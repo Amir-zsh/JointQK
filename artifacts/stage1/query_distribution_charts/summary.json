@@ -1,0 +1,36 @@
+{
+  "representative_heads": [
+    {
+      "layer": 0,
+      "head": 0
+    },
+    {
+      "layer": 7,
+      "head": 0
+    },
+    {
+      "layer": 14,
+      "head": 0
+    },
+    {
+      "layer": 21,
+      "head": 0
+    },
+    {
+      "layer": 28,
+      "head": 0
+    },
+    {
+      "layer": 35,
+      "head": 0
+    }
+  ],
+  "pre": {
+    "mean_abs_skew": 0.020143210887908936,
+    "mean_abs_excess_kurtosis": 0.39955151081085205
+  },
+  "post": {
+    "mean_abs_skew": 0.012851949781179428,
+    "mean_abs_excess_kurtosis": 0.20749008655548096
+  }
+}

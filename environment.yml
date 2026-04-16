@@ -1,0 +1,40 @@
+name: kv-rd
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch>=2.4,<2.6
+  - pytorch-cuda=12.1
+  - numpy>=2,<3
+  - scipy>=1.13,<2
+  - pandas>=2.2,<3
+  - matplotlib>=3.9,<4
+  - seaborn>=0.13,<0.14
+  - scikit-learn>=1.5,<2
+  - ipykernel>=6.29,<7
+  - jupyterlab>=4,<5
+  - pip:
+      - transformers>=4.56,<5.3
+      - datasets>=2.21,<4
+      - accelerate>=1,<2
+      - requests>=2.32,<3
+      - cachetools>=5.5,<6
+      - fire>=0.6,<0.7
+      - tqdm>=4.66,<5
+      - nltk>=3.9,<4
+      - bert-score>=0.3.13,<0.4
+      - jieba>=0.42.1
+      - fuzzywuzzy>=0.18.0
+      - sentencepiece>=0.2,<0.3
+      - protobuf>=5.27,<6
+      - bitsandbytes>=0.43
+      - optimum-quanto
+      - pytest>=7,<9
+      - black>=24,<26
+      - isort>=5.13,<6
+      - flake8>=7,<8
+      - mypy>=1.13,<2
+      - -e ./kvpress

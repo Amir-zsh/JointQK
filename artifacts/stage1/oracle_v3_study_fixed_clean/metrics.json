@@ -1,0 +1,50 @@
+{
+  "baseline_2bit": {
+    "geometry_distortion": 2.913773770409602,
+    "key_mse": 1.1936283918718498,
+    "logit_cosine": 0.9188229792095997,
+    "logit_mse": 2.913767220797362,
+    "top1_match": 0.5234229265479371,
+    "top5_containment": 0.7285121270558901
+  },
+  "baseline_3bit": {
+    "geometry_distortion": 0.8724348288443353,
+    "key_mse": 0.349041866345538,
+    "logit_cosine": 0.97376784130379,
+    "logit_mse": 0.8724327662752734,
+    "top1_match": 0.6636085064081406,
+    "top5_containment": 0.8771886298156999
+  },
+  "baseline_4bit": {
+    "geometry_distortion": 0.24305600754019838,
+    "key_mse": 0.09417649524941764,
+    "logit_cosine": 0.9921476791302363,
+    "logit_mse": 0.2430554231007894,
+    "top1_match": 0.7783813079543136,
+    "top5_containment": 0.9557374490907898
+  },
+  "oracle_2bit": {
+    "geometry_distortion": 2.3405532227070243,
+    "key_mse": 16.2118419430874,
+    "logit_cosine": 0.9238052530973045,
+    "logit_mse": 2.3404746778585293,
+    "top1_match": 0.38945336508806105,
+    "top5_containment": 0.6019412337077988
+  },
+  "oracle_3bit": {
+    "geometry_distortion": 0.6910666317023613,
+    "key_mse": 5.277463240755929,
+    "logit_cosine": 0.976415434093387,
+    "logit_mse": 0.6910421513020992,
+    "top1_match": 0.560374414479291,
+    "top5_containment": 0.8142345344854726
+  },
+  "oracle_4bit": {
+    "geometry_distortion": 0.1900185741553152,
+    "key_mse": 1.4760182960717767,
+    "logit_cosine": 0.9932882319445964,
+    "logit_mse": 0.1900117756040008,
+    "top1_match": 0.7088252844081985,
+    "top5_containment": 0.9353694038258659
+  }
+}
