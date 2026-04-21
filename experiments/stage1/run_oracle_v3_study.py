@@ -17,15 +17,12 @@ else:
 
 from experiments.stage1.common import (
     Stage1MSECompressor,
-    build_prompt,
     compute_attention_metrics,
     compute_geometry_distortion,
     compute_grouped_query_second_moment,
     ensure_dir,
     geometry_aware_roundtrip,
-    load_longbench_slice,
     load_model_and_tokenizer,
-    parse_task_names,
     run_prefill_and_capture,
     save_json,
     split_prefix_and_future,
@@ -33,15 +30,17 @@ from experiments.stage1.common import (
     trim_queries,
     write_markdown_table,
 )
+from experiments.stage1.data import get_dataset_spec, load_and_filter
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the stage-1 oracle V3 study.")
     parser.add_argument("--model", default="Qwen/Qwen3-8B")
     parser.add_argument("--dataset", default="longbench-e")
-    parser.add_argument("--task_names", default="qasper,hotpotqa,passage_retrieval_en")
-    parser.add_argument("--num_examples", type=int, default=6)
-    parser.add_argument("--max_context_length", type=int, default=4096)
+    parser.add_argument("--configs", default="qasper,hotpotqa,passage_retrieval_en")
+    parser.add_argument("--num_examples_per_config", type=int, default=2)
+    parser.add_argument("--min_tokens", type=int, default=4000)
+    parser.add_argument("--max_tokens", type=int, default=12000)
     parser.add_argument("--n_sink", type=int, default=4)
     parser.add_argument("--key_bits", default="2,3,4")
     parser.add_argument("--geometry_mode", choices=["none", "oracle", "both"], default="both")
@@ -60,30 +59,34 @@ def main() -> None:
 
     args = parse_args()
     output_dir = ensure_dir(args.output_dir)
-    task_names = parse_task_names(args.task_names)
     bitwidths = [int(part.strip()) for part in args.key_bits.split(",") if part.strip()]
+    configs = [c.strip() for c in args.configs.split(",") if c.strip()] or None
 
     model, tokenizer = load_model_and_tokenizer(args.model, device_map=args.device_map, dtype_name=args.dtype)
-    records = load_longbench_slice(task_names, args.num_examples, seed=args.seed, dataset_name=args.dataset)
+    spec = get_dataset_spec(args.dataset)
+    examples = load_and_filter(
+        spec,
+        tokenizer=tokenizer,
+        num_examples_per_config=args.num_examples_per_config,
+        min_tokens=args.min_tokens,
+        max_tokens=args.max_tokens,
+        seed=args.seed,
+        config_names=configs,
+    )
 
     per_bit_baseline: dict[int, list[dict[str, float]]] = {bits: [] for bits in bitwidths}
     per_bit_oracle: dict[int, list[dict[str, float]]] = {bits: [] for bits in bitwidths}
     per_example = []
 
-    for example_offset, record in enumerate(records):
-        prompt = build_prompt(record)
-        outputs, _, post_queries, _ = run_prefill_and_capture(
-            model,
-            tokenizer,
-            prompt,
-            max_context_length=args.max_context_length,
-        )
+    for example_offset, example in enumerate(examples):
+        outputs, _, post_queries = run_prefill_and_capture(model, example.input_ids)
         future_query_tensor = trim_queries(post_queries, args.n_sink).to(getattr(model, "dtype", torch.float16))
         cache = outputs.past_key_values
 
         example_row = {
-            "task": record.task,
-            "example_index": record.example_index,
+            "dataset": example.dataset,
+            "config": example.config,
+            "row_index": example.row_index,
             "layers": [],
         }
 

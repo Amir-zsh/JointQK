@@ -123,8 +123,8 @@ def test_variant_aggregation_helpers_average_multi_variant_rows():
 def test_stage1d_correlations_ignore_degenerate_control_variants():
     rows = [
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "layer_idx": 1,
             "bits": 3,
             "variant": "baseline_raw",
@@ -132,8 +132,8 @@ def test_stage1d_correlations_ignore_degenerate_control_variants():
             "diagnostics": {"transformed_norm_cv": 0.1},
         },
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "layer_idx": 1,
             "bits": 3,
             "variant": "basis_only",
@@ -141,8 +141,8 @@ def test_stage1d_correlations_ignore_degenerate_control_variants():
             "diagnostics": {"transformed_norm_cv": 0.1},
         },
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "layer_idx": 1,
             "bits": 3,
             "variant": "full_metric",
@@ -150,8 +150,8 @@ def test_stage1d_correlations_ignore_degenerate_control_variants():
             "diagnostics": {"transformed_norm_cv": 0.4},
         },
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "layer_idx": 1,
             "bits": 3,
             "variant": "trace_matched_full_metric",
@@ -170,8 +170,8 @@ def test_stage1d_correlations_ignore_degenerate_control_variants():
 def test_stage1d_sweep_summary_uses_geometry_distortion_delta():
     rows = [
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "example_offset": 0,
             "layer_idx": 1,
             "split_at": 8,
@@ -182,8 +182,8 @@ def test_stage1d_sweep_summary_uses_geometry_distortion_delta():
             "diagnostics": {"transformed_norm_cv": 0.1},
         },
         {
-            "task": "t",
-            "example_index": 0,
+            "config": "t",
+            "row_index": 0,
             "example_offset": 0,
             "layer_idx": 1,
             "split_at": 8,

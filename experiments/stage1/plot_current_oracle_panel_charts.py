@@ -20,7 +20,6 @@ else:
 from experiments.stage1.common import (
     Stage1MSECompressor,
     apply_headwise_linear,
-    build_prompt,
     compute_grouped_query_second_moment,
     ensure_dir,
     factorize_metric_batch,
@@ -29,6 +28,7 @@ from experiments.stage1.common import (
     split_prefix_and_future,
     trim_queries,
 )
+from experiments.stage1.data import fetch_example, get_dataset_spec
 from experiments.stage1.diagnosis_common import compute_second_moment, instrument_compressor_path, transform_matrix_stats
 
 
@@ -40,7 +40,6 @@ def parse_args() -> argparse.Namespace:
         default="/vault/amir/cache/huggingface/hub/models--Qwen--Qwen3-8B/snapshots/b968826d9c46dd6066d109eabc6255188de91218",
     )
     parser.add_argument("--dataset", default="longbench-e")
-    parser.add_argument("--max_context_length", type=int, default=4096)
     parser.add_argument("--n_sink", type=int, default=4)
     parser.add_argument("--prefix_fraction", type=float, default=0.75)
     parser.add_argument("--min_future_tokens", type=int, default=32)
@@ -55,25 +54,6 @@ def parse_args() -> argparse.Namespace:
         help="Comma-separated layer indices to render, or 'auto' for layer 0 + early/mid/late representatives.",
     )
     return parser.parse_args()
-
-
-def fetch_prompt_record(task: str, example_index: int, dataset_name: str):
-    from datasets import load_dataset
-
-    config_name = task
-    if dataset_name == "longbench-e" and not task.endswith("_e"):
-        config_name = f"{task}_e"
-    dataset = load_dataset("Xnhyacinth/LongBench", config_name, split="test")
-    row = dataset[int(example_index)]
-    from experiments.stage1.common import PromptRecord
-
-    return PromptRecord(
-        task=task,
-        example_index=int(example_index),
-        context=row["context"],
-        question=row["question"],
-        answer_prefix=row.get("answer_prefix", ""),
-    )
 
 
 def standardized_moments_from_matrix(matrix: torch.Tensor) -> tuple[float, float]:
@@ -122,27 +102,24 @@ def gather_panel_data(
     row: dict,
     model,
     tokenizer,
+    spec,
     prompt_cache: dict[tuple[str, int], dict],
 ) -> dict:
     from kvpress.utils import extract_keys_and_values
 
-    key = (row["task"], int(row["example_index"]))
+    config = row.get("config") or row["task"]
+    row_index = int(row.get("row_index", row.get("example_index")))
+    key = (config, row_index)
     if key not in prompt_cache:
-        record = fetch_prompt_record(row["task"], int(row["example_index"]), args.dataset)
-        prompt = build_prompt(record)
-        outputs, _, post_queries, _ = run_prefill_and_capture(
-            model,
-            tokenizer,
-            prompt,
-            max_context_length=args.max_context_length,
-        )
+        example = fetch_example(spec, config=config, row_index=row_index, tokenizer=tokenizer)
+        outputs, _, post_queries = run_prefill_and_capture(model, example.input_ids)
         prompt_cache[key] = {
-            "record": record,
+            "example": example,
             "future_query_tensor": trim_queries(post_queries, args.n_sink).to(getattr(model, "dtype", torch.float16)),
             "cache": outputs.past_key_values,
         }
 
-    record = prompt_cache[key]["record"]
+    example = prompt_cache[key]["example"]
     future_query_tensor = prompt_cache[key]["future_query_tensor"]
     cache = prompt_cache[key]["cache"]
     layer_idx = int(row["layer_idx"])
@@ -166,8 +143,8 @@ def gather_panel_data(
     transform_stats = transform_matrix_stats(factors, metrics)
 
     return {
-        "task": record.task,
-        "example_index": record.example_index,
+        "config": example.config,
+        "row_index": example.row_index,
         "layer_idx": layer_idx,
         "bits": bits,
         "k": prefix_keys.detach().cpu().reshape(-1, prefix_keys.shape[-1]).float(),
@@ -199,7 +176,7 @@ def render_panel(panel_data: dict, output_path: Path) -> None:
 
     fig.suptitle(
         f"Layer {panel_data['layer_idx']} Distribution Comparison\n"
-        f"task={panel_data['task']} example={panel_data['example_index']} bits={panel_data['bits']} "
+        f"config={panel_data['config']} row={panel_data['row_index']} bits={panel_data['bits']} "
         f"transform cond={panel_data['transform_condition_number']:.2f}"
     )
     fig.savefig(output_path, dpi=180)
@@ -225,8 +202,10 @@ def write_summary(path: Path, selected_rows: list[dict], selected_layers: list[i
         "",
     ]
     for row in selected_rows:
+        config = row.get("config") or row.get("task")
+        row_index = row.get("row_index", row.get("example_index"))
         lines.append(
-            f"- layer {row['layer_idx']}: task `{row['task']}`, example `{row['example_index']}`, bits `{row['bits']}`"
+            f"- layer {row['layer_idx']}: config `{config}`, row `{row_index}`, bits `{row['bits']}`"
         )
     path.write_text("\n".join(lines))
 
@@ -245,9 +224,10 @@ def main() -> None:
     else:
         selected_layers = [int(part.strip()) for part in args.layers.split(",") if part.strip()]
 
+    spec = get_dataset_spec(args.dataset)
     selected_rows = [choose_row_for_layer(rows, layer_idx) for layer_idx in selected_layers]
     for row in selected_rows:
-        panel_data = gather_panel_data(args, row, model, tokenizer, prompt_cache)
+        panel_data = gather_panel_data(args, row, model, tokenizer, spec, prompt_cache)
         render_panel(panel_data, output_dir / f"layer_{int(row['layer_idx']):02d}_panel.png")
 
     write_summary(output_dir / "summary.md", selected_rows, selected_layers)

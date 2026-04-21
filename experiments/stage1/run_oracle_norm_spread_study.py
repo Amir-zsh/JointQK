@@ -18,16 +18,14 @@ else:
 
 from experiments.stage1.common import (
     TRANSFORM_FAMILIES,
-    build_prompt,
     compute_grouped_query_second_moment,
     ensure_dir,
-    load_longbench_slice,
     load_model_and_tokenizer,
-    parse_task_names,
     run_prefill_and_capture,
     split_prefix_and_future,
     trim_queries,
 )
+from experiments.stage1.data import get_dataset_spec, load_and_filter
 from experiments.stage1.diagnosis_common import (
     aggregate_variant_diagnostics,
     aggregate_variant_metric_rows,
@@ -76,9 +74,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the Stage-1D oracle norm-spread ablation study.")
     parser.add_argument("--model", default="Qwen/Qwen3-8B")
     parser.add_argument("--dataset", default="longbench-e")
-    parser.add_argument("--task_names", default="qasper,hotpotqa,passage_retrieval_en")
-    parser.add_argument("--num_examples", type=int, default=6)
-    parser.add_argument("--max_context_length", type=int, default=4096)
+    parser.add_argument("--configs", default="qasper,hotpotqa,passage_retrieval_en")
+    parser.add_argument("--num_examples_per_config", type=int, default=2)
+    parser.add_argument("--min_tokens", type=int, default=4000)
+    parser.add_argument("--max_tokens", type=int, default=12000)
     parser.add_argument("--n_sink", type=int, default=4)
     parser.add_argument("--key_bits", default="2,3,4")
     parser.add_argument("--prefix_fraction", type=float, default=0.75)
@@ -93,8 +92,8 @@ def parse_args() -> argparse.Namespace:
 
 def row_key(row: dict) -> tuple:
     return (
-        row["task"],
-        int(row["example_index"]),
+        row["config"],
+        int(row["row_index"]),
         int(row["layer_idx"]),
         int(row["bits"]),
     )
@@ -465,22 +464,25 @@ def main() -> None:
 
     args = parse_args()
     output_dir = ensure_dir(args.output_dir)
-    task_names = parse_task_names(args.task_names)
     bitwidths = [int(part.strip()) for part in args.key_bits.split(",") if part.strip()]
+    configs = [c.strip() for c in args.configs.split(",") if c.strip()] or None
 
     model, tokenizer = load_model_and_tokenizer(args.model, device_map=args.device_map, dtype_name=args.dtype)
-    records = load_longbench_slice(task_names, args.num_examples, seed=args.seed, dataset_name=args.dataset)
+    spec = get_dataset_spec(args.dataset)
+    examples = load_and_filter(
+        spec,
+        tokenizer=tokenizer,
+        num_examples_per_config=args.num_examples_per_config,
+        min_tokens=args.min_tokens,
+        max_tokens=args.max_tokens,
+        seed=args.seed,
+        config_names=configs,
+    )
 
     rows: list[dict] = []
 
-    for example_offset, record in enumerate(records):
-        prompt = build_prompt(record)
-        outputs, _, post_queries, _ = run_prefill_and_capture(
-            model,
-            tokenizer,
-            prompt,
-            max_context_length=args.max_context_length,
-        )
+    for example_offset, example in enumerate(examples):
+        outputs, _, post_queries = run_prefill_and_capture(model, example.input_ids)
         future_query_tensor = trim_queries(post_queries, args.n_sink).to(getattr(model, "dtype", torch.float16))
         cache = outputs.past_key_values
 
@@ -509,8 +511,9 @@ def main() -> None:
                     )
                     rows.append(
                         {
-                            "task": record.task,
-                            "example_index": int(record.example_index),
+                            "dataset": example.dataset,
+                            "config": example.config,
+                            "row_index": int(example.row_index),
                             "example_offset": int(example_offset),
                             "layer_idx": int(layer_idx),
                             "split_at": int(split_at),
@@ -536,8 +539,9 @@ def main() -> None:
                         )
                         rows.append(
                             {
-                                "task": record.task,
-                                "example_index": int(record.example_index),
+                                "dataset": example.dataset,
+                                "config": example.config,
+                                "row_index": int(example.row_index),
                                 "example_offset": int(example_offset),
                                 "layer_idx": int(layer_idx),
                                 "split_at": int(split_at),
