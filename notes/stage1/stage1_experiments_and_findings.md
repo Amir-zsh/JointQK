@@ -296,15 +296,27 @@ That follow-up sharpened the Stage 1C diagnosis:
 
 But Stage 1D did **not** establish that token-level norm spread is the dominant mechanism:
 
-- `trace_matched_full_metric` did not recover the loss
-- `per_token_norm_matched_full_metric` also did not recover the loss
 - the `gamma` sweep was not monotone
+
+And there is an important caveat on the two apparent "failed rescue" controls:
+
+- `trace_matched_full_metric` differs from `full_metric` only by a global scale factor, which the V3 backend removes when it unit-normalizes vectors before quantization
+- `per_token_norm_matched_full_metric` differs from `full_metric` only by a per-token scale factor that is likewise removed by unit-normalization and then explicitly undone after decompression
+
+So those two arms are degenerate under the current backend and should not be used as evidence against the norm-spread hypothesis.
+
+Stage 1D also surfaced an important positive signal that should be kept separate from the failed mechanism claim:
+
+- at `3` bits, intermediate `gamma` values around `0.25` to `0.5` clearly beat the plain V3 baseline on geometry distortion and top-1
+- this remains true on both the full-data and layer-0-excluded summaries
 
 So the clean supported conclusion is narrower:
 
 - scaling is implicated
+- partial metric scaling is a promising method direction
 - norm spread is a plausible contributor
 - but the current evidence does not isolate norm spread alone as the full explanation
+- and the current degenerate control arms do not falsify the norm-spread story
 
 ### Challenge 5: Ranking-sensitive alternatives
 
@@ -327,7 +339,8 @@ The stage-1 bottom line is:
 - the current geometry-aware quantization method is not a robust win over standard V3
 - the main problem is not just implementation; it is the current objective-and-backend coupling
 - Stage 1D further shows that the oracle eigenbasis is not the problem by itself; the full anisotropic scaling term is the part that breaks the current path
-- Stage 1D does not yet prove that token-level norm spread is the main mechanism, especially because the current V3 backend normalizes vectors before scalar quantization
+- Stage 1D also shows that partial metric scaling is a real positive signal, especially near `gamma ≈ 0.25-0.5` at `3` bits
+- Stage 1D does not yet prove that token-level norm spread is the main mechanism, and the trace-matched / per-token-norm-matched controls cannot be used against that hypothesis because the current V3 backend unit-normalizes vectors before scalar quantization
 
 So the project is still alive, but the next step should be:
 

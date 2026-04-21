@@ -12,6 +12,11 @@ from experiments.stage1.diagnosis_common import (
     aggregate_variant_metric_rows,
     run_transform_variant_path,
 )
+from experiments.stage1.run_oracle_norm_spread_study import (
+    compute_baseline_deltas,
+    compute_correlations,
+    summarize_sweep,
+)
 
 
 def test_basis_only_transform_is_orthogonal_and_norm_preserving():
@@ -113,3 +118,84 @@ def test_variant_aggregation_helpers_average_multi_variant_rows():
     assert abs(metric_summary["top1_match"] - 0.7) < 1e-6
     assert abs(diag_summary["transformed_norm_cv"] - 0.3) < 1e-6
     assert abs(diag_summary["trace_scale_alpha_mean"] - 1.0) < 1e-6
+
+
+def test_stage1d_correlations_ignore_degenerate_control_variants():
+    rows = [
+        {
+            "task": "t",
+            "example_index": 0,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "baseline_raw",
+            "metrics": {"geometry_distortion": 1.0, "top1_match": 0.5},
+            "diagnostics": {"transformed_norm_cv": 0.1},
+        },
+        {
+            "task": "t",
+            "example_index": 0,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "basis_only",
+            "metrics": {"geometry_distortion": 0.9, "top1_match": 0.55},
+            "diagnostics": {"transformed_norm_cv": 0.1},
+        },
+        {
+            "task": "t",
+            "example_index": 0,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "full_metric",
+            "metrics": {"geometry_distortion": 1.3, "top1_match": 0.45},
+            "diagnostics": {"transformed_norm_cv": 0.4},
+        },
+        {
+            "task": "t",
+            "example_index": 0,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "trace_matched_full_metric",
+            "metrics": {"geometry_distortion": 5.0, "top1_match": 0.1},
+            "diagnostics": {"transformed_norm_cv": 99.0},
+        },
+    ]
+
+    delta_rows = compute_baseline_deltas(rows)
+    correlations = compute_correlations(delta_rows)
+
+    assert "transformed_norm_cv__vs__delta_geometry_distortion" in correlations
+    assert correlations["transformed_norm_cv__vs__delta_geometry_distortion"] == 1.0
+
+
+def test_stage1d_sweep_summary_uses_geometry_distortion_delta():
+    rows = [
+        {
+            "task": "t",
+            "example_index": 0,
+            "example_offset": 0,
+            "layer_idx": 1,
+            "split_at": 8,
+            "bits": 3,
+            "variant": "baseline_raw",
+            "gamma": None,
+            "metrics": {"geometry_distortion": 1.0, "top1_match": 0.5},
+            "diagnostics": {"transformed_norm_cv": 0.1},
+        },
+        {
+            "task": "t",
+            "example_index": 0,
+            "example_offset": 0,
+            "layer_idx": 1,
+            "split_at": 8,
+            "bits": 3,
+            "variant": "gamma_sweep",
+            "gamma": 0.5,
+            "metrics": {"geometry_distortion": 0.7, "top1_match": 0.6},
+            "diagnostics": {"transformed_norm_cv": 0.2},
+        },
+    ]
+
+    summary = summarize_sweep(rows)
+
+    assert abs(summary["0.5"]["mean_delta_geometry_distortion"] + 0.3) < 1e-6
+    assert abs(summary["0.5"]["mean_delta_top1_match"] - 0.1) < 1e-6
