@@ -6,6 +6,18 @@ This note summarizes the stage-1 work so far:
 2. Oracle key-only geometry-aware quantization versus the V3 baseline.
 3. The main challenges uncovered by these experiments.
 
+## Current Takeaway
+
+If someone reads only one Stage 1 note, it should be this one.
+
+The current Stage 1 position is:
+
+- query second moments are worth modeling even though exact Gaussianity is false
+- the original full-metric oracle path is not a robust win over the V3 baseline
+- outside layer 0, the full-metric path loses even on geometry distortion
+- the oracle eigenbasis by itself is not the problem; the harmful component is the anisotropic scaling term
+- Stage 1D did **not** isolate token-level norm spread as the dominant mechanism, so that explanation should still be treated as provisional
+
 The corresponding artifacts live under:
 
 - [artifacts/stage1/query_stats](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/query_stats)
@@ -14,15 +26,16 @@ The corresponding artifacts live under:
 - [artifacts/stage1/visuals](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/visuals)
 - [artifacts/stage1/oracle_v3_study](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_v3_study)
 - [artifacts/stage1/oracle_v3_study_fixed_clean](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_v3_study_fixed_clean)
+- [artifacts/stage1/oracle_norm_spread_study](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_norm_spread_study)
 
 ## 1. Goal of Stage 1
 
 Stage 1 was designed to answer two questions before moving on to online estimators or rate allocation:
 
 1. Are future queries Gaussian enough, or at least stable enough in second moment, to justify query-aware geometry?
-2. In an oracle setting, does geometry-aware key quantization beat standard V3-style MSE quantization?
+2. In an oracle setting, does geometry-aware key quantization beat standard V3-style quantization?
 
-The baseline quantizer is the V3-style single-stage MSE compressor used in the stage-1 code. The oracle method computes a future-query second moment per KV head and quantizes after a geometry transform derived from that second moment.
+The baseline quantizer is the V3-style single-stage compressor used in the stage-1 code. The oracle method computes a future-query second moment per KV head and quantizes after a geometry transform derived from that second moment.
 
 ## 2. Experiment A: Query Distribution Validation
 
@@ -271,6 +284,28 @@ So there is a design tension:
 
 This is one of the main unresolved algorithmic questions.
 
+### Challenge 4A: What Stage 1D resolved and what it did not
+
+The Stage 1D follow-up is documented in [stage1d_norm_spread_ablation_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1d_norm_spread_ablation_report.md:1).
+
+That follow-up sharpened the Stage 1C diagnosis:
+
+- `basis_only` stays close to baseline outside layer 0
+- `full_metric` is worse than baseline outside layer 0
+- the harmful component is therefore the anisotropic scaling term, not the oracle eigenbasis by itself
+
+But Stage 1D did **not** establish that token-level norm spread is the dominant mechanism:
+
+- `trace_matched_full_metric` did not recover the loss
+- `per_token_norm_matched_full_metric` also did not recover the loss
+- the `gamma` sweep was not monotone
+
+So the clean supported conclusion is narrower:
+
+- scaling is implicated
+- norm spread is a plausible contributor
+- but the current evidence does not isolate norm spread alone as the full explanation
+
 ### Challenge 5: Ranking-sensitive alternatives
 
 The current metric is too weak if the end goal is attention preservation.
@@ -291,7 +326,9 @@ The stage-1 bottom line is:
 - exact normality is not required and not supported
 - the current geometry-aware quantization method is not a robust win over standard V3
 - the main problem is not just implementation; it is the current objective-and-backend coupling
+- Stage 1D further shows that the oracle eigenbasis is not the problem by itself; the full anisotropic scaling term is the part that breaks the current path
+- Stage 1D does not yet prove that token-level norm spread is the main mechanism, especially because the current V3 backend normalizes vectors before scalar quantization
 
 So the project is still alive, but the next step should be:
 
-**refine the distortion target and the way geometry is injected into the quantizer, rather than moving directly to online estimation or rate allocation.**
+**refine the way geometry is injected into the quantizer, especially by avoiding direct full-metric preconditioning, rather than moving directly to online estimation or rate allocation.**

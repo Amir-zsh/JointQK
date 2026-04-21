@@ -10,9 +10,11 @@ import torch
 from experiments.stage1.common import (
     Stage1MSECompressor,
     apply_headwise_linear,
+    build_metric_transform,
     compute_attention_metrics,
     compute_geometry_distortion,
     factorize_metric_batch,
+    prepare_variant_states,
 )
 
 
@@ -45,6 +47,17 @@ def tensor_norm_stats(states: torch.Tensor) -> dict[str, float]:
         "norm_mean": float(mean.item()),
         "norm_std": float(std.item()),
         "norm_cv": float(cv.item()),
+    }
+
+
+def ratio_stats(numerator: torch.Tensor, denominator: torch.Tensor, eps: float = 1e-8) -> dict[str, float]:
+    ratios = numerator.float() / denominator.float().clamp_min(eps)
+    return {
+        "ratio_mean": float(ratios.mean().item()),
+        "ratio_std": float(ratios.std(unbiased=False).item()),
+        "ratio_cv": float((ratios.std(unbiased=False) / ratios.mean().clamp_min(eps)).item()),
+        "ratio_min": float(ratios.min().item()),
+        "ratio_max": float(ratios.max().item()),
     }
 
 
@@ -181,6 +194,83 @@ def run_current_oracle_path(
     }
 
 
+def run_transform_variant_path(
+    prefix_keys: torch.Tensor,
+    future_queries: torch.Tensor,
+    metrics: torch.Tensor,
+    bits: int,
+    seed: int,
+    eps: float,
+    variant: str,
+    gamma: float | None = None,
+) -> dict[str, Any]:
+    if variant == "baseline_raw":
+        baseline = run_baseline_path(prefix_keys, future_queries, metrics, bits=bits, seed=seed)
+        diagnostics = dict(baseline["diagnostics"])
+        diagnostics["transformed_norm_mean"] = diagnostics["pre_norm_mean"]
+        diagnostics["transformed_norm_std"] = diagnostics["pre_norm_std"]
+        diagnostics["transformed_norm_cv"] = diagnostics["pre_norm_cv"]
+        diagnostics["transformed_effective_rank"] = diagnostics["pre_effective_rank"]
+        diagnostics["transform_ratio_mean"] = 1.0
+        diagnostics["transform_ratio_std"] = 0.0
+        diagnostics["transform_ratio_cv"] = 0.0
+        diagnostics["transform_ratio_min"] = 1.0
+        diagnostics["transform_ratio_max"] = 1.0
+        diagnostics["transform_condition_number_mean"] = 1.0
+        diagnostics["transform_condition_number_max"] = 1.0
+        diagnostics["trace_scale_alpha_mean"] = 1.0
+        diagnostics["trace_scale_alpha_std"] = 0.0
+        baseline["variant"] = variant
+        baseline["gamma"] = gamma
+        baseline["trace_scale_alpha_mean"] = 1.0
+        baseline["diagnostics"] = diagnostics
+        return baseline
+
+    prepared = prepare_variant_states(prefix_keys, metrics, variant=variant, eps=eps, gamma=gamma)
+    compressor = Stage1MSECompressor(prefix_keys.shape[-1], bits, seed=seed, device=prefix_keys.device)
+    instrumented = instrument_compressor_path(prepared["compressor_input"], compressor)
+
+    transformed_reconstructed = instrumented["reconstructed"]
+    if prepared["norm_match_scales"] is not None:
+        transformed_reconstructed = transformed_reconstructed / prepared["norm_match_scales"].clamp_min(eps)
+
+    mapped_back = apply_headwise_linear(transformed_reconstructed, prepared["inverse"])
+    metric_values = compute_attention_metrics(future_queries, prefix_keys, mapped_back)
+    metric_values["key_mse"] = float((mapped_back.float() - prefix_keys.float()).pow(2).mean().item())
+    metric_values["geometry_distortion"] = compute_geometry_distortion(mapped_back, prefix_keys, metrics)
+
+    transform_stats = transform_matrix_stats(prepared["transform"], metrics)
+    transform_stats.update({f"transformed_{k}": v for k, v in tensor_norm_stats(prepared["compressor_input"]).items()})
+    transform_stats["transformed_effective_rank"] = effective_rank_from_states(prepared["compressor_input"])
+    ratio_block = ratio_stats(prepared["transformed_norms"], prepared["input_norms"], eps=eps)
+    transform_stats.update({f"transform_{k}": v for k, v in ratio_block.items()})
+
+    trace_alpha = prepared["trace_scale_alpha"]
+    transform_stats["trace_scale_alpha_mean"] = float(trace_alpha.mean().item())
+    transform_stats["trace_scale_alpha_std"] = float(trace_alpha.std(unbiased=False).item())
+
+    if prepared["norm_match_scales"] is not None:
+        norm_match = prepared["norm_match_scales"].squeeze(-1)
+        transform_stats["norm_match_scale_mean"] = float(norm_match.mean().item())
+        transform_stats["norm_match_scale_std"] = float(norm_match.std(unbiased=False).item())
+        matched_norms = torch.linalg.vector_norm(prepared["compressor_input"].float(), dim=-1)
+        transform_stats.update({f"matched_{k}": v for k, v in ratio_stats(matched_norms, prepared["input_norms"], eps=eps).items()})
+
+    return {
+        "variant": variant,
+        "gamma": gamma,
+        "reconstructed": mapped_back,
+        "transformed": prepared["transformed"],
+        "compressor_input": prepared["compressor_input"],
+        "transformed_reconstructed": transformed_reconstructed,
+        "rotated_flat": instrumented["rotated_flat"],
+        "metrics": metric_values,
+        "diagnostics": {**instrumented["diagnostics"], **transform_stats},
+        "transform": prepared["transform"],
+        "inverse": prepared["inverse"],
+    }
+
+
 def aggregate_metric_rows(rows: list[dict[str, Any]], predicate: Any | None = None) -> dict[str, dict[str, float]]:
     filtered = [row for row in rows if predicate is None or predicate(row)]
     if not filtered:
@@ -287,3 +377,33 @@ def save_json(path: str | Path, payload: dict[str, Any]) -> None:
         return value
 
     Path(path).write_text(__import__("json").dumps(_convert(payload), indent=2, sort_keys=True))
+
+
+def aggregate_variant_metric_rows(
+    rows: list[dict[str, Any]],
+    variant: str,
+    predicate: Any | None = None,
+) -> dict[str, float]:
+    filtered = [row for row in rows if row.get("variant") == variant and (predicate is None or predicate(row))]
+    if not filtered:
+        return {}
+    metric_names = sorted(filtered[0]["metrics"].keys())
+    return {
+        metric_name: float(sum(float(row["metrics"][metric_name]) for row in filtered) / len(filtered))
+        for metric_name in metric_names
+    }
+
+
+def aggregate_variant_diagnostics(
+    rows: list[dict[str, Any]],
+    variant: str,
+    keys: list[str],
+    predicate: Any | None = None,
+) -> dict[str, float]:
+    filtered = [row for row in rows if row.get("variant") == variant and (predicate is None or predicate(row))]
+    if not filtered:
+        return {}
+    return {
+        key: float(sum(float(row["diagnostics"][key]) for row in filtered) / len(filtered))
+        for key in keys
+    }

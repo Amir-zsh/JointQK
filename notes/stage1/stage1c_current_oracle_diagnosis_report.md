@@ -1,5 +1,9 @@
 # Stage 1C Report: Diagnosing the Current Oracle Path
 
+> Supporting diagnosis note.
+>
+> This document captures the Stage 1C diagnosis of the original `Lk` oracle path. It remains useful as a historical diagnosis, but Stage 1D later narrowed the conclusion: the broken component is the anisotropic scaling term, while token-level norm spread was **not** isolated as the dominant mechanism. For the current summary, see [stage1_experiments_and_findings.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_experiments_and_findings.md:1) and [stage1d_norm_spread_ablation_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1d_norm_spread_ablation_report.md:1).
+
 This report summarizes the follow-up diagnosis performed after the initial stage-1 oracle study.
 
 The question for this stage was:

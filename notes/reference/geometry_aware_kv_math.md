@@ -1,5 +1,9 @@
 # Geometry-Aware KV Cache Compression Math
 
+> Reference derivation note.
+>
+> This document derives the surrogate geometry-aware objectives. It should not be read as evidence that direct full-metric preconditioning will work with the current V3 backend. Stage 1 showed a gap between the clean transformed-space derivation and the behavior of the actual backend used in experiments.
+
 This note derives the proposed geometry-aware objectives for KV cache compression and shows how they reduce to ordinary Euclidean quantization after a linear transform.
 
 The main idea is simple:

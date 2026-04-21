@@ -1,5 +1,9 @@
 # Stage 1 Plan: Query Normality and Oracle Geometry Study
 
+> Historical planning note.
+>
+> This document records the original Stage 1 plan. Stage 1 did not satisfy its original success criterion, and the current outcome is documented in [stage1_experiments_and_findings.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_experiments_and_findings.md:1), [stage1c_current_oracle_diagnosis_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1c_current_oracle_diagnosis_report.md:1), and [stage1d_norm_spread_ablation_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1d_norm_spread_ablation_report.md:1).
+
 This document specifies the first research stage in concrete terms.
 
 The purpose of Stage 1 is to answer two questions:

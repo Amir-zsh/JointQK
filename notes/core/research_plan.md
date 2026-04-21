@@ -8,6 +8,19 @@ The main research target is:
 
 This is narrower than general KV compression and is the cleanest way to test the proposal.
 
+## Project Status
+
+Stage 1 is now complete.
+
+The main Stage 1 conclusions are:
+
+- query second moments are stable enough to remain a useful modeling object
+- the original full-metric oracle path is not a robust win over the V3 baseline
+- the harmful component is the anisotropic scaling term, not the oracle eigenbasis by itself
+- the next step is **not** to estimate the same full-metric path online
+
+So the immediate research direction has changed. Before moving to estimated geometry or variable bit allocation, the method needs a backend-compatible way to inject geometry, likely through basis-aware or allocation-aware methods rather than direct full-metric preconditioning
+
 ---
 
 ## Core Questions
@@ -26,7 +39,7 @@ We will answer the following questions in order:
 
 ## Stage 1: Validate Query Distribution + Oracle Geometry Study
 
-This is the current stage.
+This stage is complete.
 
 Goals:
 
@@ -145,7 +158,7 @@ We already have useful starting points:
   - query-aware presses, Expected Attention implementation, and evaluation harness
 - `turboquant-pytorch/`
   - a working TurboQuant-style quantization codebase and MSE-only variants
-- [geometry_aware_kv_math.md](./geometry_aware_kv_math.md)
+- [geometry_aware_kv_math.md](/vault/amir/efficient-llm/teamily-project/notes/reference/geometry_aware_kv_math.md:1)
   - derivation of the geometry-aware objectives
 
 This means the project should build on existing code rather than starting from scratch.
@@ -154,9 +167,12 @@ This means the project should build on existing code rather than starting from s
 
 ## Immediate Next Step
 
-The next concrete task is Stage 1:
+The next concrete task is a method revision step between the original Stage 1 and the originally planned Stage 2.
 
-- validate the query-normality assumption
-- run the oracle geometry-aware vs standard TurboQuant study
+That step should:
 
-The detailed execution plan for this stage is in [stage1_plan.md](./stage1_plan.md).
+- preserve the useful oracle eigenbasis signal
+- avoid direct full-metric preconditioning with the current V3 backend
+- test basis-aware or allocation-aware alternatives before moving on to online estimation
+
+Historical Stage 1 planning details remain in [stage1_plan_historical.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_plan_historical.md:1).
