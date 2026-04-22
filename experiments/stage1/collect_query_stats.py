@@ -18,7 +18,7 @@ from experiments.stage1.toolkit import (
     run_generation_and_capture,
     save_json,
 )
-from experiments.stage1.data import get_dataset_spec, load_and_filter
+from experiments.stage1.data import get_dataset_spec, load_and_filter, register_all_benchmark_specs
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,7 +33,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num_examples_per_config", type=int, default=8)
     parser.add_argument("--min_tokens", type=int, default=4000)
     parser.add_argument("--max_tokens", type=int, default=12000)
-    parser.add_argument("--max_new_tokens", type=int, default=256)
+    parser.add_argument(
+        "--max_new_tokens",
+        type=int,
+        default=None,
+        help=(
+            "Override the per-task generation budget. If None (default), use the "
+            "dataset row's `max_new_tokens` column (kvpress convention); fall back to 256 "
+            "if the row doesn't carry the column."
+        ),
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device_map", default="auto")
     parser.add_argument("--dtype", default="float16")
@@ -54,6 +63,7 @@ def main() -> None:
     output_dir = ensure_dir(args.output_dir)
     examples_dir = ensure_dir(Path(args.output_dir) / "examples")
 
+    register_all_benchmark_specs()
     model, tokenizer = load_model_and_tokenizer(
         args.model, device_map=args.device_map, dtype_name=args.dtype
     )
@@ -85,11 +95,13 @@ def main() -> None:
     length_stats: list[int] = []
 
     for example_idx, example in enumerate(selected):
+        row_budget = example.metadata.get("max_new_tokens")
+        max_new_tokens = int(args.max_new_tokens if args.max_new_tokens is not None else (row_budget or 256))
         captured = run_generation_and_capture(
             model=model,
             tokenizer=tokenizer,
             input_ids=example.input_ids,
-            max_new_tokens=args.max_new_tokens,
+            max_new_tokens=max_new_tokens,
         )
 
         prompt_length = int(captured["prompt_length"])
@@ -133,6 +145,8 @@ def main() -> None:
                 "total_length": int(captured["total_length"]),
                 "captured_length": int(captured["captured_length"]),
                 "n_generated": int(captured["total_length"]) - prompt_length,
+                "max_new_tokens_used": max_new_tokens,
+                "generated_text": generated_text,
                 "metadata": example.metadata,
             }
         )

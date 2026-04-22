@@ -26,7 +26,7 @@ from experiments.stage1.toolkit import (
     split_prefix_and_future,
     trim_queries,
 )
-from experiments.stage1.data import get_dataset_spec, load_and_filter
+from experiments.stage1.data import get_dataset_spec, load_and_filter, register_all_benchmark_specs
 from experiments.stage1.diagnosis import (
     aggregate_variant_diagnostics,
     aggregate_variant_metric_rows,
@@ -467,6 +467,7 @@ def main() -> None:
     bitwidths = [int(part.strip()) for part in args.key_bits.split(",") if part.strip()]
     configs = [c.strip() for c in args.configs.split(",") if c.strip()] or None
 
+    register_all_benchmark_specs()
     model, tokenizer = load_model_and_tokenizer(args.model, device_map=args.device_map, dtype_name=args.dtype)
     spec = get_dataset_spec(args.dataset)
     examples = load_and_filter(

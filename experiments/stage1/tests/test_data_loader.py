@@ -8,13 +8,10 @@ from experiments.stage1.data import (
     DatasetSpec,
     FilteredExample,
     get_dataset_spec,
+    kvpress_row_to_messages,
     register_dataset,
 )
-from experiments.stage1.data.longbench import (
-    LONGBENCH_E,
-    _longbench_e_alias,
-    _longbench_messages,
-)
+from experiments.stage1.data.benchmark_specs import LONGBENCH_E, _longbench_e_alias
 
 
 def test_longbench_e_is_registered():
@@ -45,18 +42,18 @@ def test_register_dataset_duplicate_raises_value_error():
         register_dataset(duplicate)
 
 
-def test_longbench_messages_without_answer_prefix():
-    messages = _longbench_messages({"context": "ctx", "question": "q?"})
+def testkvpress_row_to_messages_without_answer_prefix():
+    messages = kvpress_row_to_messages({"context": "ctx", "question": "q?"})
     assert messages == [{"role": "user", "content": "ctx\n\nq?"}]
 
 
-def test_longbench_messages_with_empty_answer_prefix():
-    messages = _longbench_messages({"context": "ctx", "question": "q?", "answer_prefix": ""})
+def testkvpress_row_to_messages_with_empty_answer_prefix():
+    messages = kvpress_row_to_messages({"context": "ctx", "question": "q?", "answer_prefix": ""})
     assert messages == [{"role": "user", "content": "ctx\n\nq?"}]
 
 
-def test_longbench_messages_with_answer_prefix():
-    messages = _longbench_messages(
+def testkvpress_row_to_messages_with_answer_prefix():
+    messages = kvpress_row_to_messages(
         {"context": "ctx", "question": "q?", "answer_prefix": "A:"}
     )
     assert messages == [{"role": "user", "content": "ctx\n\nq?\n\nA:"}]

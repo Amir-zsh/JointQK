@@ -27,7 +27,7 @@ from experiments.stage1.toolkit import (
     split_prefix_and_future,
     trim_queries,
 )
-from experiments.stage1.data import fetch_example, get_dataset_spec
+from experiments.stage1.data import fetch_example, get_dataset_spec, register_all_benchmark_specs
 from experiments.stage1.diagnosis import compute_second_moment, instrument_compressor_path, transform_matrix_stats
 
 
@@ -215,6 +215,7 @@ def main() -> None:
     output_dir = ensure_dir(args.output_dir or (diagnosis_dir / "panel_charts"))
     payload = torch.load(diagnosis_dir / "diagnosis.pt", map_location="cpu")
     rows = payload["rows"]
+    register_all_benchmark_specs()
     model, tokenizer = load_model_and_tokenizer(args.model, device_map=args.device_map, dtype_name=args.dtype)
     prompt_cache: dict[tuple[str, int], dict] = {}
 
