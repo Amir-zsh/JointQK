@@ -8,6 +8,19 @@ import matplotlib.pyplot as plt
 import torch
 from scipy import stats
 
+if __package__ in {None, ""}:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from experiments.stage1.plots.utils import (
+    apply_figure_title,
+    choose_representative_heads,
+    flatten_samples,
+    standardize_samples,
+)
+from experiments.stage1.toolkit import ensure_dir
+
 DIST_NOTE = "Each panel is a single coordinate marginal. Skew: asymmetry (0 = symmetric). Excess kurtosis: tail-heaviness vs Gaussian (0 = Gaussian-like tails)."
 
 
@@ -19,51 +32,11 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def ensure_dir(path: str | Path) -> Path:
-    out = Path(path)
-    out.mkdir(parents=True, exist_ok=True)
-    return out
-
-
-def apply_figure_title(fig: plt.Figure, title: str) -> None:
-    fig.suptitle(f"{title}\n{DIST_NOTE}", fontsize=12)
-
-
-def flatten_samples(sample_list: list[torch.Tensor]) -> torch.Tensor:
-    return torch.cat([sample.float() for sample in sample_list], dim=2)
-
-
-def standardize(samples: torch.Tensor) -> torch.Tensor:
-    mean = samples.mean(dim=2, keepdim=True)
-    std = samples.std(dim=2, unbiased=False, keepdim=True).clamp_min(1e-6)
-    return (samples - mean) / std
-
-
 def compute_coordinate_stats(samples: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    z = standardize(samples)
+    z = standardize_samples(samples)
     skew = z.pow(3).mean(dim=2)
     kurt = z.pow(4).mean(dim=2) - 3.0
     return skew, kurt
-
-
-def choose_representative_heads(second_moment: torch.Tensor, sample_heads: int) -> list[tuple[int, int]]:
-    score_matrix = torch.linalg.matrix_norm(second_moment.float(), ord="fro", dim=(-2, -1))
-    layer_count, head_count = score_matrix.shape
-    pairs = []
-    for layer in torch.linspace(0, layer_count - 1, steps=min(sample_heads, layer_count)).round().long().tolist():
-        pairs.append((int(layer), 0))
-    remaining = sample_heads - len(pairs)
-    if remaining > 0:
-        flat_indices = score_matrix.flatten().argsort(descending=True).tolist()
-        for index in flat_indices:
-            layer = index // head_count
-            head = index % head_count
-            pair = (int(layer), int(head))
-            if pair not in pairs:
-                pairs.append(pair)
-            if len(pairs) >= sample_heads:
-                break
-    return pairs[:sample_heads]
 
 
 def choose_coordinates(
@@ -140,7 +113,7 @@ def plot_coordinate_histograms(
                 fontsize=10,
             )
 
-    apply_figure_title(fig, title)
+    apply_figure_title(fig, title, note=DIST_NOTE)
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
 
@@ -184,7 +157,7 @@ def plot_coordinate_qq(
             axis.set_xlabel("Theoretical Quantiles")
             axis.set_ylabel("Sample Quantiles")
 
-    apply_figure_title(fig, title)
+    apply_figure_title(fig, title, note=DIST_NOTE)
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
 
@@ -196,7 +169,7 @@ def plot_head_coordinate_heatmap(metric: torch.Tensor, output_path: Path, title:
     ax.set_ylabel("Coordinate")
     ax.set_title(title)
     fig.colorbar(image, ax=ax, fraction=0.03, pad=0.02)
-    apply_figure_title(fig, title)
+    apply_figure_title(fig, title, note=DIST_NOTE)
     fig.savefig(output_path, dpi=180)
     plt.close(fig)
 
@@ -211,7 +184,8 @@ def main() -> None:
     post_samples = flatten_samples(payload["sampled_post_queries"])
     pre_second = payload["pre_second_moment"]
 
-    head_pairs = choose_representative_heads(pre_second, args.sample_heads)
+    score_matrix = torch.linalg.matrix_norm(pre_second.float(), ord="fro", dim=(-2, -1))
+    head_pairs = choose_representative_heads(score_matrix, args.sample_heads)
     pre_skew, pre_kurt = compute_coordinate_stats(pre_samples)
     post_skew, post_kurt = compute_coordinate_stats(post_samples)
     selection = choose_coordinates(post_skew, post_kurt, head_pairs)

@@ -6,6 +6,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import torch
 
+if __package__ in {None, ""}:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from experiments.stage1.toolkit import ensure_dir
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plot distribution diagnostics for the current oracle diagnosis run.")
@@ -20,12 +27,6 @@ def parse_args() -> argparse.Namespace:
         help="Optional output directory. Defaults to <diagnosis_dir>/distribution_charts",
     )
     return parser.parse_args()
-
-
-def ensure_dir(path: str | Path) -> Path:
-    out = Path(path)
-    out.mkdir(parents=True, exist_ok=True)
-    return out
 
 
 def dedupe_rows(rows: list[dict], exclude_layer0: bool = True) -> list[dict]:

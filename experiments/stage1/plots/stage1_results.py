@@ -8,6 +8,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import torch
 
+if __package__ in {None, ""}:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+from experiments.stage1.toolkit import ensure_dir
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Generate charts for stage-1 results.")
@@ -15,12 +22,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oracle_dir", default="artifacts/stage1/oracle_v3_study")
     parser.add_argument("--output_dir", default="artifacts/stage1/visuals")
     return parser.parse_args()
-
-
-def ensure_dir(path: str | Path) -> Path:
-    out = Path(path)
-    out.mkdir(parents=True, exist_ok=True)
-    return out
 
 
 def load_query_analysis(query_stats_dir: Path) -> dict:

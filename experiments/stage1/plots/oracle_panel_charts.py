@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -10,14 +9,14 @@ import torch
 if __package__ in {None, ""}:
     import sys
 
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "kvpress"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "kvpress"))
 else:
     import sys
 
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "kvpress"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "kvpress"))
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     Stage1MSECompressor,
     apply_headwise_linear,
     compute_grouped_query_second_moment,
@@ -29,7 +28,7 @@ from experiments.stage1.common import (
     trim_queries,
 )
 from experiments.stage1.data import fetch_example, get_dataset_spec
-from experiments.stage1.diagnosis_common import compute_second_moment, instrument_compressor_path, transform_matrix_stats
+from experiments.stage1.diagnosis import compute_second_moment, instrument_compressor_path, transform_matrix_stats
 
 
 def parse_args() -> argparse.Namespace:

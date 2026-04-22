@@ -4,7 +4,7 @@ from unittest import mock
 
 import torch
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     Stage1MSECompressor,
     apply_headwise_linear,
     compute_query_moments,

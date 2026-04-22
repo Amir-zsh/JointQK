@@ -15,7 +15,7 @@ else:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "kvpress"))
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     Stage1MSECompressor,
     compute_attention_metrics,
     compute_geometry_distortion,

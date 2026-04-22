@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import torch
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     TRANSFORM_FAMILIES,
     build_metric_transform,
     prepare_variant_states,
 )
-from experiments.stage1.diagnosis_common import (
+from experiments.stage1.diagnosis import (
     aggregate_variant_diagnostics,
     aggregate_variant_metric_rows,
     run_transform_variant_path,

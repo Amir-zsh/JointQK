@@ -12,7 +12,8 @@ if __package__ in {None, ""}:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from experiments.stage1.common import ensure_dir, save_json
+from experiments.stage1.plots.utils import choose_representative_heads, flatten_samples
+from experiments.stage1.toolkit import ensure_dir, save_json
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,10 +22,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample_heads", type=int, default=6)
     parser.add_argument("--output_dir", default=None)
     return parser.parse_args()
-
-
-def flatten_samples(sample_list: list[torch.Tensor]) -> torch.Tensor:
-    return torch.cat([sample.float() for sample in sample_list], dim=2)
 
 
 def compute_head_summary(samples: torch.Tensor) -> dict[str, torch.Tensor]:
@@ -46,25 +43,6 @@ def compute_prompt_stability(prompt_second_moment: torch.Tensor, global_second_m
     numerator = torch.linalg.matrix_norm(centered, ord="fro", dim=(-2, -1))
     denominator = torch.linalg.matrix_norm(global_second_moment.float(), ord="fro", dim=(-2, -1)).clamp_min(1e-6)
     return numerator / denominator.unsqueeze(0)
-
-
-def choose_representative_heads(score_matrix: torch.Tensor, sample_heads: int) -> list[tuple[int, int]]:
-    layer_count, head_count = score_matrix.shape
-    pairs = []
-    for layer in torch.linspace(0, layer_count - 1, steps=min(sample_heads, layer_count)).round().long().tolist():
-        pairs.append((int(layer), 0))
-    remaining = sample_heads - len(pairs)
-    if remaining > 0:
-        flat_indices = score_matrix.flatten().argsort(descending=True).tolist()
-        for index in flat_indices:
-            layer = index // head_count
-            head = index % head_count
-            pair = (int(layer), int(head))
-            if pair not in pairs:
-                pairs.append(pair)
-            if len(pairs) >= sample_heads:
-                break
-    return pairs[:sample_heads]
 
 
 def plot_histograms(samples: torch.Tensor, head_pairs: list[tuple[int, int]], output_path: Path, title: str) -> None:

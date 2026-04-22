@@ -1,0 +1,189 @@
+from __future__ import annotations
+
+import torch
+
+from experiments.stage1.toolkit.quantization import Stage1MSECompressor
+
+
+TRANSFORM_FAMILIES = [
+    "baseline_raw",
+    "basis_only",
+    "full_metric",
+    "trace_matched_full_metric",
+    "per_token_norm_matched_full_metric",
+]
+
+
+def apply_headwise_linear(states: torch.Tensor, matrices: torch.Tensor) -> torch.Tensor:
+    return torch.einsum("bhsd,hdf->bhsf", states, matrices)
+
+
+def repeat_kv_states(keys: torch.Tensor, num_query_heads: int) -> torch.Tensor:
+    bsz, num_kv_heads, seq_len, dim = keys.shape
+    if num_query_heads == num_kv_heads:
+        return keys
+    group_size = num_query_heads // num_kv_heads
+    expanded = keys[:, :, None, :, :].expand(bsz, num_kv_heads, group_size, seq_len, dim)
+    return expanded.reshape(bsz, num_query_heads, seq_len, dim)
+
+
+def factorize_metric(metric: torch.Tensor, eps: float) -> tuple[torch.Tensor, torch.Tensor]:
+    sym = 0.5 * (metric + metric.transpose(-1, -2))
+    sym = sym + eps * torch.eye(sym.shape[-1], dtype=sym.dtype, device=sym.device)
+    try:
+        factor = torch.linalg.cholesky(sym)
+        inverse = torch.linalg.inv(factor)
+    except RuntimeError:
+        eigenvalues, eigenvectors = torch.linalg.eigh(sym)
+        clipped = eigenvalues.clamp_min(eps)
+        sqrt_vals = torch.sqrt(clipped)
+        inv_sqrt_vals = 1.0 / sqrt_vals
+        factor = eigenvectors @ torch.diag(sqrt_vals)
+        inverse = torch.diag(inv_sqrt_vals) @ eigenvectors.transpose(-1, -2)
+    return factor, inverse
+
+
+def factorize_metric_batch(metrics: torch.Tensor, eps: float) -> tuple[torch.Tensor, torch.Tensor]:
+    factors = []
+    inverses = []
+    for metric in metrics:
+        factor, inverse = factorize_metric(metric.float(), eps)
+        factors.append(factor)
+        inverses.append(inverse)
+    return torch.stack(factors, dim=0), torch.stack(inverses, dim=0)
+
+
+def eigendecompose_metric_batch(metrics: torch.Tensor, eps: float) -> tuple[torch.Tensor, torch.Tensor]:
+    sym = 0.5 * (metrics.float() + metrics.float().transpose(-1, -2))
+    eye = torch.eye(sym.shape[-1], dtype=sym.dtype, device=sym.device).unsqueeze(0)
+    sym = sym + eps * eye
+    eigenvalues, eigenvectors = torch.linalg.eigh(sym)
+    clipped = eigenvalues.clamp_min(eps)
+    return clipped, eigenvectors
+
+
+def _build_scaled_eigen_transform(
+    eigenvalues: torch.Tensor,
+    eigenvectors: torch.Tensor,
+    coord_scales: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    scale_embed = torch.diag_embed(coord_scales)
+    inverse_embed = torch.diag_embed(1.0 / coord_scales.clamp_min(1e-12))
+    transform = eigenvectors @ scale_embed
+    inverse = inverse_embed @ eigenvectors.transpose(-1, -2)
+    return transform, inverse
+
+
+def build_metric_transform(
+    metrics: torch.Tensor,
+    variant: str,
+    eps: float,
+    gamma: float | None = None,
+) -> dict[str, torch.Tensor | float | str]:
+    if variant not in TRANSFORM_FAMILIES and variant != "gamma_sweep":
+        raise ValueError(f"Unsupported transform variant '{variant}'.")
+
+    if variant == "baseline_raw":
+        dim = metrics.shape[-1]
+        identity = torch.eye(dim, dtype=metrics.dtype, device=metrics.device).unsqueeze(0).repeat(metrics.shape[0], 1, 1)
+        ones = torch.ones(metrics.shape[0], dtype=metrics.dtype, device=metrics.device)
+        return {
+            "variant": variant,
+            "transform": identity,
+            "inverse": identity,
+            "eigenvalues": torch.ones(metrics.shape[0], dim, dtype=metrics.dtype, device=metrics.device),
+            "eigenvectors": identity,
+            "coord_scales": torch.ones(metrics.shape[0], dim, dtype=metrics.dtype, device=metrics.device),
+            "trace_scale_alpha": ones,
+        }
+
+    eigenvalues, eigenvectors = eigendecompose_metric_batch(metrics, eps)
+    dim = eigenvalues.shape[-1]
+    ones = torch.ones(eigenvalues.shape[0], dtype=eigenvalues.dtype, device=eigenvalues.device)
+
+    if variant == "basis_only":
+        coord_scales = torch.ones_like(eigenvalues)
+        trace_scale_alpha = ones
+    elif variant == "full_metric":
+        coord_scales = torch.sqrt(eigenvalues)
+        trace_scale_alpha = ones
+    elif variant == "trace_matched_full_metric":
+        base_scales = torch.sqrt(eigenvalues)
+        trace_scale_alpha = torch.sqrt(torch.tensor(float(dim), dtype=eigenvalues.dtype, device=eigenvalues.device) / eigenvalues.sum(dim=-1).clamp_min(1e-12))
+        coord_scales = base_scales * trace_scale_alpha.unsqueeze(-1)
+    elif variant == "per_token_norm_matched_full_metric":
+        coord_scales = torch.sqrt(eigenvalues)
+        trace_scale_alpha = ones
+    elif variant == "gamma_sweep":
+        if gamma is None:
+            raise ValueError("gamma must be provided for gamma_sweep transforms.")
+        base_scales = eigenvalues.pow(gamma / 2.0)
+        gamma_trace = eigenvalues.pow(gamma).sum(dim=-1).clamp_min(1e-12)
+        trace_scale_alpha = torch.sqrt(torch.tensor(float(dim), dtype=eigenvalues.dtype, device=eigenvalues.device) / gamma_trace)
+        coord_scales = base_scales * trace_scale_alpha.unsqueeze(-1)
+    else:
+        raise ValueError(f"Unhandled transform variant '{variant}'.")
+
+    transform, inverse = _build_scaled_eigen_transform(eigenvalues, eigenvectors, coord_scales)
+    result: dict[str, torch.Tensor | float | str] = {
+        "variant": variant,
+        "transform": transform,
+        "inverse": inverse,
+        "eigenvalues": eigenvalues,
+        "eigenvectors": eigenvectors,
+        "coord_scales": coord_scales,
+        "trace_scale_alpha": trace_scale_alpha,
+    }
+    if gamma is not None:
+        result["gamma"] = float(gamma)
+    return result
+
+
+def match_transformed_token_norms(
+    reference_states: torch.Tensor,
+    transformed_states: torch.Tensor,
+    eps: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    reference_norms = torch.linalg.vector_norm(reference_states.float(), dim=-1, keepdim=True)
+    transformed_norms = torch.linalg.vector_norm(transformed_states.float(), dim=-1, keepdim=True)
+    scales = reference_norms / transformed_norms.clamp_min(eps)
+    return transformed_states * scales, scales
+
+
+def prepare_variant_states(
+    states: torch.Tensor,
+    metrics: torch.Tensor,
+    variant: str,
+    eps: float,
+    gamma: float | None = None,
+) -> dict[str, torch.Tensor | float | str]:
+    transform_payload = build_metric_transform(metrics.to(states.device), variant=variant, eps=eps, gamma=gamma)
+    transform = transform_payload["transform"]
+    inverse = transform_payload["inverse"]
+    transformed = apply_headwise_linear(states.float(), transform)
+    compressor_input = transformed
+    norm_match_scales: torch.Tensor | None = None
+    if variant == "per_token_norm_matched_full_metric":
+        compressor_input, norm_match_scales = match_transformed_token_norms(states, transformed, eps)
+    return {
+        **transform_payload,
+        "transformed": transformed,
+        "compressor_input": compressor_input,
+        "norm_match_scales": norm_match_scales,
+        "input_norms": torch.linalg.vector_norm(states.float(), dim=-1),
+        "transformed_norms": torch.linalg.vector_norm(transformed.float(), dim=-1),
+    }
+
+
+def geometry_aware_roundtrip(
+    states: torch.Tensor,
+    metrics: torch.Tensor,
+    bits: int,
+    seed: int,
+    eps: float,
+) -> torch.Tensor:
+    factors, inverses = factorize_metric_batch(metrics.to(states.device), eps)
+    transformed = apply_headwise_linear(states.float(), factors)
+    compressor = Stage1MSECompressor(states.shape[-1], bits, seed=seed, device=states.device)
+    transformed_recon = compressor.roundtrip(transformed)
+    return apply_headwise_linear(transformed_recon, inverses)

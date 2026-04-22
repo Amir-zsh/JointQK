@@ -16,22 +16,22 @@ else:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "kvpress"))
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     TRANSFORM_FAMILIES,
     compute_grouped_query_second_moment,
     ensure_dir,
     load_model_and_tokenizer,
     run_prefill_and_capture,
+    save_json,
     split_prefix_and_future,
     trim_queries,
 )
 from experiments.stage1.data import get_dataset_spec, load_and_filter
-from experiments.stage1.diagnosis_common import (
+from experiments.stage1.diagnosis import (
     aggregate_variant_diagnostics,
     aggregate_variant_metric_rows,
     pearson_correlation,
     run_transform_variant_path,
-    save_json,
 )
 
 

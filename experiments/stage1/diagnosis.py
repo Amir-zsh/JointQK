@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import math
 import random
-from pathlib import Path
 from typing import Any
 
 import torch
 
-from experiments.stage1.common import (
+from experiments.stage1.toolkit import (
     Stage1MSECompressor,
     apply_headwise_linear,
     build_metric_transform,
@@ -364,19 +362,6 @@ def decide_diagnosis(rows: list[dict[str, Any]]) -> str:
     return "unsupported"
 
 
-def save_json(path: str | Path, payload: dict[str, Any]) -> None:
-    def _convert(value: Any) -> Any:
-        if isinstance(value, Path):
-            return str(value)
-        if isinstance(value, torch.Tensor):
-            return value.tolist()
-        if isinstance(value, dict):
-            return {k: _convert(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple)):
-            return [_convert(v) for v in value]
-        return value
-
-    Path(path).write_text(__import__("json").dumps(_convert(payload), indent=2, sort_keys=True))
 
 
 def aggregate_variant_metric_rows(
