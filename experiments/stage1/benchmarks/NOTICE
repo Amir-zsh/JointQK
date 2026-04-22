@@ -1,0 +1,11 @@
+This directory contains code vendored from the kvpress project.
+
+Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Upstream source:
+  https://github.com/NVIDIA/kvpress
+  path: kvpress/evaluation/benchmarks/
+  snapshot: local checkout at commit d8349a952e31b16642eaa962c56eecb10c3873ca (2026-04-13)
+
+See VENDORED.md for the list of modifications applied to the vendored copy.

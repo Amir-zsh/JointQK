@@ -1,10 +1,12 @@
 # SPDX-FileCopyrightText: Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Trimmed copy of kvpress/evaluation/evaluate_registry.py — only DATASET_REGISTRY
-# and SCORER_REGISTRY are kept. PRESS_REGISTRY is omitted (kvpress-side compression,
-# orthogonal to our pipeline). Scorer imports are rewritten to point into the
-# vendored experiments.stage1.benchmarks tree.
+# Modified from kvpress/evaluation/evaluate_registry.py (Apache-2.0). Changes:
+#   - PRESS_REGISTRY and `from kvpress import ...` block removed.
+#   - Scorer imports rewritten from `benchmarks.<name>...` (flat sys.path) to
+#     `experiments.stage1.benchmarks.<name>...` (absolute package imports).
+#   - DATASET_REGISTRY and SCORER_REGISTRY contents are unchanged.
+# See experiments/stage1/benchmarks/VENDORED.md for full vendor notes.
 
 from experiments.stage1.benchmarks.aime25.calculate_metrics import calculate_metrics as aime25_scorer
 from experiments.stage1.benchmarks.infinite_bench.calculate_metrics import calculate_metrics as infinite_bench_scorer
