@@ -4,4 +4,7 @@ turboquant-pytorch/
 *.pdf
 *.pyc
 *.pt
-
+.codex/
+artifacts/stage1/query_stats_longbench_under4k
+artifacts/stage1/query_stats_longbench_under4k_small
+experiments/stage1/notebooks/data
