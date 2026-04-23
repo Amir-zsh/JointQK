@@ -58,7 +58,7 @@ def _render_and_tokenize(
 ) -> FilteredExample:
     messages = spec.row_to_messages(row)
     prompt_text = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
+        messages, tokenize=False, add_generation_prompt=True, enable_thinking=False
     )
     input_ids = tokenizer(prompt_text, return_tensors="pt", truncation=False)["input_ids"]
     metadata = {field_name: row.get(field_name) for field_name in spec.metadata_fields}
