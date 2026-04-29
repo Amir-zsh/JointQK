@@ -91,9 +91,13 @@ def parse_args() -> argparse.Namespace:
 
 
 def row_key(row: dict) -> tuple:
+    config = row.get("config", row.get("task"))
+    row_index = row.get("row_index", row.get("example_index"))
+    if config is None or row_index is None:
+        raise KeyError("Stage 1D row must contain config/row_index or legacy task/example_index fields.")
     return (
-        row["config"],
-        int(row["row_index"]),
+        config,
+        int(row_index),
         int(row["layer_idx"]),
         int(row["bits"]),
     )

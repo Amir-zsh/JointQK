@@ -11,7 +11,7 @@ Representative heads:
 - Skew measures asymmetry. `0` means symmetric.
 - Excess kurtosis measures tail-heaviness relative to a Gaussian. `0` means Gaussian-like tails.
 
-- Pre-RoPE mean |skew|: `0.0201`
-- Post-RoPE mean |skew|: `0.0129`
-- Pre-RoPE mean |excess kurtosis|: `0.3996`
-- Post-RoPE mean |excess kurtosis|: `0.2075`
+- Pre-RoPE mean |skew|: `0.1986`
+- Post-RoPE mean |skew|: `0.1167`
+- Pre-RoPE mean |excess kurtosis|: `0.4497`
+- Post-RoPE mean |excess kurtosis|: `0.4937`

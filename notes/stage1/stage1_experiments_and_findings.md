@@ -5,6 +5,7 @@ This note summarizes the stage-1 work so far:
 1. Query-distribution validation for the Expected Attention assumption.
 2. Oracle key-only geometry-aware quantization versus the V3 baseline.
 3. The main challenges uncovered by these experiments.
+4. The Stage 1D/1E partial-spectrum follow-ups.
 
 ## Current Takeaway
 
@@ -17,6 +18,7 @@ The current Stage 1 position is:
 - outside layer 0, the full-metric path loses even on geometry distortion
 - the oracle eigenbasis by itself is not the problem; the harmful component is the anisotropic scaling term
 - Stage 1D did **not** isolate token-level norm spread as the dominant mechanism, so that explanation should still be treated as provisional
+- Stage 1E showed that softened partial-spectrum scaling at `gamma = 0.25` is a robust positive oracle result across `2`, `3`, and `4` bits, including after excluding layer 0
 
 The corresponding artifacts live under:
 
@@ -27,6 +29,7 @@ The corresponding artifacts live under:
 - [artifacts/stage1/oracle_v3_study](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_v3_study)
 - [artifacts/stage1/oracle_v3_study_fixed_clean](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_v3_study_fixed_clean)
 - [artifacts/stage1/oracle_norm_spread_study](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_norm_spread_study)
+- [artifacts/stage1/oracle_partial_spectrum_study](/vault/amir/efficient-llm/teamily-project/artifacts/stage1/oracle_partial_spectrum_study)
 
 ## 1. Goal of Stage 1
 
@@ -223,7 +226,8 @@ The experiments support the following:
 
 1. Query second moments are stable enough to be a meaningful object.
 2. Exact Gaussianity is false, but a Gaussian / second-moment approximation is still reasonable as a modeling device.
-3. The current oracle geometry-aware quantizer does not improve the behavior we care about in a robust way.
+3. The original full-metric oracle geometry-aware quantizer does not improve the behavior we care about in a robust way.
+4. The softened partial-spectrum oracle path with `gamma = 0.25` does improve the internal behavior we care about on the current slice.
 
 ### Important non-conclusion
 
@@ -318,6 +322,31 @@ So the clean supported conclusion is narrower:
 - but the current evidence does not isolate norm spread alone as the full explanation
 - and the current degenerate control arms do not falsify the norm-spread story
 
+### Challenge 4B: What Stage 1E resolved
+
+The Stage 1E follow-up is documented in [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md:1).
+
+That follow-up tested whether the robust `3`-bit `gamma = 0.25` signal from Stage 1D generalizes to other bitwidths.
+
+It does.
+
+Layer-0-excluded results:
+
+| Bits | Method | Geometry Dist. | Top-1 | Both-Win Rate |
+| --- | --- | ---: | ---: | ---: |
+| 2 | Baseline | `1.6972` | `0.4847` | - |
+| 2 | Gamma 0.25 | `0.9027` | `0.5486` | `0.805` |
+| 3 | Baseline | `0.4727` | `0.6251` | - |
+| 3 | Gamma 0.25 | `0.2218` | `0.6794` | `0.776` |
+| 4 | Baseline | `0.1276` | `0.7512` | - |
+| 4 | Gamma 0.25 | `0.0577` | `0.7898` | `0.752` |
+
+This changes the interpretation of the method direction:
+
+- direct full-metric scaling is still broken
+- partial-spectrum scaling is no longer just a `3`-bit anomaly
+- `gamma = 0.25` is the best current oracle default because it improves geometry while preserving ranking more reliably than `gamma = 0.5`
+
 ### Challenge 5: Ranking-sensitive alternatives
 
 The current metric is too weak if the end goal is attention preservation.
@@ -336,12 +365,12 @@ The stage-1 bottom line is:
 
 - query-aware second moments are worth modeling
 - exact normality is not required and not supported
-- the current geometry-aware quantization method is not a robust win over standard V3
+- the original full-metric geometry-aware quantization method is not a robust win over standard V3
 - the main problem is not just implementation; it is the current objective-and-backend coupling
 - Stage 1D further shows that the oracle eigenbasis is not the problem by itself; the full anisotropic scaling term is the part that breaks the current path
-- Stage 1D also shows that partial metric scaling is a real positive signal, especially near `gamma ≈ 0.25-0.5` at `3` bits
+- Stage 1E shows that partial metric scaling at `gamma = 0.25` is a robust positive oracle result across `2`, `3`, and `4` bits, including after excluding layer 0
 - Stage 1D does not yet prove that token-level norm spread is the main mechanism, and the trace-matched / per-token-norm-matched controls cannot be used against that hypothesis because the current V3 backend unit-normalizes vectors before scalar quantization
 
-So the project is still alive, but the next step should be:
+So the project is still alive, and the next step should be:
 
-**refine the way geometry is injected into the quantizer, especially by avoiding direct full-metric preconditioning, rather than moving directly to online estimation or rate allocation.**
+**build on the softened `gamma = 0.25` oracle path rather than estimating the failed full-metric path.**

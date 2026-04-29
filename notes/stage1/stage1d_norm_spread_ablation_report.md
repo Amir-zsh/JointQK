@@ -1,8 +1,8 @@
 # Stage 1D Report: Oracle Norm-Spread Ablation
 
-> Current supporting diagnosis note.
+> Supporting diagnosis note.
 >
-> This is the most up-to-date Stage 1 diagnostic follow-up, but it should be read together with [stage1_experiments_and_findings.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_experiments_and_findings.md:1). The strongest supported conclusion is about **basis vs scaling**. The norm-spread interpretation remains limited because the current backend normalizes vectors before scalar quantization.
+> This is the main Stage 1 diagnosis of basis versus scaling, but Stage 1E later confirmed that the positive partial-spectrum signal generalizes across bitwidths. It should be read together with [stage1_experiments_and_findings.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_experiments_and_findings.md:1) and [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md:1). The strongest supported conclusion here is about **basis vs scaling**. The norm-spread interpretation remains limited because the current backend normalizes vectors before scalar quantization.
 
 This report summarizes the Stage 1D follow-up experiment run after the Stage 1C diagnosis.
 
@@ -195,6 +195,8 @@ So Stage 1D narrows the design space:
 
 - keep the oracle basis as a useful object
 - treat full metric scaling as the currently broken component
-- treat partial metric scaling as the most promising current Stage 1 method signal
+- treat partial metric scaling as a real positive Stage 1 method signal
 - do not claim that norm spread alone explains the failure yet
 - do not treat the current degenerate norm-control arms as evidence against the norm-spread story
+
+Stage 1E then tested the partial-spectrum signal more directly and found that `gamma = 0.25` improves both geometry distortion and top-1 across `2`, `3`, and `4` bits, including after excluding layer 0.

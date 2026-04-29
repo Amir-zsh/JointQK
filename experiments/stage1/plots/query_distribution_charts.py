@@ -34,8 +34,8 @@ def parse_args() -> argparse.Namespace:
 
 def compute_skew_kurtosis(samples: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
     z = standardize_samples(samples)
-    skew = z.pow(3).mean(dim=2).mean(dim=-1)
-    kurt = (z.pow(4).mean(dim=2) - 3.0).mean(dim=-1)
+    skew = z.pow(3).mean(dim=2).abs().mean(dim=-1)
+    kurt = (z.pow(4).mean(dim=2) - 3.0).abs().mean(dim=-1)
     return skew, kurt
 
 

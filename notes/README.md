@@ -19,6 +19,8 @@ This directory organizes the project notes by role.
   - diagnosis of why the original `Lk` oracle path failed
 - [stage1d_norm_spread_ablation_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1d_norm_spread_ablation_report.md:1)
   - follow-up ablation separating basis effects from scaling effects
+- [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md:1)
+  - follow-up showing `gamma = 0.25` partial-spectrum scaling generalizes across 2/3/4 bits
 
 ## Reference
 

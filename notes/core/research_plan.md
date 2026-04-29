@@ -17,9 +17,10 @@ The main Stage 1 conclusions are:
 - query second moments are stable enough to remain a useful modeling object
 - the original full-metric oracle path is not a robust win over the V3 baseline
 - the harmful component is the anisotropic scaling term, not the oracle eigenbasis by itself
-- the next step is **not** to estimate the same full-metric path online
+- softened partial-spectrum scaling with `gamma = 0.25` is a robust positive oracle result across `2`, `3`, and `4` bits on the current slice
+- the next step is **not** to estimate the failed full-metric path online
 
-So the immediate research direction has changed. Before moving to estimated geometry or variable bit allocation, the method needs a backend-compatible way to inject geometry, likely through basis-aware or allocation-aware methods rather than direct full-metric preconditioning
+So the immediate research direction has changed. The project should build on the backend-compatible `gamma = 0.25` partial-spectrum oracle path, rather than direct full-metric preconditioning.
 
 ---
 
@@ -59,7 +60,7 @@ Success criterion:
 
 Go / no-go:
 
-- if the oracle geometry-aware study does not beat the standard TurboQuant baseline, stop and revise the method before proceeding
+- the original full-metric oracle failed this criterion, but the Stage 1E partial-spectrum oracle with `gamma = 0.25` satisfies the internal-metric version across `2`, `3`, and `4` bits
 
 ## Stage 2: Estimated Future-Query Geometry
 
@@ -167,12 +168,13 @@ This means the project should build on existing code rather than starting from s
 
 ## Immediate Next Step
 
-The next concrete task is a method revision step between the original Stage 1 and the originally planned Stage 2.
+The next concrete task is to convert the Stage 1E oracle partial-spectrum result into a realistic method.
 
 That step should:
 
-- preserve the useful oracle eigenbasis signal
-- avoid direct full-metric preconditioning with the current V3 backend
-- test basis-aware or allocation-aware alternatives before moving on to online estimation
+- use `gamma = 0.25` as the current fixed-bit oracle default
+- avoid estimating or deploying the failed `gamma = 1.0` full-metric path
+- test whether estimated future-query statistics retain the oracle partial-spectrum gain
+- optionally test downstream generation quality for the oracle `gamma = 0.25` path before investing in estimator complexity
 
 Historical Stage 1 planning details remain in [stage1_plan_historical.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_plan_historical.md:1).

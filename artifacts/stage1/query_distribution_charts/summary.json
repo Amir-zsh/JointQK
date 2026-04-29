@@ -26,11 +26,11 @@
     }
   ],
   "pre": {
-    "mean_abs_skew": 0.020143210887908936,
-    "mean_abs_excess_kurtosis": 0.39955151081085205
+    "mean_abs_skew": 0.19857528805732727,
+    "mean_abs_excess_kurtosis": 0.44970548152923584
   },
   "post": {
-    "mean_abs_skew": 0.012851949781179428,
-    "mean_abs_excess_kurtosis": 0.20749008655548096
+    "mean_abs_skew": 0.11674407124519348,
+    "mean_abs_excess_kurtosis": 0.49368032813072205
   }
 }

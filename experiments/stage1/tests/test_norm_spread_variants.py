@@ -15,6 +15,7 @@ from experiments.stage1.diagnosis import (
 from experiments.stage1.run_oracle_norm_spread_study import (
     compute_baseline_deltas,
     compute_correlations,
+    row_key,
     summarize_sweep,
 )
 
@@ -199,3 +200,51 @@ def test_stage1d_sweep_summary_uses_geometry_distortion_delta():
 
     assert abs(summary["0.5"]["mean_delta_geometry_distortion"] + 0.3) < 1e-6
     assert abs(summary["0.5"]["mean_delta_top1_match"] - 0.1) < 1e-6
+
+
+def test_stage1d_row_key_accepts_legacy_artifact_schema():
+    current = {
+        "config": "qasper",
+        "row_index": 44,
+        "layer_idx": 3,
+        "bits": 3,
+    }
+    legacy = {
+        "task": "qasper",
+        "example_index": 44,
+        "layer_idx": 3,
+        "bits": 3,
+    }
+
+    assert row_key(current) == ("qasper", 44, 3, 3)
+    assert row_key(legacy) == row_key(current)
+
+
+def test_stage1d_delta_helpers_accept_legacy_artifact_schema():
+    rows = [
+        {
+            "task": "qasper",
+            "example_index": 44,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "baseline_raw",
+            "metrics": {"geometry_distortion": 1.0, "top1_match": 0.5},
+            "diagnostics": {"transformed_norm_cv": 0.1},
+        },
+        {
+            "task": "qasper",
+            "example_index": 44,
+            "layer_idx": 1,
+            "bits": 3,
+            "variant": "gamma_sweep",
+            "gamma": 0.25,
+            "metrics": {"geometry_distortion": 0.75, "top1_match": 0.6},
+            "diagnostics": {"transformed_norm_cv": 0.2},
+        },
+    ]
+
+    delta_rows = compute_baseline_deltas(rows)
+    summary = summarize_sweep(rows)
+
+    assert abs(delta_rows[0]["delta_geometry_distortion"] + 0.25) < 1e-6
+    assert abs(summary["0.25"]["mean_delta_top1_match"] - 0.1) < 1e-6
