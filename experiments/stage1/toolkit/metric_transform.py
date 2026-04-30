@@ -27,6 +27,164 @@ def repeat_kv_states(keys: torch.Tensor, num_query_heads: int) -> torch.Tensor:
     return expanded.reshape(bsz, num_query_heads, seq_len, dim)
 
 
+def whitening_factor(cov: torch.Tensor, eps: float) -> tuple[torch.Tensor, torch.Tensor]:
+    """Symmetric whitening: returns (W, W_inv) such that W @ cov @ W^T ≈ I.
+
+    Uses eigh-based formulation, robust to near-singular covariance matrices.
+    Adds eps * trace(cov)/d * I for Tikhonov regularization.
+    """
+    cov = 0.5 * (cov + cov.transpose(-1, -2))
+    d = cov.shape[-1]
+    if cov.dim() == 2:
+        scale = (cov.diagonal().sum() / d).clamp_min(1e-12)
+        reg = eps * scale * torch.eye(d, dtype=cov.dtype, device=cov.device)
+        cov_reg = cov + reg
+        eigvals, eigvecs = torch.linalg.eigh(cov_reg)
+        eigvals = eigvals.clamp_min(eps * scale)
+        sqrt_inv = torch.diag(1.0 / torch.sqrt(eigvals))
+        sqrt_pos = torch.diag(torch.sqrt(eigvals))
+        W = sqrt_inv @ eigvecs.transpose(-1, -2)
+        W_inv = eigvecs @ sqrt_pos
+        return W, W_inv
+    eigvals_list = []
+    eigvecs_list = []
+    for layer_cov in cov:
+        scale = (layer_cov.diagonal().sum() / d).clamp_min(1e-12)
+        reg = eps * scale * torch.eye(d, dtype=layer_cov.dtype, device=layer_cov.device)
+        ev, vec = torch.linalg.eigh(layer_cov + reg)
+        eigvals_list.append(ev.clamp_min(eps * scale))
+        eigvecs_list.append(vec)
+    eigvals = torch.stack(eigvals_list, dim=0)
+    eigvecs = torch.stack(eigvecs_list, dim=0)
+    sqrt_inv = torch.diag_embed(1.0 / torch.sqrt(eigvals))
+    sqrt_pos = torch.diag_embed(torch.sqrt(eigvals))
+    W = sqrt_inv @ eigvecs.transpose(-1, -2)
+    W_inv = eigvecs @ sqrt_pos
+    return W, W_inv
+
+
+def compute_cca_basis(
+    sigma_q: torch.Tensor,
+    sigma_k: torch.Tensor,
+    cross_qk: torch.Tensor,
+    eps: float = 1e-4,
+) -> dict[str, torch.Tensor]:
+    """Per-head CCA basis from second moments.
+
+    Solves SVD of W_Q @ C_QK @ W_K^T where W_X = Σ_X^{-1/2}, returning canonical
+    correlations ρ and projection matrices P_K, P_Q such that
+        - P_K maps a key vector k to its canonical-coordinates representation
+          (i.e. P_K @ k has unit-variance whitened CCA components).
+        - P_Q analogously for queries.
+        - The canonical pairs (P_Q @ q)_i, (P_K @ k)_i are uncorrelated for i != j
+          and have correlation ρ_i.
+
+    Inputs are batched over heads:
+        sigma_q: (H, d, d) — Σ_Q per kv-head (Q is GQA-pooled).
+        sigma_k: (H, d, d) — Σ_K per kv-head.
+        cross_qk: (H, d, d) — C_QK per kv-head (E[q k^T]).
+        eps: regularization scaling for whitening.
+
+    Returns dict with keys:
+        - rho: (H, d) canonical correlations sorted descending in [0, 1] up to noise.
+        - P_K: (H, d, d) where P_K[h] @ k projects key onto canonical-K basis.
+        - P_Q: (H, d, d) projection onto canonical-Q basis.
+        - P_K_inv: (H, d, d) inverse mapping.
+        - W_K: (H, d, d) whitening factor for K (Σ_K^{-1/2}).
+        - W_K_inv: (H, d, d) un-whitening (Σ_K^{1/2}).
+    """
+    if sigma_q.dim() == 2:
+        sigma_q = sigma_q.unsqueeze(0)
+        sigma_k = sigma_k.unsqueeze(0)
+        cross_qk = cross_qk.unsqueeze(0)
+        squeeze = True
+    else:
+        squeeze = False
+    sigma_q = sigma_q.float()
+    sigma_k = sigma_k.float()
+    cross_qk = cross_qk.float()
+
+    W_Q, _W_Q_inv = whitening_factor(sigma_q, eps)
+    W_K, W_K_inv = whitening_factor(sigma_k, eps)
+
+    M = W_Q @ cross_qk @ W_K.transpose(-1, -2)
+    U, S, Vh = torch.linalg.svd(M, full_matrices=False)
+    rho = S.clamp(min=0.0, max=1.0 + 1e-3)
+
+    P_K = Vh @ W_K
+    P_K_inv = W_K_inv @ Vh.transpose(-1, -2)
+    P_Q = U.transpose(-1, -2) @ W_Q
+
+    out = {
+        "rho": rho,
+        "P_K": P_K,
+        "P_K_inv": P_K_inv,
+        "P_Q": P_Q,
+        "W_K": W_K,
+        "W_K_inv": W_K_inv,
+    }
+    if squeeze:
+        out = {k: v.squeeze(0) for k, v in out.items()}
+    return out
+
+
+def water_fill(variances: torch.Tensor, total_bits: float, max_bits: float = 16.0) -> torch.Tensor:
+    """Continuous reverse water-filling on per-coord 'variances' (could be λ_j σ_j² or σ_j²).
+
+    Returns per-coord bit allocations b_j >= 0 satisfying sum(b_j) = total_bits, allocating more
+    bits to coords with higher variance. Bits are continuous (non-integer); caller rounds if
+    the downstream quantizer requires integers.
+
+    Mathematically: b_j = max(0, 0.5 * log2(variances_j / θ)) where θ is chosen so sum(b_j) = total_bits.
+    Coords with variance below θ get zero bits.
+    """
+    variances = variances.float().clamp_min(1e-30)
+    if variances.dim() == 1:
+        variances = variances.unsqueeze(0)
+        squeeze = True
+    else:
+        squeeze = False
+    H, d = variances.shape
+    total_bits_t = torch.full((H,), float(total_bits), dtype=variances.dtype, device=variances.device)
+
+    log2_var = torch.log2(variances)
+    out = torch.zeros_like(variances)
+
+    # Per-row water-fill. Cheap (H is at most thousands).
+    sorted_log2, sorted_idx = torch.sort(log2_var, dim=-1, descending=True)
+    for h in range(H):
+        sl = sorted_log2[h]
+        # Try active sets of size k = 1..d. For active set of top-k coords, θ chosen so
+        # sum_i (0.5 (sl[i] - log2(θ))) = total_bits  =>
+        # log2(θ) = (sum_i sl[i]) / k - 2 * total_bits / k
+        # Then b_i = 0.5 (sl[i] - log2(θ)). Valid if b_k > 0 (i.e. sl[k-1] > log2(θ))
+        # and (if k < d) b_{k+1} <= 0 (i.e. sl[k] <= log2(θ)).
+        cum = torch.cumsum(sl, dim=0)
+        valid_b: torch.Tensor | None = None
+        valid_log_theta = None
+        for k in range(1, d + 1):
+            log_theta = cum[k - 1] / k - 2.0 * total_bits_t[h] / k
+            if sl[k - 1] <= log_theta:
+                continue
+            if k < d and sl[k] > log_theta:
+                continue
+            b_full = 0.5 * (sl - log_theta)
+            b_full = b_full.clamp_min(0.0).clamp_max(max_bits)
+            valid_b = b_full
+            valid_log_theta = log_theta
+            break
+        if valid_b is None:
+            valid_b = torch.full_like(sl, total_bits_t[h] / d).clamp_max(max_bits)
+        # Reorder back to original coord order
+        b_unsorted = torch.zeros_like(valid_b)
+        b_unsorted[sorted_idx[h]] = valid_b
+        out[h] = b_unsorted
+
+    if squeeze:
+        out = out.squeeze(0)
+    return out
+
+
 def factorize_metric(metric: torch.Tensor, eps: float) -> tuple[torch.Tensor, torch.Tensor]:
     sym = 0.5 * (metric + metric.transpose(-1, -2))
     sym = sym + eps * torch.eye(sym.shape[-1], dtype=sym.dtype, device=sym.device)

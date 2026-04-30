@@ -28,6 +28,7 @@ from experiments.stage1.toolkit.metric_transform import (
     TRANSFORM_FAMILIES,
     apply_headwise_linear,
     build_metric_transform,
+    compute_cca_basis,
     eigendecompose_metric_batch,
     factorize_metric,
     factorize_metric_batch,
@@ -35,14 +36,24 @@ from experiments.stage1.toolkit.metric_transform import (
     match_transformed_token_norms,
     prepare_variant_states,
     repeat_kv_states,
+    water_fill,
+    whitening_factor,
 )
 from experiments.stage1.toolkit.model import get_model_device, load_model_and_tokenizer
 from experiments.stage1.toolkit.moments import (
+    CrossMomentsAccumulator,
     QueryMomentsAccumulator,
     compute_grouped_query_second_moment,
     compute_query_moments,
+    split_prefill_and_decode,
     split_prefix_and_future,
     trim_queries,
+)
+from experiments.stage1.toolkit.per_coord_quantization import (
+    PerCoordCompressor,
+    build_method_compressor,
+    round_bits_to_integer,
+    unit_gaussian_centroids,
 )
 from experiments.stage1.toolkit.quantization import (
     Stage1MSECompressor,
@@ -51,13 +62,17 @@ from experiments.stage1.toolkit.quantization import (
 )
 
 __all__ = [
+    "CrossMomentsAccumulator",
+    "PerCoordCompressor",
     "QueryMomentsAccumulator",
     "Stage1MSECompressor",
     "TRANSFORM_FAMILIES",
     "apply_headwise_linear",
+    "build_method_compressor",
     "build_metric_transform",
     "capture_rope_qk",
     "compute_attention_metrics",
+    "compute_cca_basis",
     "compute_geometry_distortion",
     "compute_grouped_query_second_moment",
     "compute_query_moments",
@@ -72,13 +87,18 @@ __all__ = [
     "match_transformed_token_norms",
     "prepare_variant_states",
     "repeat_kv_states",
+    "round_bits_to_integer",
     "run_generation_and_capture",
     "run_prefill_and_capture",
     "save_json",
     "solve_lloyd_max",
+    "split_prefill_and_decode",
     "split_prefix_and_future",
     "summarize_metrics",
     "torch_dtype_from_name",
     "trim_queries",
+    "unit_gaussian_centroids",
+    "water_fill",
+    "whitening_factor",
     "write_markdown_table",
 ]
