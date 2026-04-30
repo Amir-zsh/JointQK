@@ -23,16 +23,16 @@ Headline ranking @ b_avg=3, layer-0-excluded median log₂(D_method / D_v3):
 
 | Method | log₂(D/D_v3) | frac (layer,head) better than V3 |
 |---|---:|---:|
-| `cca_waterfill` | -8.400 | 100.0% |
-| `cca_uniform_r96` | -7.024 | 100.0% |
-| `cca_uniform_r64` | -4.560 | 100.0% |
 | `v_waterfill` | -3.449 | 100.0% |
-| `cca_uniform_r48` | -3.429 | 100.0% |
-| `cca_uniform_r32` | -2.437 | 99.6% |
+| `cca_waterfill` | -3.009 | 100.0% |
 | `v_truncate_r96` | +0.061 | 43.9% |
+| `cca_uniform_r96` | +0.536 | 26.8% |
 | `v_truncate_r64` | +0.647 | 23.2% |
 | `v_truncate_r48` | +1.167 | 13.6% |
+| `cca_uniform_r64` | +1.331 | 8.9% |
+| `cca_uniform_r48` | +1.772 | 3.6% |
 | `v_truncate_r32` | +1.799 | 3.9% |
+| `cca_uniform_r32` | +2.254 | 2.5% |
 
 ## 4. E3 — Real per-coord quantization
 Per-method headline numbers across the b_avg grid (layer-0-excluded means):
@@ -54,44 +54,32 @@ Per-method headline numbers across the b_avg grid (layer-0-excluded means):
 | 4.0 | `v3` | 0.8060 | 1.2357e-01 | 1.2363e-01 |
 | 4.0 | `v_truncate` | 0.6885 | 5.2087e-01 | 5.1194e-01 |
 | 4.0 | `v_waterfill` | 0.8368 | 1.9049e-02 | 1.9003e-02 |
-| 3.0 | `cca_uniform` | 0.3911 | 6.5214e-01 | 6.5330e-01 |
-| 3.0 | `cca_waterfill` | 0.5796 | 3.1057e-01 | 3.0875e-01 |
-| 3.0 | `v3` | 0.3923 | 6.2305e-01 | 6.2020e-01 |
-| 3.0 | `v_truncate` | 0.5555 | 5.6635e-01 | 5.6992e-01 |
-| 3.0 | `v_waterfill` | 0.7432 | 6.1944e-02 | 6.1924e-02 |
-| 3.0 | `cca_uniform` | 0.2245 | 8.2769e-01 | 8.3890e-01 |
-| 3.0 | `cca_waterfill` | 0.3628 | 2.9642e-01 | 3.0013e-01 |
-| 3.0 | `v3` | 0.6874 | 4.3970e-01 | 4.5334e-01 |
-| 3.0 | `v_truncate` | 0.5947 | 5.0085e-01 | 5.1640e-01 |
-| 3.0 | `v_waterfill` | 0.7631 | 6.2195e-02 | 6.4600e-02 |
 
 **Real-quant winner per b_avg (top-1 retention layer-0-excluded):**
 
 - b_avg=2.0: `v_waterfill` (top1 = 0.6287)
-- b_avg=3.0: `v_waterfill` (top1 = 0.7631)
+- b_avg=3.0: `v_waterfill` (top1 = 0.7601)
 - b_avg=4.0: `v_waterfill` (top1 = 0.8368)
 
 ## 5. Simulation-vs-reality consistency (A3)
-- **Disagreement at b_avg=3:** simulation winner is `cca_waterfill`, real-quantization winner is `v_waterfill`.
-  This is a known limitation of the high-rate Bennett approximation; the simulation's closed-form Q-weighted distortion does not perfectly track top-1 attention rank.
-  See `figures/sim_log_ratio_*_b3.png` for per-(layer, head) ratio breakdown.
+- Simulation and real quantization both pick **`v_waterfill`** at b_avg=3.
 
 ## 6. E4 — Generalization stability
 ### E4a — Cross-task (calibrate on one config, evaluate on all 24 examples)
-- calib=`hotpotqa`: best method = `v_waterfill` (top1[l0excl] = 0.7539)
-- calib=`passage_retrieval_en`: best method = `v_waterfill` (top1[l0excl] = 0.7591)
-- calib=`qasper`: best method = `v_waterfill` (top1[l0excl] = 0.7712)
+- calib=`hotpotqa`: best method = `v_waterfill` (top1[l0excl] = 0.7556)
+- calib=`passage_retrieval_en`: best method = `v_waterfill` (top1[l0excl] = 0.7661)
+- calib=`qasper`: best method = `v_waterfill` (top1[l0excl] = 0.7793)
 
 ### E4b — Within-task LOO (24 folds × method)
 Mean top1[l0excl] across LOO folds, per method × config:
 
 | Method | hotpotqa | passage_retrieval_en | qasper |
 |---|---:|---:|---:|
-| `cca_uniform` | 0.2468 (n=8) | 0.2245 (n=8) | 0.2553 (n=9) |
-| `cca_waterfill` | 0.4010 (n=8) | 0.3651 (n=8) | 0.4002 (n=9) |
-| `v3` | 0.6908 (n=8) | 0.6706 (n=8) | 0.6604 (n=9) |
-| `v_truncate` | 0.5753 (n=8) | 0.5683 (n=8) | 0.5896 (n=9) |
-| `v_waterfill` | 0.7606 (n=8) | 0.7520 (n=8) | 0.7668 (n=9) |
+| `cca_uniform` | 0.2331 (n=8) | 0.2157 (n=8) | 0.2264 (n=8) |
+| `cca_waterfill` | 0.3894 (n=8) | 0.3626 (n=8) | 0.3773 (n=8) |
+| `v3` | 0.6908 (n=8) | 0.6706 (n=8) | 0.6841 (n=8) |
+| `v_truncate` | 0.6008 (n=8) | 0.5903 (n=8) | 0.6359 (n=8) |
+| `v_waterfill` | 0.7627 (n=8) | 0.7593 (n=8) | 0.7865 (n=8) |
 
 ## 7. E5 — Decode-phase Q on compressed prefill cache (A7)
 | b_avg | Method | top1_prefill | top1_decode | Δ = decode − prefill |
