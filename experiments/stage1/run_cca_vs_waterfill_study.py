@@ -68,7 +68,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--b-avg", type=float, default=3.0)
     parser.add_argument("--rank", type=int, default=RANK_DEFAULT)
     parser.add_argument("--methods", type=str, default=METHODS_DEFAULT)
-    parser.add_argument("--query-phase", choices=["prefill", "decode", "both"], default="prefill")
+    parser.add_argument(
+        "--query-phase",
+        choices=["prefill", "both"],
+        default="prefill",
+        help="Which Q to evaluate against the compressed prefill K. 'both' covers decode-phase Q "
+        "in addition to prefill (standalone 'decode' is unsupported because the prefill metrics "
+        "would be empty/NaN).",
+    )
     parser.add_argument("--calibration-config", type=str, default=None,
                         help="For e4a: restrict CCA calibration to examples with this config.")
     parser.add_argument("--loo-index", type=int, default=None,
@@ -142,6 +149,7 @@ def _accumulate_calibration_stats(
     sk_acc = torch.zeros(n_layers, n_kv_heads, head_dim, head_dim, device=accum_device)
     cqk_acc = torch.zeros(n_layers, n_kv_heads, head_dim, head_dim, device=accum_device)
     total_tokens = 0
+    group: int | None = None
     for k, idx in enumerate(indices):
         ex = examples[idx]
         path = _example_path(bundle_dir, ex)
@@ -153,21 +161,31 @@ def _accumulate_calibration_stats(
         n_q_heads = q.shape[1]
         if n_q_heads % n_kv_heads != 0:
             raise ValueError(f"GQA mismatch at example {ex['file']}")
-        group = n_q_heads // n_kv_heads
-        # Vectorize over layers: GQA-pool Q per (layer, kv_head), then einsum.
-        # q: (n_layers, n_q_heads, L, d)
+        ex_group = n_q_heads // n_kv_heads
+        if group is None:
+            group = ex_group
+        elif group != ex_group:
+            raise ValueError(f"Inconsistent GQA group size: {group} vs {ex_group} at {ex['file']}")
+        # Σ_Q convention "treat each query head as a sample": matches E1's load_pooled_stats and
+        # E3's global cca_stats, so cross-task / LOO calibrations are comparable to in-domain.
+        # Equivalent to mean_g E[q_g q_g^T]; we accumulate the sum and divide by (group * total_tokens)
+        # at finalization.
+        q_per_head_outer = torch.einsum("lhsd,lhse->lhde", q, q)  # (n_layers, n_q_heads, d, d)
+        sq_acc += q_per_head_outer.view(n_layers, n_kv_heads, group, head_dim, head_dim).sum(dim=2)
+        # C_QK is linear in q so GQA-pooling before the outer is fine (matches CrossMomentsAccumulator).
         q_grouped = q.view(n_layers, n_kv_heads, group, L, head_dim).mean(dim=2)
-        sq_acc += torch.einsum("lhsd,lhse->lhde", q_grouped, q_grouped)
         sk_acc += torch.einsum("lhsd,lhse->lhde", k_pre, k_pre)
         cqk_acc += torch.einsum("lhsd,lhse->lhde", q_grouped, k_pre)
         total_tokens += L
-        del payload, q, k_pre, q_grouped
+        del payload, q, k_pre, q_grouped, q_per_head_outer
         log_fn(f"  calib accum {k+1}/{len(indices)} ({path.name}) prefill_len={L} in {time.time()-t0:.1f}s")
         if heartbeat_path is not None:
             heartbeat_path.touch()
-    sigma_q = (sq_acc / max(1, total_tokens)).cpu()
-    sigma_k = (sk_acc / max(1, total_tokens)).cpu()
-    cqk = (cqk_acc / max(1, total_tokens)).cpu()
+    if total_tokens == 0 or group is None:
+        raise RuntimeError("no calibration tokens accumulated")
+    sigma_q = (sq_acc / (group * total_tokens)).cpu()
+    sigma_k = (sk_acc / total_tokens).cpu()
+    cqk = (cqk_acc / total_tokens).cpu()
     return {"sigma_q": sigma_q, "sigma_k": sigma_k, "cqk": cqk, "total_tokens": total_tokens}
 
 
@@ -265,13 +283,14 @@ def evaluate_method_on_example(
 
     metrics["geometry_distortion"] = compute_geometry_distortion(keys_recon, keys.to(device), Mq)
 
-    prefill_metrics = compute_attention_metrics(
-        queries_prefill.to(device), keys.to(device), keys_recon
-    )
-    metrics["logit_mse_prefill"] = prefill_metrics["logit_mse"]
-    metrics["top1_prefill"] = prefill_metrics["top1_match"]
-    metrics["top5_prefill"] = prefill_metrics["top5_containment"]
-    metrics["logit_cosine_prefill"] = prefill_metrics["logit_cosine"]
+    if queries_prefill.shape[1] > 0 and queries_prefill.shape[2] > 0:
+        prefill_metrics = compute_attention_metrics(
+            queries_prefill.to(device), keys.to(device), keys_recon
+        )
+        metrics["logit_mse_prefill"] = prefill_metrics["logit_mse"]
+        metrics["top1_prefill"] = prefill_metrics["top1_match"]
+        metrics["top5_prefill"] = prefill_metrics["top5_containment"]
+        metrics["logit_cosine_prefill"] = prefill_metrics["logit_cosine"]
 
     if queries_decode is not None and queries_decode.shape[2] > 0:
         decode_metrics = compute_attention_metrics(
@@ -607,23 +626,29 @@ def aggregate_results(rows: list[dict], methods: list[str], n_layers: int) -> di
                 "l0excl_mean": float(sum(layer_means[1:]) / max(1, len(layer_means[1:]))) if len(layer_means) > 1 else float("nan"),
             }
         # Bootstrap CI over examples for the headline metric (top1_prefill if available, else logit_mse_prefill).
-        headline_key = "top1_prefill" if "top1_prefill" in metric_keys else metric_keys[0]
-        ex_means: list[float] = []
-        per_ex = defaultdict(list)
-        for r in mrows:
-            if headline_key in r:
-                per_ex[r["example_index"]].append(r[headline_key])
-        for ex_idx, vals in per_ex.items():
-            if vals:
-                ex_means.append(float(sum(vals) / len(vals)))
-        if ex_means and len(ex_means) >= 4:
-            import numpy as np
-            arr = np.array(ex_means)
-            B = 1000
-            rng = np.random.default_rng(0)
-            samples = rng.choice(arr, size=(B, len(arr)), replace=True).mean(axis=1)
-            ci = np.quantile(samples, [0.025, 0.975]).tolist()
-            method_summary["bootstrap_ci"] = {"metric": headline_key, "lo95": float(ci[0]), "hi95": float(ci[1]), "mean": float(arr.mean())}
+        if metric_keys:
+            headline_key = "top1_prefill" if "top1_prefill" in metric_keys else metric_keys[0]
+            ex_means: list[float] = []
+            per_ex = defaultdict(list)
+            for r in mrows:
+                if headline_key in r:
+                    per_ex[r["example_index"]].append(r[headline_key])
+            for ex_idx, vals in per_ex.items():
+                if vals:
+                    ex_means.append(float(sum(vals) / len(vals)))
+            if ex_means and len(ex_means) >= 4:
+                import numpy as np
+                arr = np.array(ex_means)
+                B = 1000
+                rng = np.random.default_rng(0)
+                samples = rng.choice(arr, size=(B, len(arr)), replace=True).mean(axis=1)
+                ci = np.quantile(samples, [0.025, 0.975]).tolist()
+                method_summary["bootstrap_ci"] = {
+                    "metric": headline_key,
+                    "lo95": float(ci[0]),
+                    "hi95": float(ci[1]),
+                    "mean": float(arr.mean()),
+                }
         out[method] = method_summary
     return out
 

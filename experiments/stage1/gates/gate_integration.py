@@ -46,14 +46,20 @@ def main() -> int:
     ok(f"E2 simulation winner @ b_avg=3 (l0excl): {sim_winner} (log2 D/D_v3 = {sim_best_logratio:+.3f})")
 
     # Pull E3 winner at b_avg=3 layer-0-excluded on top1_prefill
-    e3_summaries = sorted((base / "e3").glob("*b3.0*_summary.json"))
-    if not e3_summaries:
-        e3_summaries = sorted((base / "e3").glob("*_summary.json"))
+    e3_summaries = sorted((base / "e3").glob("e3_b*_r*_summary.json"))
     if not e3_summaries:
         fail("no E3 summaries found")
-    spath = next((p for p in e3_summaries if "b3.0" in p.name), e3_summaries[0])
-    with open(spath) as f:
-        e3 = json.load(f)
+    e3 = None
+    spath = None
+    for candidate in e3_summaries:
+        with open(candidate) as f:
+            payload = json.load(f)
+        if abs(float(payload.get("b_avg", float("nan"))) - 3.0) <= 1e-6:
+            e3 = payload
+            spath = candidate
+            break
+    if e3 is None:
+        fail("no canonical E3 b_avg=3 summary found")
     real_winner = None
     real_best_top1 = -float("inf")
     for method, mres in e3["aggregated"].items():

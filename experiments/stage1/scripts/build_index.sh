@@ -85,7 +85,7 @@ A small gap means decode-phase queries are well-served by prefill-time calibrati
 ## What to look at first (5 minutes)
 
 1. \`${BASE}/figures/sim_pareto.png\` — closed-form Pareto across methods.
-2. \`${BASE}/e3/e3_b3.0_r64_summary.json\` — headline real-quantization results.
+2. \`${BASE}/e3/e3_b3_r64_summary.json\` — headline real-quantization results.
 3. The Stage 1E report under \`notes/stage1/stage1e_cca_vs_waterfill_report.md\` (if pipeline succeeded).
 EOF
 

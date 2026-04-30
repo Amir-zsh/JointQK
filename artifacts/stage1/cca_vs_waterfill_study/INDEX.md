@@ -1,7 +1,7 @@
 # Stage 1E CCA vs Water-Filling — Review Packet
 
 **Status:** SUCCESS
-**Generated:** 2026-04-29 07:39:27
+**Generated:** 2026-04-29 19:18:28
 
 ## Headline (b_avg = 3, layer-0-excluded)
 
@@ -66,5 +66,5 @@ A small gap means decode-phase queries are well-served by prefill-time calibrati
 ## What to look at first (5 minutes)
 
 1. `/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/figures/sim_pareto.png` — closed-form Pareto across methods.
-2. `/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/e3/e3_b3.0_r64_summary.json` — headline real-quantization results.
+2. `/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/e3/e3_b3_r64_summary.json` — headline real-quantization results.
 3. The Stage 1E report under `notes/stage1/stage1e_cca_vs_waterfill_report.md` (if pipeline succeeded).

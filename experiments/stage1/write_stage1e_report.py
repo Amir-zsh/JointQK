@@ -73,7 +73,7 @@ def main() -> int:
 
     lines.append("## 4. E3 — Real per-coord quantization\n")
     e3_dir = base / "e3"
-    e3_summaries = sorted(e3_dir.glob("*_summary.json"))
+    e3_summaries = sorted(e3_dir.glob("e3_b*_r*_summary.json"))
     headline_method_winners: dict[float, tuple[str, float]] = {}
     if e3_summaries:
         lines.append("Per-method headline numbers across the b_avg grid (layer-0-excluded means):\n\n")
@@ -130,7 +130,7 @@ def main() -> int:
         lines.append("## 6. E4 — Generalization stability\n")
     if e4a_dir.exists():
         lines.append("### E4a — Cross-task (calibrate on one config, evaluate on all 24 examples)\n")
-        for spath in sorted(e4a_dir.glob("*_summary.json")):
+        for spath in sorted(e4a_dir.glob("e4a_calib_*_b*_r*_summary.json")):
             with open(spath) as f:
                 sm = json.load(f)
             calib = sm.get("calibration_config", "?")
@@ -145,7 +145,7 @@ def main() -> int:
         lines.append("### E4b — Within-task LOO (24 folds × method)\n")
         # Aggregate per method, per config: mean top1 across LOO folds
         per_method_per_config = defaultdict(lambda: defaultdict(list))
-        for spath in sorted(e4b_dir.glob("*_summary.json")):
+        for spath in sorted(e4b_dir.glob("e4b_*_loo*_b*_r*_summary.json")):
             with open(spath) as f:
                 sm = json.load(f)
             cfg = sm.get("loo_config", "?")

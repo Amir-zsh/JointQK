@@ -217,8 +217,16 @@ def build_method_compressor(
         inverse_map = cca["P_K_inv"].transpose(-1, -2)
         Sk_in_basis = cca["P_K"] @ sigma_k_for_head @ cca["P_K"].transpose(-1, -2)
         sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        rho = cca["rho"].clamp(min=0.0, max=1.0)
-        weights = (rho.float() ** 2).clamp_min(1e-30)
+        # CCA's P_K is non-orthogonal, so Q-weighted reconstruction MSE is not weighted
+        # by rho^2. Use the trace-formula metric in canonical-K coordinates:
+        # diag((P_K_inv)^T Sigma_Q P_K_inv). This matches the corrected E2 simulation
+        # and the F8/F11 Monte-Carlo derivation.
+        metric_in_basis = (
+            cca["P_K_inv"].transpose(-1, -2)
+            @ sigma_q_for_head
+            @ cca["P_K_inv"]
+        )
+        weights = metric_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
     else:
         raise ValueError(f"Unknown method '{method}'")
 

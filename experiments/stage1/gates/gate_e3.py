@@ -25,10 +25,9 @@ def main() -> int:
     if not e3_dir.exists():
         fail(f"missing {e3_dir}")
 
-    # Find all e3_b*_*.summary.json
-    summaries = sorted(e3_dir.glob("*_summary.json"))
+    summaries = sorted(e3_dir.glob("e3_b*_r*_summary.json"))
     if not summaries:
-        fail(f"no summary jsons under {e3_dir}")
+        fail(f"no canonical E3 summary jsons under {e3_dir}")
 
     found_b_avgs = []
     for spath in summaries:
@@ -69,7 +68,7 @@ def main() -> int:
         if legacy_v3 is not None:
             print(f"GATE_E3 INFO: legacy V3 reference present in {legacy_path.name}", flush=True)
 
-    # Pull bootstrap CIs from the b_avg=3 run
+    # Pull bootstrap CIs from the canonical b_avg=3 run
     for spath in summaries:
         with open(spath) as f:
             sm = json.load(f)

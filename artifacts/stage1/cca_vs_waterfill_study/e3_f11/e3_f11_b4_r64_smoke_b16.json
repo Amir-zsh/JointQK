@@ -1,0 +1,9 @@
+{
+  "cca_waterfill": {
+    "geometry_distortion": 0.0003070879611186683,
+    "logit_cosine_prefill": 0.9999910593032837,
+    "logit_mse_prefill": 0.00030616644653491676,
+    "top1_prefill": 0.9847341179847717,
+    "top5_prefill": 0.9998358488082886
+  }
+}

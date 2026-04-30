@@ -167,13 +167,17 @@ def simulate_method(
     Returns (distortion_per_head, bits_alloc_per_head_per_coord).
 
     Method definitions:
-        v3:           random rotation; uniform b_avg bits/coord; weights = M_q diagonal in random basis.
-                      Approximated by E[trace(M_q Σ_K)] * 2^(-2 b_avg) / d * d = trace(M_q Σ_K) * 2^(-2 b_avg).
-                      (Random rotation makes the per-coord variance uniform on average.)
+        v3:           random rotation; uniform b_avg bits/coord; D = trace(M_q Σ_K) · 2^(-2 b_avg).
         v_truncate:   V basis (eigvecs of M_q); top r coords get b_avg*d/r bits, rest get 0.
+                      Per-coord weight: λ_j · σ²_j(V) (V is orthogonal, no whitening).
         v_waterfill:  V basis; continuous water-fill on λ_j σ²_j(V).
-        cca_uniform:  CCA basis P_K; top r coords get b_avg*d/r bits, rest get 0.
-        cca_waterfill:CCA basis; continuous water-fill on ρ_j² σ²_j(CCA).
+        cca_uniform:  CCA basis P_K = V_h W_K; top r coords get b_avg*d/r bits, rest get 0.
+                      Per-coord weight: ((P_K^{-1})^T M_q P_K^{-1})_jj · σ²_j(CCA). The σ²_j(CCA) ≈ 1
+                      because canonical K is whitened by construction; the trace-formula weight
+                      ((P_K^{-1})^T M_q P_K^{-1})_jj is what carries the Q-mass projection through the
+                      non-orthogonal un-rotation. (NOT ρ_j² — that gives canonical-score MSE, not
+                      Q-weighted reconstruction MSE; see verify_f8_bug.py for the derivation + MC check.)
+        cca_waterfill:CCA basis; continuous water-fill on ((P_K^{-1})^T M_q P_K^{-1})_jj · σ²_j(CCA).
     """
     H = sigma_k.shape[0]
     d = head_dim
@@ -191,20 +195,27 @@ def simulate_method(
         return distortion, bits
 
     if method.startswith("v_"):
-        # V basis: rotate by eigvecs of M_q. Compute σ²_j(V) = (V^T Σ_K V)_jj
-        # The Q-weighted distortion contribution is λ_j * σ²_j(V) * 2^(-2 b_j).
+        # V basis: rotate by eigvecs of M_q. V is orthogonal, so quantization noise in V basis
+        # has variance σ²_j(V) · 2^{-2 b_j} per coord (no whitening). The trace-formula per-coord
+        # weight reduces to (V^T M_q V)_jj = λ_j since V diagonalizes M_q.
         V = sigma_q_eigvecs
         Sk_in_V = V.transpose(-1, -2) @ sigma_k @ V
         sigma_k_diag = Sk_in_V.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
         weights = sigma_q_eigvals.clamp_min(1e-30)
     elif method.startswith("cca_"):
+        # CCA basis: P_K = V_h W_K is non-orthogonal (involves Σ_K-whitening). Canonical-K is whitened
+        # by construction so per-coord input variance ≈ 1, and Bennett noise variance is 2^{-2 b_j}.
+        # Trace-formula Q-weighted distortion per coord: ((P_K^{-1})^T M_q P_K^{-1})_jj — NOT ρ_j².
+        # Verified by Monte-Carlo (see scripts/verify_f8_bug.py).
         P_K = cca["P_K"]
-        rho = cca["rho"].clamp(min=0.0, max=1.0)
-        # Project K to canonical basis: Σ_K_in_cca = P_K @ Σ_K @ P_K^T
+        P_K_inv = cca["P_K_inv"]
+        sigma_q_full = (sigma_q_eigvecs * sigma_q_eigvals.unsqueeze(-2)) @ sigma_q_eigvecs.transpose(-1, -2)
+        metric_in_canonical = P_K_inv.transpose(-1, -2) @ sigma_q_full @ P_K_inv
+        weights = metric_in_canonical.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+        # σ²_j(CCA) is approximately 1 (canonical K is whitened); use the actual diagonal for fidelity
+        # to numerical regularization, but it stays close to 1.
         Sk_in_cca = P_K @ sigma_k @ P_K.transpose(-1, -2)
         sigma_k_diag = Sk_in_cca.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        # Weight by ρ_j² (Q-weighted distortion under whitened-CCA decomposition).
-        weights = (rho.float() ** 2).clamp_min(1e-30)
     else:
         raise ValueError(f"Unknown method '{method}'")
 

@@ -27,8 +27,8 @@ def main() -> int:
     if not e4b_dir.exists():
         fail(f"missing {e4b_dir}; run launch_cca_study.sh --phase e4b")
 
-    e4a_summaries = sorted(e4a_dir.glob("*_summary.json"))
-    e4b_summaries = sorted(e4b_dir.glob("*_summary.json"))
+    e4a_summaries = sorted(e4a_dir.glob("e4a_calib_*_b*_r*_summary.json"))
+    e4b_summaries = sorted(e4b_dir.glob("e4b_*_loo*_b*_r*_summary.json"))
 
     if len(e4a_summaries) < 3:
         fail(f"e4a: expected 3 calibration sources, found {len(e4a_summaries)} summaries")

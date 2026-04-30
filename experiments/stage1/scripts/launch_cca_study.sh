@@ -157,6 +157,7 @@ echo -e "run_name\tgpu\tpid\tcli_args\tstarted_at" >> "${REGISTRY}"
 # Pool launching: assign runs to GPUs in batches of N_GPU at a time.
 i=0
 PIDS_BATCH=()
+BATCH_EXIT_CODE=0
 for entry in "${RUNS[@]}"; do
     name="${entry%%|*}"
     args="${entry#*|}"
@@ -166,15 +167,18 @@ for entry in "${RUNS[@]}"; do
     i=$((i + 1))
     # When batch is full, wait for it to drain before launching more.
     if (( i % N_GPU == 0 )); then
-        wait
+        wait || BATCH_EXIT_CODE=1
         PIDS_BATCH=()
     fi
 done
 # Drain any remaining
-wait
+wait || BATCH_EXIT_CODE=1
 
 # Final status check: mark FAILED if non-zero exit or missing summary.
 EXIT_CODE=0
+if [[ "${BATCH_EXIT_CODE}" -ne 0 ]]; then
+    EXIT_CODE=1
+fi
 for entry in "${RUNS[@]}"; do
     name="${entry%%|*}"
     if [[ -f "${LOGS_DIR}/${name}.FAILED" ]] || [[ ! -f "${LOGS_DIR}/${name}.summary.json" ]]; then

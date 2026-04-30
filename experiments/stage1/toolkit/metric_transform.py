@@ -128,15 +128,43 @@ def compute_cca_basis(
     return out
 
 
+def _water_fill_unconstrained_row(log2_var: torch.Tensor, total_bits: float) -> torch.Tensor:
+    """Solve unconstrained reverse water-fill on one row, returning continuous b_j >= 0.
+
+    Returns bits in original coord order (not sorted). No max_bits cap.
+    """
+    d = log2_var.shape[0]
+    sorted_log2, sorted_idx = torch.sort(log2_var, descending=True)
+    cum = torch.cumsum(sorted_log2, dim=0)
+    valid_b: torch.Tensor | None = None
+    for k in range(1, d + 1):
+        log_theta = cum[k - 1] / k - 2.0 * total_bits / k
+        if sorted_log2[k - 1] <= log_theta:
+            continue
+        if k < d and sorted_log2[k] > log_theta:
+            continue
+        valid_b = (0.5 * (sorted_log2 - log_theta)).clamp_min(0.0)
+        break
+    if valid_b is None:
+        # Fallback: spread budget uniformly (shouldn't happen for sane inputs)
+        valid_b = torch.full_like(sorted_log2, total_bits / d).clamp_min(0.0)
+    b_unsorted = torch.zeros_like(valid_b)
+    b_unsorted[sorted_idx] = valid_b
+    return b_unsorted
+
+
 def water_fill(variances: torch.Tensor, total_bits: float, max_bits: float = 16.0) -> torch.Tensor:
     """Continuous reverse water-filling on per-coord 'variances' (could be λ_j σ_j² or σ_j²).
 
-    Returns per-coord bit allocations b_j >= 0 satisfying sum(b_j) = total_bits, allocating more
-    bits to coords with higher variance. Bits are continuous (non-integer); caller rounds if
+    Returns per-coord bit allocations b_j ∈ [0, max_bits] satisfying sum(b_j) = total_bits, allocating
+    more bits to coords with higher variance. Bits are continuous (non-integer); caller rounds if
     the downstream quantizer requires integers.
 
     Mathematically: b_j = max(0, 0.5 * log2(variances_j / θ)) where θ is chosen so sum(b_j) = total_bits.
-    Coords with variance below θ get zero bits.
+    Coords with variance below θ get zero bits. When the unconstrained solution would assign more than
+    `max_bits` to some coord, that coord is fixed at `max_bits` and water-fill is recomputed on the
+    remaining coordinates with reduced budget — iterating until no further saturation. This preserves
+    the total bit budget (up to `min(total_bits, d * max_bits)`).
     """
     variances = variances.float().clamp_min(1e-30)
     if variances.dim() == 1:
@@ -145,40 +173,40 @@ def water_fill(variances: torch.Tensor, total_bits: float, max_bits: float = 16.
     else:
         squeeze = False
     H, d = variances.shape
-    total_bits_t = torch.full((H,), float(total_bits), dtype=variances.dtype, device=variances.device)
 
+    capped_total = min(float(total_bits), d * float(max_bits))
     log2_var = torch.log2(variances)
     out = torch.zeros_like(variances)
 
-    # Per-row water-fill. Cheap (H is at most thousands).
-    sorted_log2, sorted_idx = torch.sort(log2_var, dim=-1, descending=True)
     for h in range(H):
-        sl = sorted_log2[h]
-        # Try active sets of size k = 1..d. For active set of top-k coords, θ chosen so
-        # sum_i (0.5 (sl[i] - log2(θ))) = total_bits  =>
-        # log2(θ) = (sum_i sl[i]) / k - 2 * total_bits / k
-        # Then b_i = 0.5 (sl[i] - log2(θ)). Valid if b_k > 0 (i.e. sl[k-1] > log2(θ))
-        # and (if k < d) b_{k+1} <= 0 (i.e. sl[k] <= log2(θ)).
-        cum = torch.cumsum(sl, dim=0)
-        valid_b: torch.Tensor | None = None
-        valid_log_theta = None
-        for k in range(1, d + 1):
-            log_theta = cum[k - 1] / k - 2.0 * total_bits_t[h] / k
-            if sl[k - 1] <= log_theta:
-                continue
-            if k < d and sl[k] > log_theta:
-                continue
-            b_full = 0.5 * (sl - log_theta)
-            b_full = b_full.clamp_min(0.0).clamp_max(max_bits)
-            valid_b = b_full
-            valid_log_theta = log_theta
-            break
-        if valid_b is None:
-            valid_b = torch.full_like(sl, total_bits_t[h] / d).clamp_max(max_bits)
-        # Reorder back to original coord order
-        b_unsorted = torch.zeros_like(valid_b)
-        b_unsorted[sorted_idx[h]] = valid_b
-        out[h] = b_unsorted
+        active = torch.ones(d, dtype=torch.bool, device=variances.device)
+        bits_h = torch.zeros(d, dtype=variances.dtype, device=variances.device)
+        remaining_budget = capped_total
+
+        for _iteration in range(d + 1):
+            n_active = int(active.sum().item())
+            if n_active == 0 or remaining_budget <= 0:
+                break
+
+            active_idx = torch.nonzero(active, as_tuple=True)[0]
+            sub_log2 = log2_var[h, active_idx]
+            sub_bits = _water_fill_unconstrained_row(sub_log2, remaining_budget)
+
+            saturated_local = sub_bits >= max_bits
+            if not saturated_local.any():
+                bits_h[active_idx] = sub_bits.clamp_max(max_bits)
+                break
+
+            saturated_global = active_idx[saturated_local]
+            bits_h[saturated_global] = max_bits
+            n_sat = int(saturated_local.sum().item())
+            active[saturated_global] = False
+            remaining_budget -= n_sat * float(max_bits)
+        else:
+            # Should not happen — would require more iterations than coords.
+            raise RuntimeError("water_fill iterative loop did not converge")
+
+        out[h] = bits_h
 
     if squeeze:
         out = out.squeeze(0)

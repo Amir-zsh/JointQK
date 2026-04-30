@@ -26,9 +26,9 @@ def main() -> int:
     e3_dir = repo_root / "artifacts/stage1/cca_vs_waterfill_study/e3"
     if not e3_dir.exists():
         fail(f"missing {e3_dir}")
-    summaries = sorted(e3_dir.glob("*_summary.json"))
+    summaries = sorted(e3_dir.glob("e3_b*_r*_summary.json"))
     if not summaries:
-        fail(f"no summaries under {e3_dir}")
+        fail(f"no canonical E3 summaries under {e3_dir}")
 
     found_decode = False
     for spath in summaries:

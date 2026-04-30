@@ -71,29 +71,60 @@ def main() -> int:
         )
     ok(f"r95 distribution: min={m['r95_min']} median={m['r95_median']} max={r95_max} (< head_dim={head_dim})")
 
-    # SciPy cross-check on (layer 1, head 0): solve generalized eigenvalue problem
+    # F4: P_K_inv · P_K = I identity check across all (layer, kv_head). E2/E3 reconstruction
+    # paths assume this; a violation would be a real bug in the SVD or whitening.
+    P_K = cca["P_K"]
+    P_K_inv = cca["P_K_inv"]
+    if P_K.dim() != 4 or P_K_inv.dim() != 4 or P_K.shape != P_K_inv.shape:
+        fail(f"P_K / P_K_inv shape mismatch or wrong rank: {tuple(P_K.shape)} vs {tuple(P_K_inv.shape)}")
+    identity = torch.eye(P_K.shape[-1])
+    recon = P_K_inv @ P_K  # batch matmul over (n_layers, n_kv_heads)
+    err_max = (recon - identity).abs().max().item()
+    err_per_head = (recon - identity).abs().reshape(-1, head_dim, head_dim).amax(dim=(-2, -1))
+    if err_max > 1e-3:
+        worst = int(err_per_head.argmax().item())
+        worst_layer, worst_head = worst // n_kv_heads, worst % n_kv_heads
+        fail(
+            f"P_K_inv · P_K identity violated: max abs error = {err_max:.4e} "
+            f"(worst at layer={worst_layer}, kv_head={worst_head})"
+        )
+    ok(f"P_K_inv · P_K = I across all 288 heads (max abs err = {err_max:.4e})")
+
+    # F5: SciPy cross-check on 3 random (layer, kv_head) pairs (fixed seed for reproducibility).
     try:
         from scipy.linalg import eigh as scipy_eigh
-        sigma_q = cca["sigma_q"][1, 0].numpy().astype("float64")
-        sigma_k = cca["sigma_k"][1, 0].numpy().astype("float64")
-        cqk = cca["cqk"][1, 0].numpy().astype("float64")
-        # Solve C_QK Σ_K^{-1} C_QK^T w = ρ² Σ_Q w
         import numpy as np
-        sigma_k_inv = np.linalg.solve(sigma_k + 1e-6 * np.eye(head_dim) * np.trace(sigma_k) / head_dim, np.eye(head_dim))
-        A = cqk @ sigma_k_inv @ cqk.T
-        # Σ_Q regularized
-        B = sigma_q + 1e-6 * np.eye(head_dim) * np.trace(sigma_q) / head_dim
-        eigvals, _ = scipy_eigh(A, B)
-        rho_scipy = np.sqrt(np.clip(eigvals, 0, None))
-        rho_scipy_sorted = np.sort(rho_scipy)[::-1][:3]
-        rho_ours = rho[1, 0, :3].numpy()
-        rel_err = np.abs(rho_scipy_sorted - rho_ours).max() / max(rho_scipy_sorted.max(), 1e-6)
-        if rel_err > 5e-2:
-            fail(
-                f"SciPy cross-check on (layer=1, head=0) top-3 ρ disagrees: ours={rho_ours.tolist()}, "
-                f"scipy={rho_scipy_sorted.tolist()}, max relative error = {rel_err:.4f}"
+
+        rng = np.random.default_rng(42)
+        sample_pairs = sorted({
+            (int(rng.integers(1, n_layers)), int(rng.integers(0, n_kv_heads)))
+            for _ in range(20)
+        })[:3]
+        max_rel_err = 0.0
+        for layer, head in sample_pairs:
+            sigma_q = cca["sigma_q"][layer, head].numpy().astype("float64")
+            sigma_k = cca["sigma_k"][layer, head].numpy().astype("float64")
+            cqk = cca["cqk"][layer, head].numpy().astype("float64")
+            sigma_k_inv = np.linalg.solve(
+                sigma_k + 1e-6 * np.eye(head_dim) * np.trace(sigma_k) / head_dim,
+                np.eye(head_dim),
             )
-        ok(f"SciPy cross-check on (layer=1, head=0) top-3 ρ relative error = {rel_err:.4e}")
+            A_mat = cqk @ sigma_k_inv @ cqk.T
+            B_mat = sigma_q + 1e-6 * np.eye(head_dim) * np.trace(sigma_q) / head_dim
+            eigvals, _ = scipy_eigh(A_mat, B_mat)
+            rho_scipy_sorted = np.sort(np.sqrt(np.clip(eigvals, 0, None)))[::-1][:3]
+            rho_ours = rho[layer, head, :3].numpy()
+            rel_err = np.abs(rho_scipy_sorted - rho_ours).max() / max(rho_scipy_sorted.max(), 1e-6)
+            max_rel_err = max(max_rel_err, rel_err)
+            if rel_err > 5e-2:
+                fail(
+                    f"SciPy cross-check on (layer={layer}, head={head}) top-3 ρ disagrees: "
+                    f"ours={rho_ours.tolist()}, scipy={rho_scipy_sorted.tolist()}, rel err={rel_err:.4f}"
+                )
+        ok(
+            f"SciPy cross-check on {len(sample_pairs)} random (layer, head) pairs: "
+            f"max rel err = {max_rel_err:.4e} (pairs={sample_pairs})"
+        )
     except ImportError:
         print("GATE_E1_E2 INFO: scipy not available; skipping cross-check", flush=True)
 
