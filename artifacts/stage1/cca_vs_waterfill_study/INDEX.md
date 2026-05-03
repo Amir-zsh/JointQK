@@ -1,7 +1,7 @@
 # Stage 1E CCA vs Water-Filling — Review Packet
 
 **Status:** SUCCESS
-**Generated:** 2026-04-29 19:18:28
+**Generated:** 2026-04-30 07:40:23
 
 ## Headline (b_avg = 3, layer-0-excluded)
 

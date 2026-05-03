@@ -37,13 +37,22 @@ OUT = BASE / "report_charts"
 OUT.mkdir(parents=True, exist_ok=True)
 
 
-METHODS = ["v3", "v_truncate", "v_waterfill", "cca_uniform", "cca_waterfill"]
+METHODS = [
+    "v3", "v_truncate", "v_waterfill",
+    "cca_uniform", "cca_waterfill",
+    "cca_orth_uniform", "cca_orth_waterfill",
+    "r_sym_uniform", "r_sym_waterfill",
+]
 METHOD_LABELS = {
     "v3": "V3",
     "v_truncate": "V truncate r=64",
     "v_waterfill": "V + water-fill",
     "cca_uniform": "CCA uniform r=64",
     "cca_waterfill": "CCA + water-fill",
+    "cca_orth_uniform": "CCA (V_h orth) uniform r=64",
+    "cca_orth_waterfill": "CCA (V_h orth) + water-fill",
+    "r_sym_uniform": "R_sym uniform r=64",
+    "r_sym_waterfill": "R_sym + water-fill",
 }
 COLORS = {
     "v3": "#777777",
@@ -51,6 +60,10 @@ COLORS = {
     "v_truncate": "#66CC99",
     "cca_waterfill": "#4477AA",
     "cca_uniform": "#88AACC",
+    "cca_orth_waterfill": "#0066AA",
+    "cca_orth_uniform": "#3388BB",
+    "r_sym_waterfill": "#AA3366",
+    "r_sym_uniform": "#CC6688",
 }
 B_AVG_GRID = [2, 3, 4]
 

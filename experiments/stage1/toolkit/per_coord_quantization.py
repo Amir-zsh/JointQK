@@ -188,12 +188,16 @@ def build_method_compressor(
     r: int | None,
     seed: int,
     head_dim: int,
+    V_h: torch.Tensor | None = None,
+    R_sym: torch.Tensor | None = None,
 ) -> PerCoordCompressor | None:
     """Construct a PerCoordCompressor for the requested method on a single head.
 
     Returns None for the V3 baseline (caller uses Stage1MSECompressor for that path).
 
     Inputs are per-head (no batch dim). cca contains per-head P_K, P_K_inv, rho, etc.
+    V_h: orthogonal CCA basis (P_K @ Σ_K^(1/2)) for cca_orth_* methods.
+    R_sym: joint Q-K eigenbasis (eigvec_descending((Σ_Q Σ_K + Σ_K Σ_Q)/2)) for r_sym_* methods.
     """
     if method == "v3":
         return None
@@ -209,6 +213,26 @@ def build_method_compressor(
         Sk_in_basis = mq_eigvecs.transpose(-1, -2) @ sigma_k_for_head @ mq_eigvecs
         sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
         weights = mq_eigvals.clamp_min(1e-30)
+    elif method.startswith("cca_orth_"):
+        if V_h is None:
+            raise ValueError("cca_orth_* methods require V_h")
+        # V_h is orthogonal: V_h V_h.T = I. Row form: canonical_row = k_row @ V_h.T.
+        forward_map = V_h.transpose(-1, -2)
+        inverse_map = V_h
+        Sk_in_basis = V_h @ sigma_k_for_head @ V_h.transpose(-1, -2)
+        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+        Mq_in_basis = V_h @ sigma_q_for_head @ V_h.transpose(-1, -2)
+        weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+    elif method.startswith("r_sym_"):
+        if R_sym is None:
+            raise ValueError("r_sym_* methods require R_sym")
+        # R_sym is orthogonal (eigvec of symmetric matrix). Row form: c_row = k_row @ R_sym.
+        forward_map = R_sym
+        inverse_map = R_sym.transpose(-1, -2)
+        Sk_in_basis = R_sym.transpose(-1, -2) @ sigma_k_for_head @ R_sym
+        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+        Mq_in_basis = R_sym.transpose(-1, -2) @ sigma_q_for_head @ R_sym
+        weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
     elif method.startswith("cca_"):
         if cca is None:
             raise ValueError("CCA methods require cca payload")

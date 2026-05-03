@@ -46,11 +46,82 @@ from experiments.stage1.toolkit import (
     save_json,
     split_prefill_and_decode,
 )
+from experiments.stage1.toolkit.metric_transform import whitening_factor
 
 
 METHODS_DEFAULT = "v3,v_truncate,v_waterfill,cca_uniform,cca_waterfill"
 RANK_DEFAULT = 64
 PROGRESS_INTERVAL_SEC_DEFAULT = 30
+
+
+def _derive_vh_rsym(
+    sigma_q: torch.Tensor,
+    sigma_k: torch.Tensor,
+    P_K: torch.Tensor,
+    eps: float,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Derive V_h (orthogonal CCA basis) and R_sym (joint Q-K eigenbasis) per head.
+
+    V_h = P_K @ Σ_K^(1/2) (orthogonal — the right-singular-vectors of the whitened cross-moment SVD).
+    R_sym = eigvec_descending((Σ_Q Σ_K + Σ_K Σ_Q)/2) using regularized inputs.
+
+    sigma_q/sigma_k/P_K: (..., d, d). Returns V_h, R_sym of same leading shape.
+
+    Raises if V_h fails orthogonality at threshold 1e-3 worst-case across heads.
+    """
+    leading_shape = sigma_q.shape[:-2]
+    d = sigma_q.shape[-1]
+    flat_sq = sigma_q.reshape(-1, d, d)
+    flat_sk = sigma_k.reshape(-1, d, d)
+    flat_pk = P_K.reshape(-1, d, d)
+    n = flat_sq.shape[0]
+
+    _, W_K_inv = whitening_factor(flat_sk, eps=eps)  # W_K_inv = Σ_K^(1/2)
+    V_h_raw = flat_pk @ W_K_inv
+
+    # V_h is orthogonal by construction (right-singular-vectors of W_Q C_QK W_K^T),
+    # but P_K @ Σ_K^(1/2) inherits regularization noise from whitening, so orthogonality
+    # is only approximate. Polar-orthogonalize: closest orthogonal matrix to V_h_raw is
+    # U @ V^T from its SVD. This preserves the basis directions while restoring V_h V_h^T = I.
+    raw_err = (V_h_raw @ V_h_raw.transpose(-1, -2) - torch.eye(d, dtype=V_h_raw.dtype, device=V_h_raw.device)).abs().reshape(n, -1).max(dim=-1).values
+    worst_raw = float(raw_err.max())
+    U_pol, _, Vh_pol = torch.linalg.svd(V_h_raw, full_matrices=False)
+    V_h = U_pol @ Vh_pol
+
+    eye = torch.eye(d, dtype=V_h.dtype, device=V_h.device)
+    err = (V_h @ V_h.transpose(-1, -2) - eye).abs().reshape(n, -1).max(dim=-1).values
+    worst = float(err.max())
+    if worst > 1e-3:
+        n_bad = int((err > 1e-3).sum())
+        raise RuntimeError(
+            f"V_h orthogonality check failed after polar fix: {n_bad}/{n} heads with err > 1e-3, "
+            f"worst={worst:.4e} (raw worst before polar={worst_raw:.4e})"
+        )
+
+    sym_sq = 0.5 * (flat_sq + flat_sq.transpose(-1, -2))
+    sym_sk = 0.5 * (flat_sk + flat_sk.transpose(-1, -2))
+    trace_sq = sym_sq.diagonal(dim1=-2, dim2=-1).sum(-1)
+    trace_sk = sym_sk.diagonal(dim1=-2, dim2=-1).sum(-1)
+    eye_d = torch.eye(d, dtype=sym_sq.dtype, device=sym_sq.device)
+    reg_q = (eps * (trace_sq / d).clamp_min(1e-12)).unsqueeze(-1).unsqueeze(-1) * eye_d
+    reg_k = (eps * (trace_sk / d).clamp_min(1e-12)).unsqueeze(-1).unsqueeze(-1) * eye_d
+    sq_reg = sym_sq + reg_q
+    sk_reg = sym_sk + reg_k
+    qk = sq_reg @ sk_reg
+    sym = 0.5 * (qk + qk.transpose(-1, -2))
+    eigvals, eigvecs = torch.linalg.eigh(sym)
+    sort_idx = torch.argsort(eigvals, dim=-1, descending=True)
+    R_sym = torch.gather(eigvecs, -1, sort_idx.unsqueeze(-2).expand(-1, d, -1))
+
+    err_r = (R_sym @ R_sym.transpose(-1, -2) - eye).abs().reshape(n, -1).max(dim=-1).values
+    worst_r = float(err_r.max())
+    if worst_r > 1e-3:
+        n_bad = int((err_r > 1e-3).sum())
+        raise RuntimeError(
+            f"R_sym orthogonality check failed: {n_bad}/{n} heads with err > 1e-3, worst={worst_r:.4e}"
+        )
+
+    return V_h.reshape(leading_shape + (d, d)), R_sym.reshape(leading_shape + (d, d))
 
 
 def parse_args() -> argparse.Namespace:
@@ -194,6 +265,7 @@ def build_per_head_calibration(
     sigma_k: torch.Tensor,
     cqk: torch.Tensor,
     eps: float,
+    compute_newbases: bool = True,
 ) -> dict[str, torch.Tensor]:
     """Compute CCA + V eigendecomposition for each (layer, kv_head). Returns per-head dicts.
 
@@ -220,9 +292,10 @@ def build_per_head_calibration(
     mq_eigvals = torch.gather(mq_eigvals, -1, sort_idx)
     mq_eigvecs = torch.gather(mq_eigvecs, -1, sort_idx.unsqueeze(-2).expand(-1, d, -1))
 
-    return {
+    P_K_view = cca["P_K"].view(n_layers, n_kv_heads, d, d)
+    out = {
         "rho": cca["rho"].view(n_layers, n_kv_heads, d),
-        "P_K": cca["P_K"].view(n_layers, n_kv_heads, d, d),
+        "P_K": P_K_view,
         "P_K_inv": cca["P_K_inv"].view(n_layers, n_kv_heads, d, d),
         "P_Q": cca["P_Q"].view(n_layers, n_kv_heads, d, d),
         "mq_eigvals": mq_eigvals.view(n_layers, n_kv_heads, d),
@@ -230,6 +303,11 @@ def build_per_head_calibration(
         "Mq": sym_mq.view(n_layers, n_kv_heads, d, d),
         "sigma_k": sigma_k,
     }
+    if compute_newbases:
+        V_h, R_sym = _derive_vh_rsym(sigma_q, sigma_k, P_K_view, eps=eps)
+        out["V_h"] = V_h
+        out["R_sym"] = R_sym
+    return out
 
 
 def evaluate_method_on_example(
@@ -263,6 +341,8 @@ def evaluate_method_on_example(
         compressor = Stage1MSECompressor(head_dim, int(round(bits_avg)), seed=seed, device=device)
         keys_recon = compressor.roundtrip(keys.to(device))
     else:
+        V_h = calibration.get("V_h")
+        R_sym = calibration.get("R_sym")
         per_head_compressor = build_method_compressor(
             method=method,
             sigma_q_for_head=calibration["Mq"][layer, kv_head].to(device),
@@ -278,6 +358,8 @@ def evaluate_method_on_example(
             r=rank,
             seed=seed,
             head_dim=head_dim,
+            V_h=V_h[layer, kv_head].to(device) if V_h is not None else None,
+            R_sym=R_sym[layer, kv_head].to(device) if R_sym is not None else None,
         )
         keys_recon = per_head_compressor.roundtrip(keys.to(device))
 
@@ -351,6 +433,10 @@ def main() -> int:
         # --- determine calibration source for the run ---
         manifest_examples = _read_manifest(bundle_dir)
 
+        # Determine if any requested method needs the new bases (V_h / R_sym).
+        _requested_methods = [m.strip() for m in args.methods.split(",") if m.strip()]
+        _need_newbases = any(m.startswith(("cca_orth_", "r_sym_")) for m in _requested_methods)
+
         if args.phase == "e4a":
             if args.calibration_config is None:
                 raise ValueError("e4a requires --calibration-config")
@@ -363,9 +449,10 @@ def main() -> int:
                 bundle_dir, manifest_examples, calib_indices, n_layers, n_kv_heads, head_dim, args.device, log_fn, heartbeat_path
             )
             calibration = build_per_head_calibration(
-                calib_raw["sigma_q"], calib_raw["sigma_k"], calib_raw["cqk"], eps=args.eps
+                calib_raw["sigma_q"], calib_raw["sigma_k"], calib_raw["cqk"], eps=args.eps,
+                compute_newbases=_need_newbases,
             )
-            log_fn(f"  calibration built in {time.time()-t0:.1f}s")
+            log_fn(f"  calibration built in {time.time()-t0:.1f}s (newbases={_need_newbases})")
             _heartbeat(heartbeat_path)
         elif args.phase == "e4b":
             if args.loo_index is None:
@@ -389,12 +476,13 @@ def main() -> int:
                 bundle_dir, manifest_examples, calib_indices, n_layers, n_kv_heads, head_dim, args.device, log_fn, heartbeat_path
             )
             calibration = build_per_head_calibration(
-                calib_raw["sigma_q"], calib_raw["sigma_k"], calib_raw["cqk"], eps=args.eps
+                calib_raw["sigma_q"], calib_raw["sigma_k"], calib_raw["cqk"], eps=args.eps,
+                compute_newbases=_need_newbases,
             )
-            log_fn(f"  calibration built in {time.time()-t0:.1f}s")
+            log_fn(f"  calibration built in {time.time()-t0:.1f}s (newbases={_need_newbases})")
             _heartbeat(heartbeat_path)
         else:
-            # e3 / e5 use the global cca_stats
+            # e3 / e5 use the global cca_stats; derive V_h / R_sym lazily only if needed.
             calibration = {
                 "rho": cca_stats["rho"],
                 "P_K": cca_stats["P_K"],
@@ -405,7 +493,22 @@ def main() -> int:
                 "Mq": cca_stats["sigma_q"],
                 "sigma_k": cca_stats["sigma_k"],
             }
-            log_fn("e3/e5: using global CCA stats from run_cca_diagnostics")
+            if _need_newbases:
+                t0 = time.time()
+                V_h, R_sym = _derive_vh_rsym(
+                    cca_stats["sigma_q"],
+                    cca_stats["sigma_k"],
+                    cca_stats["P_K"],
+                    eps=args.eps,
+                )
+                calibration["V_h"] = V_h
+                calibration["R_sym"] = R_sym
+                log_fn(
+                    f"e3/e5: using global CCA stats from run_cca_diagnostics; "
+                    f"derived V_h, R_sym in {time.time()-t0:.1f}s"
+                )
+            else:
+                log_fn("e3/e5: using global CCA stats from run_cca_diagnostics")
 
         # --- determine evaluation set ---
         if args.phase == "e4b":

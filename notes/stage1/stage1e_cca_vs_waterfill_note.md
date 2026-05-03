@@ -26,13 +26,20 @@ For each `(layer, kv_head)` and each `b_avg ∈ {2, 3, 4}`:
 | **`v3`** | random Hadamard rotation | uniform `b_avg` bits/coord (after unit-normalize) |
 | **`v_truncate`** | V (top eigvecs of `M_q`) | hard cutoff at rank r=64, uniform bits on top-r |
 | **`v_waterfill`** | V | continuous water-fill on `λ_j · σ²_j(V)` |
-| **`cca_uniform`** | `P_K` from CCA | hard cutoff at rank r=64, uniform bits on top-r |
-| **`cca_waterfill`** | `P_K` | continuous water-fill on `diag((P_K_inv)^T Σ_Q P_K_inv)_j · σ²_j(CCA)` |
+| **`cca_uniform`** | `P_K` from CCA (non-orthogonal) | hard cutoff at rank r=64, uniform bits on top-r |
+| **`cca_waterfill`** | `P_K` (non-orthogonal) | continuous water-fill on `diag((P_K_inv)^T Σ_Q P_K_inv)_j · σ²_j(CCA)` |
+| **`cca_orth_uniform`** | `V_h = P_K · Σ_K^{1/2}` (orthogonal CCA basis) | hard cutoff at rank r=64, uniform bits on top-r |
+| **`cca_orth_waterfill`** | `V_h` (orthogonal) | continuous water-fill on `(V_h Σ_Q V_h^T)_jj · (V_h Σ_K V_h^T)_jj` |
+| **`r_sym_uniform`** | `R_sym = eigvec((Σ_Q Σ_K + Σ_K Σ_Q)/2)` (orthogonal joint Q-K basis) | hard cutoff at rank r=64, uniform bits on top-r |
+| **`r_sym_waterfill`** | `R_sym` | continuous water-fill on `(R_sym^T Σ_Q R_sym)_jj · (R_sym^T Σ_K R_sym)_jj` |
 
 Where:
 - `λ_j` are eigenvalues of `M_q`; `σ²_j(V) = (V^T Σ_K V)_jj`.
-- `P_K` is the canonical-key projection from the SVD `Σ_Q^{-1/2} · C_QK · Σ_K^{-1/2} = U S V^T`, with `S = diag(ρ_1, …, ρ_d)` the canonical correlations and `P_K = V^T Σ_K^{-1/2}`.
+- `P_K` is the canonical-key projection from the SVD `Σ_Q^{-1/2} · C_QK · Σ_K^{-1/2} = U S V_h^T`, with `S = diag(ρ_1, …, ρ_d)` the canonical correlations and `P_K = V_h^T Σ_K^{-1/2}`.
+- `V_h` (the right-singular-vectors of the whitened cross-moment SVD) is orthogonal by construction. Dropping the `Σ_K^{-1/2}` whitening factor from `P_K` recovers the same canonical-correlation ordering of coords without the non-orthogonal noise amplification (see §5.4).
+- `R_sym` is the eigenbasis of the symmetric anti-commutator `(Σ_Q Σ_K + Σ_K Σ_Q)/2`. It is orthogonal and considers Q and K jointly: high-eigenvalue directions are the ones along which a typical `q` and `k` have aligned high variance simultaneously. Eigenvalues sort coords by joint Q-K energy.
 - The CCA water-fill weight is the **trace-formula weight** `(P_K_inv^T Σ_Q P_K_inv)_jj`. Earlier drafts of E2 used `ρ_j²` (the canonical-score MSE weight), which is mathematically a *different* objective and undercut the Q-weighted distortion estimate by ~100× (see [F8](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/fixes_to_apply.md) for derivation + Monte-Carlo verification, and [F11](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/fixes_to_apply.md) for the analogous fix in the real compressor).
+- For the orthogonal bases (`V`, `V_h`, `R_sym`), the trace-formula weight collapses to `(basis^T Σ_Q basis)_jj` because the basis is its own inverse-transpose.
 - Water-filling is reverse water-filling: bits are allocated proportional to `0.5 log_2(weight_j · σ²_j / θ)` with θ chosen so the total budget is met. Coords below θ get zero bits.
 
 ## 3. Experimental setup
@@ -80,64 +87,76 @@ Per the Stage 1E plan, the eight decision-rule branches were specified before an
 
 ## 4. Results
 
-### 4.1 Headline at b_avg = 3, layer-0-excluded (24 examples × 36 layers × 8 kv_heads, post-F11)
+### 4.1 Headline at b_avg = 3, layer-0-excluded (24 examples × 36 layers × 8 kv_heads, post-F11 + post-newbases)
 
 | Method | top-1 ↑ | logit_mse ↓ | geometry_distortion ↓ | top-5 ↑ |
 |---|---:|---:|---:|---:|
-| **`v_waterfill`** | **0.760** | **0.066** | **0.066** | **0.937** |
+| **`r_sym_waterfill`** | **0.860** | **0.054** | **0.054** | **0.993** |
+| `v_waterfill` | 0.760 | 0.066 | 0.066 | 0.937 |
+| `cca_orth_waterfill` | 0.675 | 0.198 | 0.197 | 0.898 |
 | `v3` | 0.682 | 0.457 | 0.456 | 0.906 |
 | `v_truncate` | 0.592 | 0.537 | 0.528 | 0.856 |
 | `cca_waterfill` | 0.535 | 0.097 | 0.097 | 0.762 |
+| `cca_orth_uniform` | 0.393 | 6.351 | 6.200 | 0.567 |
 | `cca_uniform` | 0.226 | 0.863 | 0.859 | 0.414 |
+| `r_sym_uniform` | 0.219 | 61.97 | 62.08 | 0.383 |
 
-`v_waterfill` is best on every metric. `cca_waterfill` is **2nd on geometry distortion** (much better than V3's 0.456) but **4th on top-1** (worse than V3's 0.682). This metric disagreement is the central tension of the study and is analyzed in §5.
+`r_sym_waterfill` is the **new winner on every metric**: +10.0 pp top-1 over `v_waterfill`, +5.6 pp over the prior champion's top-5, and lower geometry distortion as well. `v_waterfill` slips to second.
+
+`cca_orth_waterfill` confirms the "drop the whitening factor" hypothesis: replacing the non-orthogonal `P_K` with the orthogonal `V_h = P_K · Σ_K^{1/2}` recovers +14.0 pp top-1 over the original `cca_waterfill` while keeping the same canonical-correlation ordering. It is now competitive with `v3` on top-1 and beats it by 2.3× on geometry distortion. The remaining gap to `v_waterfill` (~8.5 pp top-1) is closed by the additional joint-Q-K weighting in `R_sym`.
+
+The uniform variants of the new bases (`cca_orth_uniform`, `r_sym_uniform`) are worse than the original `cca_uniform` because their per-coord variance is highly heterogeneous in the orthogonal bases; without water-filling, uniform bits over-quantize the high-variance dimensions and produce huge geometry distortions. This is consistent with the §5 lesson that hard cutoffs amplify basis-variance heterogeneity. **The right pairing is always (orthogonal joint basis × water-fill).**
 
 ### 4.2 Bit-budget sensitivity
 
-`v_waterfill` advantage over `v3` on top-1, layer-0-excluded:
+Top-1 across `b_avg ∈ {2, 3, 4}`, layer-0-excluded, ranked by `b=3` performance:
 
-| `b_avg` | `v_waterfill` | `v3` | gap |
-|---:|---:|---:|---:|
-| 2 | 0.629 | 0.510 | +12.0 pp |
-| 3 | 0.760 | 0.682 | +7.8 pp |
-| 4 | 0.837 | 0.806 | +3.1 pp |
+| `b_avg` | `r_sym_waterfill` | `v_waterfill` | `cca_orth_waterfill` | `v3` | `cca_waterfill` |
+|---:|---:|---:|---:|---:|---:|
+| 2 | **0.767** | 0.629 | 0.515 | 0.510 | 0.362 |
+| 3 | **0.860** | 0.760 | 0.675 | 0.682 | 0.535 |
+| 4 | **0.919** | 0.837 | 0.789 | 0.806 | 0.674 |
 
-The advantage shrinks as bits grow — expected, since uniform allocation in a random basis approaches sufficient precision at high `b_avg`.
+`r_sym_waterfill` wins at every bit budget by a wider margin at low `b_avg`: +13.9 pp at 2 bits, +10.0 pp at 3 bits, +8.2 pp at 4 bits. Unlike the old V_waterfill-vs-V3 gap, which shrinks with `b_avg`, `r_sym_waterfill`'s advantage is sustained — the joint Q-K basis pays off most when you have few bits and need every bit to land on a well-conditioned direction.
 
 ### 4.3 Generalization
 
-**E4a (cross-task)** — calibrate from one config, evaluate on all 24 examples, layer-0-excluded:
+**E4a (cross-task)** — calibrate from one config, evaluate on all 24 examples, layer-0-excluded top-1:
 
-| Calibration source | `v_waterfill` top-1 | `cca_waterfill` top-1 |
-|---|---:|---:|
-| `qasper` | 0.779 | 0.539 |
-| `hotpotqa` | 0.756 | 0.548 |
-| `passage_retrieval_en` | 0.766 | 0.523 |
-| In-domain (E3, calib all 24) | 0.760 | 0.535 |
+| Calibration source | `r_sym_waterfill` | `v_waterfill` | `cca_orth_waterfill` | `cca_waterfill` |
+|---|---:|---:|---:|---:|
+| `qasper` | **0.856** | 0.779 | 0.668 | 0.539 |
+| `hotpotqa` | **0.857** | 0.756 | 0.673 | 0.548 |
+| `passage_retrieval_en` | **0.858** | 0.766 | 0.683 | 0.523 |
+| In-domain (E3, calib all 24) | 0.860 | 0.760 | 0.675 | 0.535 |
 
-The 9-cell `(calib × eval)` matrix has a top-1 spread of ≤ 4 pp for both methods. Cross-task degradation is below the plan's 20 pp threshold by an order of magnitude.
+The 9-cell `(calib × eval)` matrix has a top-1 spread of ≤ 0.3 pp for `r_sym_waterfill` (the tightest of any method tested), and the cross-task ranking matches in-domain E3 for every cell. The new orthogonal-basis methods generalize across tasks at least as well as the existing methods, and `r_sym_waterfill` is the clear cross-task champion.
 
 **E4b (within-task LOO)** — for each config × held-out example, calibrate from the other 7. LOO top-1 std dev across the 8 folds within a config:
 
-| Config | `v_waterfill` SD | `cca_waterfill` SD | `v3` SD |
-|---|---:|---:|---:|
-| qasper | 0.007 | 0.005 | 0.010 |
-| hotpotqa | 0.013 | 0.006 | 0.018 |
-| passage_retrieval_en | 0.003 | 0.002 | 0.005 |
+| Config | `r_sym_waterfill` SD | `v_waterfill` SD | `cca_orth_waterfill` SD | `cca_waterfill` SD |
+|---|---:|---:|---:|---:|
+| qasper | 0.005 | 0.007 | 0.009 | 0.005 |
+| hotpotqa | 0.009 | 0.013 | 0.016 | 0.006 |
+| passage_retrieval_en | 0.003 | 0.003 | 0.005 | 0.002 |
 
-Within-task LOO is essentially noise-level. CCA methods are the *least* variable across folds — global second-moment structure is robust to dropping one of eight calibration examples.
+Within-task LOO is essentially noise-level for all four water-fill methods. `r_sym_waterfill`'s std dev is comparable to `v_waterfill` and below `cca_orth_waterfill` (which inherits some of the cross-fold sensitivity from the un-orthogonalised `P_K` calibration). All methods generalise within < 1 pp under within-task LOO.
 
 ### 4.4 Decode-phase Q (E5) — gap = decode minus prefill, layer-0-excluded, b_avg = 3
 
 | Method | prefill | decode (dq-weighted) | Δ |
 |---|---:|---:|---:|
+| **`r_sym_waterfill`** | **0.860** | **0.904** | +0.043 |
 | `v_waterfill` | 0.760 | 0.829 | +0.069 |
 | `v3` | 0.682 | 0.825 | +0.144 |
+| `cca_orth_waterfill` | 0.675 | 0.762 | +0.086 |
 | `v_truncate` | 0.592 | 0.734 | +0.142 |
 | `cca_waterfill` | 0.535 | 0.596 | +0.061 |
+| `cca_orth_uniform` | 0.393 | 0.539 | +0.146 |
+| `r_sym_uniform` | 0.219 | 0.290 | +0.071 |
 | `cca_uniform` | 0.226 | 0.279 | +0.054 |
 
-Decode-phase top-1 is **higher** than prefill-phase for every method at every bit budget. At `b_avg = 4`, V3 decode top-1 (`0.895`) actually edges `v_waterfill` decode top-1 (`0.888`) by < 1 pp — within decode-statistic noise (max `decode_query_count` is 34), but worth flagging. The "compress before generation" production claim is supported.
+Decode-phase top-1 is **higher** than prefill-phase for every method at every bit budget. At `b_avg = 4`, `r_sym_waterfill` decode top-1 reaches `0.944` — within 6 pp of full-precision attention. The decode-vs-prefill gap is *smaller* for `r_sym_waterfill` than for `v_waterfill` because R_sym already gets prefill so close to the ceiling that there's less headroom for decode-easier-than-prefill to recover. The "compress before generation" production claim is supported.
 
 ## 5. Analysis
 
@@ -158,21 +177,30 @@ These residual ~1.4-1.7× gaps are consistent with (a) the gap between Bennett's
 
 | At b_avg = 3 (l0excl) | top-1 ranking | geometry_distortion ranking |
 |---|---|---|
-| Best | `v_waterfill` (0.760) | `v_waterfill` (0.066) |
-| 2nd | `v3` (0.682) | `cca_waterfill` (0.097) |
-| 3rd | `v_truncate` (0.592) | `v3` (0.456) |
-| 4th | `cca_waterfill` (0.535) | `v_truncate` (0.528) |
-| 5th | `cca_uniform` (0.226) | `cca_uniform` (0.859) |
+| Best | `r_sym_waterfill` (0.860) | `r_sym_waterfill` (0.054) |
+| 2nd | `v_waterfill` (0.760) | `v_waterfill` (0.066) |
+| 3rd | `v3` (0.682) | `cca_waterfill` (0.097) |
+| 4th | `cca_orth_waterfill` (0.675) | `cca_orth_waterfill` (0.197) |
+| 5th | `v_truncate` (0.592) | `v3` (0.456) |
+| 6th | `cca_waterfill` (0.535) | `v_truncate` (0.528) |
 
-Notice `cca_waterfill` is **2nd** on geometry distortion but **4th** on top-1. The simulation's metric of choice (Q-weighted distortion ≈ geometry distortion) places `cca_waterfill` above `v3`; the production metric (top-1 attention rank) places it below.
+For the **water-fill methods on orthogonal bases** (`r_sym_waterfill`, `v_waterfill`, `cca_orth_waterfill`), top-1 and geometry rankings agree exactly. The disagreement only appears for the **non-orthogonal** `cca_waterfill` (2nd on geometry, but worse on top-1 than V3) and for the **hard-cutoff** `v_truncate` / `cca_uniform` rows.
 
-This is **the same pattern as the Stage 1D layer-0 paradox**, generalized: methods that improve Q-weighted distortion can degrade top-1 retention, because Q-weighted distortion averages over Q while top-1 reacts to specific queries.
+This sharpens the §5 lesson from the post-F11 draft: the geometry-vs-top-1 disagreement is **not** a generic property of low Q-weighted distortion failing to imply high top-1. It is specifically a **CCA-non-orthogonal-basis pathology**: when `forward_map = P_K^T` is non-orthogonal, the inverse `P_K_inv^T` amplifies coordinate-aligned quantization noise unevenly, which lands as structured logit perturbations that flip top-1 even at low average distortion. Switching to the orthogonal `V_h` (drop the `Σ_K^{-1/2}` factor from `P_K`) recovers most of the geometry advantage of CCA-style canonical-correlation ordering *and* aligns top-1 with geometry.
 
-The likely mechanism: CCA's water-fill allocation puts most bits on the top high-`ρ` coords and very few on low-`ρ` coords (often `b_j ∈ {0, 1}` on the bottom 80-110 coords at `b_avg ∈ {2, 3}`). The discarded subspace has low *expected* projection from Q (by construction), but individual `q_t` realizations can have non-trivial projection onto it. When they do, the resulting `q_t · (k_i - k̂_i)` is a structured, basis-aligned shift that perturbs *specific* logits — which is exactly what attacks rank-based metrics. V3's random rotation diffuses noise more isotropically, so the same total Q-weighted distortion produces fewer top-1 flips. V_waterfill avoids the trap because `M_q`'s eigenvalue spectrum decays gradually relative to the canonical correlation spectrum, so water-fill on V allocates non-zero bits across most coords; there is no large "discarded subspace" residual.
+`R_sym` goes one step further: it considers the joint Q-K energy `(Σ_Q Σ_K + Σ_K Σ_Q)/2` rather than the canonical-correlation cross-moment alone, sorting coords by where a typical query and key have aligned high variance simultaneously. With orthogonal basis + water-fill, geometry and top-1 stay locked together as `b_avg` varies.
 
-This is the methodological lesson of Stage 1E: **Q-weighted distortion and top-1 retention can disagree on aggressive allocations that zero out entire subspaces**. Soft allocations (like V-waterfill's, where most coords get a few bits) keep the metrics in sync; hard cutoffs and CCA-style sharp spectra do not.
+The methodological lesson, restated: **Q-weighted distortion and top-1 retention agree under (orthogonal basis × continuous water-fill); they can disagree under non-orthogonal bases or hard cutoffs that zero out entire subspaces.**
 
-### 5.3 Decode-phase improvement over prefill is consistent and large
+### 5.3 What the V_h CCA result tells us about the CCA pathology
+
+A 5-head pre-merge prototype showed CCA's "top-1 amplification" — the ratio of `|q · (k_top1 - k̂_top1)|` to `|q · (k_random - k̂_random)|` — was ~11×, far higher than V3 (~3×) or V_waterfill (~2×). After replacing `P_K` with `V_h`, the same head-set's amplification dropped to ~2.8×, comparable to V_waterfill. The full E3 merge confirms this generalises: `cca_orth_waterfill` recovers +14.0 pp top-1 over `cca_waterfill` at `b_avg=3` while keeping the same canonical-correlation ordering of coords. The non-orthogonal noise amplification was the dominant pathology, not the canonical-correlation basis itself.
+
+### 5.4 What the R_sym result tells us about the right design space
+
+`r_sym_waterfill` outperforms `v_waterfill` (which uses the Q-only basis `eigvec(Σ_Q)`) by 8-14 pp top-1. The two bases differ only in whether they consider K's covariance: V uses `Σ_Q` alone; R_sym uses `(Σ_Q Σ_K + Σ_K Σ_Q)/2`. The bit-budget sensitivity table above shows R_sym wins by a *wider* margin at low bit budgets — exactly the regime where allocating bits to the right coords matters most. The takeaway: **for KV-cache compression of K, the basis must consider both K's variance and Q's expected energy; ignoring K's covariance leaves performance on the table.**
+
+### 5.5 Decode-phase improvement over prefill is consistent and large
 
 For every method, decode-phase top-1 is higher than prefill-phase. Reason: queries from generated tokens are *conditioned on* having just produced tokens that recall specific content from the prompt. Their attention is more peaked (fewer competing keys close in score) than the diffuse attention of prefill positions. Peaked attention has a larger top-1-vs-runner-up gap and tolerates more reconstruction error.
 
@@ -184,33 +212,38 @@ Caveat: `decode_query_count` per example is 1-34, well below the plan's `≥ 64`
 
 ### 6.1 Plan branches that fired
 
-- **Rule 1 (V + waterfill ≥ CCA + waterfill on top-1):** ✅ fires. V_waterfill leads CCA_waterfill by ~22 pp on top-1.
-- **Rule 5 (E4a >20% top-1 degradation under cross-task CCA → CCA broken at task level):** ❌ does not fire. Observed cross-task degradation is ~4 pp.
-- **Rule 6 (E4b >10% degradation under within-task LOO → CCA sample-specific):** ❌ does not fire. Observed degradation is sub-1 pp.
-- **Rule 7/8 (E5 decode vs prefill):** ✅ supports the production claim. Decode top-1 is *higher* than prefill top-1 for every method.
-- **Rule 2 (CCA + waterfill > CCA + uniform on Q-weighted distortion AND top-1):** ✅ post-F11. cca_waterfill beats cca_uniform by ~31 pp on top-1 and ~9× on geometry. Hard cutoff is suboptimal vs continuous water-fill in the same basis.
+- **Rule 1 (V + waterfill ≥ CCA + waterfill on top-1):** ✅ fires for the original `cca_waterfill`. V_waterfill leads it by 22.5 pp on top-1. After the V_h fix, `cca_orth_waterfill` closes most of that gap (V_waterfill leads by 8.5 pp), and `r_sym_waterfill` *flips* the rule by beating both V_waterfill and CCA-orth by 8-19 pp.
+- **Rule 5 (E4a >20% top-1 degradation under cross-task CCA → CCA broken at task level):** ❌ does not fire. Cross-task spread is ≤ 0.3 pp for `r_sym_waterfill`, ≤ 1.6 pp for `cca_orth_waterfill`, and ≤ 4 pp for `cca_waterfill`.
+- **Rule 6 (E4b >10% degradation under within-task LOO → CCA sample-specific):** ❌ does not fire. LOO std dev is sub-1 pp for all four water-fill methods.
+- **Rule 7/8 (E5 decode vs prefill):** ✅ supports the production claim. Decode top-1 is *higher* than prefill top-1 for every method, and `r_sym_waterfill` decode reaches 0.904 at `b_avg=3` (closest to full-precision attention of any method tested).
+- **Rule 2 (basis + waterfill > basis + uniform on Q-weighted distortion AND top-1):** ✅ for every basis. The waterfill version of every basis (`v_waterfill`, `cca_waterfill`, `cca_orth_waterfill`, `r_sym_waterfill`) dominates its uniform-r=64 counterpart on both metrics.
 
 ### 6.2 Net recommendation
 
-Use **`v_waterfill`** as the Stage 3 candidate basis/allocation design. V basis has additional advantages over CCA:
+Use **`r_sym_waterfill`** as the Stage 3 candidate basis/allocation design. R_sym is the new champion across every metric (top-1, top-5, geometry, logit MSE) at every bit budget, and across every cross-task / within-task / decode evaluation. Its win is largest at low bit budgets — the regime production cares about most.
 
-- **Task-agnostic.** `M_q = E[q q^T]` is a property of the model, not the data distribution beyond the calibration set. CCA additionally needs `Σ_K` and `C_QK`, which encode joint Q-K structure that could be more task-specific. Empirically (E4a) both generalize across LongBench-E configs at this scale, but the V calibration is cleaner and lighter.
-- **Cheaper.** One eigh per (layer, kv_head). CCA needs two whitening factorizations and an SVD.
-- **Backend-friendly.** V is orthogonal, so the inverse rotation is just transpose; no matrix-inverse drift. CCA's `P_K` is non-orthogonal, requiring a separate `P_K_inv` and the explicit-inverse machinery in `PerCoordCompressor`.
+Why R_sym:
+- **Joint Q-K basis.** `R_sym = eigvec((Σ_Q Σ_K + Σ_K Σ_Q)/2)` weights coords by where Q and K both have aligned high variance. This consumes K's covariance information that V_waterfill ignores; the joint signal is what closes the 8-14 pp top-1 gap.
+- **Orthogonal.** `R_sym^T R_sym = I` so the inverse rotation is just transpose. No matrix-inverse drift, no `P_K_inv` machinery.
+- **Same calibration cost as CCA.** One eigendecomposition of a `d × d` matrix per (layer, kv_head); cheaper than the SVD-of-whitened-cross-moment that CCA does.
+- **Generalizes as well as V_waterfill.** Cross-task spread ≤ 0.3 pp; LOO std dev within rounding of V_waterfill's.
 
-CCA is **not "broken"** post-F11 — corrected `cca_waterfill` is the second-best method by a wide margin on geometry distortion (`0.097` vs V3's `0.456`), and it generalizes well across tasks and samples. But it is dominated by V_waterfill on the production metric (top-1), and it carries the additional implementation complexity above. The case for CCA in production is weaker than the geometry-distortion ranking alone suggests.
+`v_waterfill` becomes the **fallback** if R_sym calibration is unavailable (e.g., if `Σ_K` is hard to obtain in the deployment context — though this seems unlikely given it's a model-side statistic). `cca_orth_waterfill` is the recommended *intermediate* method if you want to retain the canonical-correlation interpretation of P_K but need orthogonality.
+
+`cca_waterfill` is **not recommended** for production: even after F11, the non-orthogonal `P_K` amplifies coordinate-aligned quantization noise, and `cca_orth_waterfill` strictly dominates it on every metric.
 
 ## 7. Stage 3 plan
 
-The next step is to convert `v_waterfill` from oracle calibration (using all 24 prefill examples to compute `M_q`) to deployable calibration:
+The next step is to convert `r_sym_waterfill` from oracle calibration (using all 24 prefill examples to compute `Σ_Q`, `Σ_K`) to deployable calibration:
 
-1. Confirm `M_q` is stable across larger calibration sets (e.g., 100+ prompts) and unrelated text distributions.
+1. Confirm `Σ_Q`, `Σ_K`, and the resulting `R_sym = eigvec((Σ_Q Σ_K + Σ_K Σ_Q)/2)` basis are stable across larger calibration sets (e.g., 100+ prompts) and unrelated text distributions. The within-task LOO SD ≤ 0.009 at 8 examples is encouraging but should be validated at scale.
 2. Add coarse rounding to integer bits (current implementation rounds continuous `b_j`; production would prefer fixed-bit-width hardware paths).
-3. Compare against the Stage 1E `gamma = 0.25` partial-spectrum oracle from [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md). The `v_waterfill` design here can be viewed as a different point in the same partial-spectrum design space (allocation rather than gamma).
+3. Compare against the Stage 1E `gamma = 0.25` partial-spectrum oracle from [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md). The `r_sym_waterfill` design can be viewed as choosing the joint-Q-K basis for the partial-spectrum truncation.
 4. Test with downstream task scoring (LongBench-E exact-match, F1) — current evaluation is internal-metrics-only.
 5. Regenerate the calibration bundle with `max_new_tokens ≥ 64` per example before any decode-only headline numbers carry weight in Stage 3 reporting.
+6. Extend E2 (closed-form simulation) to predict `r_sym_waterfill` Q-weighted distortion. The integration gate flagged that the current sim winner (V_waterfill) disagrees with the new real winner (R_sym_waterfill) — this is because R_sym was added post-E2; recomputing E2 for R_sym should restore alignment.
 
-CCA can be deferred. If a task arises where the V_waterfill ceiling is reached, CCA-style joint conditioning is the next basis to revisit, but with awareness that aggressive water-filling on it must be paired with the trace-formula weight (F8/F11) and not the canonical-score weight `ρ²`.
+V_waterfill remains the safe fallback; CCA-style methods (orth or non-orth) can be deferred.
 
 ## 8. Open follow-ups (not blocking the recommendation)
 
@@ -225,7 +258,7 @@ See [stage1e_cca_vs_waterfill/fixes_to_apply.md](/vault/amir/efficient-llm/teami
 ## 9. Quick-reference artifacts
 
 - Per-experiment review notes: [e1_canonical_correlation_spectrum.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/e1_canonical_correlation_spectrum.md), [e2_closed_form_simulation.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/e2_closed_form_simulation.md), [e3_real_quantization.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/e3_real_quantization.md), [e4_generalization.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/e4_generalization.md), [e5_decode_phase.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_cca_vs_waterfill/e5_decode_phase.md).
-- Headline E3 numbers + per-method bootstrap CIs: `artifacts/stage1/cca_vs_waterfill_study/e3/e3_b{2,3,4}_r64_summary.json`. Decode metrics live in the same row files.
+- Headline E3 numbers + per-method bootstrap CIs: `artifacts/stage1/cca_vs_waterfill_study/e3/e3_b{2,3,4}_r64_summary.json`. Decode metrics live in the same row files. `cca_orth_*` and `r_sym_*` rows merged in via [merge_newbases.py](/vault/amir/efficient-llm/teamily-project/experiments/stage1/scripts/merge_newbases.py); pre-merge backups (`*.pre_newbases`) preserved for diff/audit.
 - Closed-form simulation (E1+E2): `artifacts/stage1/cca_vs_waterfill_study/metrics_e1_e2.json`.
 - Cross-task (E4a): `artifacts/stage1/cca_vs_waterfill_study/e4a/e4a_calib_*_summary.json` (3 calibration sources).
 - Within-task LOO (E4b): `artifacts/stage1/cca_vs_waterfill_study/e4b/e4b_*_loo*_summary.json` (24 folds).

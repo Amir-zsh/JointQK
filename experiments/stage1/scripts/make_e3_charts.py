@@ -34,13 +34,22 @@ E3_DIR = BASE / "e3"
 OUT = BASE / "report_charts"
 OUT.mkdir(parents=True, exist_ok=True)
 
-METHODS = ["v_waterfill", "v3", "v_truncate", "cca_waterfill", "cca_uniform"]
+METHODS = [
+    "v_waterfill", "v3", "v_truncate",
+    "cca_waterfill", "cca_uniform",
+    "cca_orth_waterfill", "cca_orth_uniform",
+    "r_sym_waterfill", "r_sym_uniform",
+]
 METHOD_LABELS = {
     "v3": "V3",
     "v_waterfill": "V + water-fill",
     "v_truncate": "V truncate r=64",
     "cca_waterfill": "CCA + water-fill",
     "cca_uniform": "CCA uniform r=64",
+    "cca_orth_waterfill": "CCA (V_h orth) + water-fill",
+    "cca_orth_uniform": "CCA (V_h orth) uniform r=64",
+    "r_sym_waterfill": "R_sym + water-fill",
+    "r_sym_uniform": "R_sym uniform r=64",
 }
 COLORS = {
     "v3": "#777777",
@@ -48,6 +57,10 @@ COLORS = {
     "v_truncate": "#66CC99",
     "cca_waterfill": "#4477AA",
     "cca_uniform": "#88AACC",
+    "cca_orth_waterfill": "#0066AA",
+    "cca_orth_uniform": "#3388BB",
+    "r_sym_waterfill": "#AA3366",
+    "r_sym_uniform": "#CC6688",
 }
 SIM_METHOD = {
     "v3": "v3",
@@ -120,7 +133,7 @@ def plot_top1_b3() -> None:
 
 def plot_bit_budget_sensitivity() -> None:
     summaries = {b: load_summary(b) for b in [2, 3, 4]}
-    fig, axes = plt.subplots(1, 2, figsize=(12.5, 5.2))
+    fig, axes = plt.subplots(1, 2, figsize=(14.0, 6.2))
 
     for method in METHODS:
         xs = [2, 3, 4]
@@ -131,7 +144,7 @@ def plot_bit_budget_sensitivity() -> None:
 
     axes[0].set_title("Top-1 retention")
     axes[0].set_ylabel("Prefill top-1, layer-0 excluded")
-    axes[0].set_ylim(0.0, 0.9)
+    axes[0].set_ylim(0.0, 1.0)
     axes[1].set_title("Geometry distortion")
     axes[1].set_ylabel("Q-weighted geometry distortion, layer-0 excluded")
     axes[1].set_yscale("log")
@@ -139,9 +152,11 @@ def plot_bit_budget_sensitivity() -> None:
         ax.set_xlabel("b_avg (bits per coordinate)")
         ax.set_xticks([2, 3, 4])
         ax.grid(alpha=0.28)
-    axes[1].legend(loc="upper right", fontsize=8)
+    # Single shared legend below both panels so it doesn't cover any data lines.
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=5, fontsize=9, bbox_to_anchor=(0.5, -0.02))
     fig.suptitle("E3 bit-budget sensitivity")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.07, 1, 0.97))
     fig.savefig(OUT / "e3_bit_budget_sensitivity.png", dpi=140, bbox_inches="tight")
     plt.close(fig)
 
@@ -154,6 +169,9 @@ def plot_sim_vs_real_geo() -> None:
     real_geo_v3 = l0excl(e3, "v3", "geometry_distortion")
     rows = []
     for method in METHODS:
+        if method not in SIM_METHOD:
+            # New methods (cca_orth_*, r_sym_*) lack closed-form E2 simulation rows.
+            continue
         sim_name = SIM_METHOD[method]
         sim_payload = sim_b3[sim_name]
         if method == "v3":
@@ -224,7 +242,8 @@ def plot_top1_heatmap_b3() -> None:
 def plot_smoke_test() -> None:
     with open(E3_DIR / "e3_b3_r64_smoke_b16.json") as f:
         smoke = json.load(f)
-    methods = METHODS
+    # Only plot methods present in the smoke file (new methods may be absent until merge runs).
+    methods = [m for m in METHODS if m in smoke]
     labels = [METHOD_LABELS[m] for m in methods]
     geo = [smoke[m]["geometry_distortion"] for m in methods]
     top1 = [smoke[m]["top1_prefill"] for m in methods]

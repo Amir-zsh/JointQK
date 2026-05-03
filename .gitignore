@@ -5,9 +5,13 @@ turboquant-pytorch/
 *.pyc
 *.pt
 *.pt.pre_f11
+*.pt.pre_newbases
 .codex/
 .claude/
 artifacts/stage1/query_stats_longbench_under4k
 artifacts/stage1/query_stats_longbench_under4k_small
+artifacts/stage1/cca_vs_waterfill_study/e3_newbases/
+artifacts/stage1/cca_vs_waterfill_study/e4a_newbases/
+artifacts/stage1/cca_vs_waterfill_study/e4b_newbases/
 experiments/stage1/notebooks/data
 experiments/stage1/logs/

@@ -1,4 +1,18 @@
 {
+  "cca_orth_uniform": {
+    "geometry_distortion": 0.008238794282078743,
+    "logit_cosine_prefill": 0.9997897148132324,
+    "logit_mse_prefill": 0.008266056887805462,
+    "top1_prefill": 0.9189100861549377,
+    "top5_prefill": 0.9996716976165771
+  },
+  "cca_orth_waterfill": {
+    "geometry_distortion": 0.0016014784341678023,
+    "logit_cosine_prefill": 0.999954342842102,
+    "logit_mse_prefill": 0.0016037188470363617,
+    "top1_prefill": 0.9642153978347778,
+    "top5_prefill": 1.0
+  },
   "cca_uniform": {
     "geometry_distortion": 0.0014650329248979688,
     "logit_cosine_prefill": 0.9999647736549377,
@@ -12,6 +26,20 @@
     "logit_mse_prefill": 0.00030616644653491676,
     "top1_prefill": 0.9847341179847717,
     "top5_prefill": 0.9998358488082886
+  },
+  "r_sym_uniform": {
+    "geometry_distortion": 0.061662349849939346,
+    "logit_cosine_prefill": 0.9987001419067383,
+    "logit_mse_prefill": 0.06480427831411362,
+    "top1_prefill": 0.7971109747886658,
+    "top5_prefill": 0.9706172347068787
+  },
+  "r_sym_waterfill": {
+    "geometry_distortion": 0.0001930188445840031,
+    "logit_cosine_prefill": 0.9999936819076538,
+    "logit_mse_prefill": 0.00019362778402864933,
+    "top1_prefill": 0.9893302917480469,
+    "top5_prefill": 1.0
   },
   "v3": {
     "geometry_distortion": 0.008105101063847542,

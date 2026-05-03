@@ -36,6 +36,8 @@ METHODS="v3,v_truncate,v_waterfill,cca_uniform,cca_waterfill"
 QUERY_PHASE="both"
 ONLY_FAILED=0
 EXTRA_ARGS=""
+OUTPUT_SUBDIR=""    # default: same as PHASE
+RUN_SUFFIX=""       # appended to run_name for differentiation
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -47,12 +49,18 @@ while [[ $# -gt 0 ]]; do
         --query-phase) QUERY_PHASE="$2"; shift 2 ;;
         --only-failed) ONLY_FAILED=1; shift ;;
         --extra-args) EXTRA_ARGS="$2"; shift 2 ;;
+        --output-subdir) OUTPUT_SUBDIR="$2"; shift 2 ;;
+        --run-suffix) RUN_SUFFIX="$2"; shift 2 ;;
         *)
             echo "Unknown flag: $1" >&2
             exit 1
             ;;
     esac
 done
+
+if [[ -z "${OUTPUT_SUBDIR}" ]]; then
+    OUTPUT_SUBDIR="${PHASE}"
+fi
 
 if [[ -z "${PHASE}" ]]; then
     echo "ERROR: --phase {e3,e4a,e4b,e5} is required" >&2
@@ -68,34 +76,34 @@ case "${PHASE}" in
     e3|e5)
         IFS=',' read -ra B_ARR <<< "${B_AVGS}"
         for B in "${B_ARR[@]}"; do
-            run_name="${PHASE}_b${B}_r${RANK}"
-            args="--phase e3 --b-avg ${B} --rank ${RANK} --methods ${METHODS} --query-phase ${QUERY_PHASE} --output-subdir ${PHASE} --run-name ${run_name} --full-precision-smoke-test"
+            run_name="${PHASE}_b${B}_r${RANK}${RUN_SUFFIX}"
+            args="--phase e3 --b-avg ${B} --rank ${RANK} --methods ${METHODS} --query-phase ${QUERY_PHASE} --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --full-precision-smoke-test"
             RUNS+=("${run_name}|${args}")
         done
         ;;
     e4a)
         # 3 calibration sources; each evaluated on all 24 examples.
         for CFG in qasper hotpotqa passage_retrieval_en; do
-            run_name="e4a_calib_${CFG}_b3_r${RANK}"
-            args="--phase e4a --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir e4a --run-name ${run_name} --calibration-config ${CFG}"
+            run_name="e4a_calib_${CFG}_b3_r${RANK}${RUN_SUFFIX}"
+            args="--phase e4a --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --calibration-config ${CFG}"
             RUNS+=("${run_name}|${args}")
         done
         ;;
     e4b)
         # 24 LOO folds (3 configs × 8 examples). Indices in manifest: 0-7 qasper, 8-15 hotpotqa, 16-23 passage_retrieval_en.
         for IDX in $(seq 0 7); do
-            run_name="e4b_qasper_loo${IDX}_b3_r${RANK}"
-            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir e4b --run-name ${run_name} --loo-config qasper --loo-index ${IDX}"
+            run_name="e4b_qasper_loo${IDX}_b3_r${RANK}${RUN_SUFFIX}"
+            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --loo-config qasper --loo-index ${IDX}"
             RUNS+=("${run_name}|${args}")
         done
         for IDX in $(seq 8 15); do
-            run_name="e4b_hotpot_loo${IDX}_b3_r${RANK}"
-            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir e4b --run-name ${run_name} --loo-config hotpotqa --loo-index ${IDX}"
+            run_name="e4b_hotpot_loo${IDX}_b3_r${RANK}${RUN_SUFFIX}"
+            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --loo-config hotpotqa --loo-index ${IDX}"
             RUNS+=("${run_name}|${args}")
         done
         for IDX in $(seq 16 23); do
-            run_name="e4b_passage_loo${IDX}_b3_r${RANK}"
-            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir e4b --run-name ${run_name} --loo-config passage_retrieval_en --loo-index ${IDX}"
+            run_name="e4b_passage_loo${IDX}_b3_r${RANK}${RUN_SUFFIX}"
+            args="--phase e4b --b-avg 3.0 --rank ${RANK} --methods ${METHODS} --query-phase prefill --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --loo-config passage_retrieval_en --loo-index ${IDX}"
             RUNS+=("${run_name}|${args}")
         done
         ;;

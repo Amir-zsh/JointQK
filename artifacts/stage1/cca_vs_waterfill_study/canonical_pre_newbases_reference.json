@@ -1,0 +1,83 @@
+{
+  "b2": {
+    "v3": {
+      "top1_prefill_l0excl": 0.5096939667191779,
+      "top1_prefill_all": 0.4964891787838294,
+      "geo_l0excl": 1.6262982005519526
+    },
+    "v_truncate": {
+      "top1_prefill_l0excl": 0.2851598233440502,
+      "top1_prefill_all": 0.28909541465704763,
+      "geo_l0excl": 0.6943774484120132
+    },
+    "v_waterfill": {
+      "top1_prefill_l0excl": 0.6286864755608673,
+      "top1_prefill_all": 0.6266531447591088,
+      "geo_l0excl": 0.21916400394291569
+    },
+    "cca_uniform": {
+      "top1_prefill_l0excl": 0.1813939980185318,
+      "top1_prefill_all": 0.18675527202502187,
+      "geo_l0excl": 1.0198525267010112
+    },
+    "cca_waterfill": {
+      "top1_prefill_l0excl": 0.3614676200673872,
+      "top1_prefill_all": 0.3662014784381933,
+      "geo_l0excl": 0.3090083848452196
+    }
+  },
+  "b3": {
+    "v3": {
+      "top1_prefill_l0excl": 0.6818164568239203,
+      "top1_prefill_all": 0.6652858602438183,
+      "geo_l0excl": 0.45608605481018993
+    },
+    "v_truncate": {
+      "top1_prefill_l0excl": 0.5918453036973785,
+      "top1_prefill_all": 0.5898597072626689,
+      "geo_l0excl": 0.5279491070979496
+    },
+    "v_waterfill": {
+      "top1_prefill_l0excl": 0.7601327336337861,
+      "top1_prefill_all": 0.7592284234178132,
+      "geo_l0excl": 0.06575819275513778
+    },
+    "cca_uniform": {
+      "top1_prefill_l0excl": 0.2258089301689151,
+      "top1_prefill_all": 0.23166925902289762,
+      "geo_l0excl": 0.8585121345783893
+    },
+    "cca_waterfill": {
+      "top1_prefill_l0excl": 0.5351201917599178,
+      "top1_prefill_all": 0.5400042148130187,
+      "geo_l0excl": 0.09650304065019424
+    }
+  },
+  "b4": {
+    "v3": {
+      "top1_prefill_l0excl": 0.806002872996032,
+      "top1_prefill_all": 0.7893071664395931,
+      "geo_l0excl": 0.12363461711987234
+    },
+    "v_truncate": {
+      "top1_prefill_l0excl": 0.6885089910566984,
+      "top1_prefill_all": 0.6841746630487722,
+      "geo_l0excl": 0.5119395188504964
+    },
+    "v_waterfill": {
+      "top1_prefill_l0excl": 0.8367585156999886,
+      "top1_prefill_all": 0.8369301315310794,
+      "geo_l0excl": 0.019003346607912263
+    },
+    "cca_uniform": {
+      "top1_prefill_l0excl": 0.23471975257260574,
+      "top1_prefill_all": 0.24054259357072386,
+      "geo_l0excl": 0.8431771111563737
+    },
+    "cca_waterfill": {
+      "top1_prefill_l0excl": 0.6740813240996518,
+      "top1_prefill_all": 0.6784170991363849,
+      "geo_l0excl": 0.02908311665232759
+    }
+  }
+}

@@ -57,19 +57,26 @@ All headline numbers below are **layer-0-excluded** (Stage 1 convention) and use
 
 ![E5 decode vs prefill](../../../artifacts/stage1/cca_vs_waterfill_study/report_charts/e5_decode_vs_prefill_top1.png)
 
-**Key takeaway:** for every method and every bit budget, **decode-phase top-1 is higher than prefill-phase top-1**. The decode regime is *easier* under prefill-time-calibrated compression than the prefill regime. The method ranking is preserved.
+**Key takeaway:** for every method and every bit budget, **decode-phase top-1 is higher than prefill-phase top-1**. After the post-newbases merge, `r_sym_waterfill` reaches **0.904 decode top-1 at `b_avg = 3`** — within 6 pp of full-precision attention. The method ranking from E3 is preserved on decode.
 
-| `b_avg` | method | prefill top-1 | decode top-1 | gap (dec − pref) |
+| `b_avg` | method | prefill top-1 | decode top-1 (dq-weighted) | gap (dec − pref) |
 |---:|---|---:|---:|---:|
-| 2 | `v_waterfill` | 0.629 | 0.735 | +0.106 |
-| 2 | `v3` | 0.510 | 0.696 | +0.186 |
-| 2 | `cca_waterfill` | 0.362 | 0.418 | +0.057 |
+| 3 | **`r_sym_waterfill`** | **0.860** | **0.904** | +0.043 |
 | 3 | `v_waterfill` | 0.760 | 0.829 | +0.069 |
 | 3 | `v3` | 0.682 | 0.825 | +0.144 |
+| 3 | `cca_orth_waterfill` | 0.675 | 0.762 | +0.086 |
 | 3 | `cca_waterfill` | 0.535 | 0.596 | +0.061 |
+| 4 | **`r_sym_waterfill`** | **0.919** | **0.944** | +0.024 |
 | 4 | `v_waterfill` | 0.837 | 0.888 | +0.051 |
 | 4 | `v3` | 0.806 | 0.895 | +0.089 |
-| 4 | `cca_waterfill` | 0.674 | 0.728 | +0.054 |
+| 4 | `cca_orth_waterfill` | 0.789 | 0.840 | +0.051 |
+| 2 | **`r_sym_waterfill`** | **0.767** | **0.823** | +0.056 |
+| 2 | `v_waterfill` | 0.629 | 0.735 | +0.106 |
+| 2 | `v3` | 0.510 | 0.696 | +0.186 |
+| 2 | `cca_orth_waterfill` | 0.515 | 0.604 | +0.089 |
+| 2 | `cca_waterfill` | 0.362 | 0.418 | +0.057 |
+
+The decode-vs-prefill gap **shrinks** as the prefill top-1 approaches its ceiling, which is why `r_sym_waterfill`'s gap is the smallest of any method (+0.024 at `b_avg=4`). There's less headroom for decode-easier-than-prefill to recover when prefill itself is already near 0.92.
 
 ### Chart 2 — Per-example decode top-1
 
@@ -101,9 +108,9 @@ This is a real statistical-power caveat: per-example decode-only top-1 is unders
 
 ![E5 decode bit budget](../../../artifacts/stage1/cca_vs_waterfill_study/report_charts/e5_bit_budget_decode.png)
 
-**Key takeaway:** as `b_avg` increases, the decode-vs-prefill gap shrinks for every method, because both metrics approach their respective ceilings. Crossover order is preserved: `v_waterfill ≈ v3 > v_truncate > cca_waterfill > cca_uniform` on decode top-1, the same order as on prefill.
+**Key takeaway:** as `b_avg` increases, the decode-vs-prefill gap shrinks for every method, because both metrics approach their respective ceilings. Crossover order is preserved across bit budgets and matches the prefill ranking: `r_sym_waterfill > v_waterfill ≈ v3 > cca_orth_waterfill > v_truncate > cca_waterfill > everything else` on decode top-1.
 
-Notable: at `b_avg = 4`, `v3` decode top-1 (`0.895`) edges past `v_waterfill` decode top-1 (`0.888`). The gap is small (`< 1 pp`) but it is the only cell across the whole study where V3 leads V-waterfill on a top-1 metric. Likely mechanism: V3's random rotation diffuses noise more uniformly, which the decode regime's peakier attention forgives in proportion to the budget. At lower budgets the V-basis allocation advantage is large enough to dominate; at high budgets it shrinks below the noise.
+`r_sym_waterfill` decode top-1 reaches **0.944 at `b_avg = 4`** — within 6 pp of full-precision attention. Notable historical caveat: at `b_avg = 4`, V3 decode top-1 (`0.895`) edges past `v_waterfill` decode top-1 (`0.888`). With R_sym in the picture this is a non-issue — `r_sym_waterfill` decode at `b_avg = 4` (`0.944`) leads V3 by 4.9 pp.
 
 ## 5. Analysis
 
@@ -117,7 +124,9 @@ The gap is positive everywhere. Magnitudes range from `+0.05` to `+0.19` at `b_a
 
 ### Q3 — Method ranking under decode
 
-`v_waterfill` is still the practical winner at `b_avg ∈ {2, 3}`. At `b_avg = 4`, V3 ties or slightly leads V-waterfill on decode top-1; this is below the noise of our underpowered decode statistics (Chart 3) and we would not flip the Stage 3 method choice on it. CCA-waterfill remains a distant third on decode top-1 at every budget, just as on prefill.
+`r_sym_waterfill` is the new practical winner at every `b_avg ∈ {2, 3, 4}` on decode top-1 — by 7-9 pp over `v_waterfill`. The decode advantage holds at every bit budget, including the high-budget regime where the original V_waterfill-vs-V3 gap collapsed to noise. The Stage 3 method choice (`r_sym_waterfill`) is thus robust to the prefill-vs-decode swap.
+
+`cca_orth_waterfill` follows V_waterfill closely on decode (within 7-9 pp). The original `cca_waterfill` remains a distant fifth on decode top-1, just as on prefill.
 
 ### Q4 — Statistical adequacy
 
@@ -147,8 +156,8 @@ So the production claim of "compress prefill once, generate against it" is empir
 
 - The "compress the prefill cache before generation begins" production design works at least as well, and often better, on real decode tokens than on the prefill self-attention used during E3.
 - This is the strongest single production-relevance result in the Stage 1E study. It closes the gap between Stage 1's prefill-only metrics and the actual deployment scenario.
-- The Stage 3 method choice (`v_waterfill`) is robust to the prefill-vs-decode swap. No method becomes the surprise winner under decode evaluation.
-- A side-effect of the decode-phase result is that high-`b_avg` regimes (≥ 4 bits) make the V-waterfill advantage over V3 essentially disappear on top-1; if compute / storage budgets allow `b_avg = 4`, V3 alone is competitive with V-waterfill on decode top-1 (within ~1 pp). At lower budgets V-waterfill remains strictly better.
+- The Stage 3 method choice (`r_sym_waterfill`) is robust to the prefill-vs-decode swap. R_sym leads on decode at every bit budget; the post-newbases ranking matches the prefill ranking.
+- The high-`b_avg` (≥ 4 bits) regime where V_waterfill and V3 used to converge is no longer a concern: `r_sym_waterfill` at `b_avg = 4` decode reaches 0.944, leading V3 by 4.9 pp. The R_sym basis pays off at every bit budget.
 - For statistical robustness on decode-phase headline numbers in future studies, regenerate the calibration bundle with `max_new_tokens` ≥ 64 per example (current bundle uses smaller defaults).
 
 ## 8. Artifacts

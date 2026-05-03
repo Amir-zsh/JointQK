@@ -17,6 +17,7 @@ Writes to:
 from __future__ import annotations
 
 import json
+import math
 import os
 import statistics
 from collections import defaultdict
@@ -41,13 +42,22 @@ OUT = BASE / "report_charts"
 OUT.mkdir(parents=True, exist_ok=True)
 
 
-METHODS = ["v3", "v_truncate", "v_waterfill", "cca_uniform", "cca_waterfill"]
+METHODS = [
+    "v3", "v_truncate", "v_waterfill",
+    "cca_uniform", "cca_waterfill",
+    "cca_orth_uniform", "cca_orth_waterfill",
+    "r_sym_uniform", "r_sym_waterfill",
+]
 METHOD_LABELS = {
     "v3": "V3",
     "v_truncate": "V truncate r=64",
     "v_waterfill": "V + water-fill",
     "cca_uniform": "CCA uniform r=64",
     "cca_waterfill": "CCA + water-fill",
+    "cca_orth_uniform": "CCA (V_h orth) uniform r=64",
+    "cca_orth_waterfill": "CCA (V_h orth) + water-fill",
+    "r_sym_uniform": "R_sym uniform r=64",
+    "r_sym_waterfill": "R_sym + water-fill",
 }
 COLORS = {
     "v3": "#777777",
@@ -55,6 +65,10 @@ COLORS = {
     "v_truncate": "#66CC99",
     "cca_waterfill": "#4477AA",
     "cca_uniform": "#88AACC",
+    "cca_orth_waterfill": "#0066AA",
+    "cca_orth_uniform": "#3388BB",
+    "r_sym_waterfill": "#AA3366",
+    "r_sym_uniform": "#CC6688",
 }
 CONFIGS = ["qasper", "hotpotqa", "passage_retrieval_en"]
 CONFIG_LABELS = {
@@ -100,34 +114,74 @@ def cross_task_matrix(metric: str) -> np.ndarray:
 
 def chart_cross_task_heatmap(metric: str, file_suffix: str, cmap_name: str, fmt: str, title_metric: str) -> Path:
     matrix = cross_task_matrix(metric)
-    fig, axes = plt.subplots(1, len(METHODS), figsize=(4.0 * len(METHODS), 4.0))
+    n_methods = len(METHODS)
+    n_cols = 3
+    n_rows = math.ceil(n_methods / n_cols)
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(4.4 * n_cols, 4.0 * n_rows))
+    axes_flat = axes.flatten() if n_rows > 1 else axes
     vmax = np.nanmax(matrix)
     vmin = np.nanmin(matrix)
+    # Log color scale for metrics that span multiple orders of magnitude
+    # (geometry distortion ranges from ~0.05 to ~62 across methods).
+    use_log = metric == "geometry_distortion" and vmax / max(vmin, 1e-12) > 50
+    if use_log:
+        from matplotlib.colors import LogNorm
+        norm = LogNorm(vmin=max(vmin, 1e-3), vmax=vmax)
+    else:
+        norm = None
+    last_im = None
     for mi, m in enumerate(METHODS):
-        ax = axes[mi]
+        ax = axes_flat[mi]
         data = matrix[:, :, mi]
-        im = ax.imshow(data, cmap=cmap_name, vmin=vmin, vmax=vmax, aspect="auto")
+        if use_log:
+            im = ax.imshow(data, cmap=cmap_name, norm=norm, aspect="auto")
+        else:
+            im = ax.imshow(data, cmap=cmap_name, vmin=vmin, vmax=vmax, aspect="auto")
+        last_im = im
         ax.set_xticks(range(len(CONFIGS)))
         ax.set_yticks(range(len(CONFIGS)))
-        ax.set_xticklabels([CONFIG_LABELS[c] for c in CONFIGS], rotation=20)
-        ax.set_yticklabels([CONFIG_LABELS[c] for c in CONFIGS])
+        # Bottom-row panels show x ticks; left-column panels show y ticks; rest hide for clarity.
+        row_idx, col_idx = mi // n_cols, mi % n_cols
+        is_bottom_row = row_idx == n_rows - 1 or mi >= n_methods - n_cols
+        is_left_col = col_idx == 0
+        if is_bottom_row:
+            ax.set_xticklabels([CONFIG_LABELS[c] for c in CONFIGS], rotation=20, fontsize=10)
+            ax.set_xlabel("evaluation config", fontsize=10)
+        else:
+            ax.set_xticklabels([])
+        if is_left_col:
+            ax.set_yticklabels([CONFIG_LABELS[c] for c in CONFIGS], fontsize=10)
+            ax.set_ylabel("calibration source", fontsize=10)
+        else:
+            ax.set_yticklabels([])
         for ci in range(len(CONFIGS)):
             for ei in range(len(CONFIGS)):
                 v = data[ci, ei]
                 if not np.isnan(v):
                     diag = ci == ei
+                    if use_log:
+                        # Threshold on log scale.
+                        logmid = 0.5 * (math.log10(max(vmin, 1e-3)) + math.log10(vmax))
+                        is_dark = math.log10(max(v, 1e-12)) < logmid
+                    else:
+                        is_dark = v < (vmin + vmax) / 2
                     ax.text(ei, ci, fmt.format(v), ha="center", va="center",
-                            fontsize=9, color="black" if v < (vmin + vmax) / 2 else "white",
+                            fontsize=11, color="black" if is_dark else "white",
                             fontweight="bold" if diag else "normal")
-        ax.set_title(METHOD_LABELS[m], fontsize=11)
-        if mi == 0:
-            ax.set_ylabel("calibration source")
-        ax.set_xlabel("evaluation config")
-    fig.suptitle(f"E4a cross-task {title_metric} (b_avg=3, layer-0 excluded). Bold = in-domain.")
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
-    fig.colorbar(im, ax=axes, fraction=0.025, pad=0.02)
+        ax.set_title(METHOD_LABELS[m], fontsize=12)
+    # Hide any leftover empty panels (e.g. if n_methods < n_rows * n_cols).
+    for extra in range(n_methods, n_rows * n_cols):
+        axes_flat[extra].set_visible(False)
+    fig.suptitle(
+        f"E4a cross-task {title_metric} (b_avg=3, layer-0 excluded). Bold = in-domain.",
+        fontsize=13,
+    )
+    fig.tight_layout(rect=(0, 0, 0.93, 0.96))
+    if last_im is not None:
+        cbar_ax = fig.add_axes([0.945, 0.10, 0.012, 0.78])
+        fig.colorbar(last_im, cax=cbar_ax)
     out_path = OUT / f"e4_cross_task_heatmap_{file_suffix}.png"
-    fig.savefig(out_path, dpi=120, bbox_inches="tight")
+    fig.savefig(out_path, dpi=130, bbox_inches="tight")
     plt.close(fig)
     return out_path
 
