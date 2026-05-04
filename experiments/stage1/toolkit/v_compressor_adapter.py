@@ -98,6 +98,22 @@ def build_v_compressor(
         bits_int = round_bits_to_integer(
             bits_continuous.unsqueeze(0), total_bits=total_bits
         ).squeeze(0)
+        # Match the K-side cap (per_coord_quantization.build_method_compressor):
+        # unit_gaussian_centroids(b) is a Lloyd–Max solve with 2^b levels, so
+        # uncapped saturated allocations (water_fill defaults to max_bits=16)
+        # would mean 65,536-level codebooks per coord. Cap at 8 and redistribute.
+        MAX_BITS = 8
+        excess = (bits_int - MAX_BITS).clamp_min(0).sum().item()
+        bits_int = bits_int.clamp_max(MAX_BITS)
+        while excess > 0:
+            below = (bits_int < MAX_BITS).nonzero(as_tuple=True)[0]
+            if below.numel() == 0:
+                break
+            min_val = bits_int[below].min()
+            candidates = below[bits_int[below] == min_val]
+            take = min(int(candidates.numel()), int(excess))
+            bits_int[candidates[:take]] += 1
+            excess -= take
     else:
         raise ValueError(f"Unknown allocation in V method: {method!r}")
 

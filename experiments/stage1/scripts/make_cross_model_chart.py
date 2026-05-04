@@ -33,11 +33,11 @@ def load_top1(summary_dir: Path, b_avgs: list[int]) -> dict[str, list[float]]:
                 out[m].append(float("nan"))
             continue
         s = json.loads(f.read_text())
-        # Stage-1E summary structure: {method: {top1: {mean, ci, ...}}}
+        # Stage-1E summary structure:
+        #   {"aggregated": {method: {"top1_prefill": {"per_layer": [...], "all_mean": ..., "l0excl_mean": ...}}}}
+        agg = s.get("aggregated") or {}
         for m in METHODS:
-            v = (s.get(m) or {}).get("top1_layer0_excluded", {}).get("mean")
-            if v is None:
-                v = (s.get(m) or {}).get("top1", {}).get("mean")
+            v = (agg.get(m) or {}).get("top1_prefill", {}).get("l0excl_mean")
             out[m].append(float("nan") if v is None else float(v))
     return out
 
@@ -45,7 +45,7 @@ def load_top1(summary_dir: Path, b_avgs: list[int]) -> dict[str, list[float]]:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--qwen-dir", default="artifacts/stage1/cca_vs_waterfill_study/e3")
-    p.add_argument("--llama-dir", default="artifacts/stage1/cca_vs_waterfill_study/llama31_8b/e3")
+    p.add_argument("--llama-dir", default="artifacts/stage1/cca_vs_waterfill_study/llama31_8b")
     p.add_argument("--out", default="artifacts/stage1/cca_vs_waterfill_study/report_charts/cross_model_b_sensitivity.png")
     args = p.parse_args()
 

@@ -101,10 +101,21 @@ def build_press(press_name, model, k_bits, v_bits, layer0_full):
         return press, {}
     if press_name == "jointqk":
         from experiments.stage1.toolkit.jointqk_press import JointQKPress
-        # Pick calibration based on model
-        cca_path = REPO / "artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt"
-        v_path = REPO / "artifacts/stage1/v_method_study/v_stats.pt"
-        # NOTE: hardcoded to Qwen3-8B calibration. Llama would need different paths.
+        # Pick calibration based on model. Qwen3-8B uses the canonical study dir;
+        # Llama-3.1-8B has its own subdir. Qwen2.5-3B has no calibration bundle.
+        model_tag = getattr(model.config, "_name_or_path", "")
+        if "Qwen3" in model_tag:
+            cca_path = REPO / "artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt"
+            v_path = REPO / "artifacts/stage1/v_method_study/v_stats.pt"
+        elif "Llama-3.1" in model_tag:
+            cca_path = REPO / "artifacts/stage1/cca_vs_waterfill_study/llama31_8b/cca_stats.pt"
+            v_path = REPO / "artifacts/stage1/v_method_study/v_stats_llama31_8b.pt"
+        else:
+            raise ValueError(
+                f"jointqk press requested but no calibration bundle is registered for model "
+                f"{model_tag!r}. Add paths in run_attention_parity.build_press, or drop "
+                f"'jointqk' from --presses for this model."
+            )
         press = JointQKPress(
             cca_stats_path=str(cca_path),
             v_stats_path=str(v_path),
@@ -279,8 +290,8 @@ def main():
                     run_one_config(model, tok, press_name, k_bits, v_bits, l0,
                                    contexts, args.model, out_csv, log)
 
-    log_handle.close()
     log(f"Done. CSV: {out_csv}")
+    log_handle.close()
 
 
 if __name__ == "__main__":

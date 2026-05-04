@@ -37,8 +37,13 @@ Per-study directories under `artifacts/<stage>/` follow a consistent pattern: `*
 ## Common commands
 
 ```bash
-# Activate the conda env once per shell
-conda activate kv-rd
+# Activate the project venv once per shell.
+# Use the project's uv-managed `.venv/` (Python 3.12 + torch/transformers/etc.).
+# Do NOT use conda — the historical `kv-rd` env no longer exists, and other
+# conda envs do not have the project's deps.
+source .venv/bin/activate
+# Or, for one-shot invocations without sourcing:
+#     ./.venv/bin/python -m experiments.<stage>.run_<study> ...
 
 # Run a single phase of a stage driver
 python -m experiments.<stage>.run_<study> \
