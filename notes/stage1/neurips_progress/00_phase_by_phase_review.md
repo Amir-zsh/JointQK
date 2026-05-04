@@ -361,9 +361,13 @@ models + RULER NIAH at 4k/8k/16k context.
 **Plan:**
 - 8 configs per model: full_precision, jointqk@K∈{2,3,4}, turboquant@K∈{2,3,4},
   kivi_int4. (V locked across all JointQK/TurboQuant via `v_lock.txt`; KIVI
-  is fixed int4/int4.)
-- 16 LongBench tasks per model × 8 configs = 128 jobs per model.
+  is fixed int4/int4 with `group_size=128`.)
+- LongBench uses the KIVI 8-task subset × 8 configs = 64 jobs per model.
 - RULER: 3 contexts × 2 models × ~4 conditions = ~24 jobs.
+- Current protocol is **prefill-only compression for every compressed method**:
+  launchers pass `compress_decode=False`, so generation-step KV remains fp16.
+  This avoids method-specific decode residual-window behavior and keeps the
+  downstream comparison uniform.
 
 **Steps:**
 
@@ -376,7 +380,8 @@ models + RULER NIAH at 4k/8k/16k context.
 
 2. **Chain script.** `experiments/stage1/scripts/_phase7_chain.py` polls Phase
    6's `_overview.log` for "12 OK", then sequences:
-   - Read locked decode decision
+   - Read locked decode decision (now informational; current launchers force
+     `compress_decode=False`)
    - Launch Phase 7 LongBench Qwen
    - Launch Phase 7 LongBench Llama
    - Launch Phase 7 RULER
@@ -395,18 +400,13 @@ models + RULER NIAH at 4k/8k/16k context.
    (subdir `1/`). On re-runs that meant we were reading stale numbers. Fixed
    to sort by `p.stat().st_mtime, reverse=True` and take the most recent.
 
-**Status (current snapshot):**
+**Status / protocol update:**
 
-- Phase 7 chain detected Phase 6 done at 15:19 and launched Qwen LongBench.
-- Qwen LongBench: 15 / 128 OK, 0 FAIL as of last overview line (16:37).
-- Qwen jobs running ~50–60 min each at fraction 0.5 across 6 GPUs → projected
-  total ≈ 8–10 wall-h for Qwen alone, plus ~12 wall-h Llama, plus ~3 wall-h
-  RULER.
-- Logs to follow live:
-  ```bash
-  tail -f experiments/stage1/logs/phase7_longbench_qwen3_8b/_overview.log
-  tail -f experiments/stage1/logs/phase7_chain.log
-  ```
+- Earlier Phase 7 partial results were produced before the KIVI quantizer fix
+  and before the prefill-only protocol was locked. Treat old KIVI rows as
+  invalid and move them aside with a `.pre_kivi_fix` suffix before rerunning.
+- Do not launch Phase 7 automatically. The user explicitly paused Phase 7
+  experiments; launchers are prepared but should only be run on request.
 
 **Preliminary signal (from the partial Qwen results we already have on 4–5
 tasks):**
@@ -418,7 +418,8 @@ tasks):**
 - Both methods retain ≥90% of full-precision F1 at K=4 / V=3 on the tasks we
   have.
 - KIVI int4 is the strongest baseline at large budgets but loses badly at
-  K=2 (no equivalent budget — it's fixed at int4).
+  K=2 (no equivalent budget — it's fixed at int4). This preliminary KIVI signal
+  predates the KIVI quantizer fix and should not be used for claims.
 
 **Final gate (C6).** Pass criterion: JointQK at K=4 / V_locked retains ≥90% of
 full-precision LongBench score on **both** models, beats both peers on ≥80%
@@ -437,7 +438,7 @@ This is judged after the final aggregators run.
 | `artifacts/stage1/v_method_study/k_floor.txt` | Phase 1 aggregate | Phase 7 (informational) | ✅ |
 | `artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt` (with R_sym, V_h) | Phase 1 precompute | Phases 1, 4, 6, 7 (Qwen) | ✅ |
 | `artifacts/stage1/cca_vs_waterfill_study/llama31_8b/cca_stats.pt` (with R_sym, V_h) | Phase 5 precompute | Phase 7 (Llama) | ✅ |
-| `artifacts/stage1/downstream/qwen3_8b/decode_scope/decode_decision.txt` | Phase 6 aggregate | Phase 7 launchers | ✅ WINNER=A |
+| `artifacts/stage1/downstream/qwen3_8b/decode_scope/decode_decision.txt` | Phase 6 aggregate | Informational; current Phase 7 launchers force prefill-only | ✅ WINNER=A |
 | `artifacts/stage1/downstream/longbench_summary.json` | Phase 7 aggregate | Final report | ⏳ pending |
 | `artifacts/stage1/downstream/ruler_summary.json` | Phase 7 aggregate | Final report | ⏳ pending |
 
@@ -465,6 +466,12 @@ This is judged after the final aggregators run.
 - `experiments/stage1/toolkit/per_coord_quantization.py` — vectorized
   roundtrip, chunked-diffs memory budget, bit cap at 8 with redistribution
   (caps `K_max=2^bits ≤ 256`, prevents OOM on long contexts)
+- `experiments/stage1/toolkit/kivi_quantizer.py` — fixed to match official
+  KIVI min-subtraction quantization, sequence-axis K grouping, head-dim V
+  grouping, and fp16 residual tail for non-divisible K sequence lengths
+- `experiments/stage1/scripts/launch_phase7_longbench.sh`,
+  `launch_phase7_ruler.sh` — force `compress_decode=False` for the current
+  prefill-only downstream protocol
 - `kvpress/evaluation/evaluate.py` — `press_kwargs` field + class instantiation
 - `kvpress/evaluation/evaluate_registry.py` — register the 3 presses (as
   classes)

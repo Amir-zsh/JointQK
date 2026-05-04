@@ -21,11 +21,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 V_LOCK_FILE="${REPO_ROOT}/artifacts/stage1/v_method_study/v_lock.txt"
-DECODE_FILE="${REPO_ROOT}/artifacts/stage1/downstream/qwen3_8b/decode_scope/decode_decision.txt"
 V_METHOD=$(grep -oP 'V_METHOD=\K\S+' "$V_LOCK_FILE")
 V_BITS=$(grep -oP 'V_BITS=\K\d+' "$V_LOCK_FILE")
-WINNER=$(grep -oP 'WINNER=\K[AB]' "$DECODE_FILE" 2>/dev/null || echo "A")
-COMPRESS_DECODE=$([ "$WINNER" = "B" ] && echo True || echo False)
+# Prefill-only compression for all methods. Decode-step KV stays fp16 so the
+# RULER comparison does not depend on method-specific generation-time behavior.
+COMPRESS_DECODE=False
 
 LOG_DIR="${REPO_ROOT}/experiments/stage1/logs/phase7_ruler"
 mkdir -p "$LOG_DIR"

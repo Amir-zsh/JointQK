@@ -14,6 +14,50 @@
 | 0.2 | `TurboQuantPress` byte-exact vs `TurboQuantV3.compress_kv` | ✓ All 5 cases (CPU / CUDA / chunked / non-divisible / protected_layers) max_abs_diff = 0.000e+00 |
 | 0.3 | `JointQKPress` byte-exact vs offline builders across (L, h) | ✓ All 12 cells max_abs_diff = 0.000e+00 |
 | 0.4 | Calibration examples held out from Phase 7 eval set | ⚠ 2 / 24 calibration examples appear in qasper eval (rows 56, 78). Symmetric across methods so doesn't affect ordering — footnote in paper. |
+| 0.5 | `KIVIPress` / local KIVI quantizer parity vs official jy-yuan/KIVI | ✓ V, K divisible-prefix, K residual-tail, and `KIVIPress.compress()` all max_abs_diff = 0.000e+00 |
+
+---
+
+## Tier 0.5 — KIVI parity and protocol decision (PASS)
+
+The original local KIVI baseline was not faithful to official `jy-yuan/KIVI`.
+Two issues were found:
+
+- **Zero-point math:** official KIVI uses `q = round((x - mn) / scale)` and
+  reconstructs with `q * scale + mn`; the local implementation pre-rounded a
+  zero point and reconstructed with `(q - zero) * scale`.
+- **K grouping axis:** official KIVI groups K along sequence length (`T`) with
+  `group_size` tokens per group; the local implementation grouped along
+  head dimension and reduced over the full sequence.
+
+The local implementation was fixed in
+`experiments/stage1/toolkit/kivi_quantizer.py` while preserving the experiment
+API: functions still return reconstructed tensors rather than packed codes.
+`KIVIPress` did not require a code change because it already calls the local
+quantizer functions.
+
+Verification command:
+
+```bash
+.venv/bin/python experiments/stage1/tests/test_kivi_press_parity.py
+```
+
+Post-fix results:
+
+| Check | Result |
+|---|---|
+| V parity vs upstream pack/dequant | `max_abs_diff = 0.000e+00` |
+| K parity, divisible sequence lengths | `max_abs_diff = 0.000e+00` |
+| K residual-tail parity for `T % group_size != 0` | `max_abs_diff = 0.000e+00` |
+| `KIVIPress.compress()` K/V parity | `max_abs_diff = 0.000e+00` |
+
+Experiment policy after the fix:
+
+- KIVI uses `group_size=128`, matching official KIVI's default CLI setting.
+- Phase 7 LongBench and RULER disable generation-time quantization for all
+  compressed methods via `compress_decode=False`; decode-step KV remains fp16.
+- Any KIVI Phase 7 rows produced before this fix should be treated as invalid
+  and moved aside with a `.pre_kivi_fix` suffix or excluded before rerunning.
 
 ---
 
@@ -156,6 +200,7 @@ generic-corpus calibration.
 Tests:
 - `experiments/stage1/tests/test_turboquant_press_parity.py`
 - `experiments/stage1/tests/test_jointqk_press_parity_broad.py`
+- `experiments/stage1/tests/test_kivi_press_parity.py`
 
 Scripts:
 - `experiments/stage1/scripts/run_upstream_synthetic.py` (Tier 0.1 wrapper)
