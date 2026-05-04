@@ -6,6 +6,7 @@ same e3 summaries. This gate inspects those summaries' decode columns.
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import sys
@@ -23,7 +24,11 @@ def ok(msg: str) -> None:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[3]
-    e3_dir = repo_root / "artifacts/stage1/cca_vs_waterfill_study/e3"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output-dir", default=None,
+                        help="Directory containing e3_b*_r*_summary.json (default: cca_vs_waterfill_study/e3)")
+    args = parser.parse_args()
+    e3_dir = Path(args.output_dir) if args.output_dir else (repo_root / "artifacts/stage1/cca_vs_waterfill_study/e3")
     if not e3_dir.exists():
         fail(f"missing {e3_dir}")
     summaries = sorted(e3_dir.glob("e3_b*_r*_summary.json"))

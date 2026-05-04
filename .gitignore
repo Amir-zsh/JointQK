@@ -10,8 +10,15 @@ turboquant-pytorch/
 .claude/
 artifacts/stage1/query_stats_longbench_under4k
 artifacts/stage1/query_stats_longbench_under4k_small
+artifacts/stage1/query_stats_longbench_under4k_llama31_8b/
 artifacts/stage1/cca_vs_waterfill_study/e3_newbases/
 artifacts/stage1/cca_vs_waterfill_study/e4a_newbases/
 artifacts/stage1/cca_vs_waterfill_study/e4b_newbases/
+artifacts/stage1/cca_vs_waterfill_study/llama31_8b/
+artifacts/stage1/v_method_study/
+artifacts/stage1/downstream/
 experiments/stage1/notebooks/data
 experiments/stage1/logs/
+paper/
+turboquant_pytorch
+*.pt.pre_*

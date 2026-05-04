@@ -70,6 +70,16 @@ conda activate kv-rd
 
 This installs PyTorch (with CUDA), the scientific Python stack, and the dependencies needed by `kvpress`. The vendored `kvpress/` package is installed in editable mode by the same spec.
 
+The vendored `turboquant-pytorch/` directory uses a hyphen, which is not a valid Python module name. Create an underscore-name symlink so `import turboquant_pytorch` resolves:
+
+```bash
+ln -sfn turboquant-pytorch turboquant_pytorch
+```
+
+The symlink is gitignored — recreate it after every fresh clone.
+
+Calibration artifacts (`artifacts/stage1/{v_method_study,cca_vs_waterfill_study/llama31_8b,downstream,query_stats_longbench_under4k_llama31_8b}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/stage1/scripts/` after capturing a fresh Q/K/V bundle.
+
 ## Where to start reading
 
 For a guided tour of the project:

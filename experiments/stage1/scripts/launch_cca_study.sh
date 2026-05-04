@@ -77,7 +77,7 @@ case "${PHASE}" in
         IFS=',' read -ra B_ARR <<< "${B_AVGS}"
         for B in "${B_ARR[@]}"; do
             run_name="${PHASE}_b${B}_r${RANK}${RUN_SUFFIX}"
-            args="--phase e3 --b-avg ${B} --rank ${RANK} --methods ${METHODS} --query-phase ${QUERY_PHASE} --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --full-precision-smoke-test"
+            args="--phase e3 --b-avg ${B} --rank ${RANK} --methods ${METHODS} --query-phase ${QUERY_PHASE} --output-subdir ${OUTPUT_SUBDIR} --run-name ${run_name} --full-precision-smoke-test ${EXTRA_ARGS}"
             RUNS+=("${run_name}|${args}")
         done
         ;;

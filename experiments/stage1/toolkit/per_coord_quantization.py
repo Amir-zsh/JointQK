@@ -129,23 +129,35 @@ class PerCoordCompressor:
             self.to(device)
         leading_shape = states.shape[:-1]
         flat = states.reshape(-1, self.d).float()
-        out = torch.empty_like(flat)
 
         if self.forward_map is not None:
             transformed = flat @ self.forward_map
         else:
             transformed = flat
 
-        # Per-coord vectorized nearest-centroid lookup.
-        for j in range(self.d):
-            k = int(self.codebook_lengths[j])
-            cb_j = self.codebooks_padded[j, :k]
-            if k == 1:
-                out[:, j] = cb_j[0]
-                continue
-            diffs = (transformed[:, j:j + 1] - cb_j).abs()
-            idx = diffs.argmin(dim=-1)
-            out[:, j] = cb_j[idx]
+        # Vectorized per-coord nearest-centroid lookup, chunked along N to bound memory.
+        # codebooks_padded[j, k] = +inf for k >= codebook_lengths[j], so argmin naturally
+        # skips invalid entries. transformed: (N, d); codebooks_padded: (d, K_max).
+        # The (N, d, K_max) diffs tensor blows up when K_max is large (water-fill methods
+        # can put 10+ bits into a single coord -> K_max >= 1024). Chunk N to cap memory
+        # at ~1 GB per chunk.
+        N = transformed.shape[0]
+        K_max = self.codebooks_padded.shape[1]
+        BYTES_PER_ELEM = 4  # fp32
+        MEM_BUDGET = 1 << 30  # 1 GiB
+        chunk = max(1, MEM_BUDGET // (self.d * K_max * BYTES_PER_ELEM))
+
+        cb_unsq = self.codebooks_padded.unsqueeze(0)  # (1, d, K_max)
+        out = torch.empty_like(transformed)
+        for start in range(0, N, chunk):
+            end = min(start + chunk, N)
+            chunk_t = transformed[start:end]                                    # (B, d)
+            diffs = (chunk_t.unsqueeze(-1) - cb_unsq).abs()                     # (B, d, K_max)
+            idx = diffs.argmin(dim=-1)                                          # (B, d)
+            out[start:end] = torch.gather(
+                cb_unsq.expand(end - start, -1, -1), 2, idx.unsqueeze(-1)
+            ).squeeze(-1)
+            del diffs
 
         if self.inverse_map is not None:
             out = out @ self.inverse_map
@@ -281,6 +293,21 @@ def build_method_compressor(
         wf_input = (weights * sigma_k_diag).unsqueeze(0)  # add batch dim of 1
         bits_continuous = water_fill(wf_input, total_bits=total_bits).squeeze(0)
         bits_int = round_bits_to_integer(bits_continuous.unsqueeze(0), total_bits=int(total_bits)).squeeze(0)
+        # Cap per-coord bits at 8 to bound K_max=256 (Lloyd-Max at 8b is ~continuous for
+        # Gaussian sources; saving these bits and redistributing to lower-bit coords).
+        MAX_BITS = 8
+        excess = (bits_int - MAX_BITS).clamp_min(0).sum().item()
+        bits_int = bits_int.clamp_max(MAX_BITS)
+        # Redistribute saved bits to coords with lowest current allocation (until they hit MAX_BITS).
+        while excess > 0:
+            below = (bits_int < MAX_BITS).nonzero(as_tuple=True)[0]
+            if below.numel() == 0:
+                break
+            min_val = bits_int[below].min()
+            candidates = below[bits_int[below] == min_val]
+            take = min(int(candidates.numel()), int(excess))
+            bits_int[candidates[:take]] += 1
+            excess -= take
     else:
         raise ValueError(f"Unknown allocation in method '{method}'")
 
