@@ -12,15 +12,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-METHODS = ["v3", "v_waterfill", "cca_orth_waterfill", "r_sym_waterfill"]
+# Paper comparison set: TurboQuant (random rotation) vs JointQK (ours).
+# Q-Eigen and CCA bases were intermediate ablations during method design and
+# are not part of the paper's headline comparison.
+METHODS = ["v3", "r_sym_waterfill"]
 METHOD_LABELS = {
     "v3": "TurboQuant (V3)",
-    "v_waterfill": "Q-Eigen WaterFill",
-    "cca_orth_waterfill": "CCA-Orth WaterFill",
-    "r_sym_waterfill": "JointQK WaterFill",
+    "r_sym_waterfill": "JointQK WaterFill (ours)",
 }
-COLORS = {"v3": "#888888", "v_waterfill": "#1f77b4",
-          "cca_orth_waterfill": "#2ca02c", "r_sym_waterfill": "#d62728"}
+COLORS = {"v3": "#888888", "r_sym_waterfill": "#d62728"}
 
 
 def load_top1(summary_dir: Path, b_avgs: list[int]) -> dict[str, list[float]]:

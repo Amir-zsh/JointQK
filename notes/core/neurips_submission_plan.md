@@ -16,7 +16,9 @@ Memory-savings claims are kept analytical (bytes saved per key); wall-clock late
 
 ## Scope decisions
 
-**In:** Qwen3-8B + Llama-3.1-8B; LongBench (full, not 24-example bundle) + RULER subset; baselines = full-precision + TurboQuant + KIVI; JointQK + Q-Eigen WaterFill (fallback) + JointQK Truncate (ablation). Paper draft in `paper/main/`.
+**In:** Qwen3-8B + Llama-3.1-8B; LongBench (full, not 24-example bundle) + RULER subset; baselines = full-precision + TurboQuant + KIVI; method = **JointQK WaterFill** (ours). Paper draft in `paper/main/`.
+
+**Comparison set (locked, 2026-05-03):** the paper compares exactly four configurations — `full`, `KIVI`, `TurboQuant`, and `JointQK` (ours). CCA-Orth WaterFill and Q-Eigen WaterFill were intermediate basis-design ablations during Stage 1E; CCA was empirically dominated by JointQK and Q-Eigen is an in-house non-published baseline. They stay in the methodology study (`run_cca_vs_waterfill_study.py`) as documentation of the path to the final basis, but **do not appear in paper figures or tables**.
 
 **Out (descoped to future work, called out explicitly in the paper):** ∞Bench, larger Llama (70B), Mistral / Mixtral, wall-clock latency benchmarks, end-to-end systems integration. Theoretical optimality proof is appendix-only (sketch + empirical validation), not main-text claim.
 
