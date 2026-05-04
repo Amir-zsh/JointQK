@@ -19,6 +19,7 @@ class KIVIPress(BasePress):
     v_bits: int = 4
     group_size: int = 128
     compress_decode: bool = False
+    layer0_full_precision: bool = False  # skip K/V quantization at layer 0 (anomalous attention sink)
     compression_ratio: float = 0.0
 
     def post_init_from_model(self, model):
@@ -26,6 +27,8 @@ class KIVIPress(BasePress):
         pass
 
     def compress(self, module, hidden_states, keys, values, attentions, kwargs):
+        if module.layer_idx == 0 and self.layer0_full_precision:
+            return keys, values
         keys_recon = kivi_quantize_keys(keys, bits=self.k_bits, group_size=self.group_size)
         values_recon = kivi_quantize_values(values, bits=self.v_bits, group_size=self.group_size)
         return keys_recon, values_recon

@@ -17,6 +17,8 @@ artifacts/stage1/cca_vs_waterfill_study/e4b_newbases/
 artifacts/stage1/cca_vs_waterfill_study/llama31_8b/
 artifacts/stage1/v_method_study/
 artifacts/stage1/downstream/
+artifacts/stage1/downstream_v6/
+artifacts/stage1/_compressor_cache/
 experiments/stage1/notebooks/data
 experiments/stage1/logs/
 paper/

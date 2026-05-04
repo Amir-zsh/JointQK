@@ -8,6 +8,9 @@ Designed to support all of Phase 1's per-side ablations through the same code pa
 """
 from __future__ import annotations
 
+import hashlib
+import os
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -18,7 +21,9 @@ from kvpress.utils import extract_keys_and_values
 
 from experiments.stage1.toolkit.per_coord_quantization import (
     PerCoordCompressor,
+    batched_roundtrip,
     build_method_compressor,
+    stack_per_head,
 )
 from experiments.stage1.toolkit.v_compressor_adapter import build_v_compressor
 
@@ -40,15 +45,103 @@ class JointQKPress(BasePress):
     # kvpress evaluate.py reads .compression_ratio for logging; quantization presses
     # don't reduce seq_len, so this is purely informational (bits-per-coord proxy).
     compression_ratio: float = 0.0
+    # Disk cache for compressors. If set, post_init writes/reads a .pt file keyed by
+    # the calibration stats path mtime + press kwargs. Saves the ~100s cold rebuild
+    # across worker restarts. Default: artifacts/stage1/_compressor_cache (auto-mkdir);
+    # pass empty string "" to disable.
+    compressor_cache_dir: str = "artifacts/stage1/_compressor_cache"
 
     # populated in post_init_from_model
     _k_compressors: dict = field(default_factory=dict, init=False, repr=False)
     _v_compressors: dict = field(default_factory=dict, init=False, repr=False)
     _n_layers: int = field(default=0, init=False, repr=False)
     _n_kv_heads: int = field(default=0, init=False, repr=False)
+    # Lazy per-layer batched stacks (Lever 3). Built on first compress() call;
+    # replaces the per-(layer, head) Python loop with one batched op per layer.
+    # Disabled by default: in fp32, batched bmm and per-head mm CUDA kernels
+    # have different reduction orders (~1e-6 fp32 diff per element), enough to
+    # flip argmin at 2-bit quantisation and shift F1 by ~0.7 pp on small
+    # samples. Forcing parity by changing the canonical per-head path's
+    # precision (we tried fp16 round, fp64 matmul, fp16 throughout) all
+    # degrade the per-head baseline F1, which is worse than living with the
+    # speedup gap. Enable only if you don't need F1 parity with prior runs.
+    _k_batched: dict = field(default_factory=dict, init=False, repr=False)
+    _v_batched: dict = field(default_factory=dict, init=False, repr=False)
+    use_batched_compress: bool = False
+
+    def _cache_key(self) -> str:
+        """Stable hash of all inputs that affect compressor construction.
+        Include calibration-file mtime so a re-calibration invalidates the cache.
+        """
+        parts = [self.k_method, str(self.k_bits), str(self.rank),
+                 self.v_method, str(self.v_bits),
+                 "qk" if self.quantize_k else "_",
+                 "qv" if self.quantize_v else "_",
+                 "l0fp" if self.layer0_full_precision else "_"]
+        for p in (self.cca_stats_path, self.v_stats_path):
+            if p and Path(p).exists():
+                parts.append(str(Path(p).resolve()))
+                parts.append(str(int(Path(p).stat().st_mtime)))
+        return hashlib.sha256("|".join(parts).encode()).hexdigest()[:16]
+
+    def _cache_path(self) -> Optional[Path]:
+        if not self.compressor_cache_dir:
+            return None
+        return Path(self.compressor_cache_dir) / f"jointqk_{self._cache_key()}.pt"
+
+    def _try_load_cache(self) -> bool:
+        cache_path = self._cache_path()
+        if cache_path is None or not cache_path.exists():
+            return False
+        try:
+            blob = torch.load(cache_path, map_location="cpu", weights_only=False)
+            self._k_compressors = blob.get("k_compressors", {})
+            self._v_compressors = blob.get("v_compressors", {})
+            self._n_layers = blob["n_layers"]
+            self._n_kv_heads = blob["n_kv_heads"]
+            return True
+        except Exception:
+            return False
+
+    def _save_cache(self) -> None:
+        cache_path = self._cache_path()
+        if cache_path is None:
+            return
+        try:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = cache_path.with_suffix(cache_path.suffix + f".tmp.{os.getpid()}")
+            torch.save({
+                "k_compressors": self._k_compressors,
+                "v_compressors": self._v_compressors,
+                "n_layers": self._n_layers,
+                "n_kv_heads": self._n_kv_heads,
+            }, tmp)
+            os.replace(tmp, cache_path)  # atomic; tolerates racing workers
+        except Exception:
+            # Cache failure is never fatal — fall back to in-memory only.
+            pass
 
     def post_init_from_model(self, model):
-        """Load calibration stats and pre-build per-(layer, head) compressors."""
+        """Load calibration stats and pre-build per-(layer, head) compressors.
+
+        Idempotent: kvpress's BasePress.__call__ context manager calls this on
+        every pipeline invocation, but compressor construction is expensive
+        (~100s: torch.load 170 MB cca_stats + 256 K eigendecompositions + 256
+        V eigendecompositions + Lloyd-Max codebook builds). Skip if already
+        initialised.
+
+        Disk-cache: if compressor_cache_dir is set, try loading a previously-
+        built cache file keyed by (cca_stats_path mtime, k_method, k_bits, rank,
+        v_method, v_bits, layer0_full_precision). Save on first build so future
+        worker restarts skip the rebuild.
+        """
+        if (self._k_compressors or not self.quantize_k) and \
+           (self._v_compressors or not self.quantize_v):
+            return
+
+        if self._try_load_cache():
+            return
+
         if self.quantize_k:
             if not self.cca_stats_path:
                 raise ValueError("quantize_k=True requires cca_stats_path")
@@ -81,11 +174,42 @@ class JointQKPress(BasePress):
                     self._k_compressors[(L, h)] = comp
 
         if self.quantize_v:
+            if self.v_method == "v_turboquant":
+                if not self._n_layers:
+                    self._n_layers = model.config.num_hidden_layers
+                n_layers_v = self._n_layers
+                n_kv_heads_v = getattr(model.config, "num_key_value_heads", None)
+                if n_kv_heads_v is None:
+                    n_kv_heads_v = model.config.num_attention_heads
+                d_v = getattr(model.config, "head_dim", None)
+                if d_v is None:
+                    d_v = model.config.hidden_size // model.config.num_attention_heads
+                self._n_kv_heads = n_kv_heads_v
+                for L in range(n_layers_v):
+                    if L == 0 and self.layer0_full_precision:
+                        continue
+                    for h in range(n_kv_heads_v):
+                        self._v_compressors[(L, h)] = build_v_compressor(
+                            method=self.v_method,
+                            sigma_v_for_head=None,
+                            head_dim=d_v,
+                            bits=int(self.v_bits),
+                            # Match TurboQuantV3's value-compressor seed for the layer.
+                            seed=42 + L * 1000 + 500,
+                        )
+                # Persist before returning — otherwise repeated worker restarts
+                # rebuild the K side from scratch when v_method=v_turboquant.
+                self._save_cache()
+                return
+
             if not self.v_stats_path:
                 raise ValueError("quantize_v=True requires v_stats_path")
             v_stats = torch.load(self.v_stats_path, map_location="cpu", weights_only=False)
-            sigma_v = v_stats["sigma_v"]  # (n_layers, n_kv_heads, d, d)
-            n_layers_v, n_kv_heads_v, d_v, _ = sigma_v.shape
+            # New (v2) calibration stores cov_v + mu_v; legacy (v1) only has
+            # uncentered sigma_v. Prefer the centered form, fall back gracefully.
+            cov_v = v_stats.get("cov_v", v_stats.get("sigma_v"))
+            mu_v = v_stats.get("mu_v")  # None for legacy; centered compressor falls back to uncentered behaviour
+            n_layers_v, n_kv_heads_v, d_v, _ = cov_v.shape
             if self._n_layers and self._n_layers != n_layers_v:
                 raise ValueError(
                     f"V stats n_layers={n_layers_v} != cca_stats n_layers={self._n_layers}"
@@ -93,32 +217,53 @@ class JointQKPress(BasePress):
             self._n_layers = n_layers_v
             self._n_kv_heads = n_kv_heads_v
             for L in range(n_layers_v):
+                if L == 0 and self.layer0_full_precision:
+                    continue
                 for h in range(n_kv_heads_v):
                     self._v_compressors[(L, h)] = build_v_compressor(
                         method=self.v_method,
-                        sigma_v_for_head=sigma_v[L, h],
+                        cov_v_for_head=cov_v[L, h],
+                        mu_v_for_head=(mu_v[L, h] if mu_v is not None else None),
                         head_dim=d_v,
                         bits=int(self.v_bits),
                         seed=42 + L * 1000 + h,
                     )
 
-    def _quantize_k(self, keys: torch.Tensor, layer_idx: int) -> torch.Tensor:
-        """Apply K compression per-head. keys: (batch, n_kv_heads, seq_len, head_dim)."""
-        if layer_idx == 0 and self.layer0_full_precision:
-            return keys
-        out = torch.empty_like(keys)
-        for h in range(keys.shape[1]):
-            comp = self._k_compressors[(layer_idx, h)].to(keys.device)
-            out[:, h] = comp.roundtrip(keys[:, h])
+        # Persist for future worker restarts (no-op if compressor_cache_dir disabled).
+        self._save_cache()
+
+    def _quantize_layer(self, x: torch.Tensor, layer_idx: int,
+                        comps: dict, layer_cache: dict) -> torch.Tensor:
+        """Round-trip one layer's heads through their compressors.
+
+        Layout: x is (B, n_heads, S, d). Uses the batched stack when
+        `use_batched_compress` is on AND every head is a PerCoordCompressor;
+        otherwise falls back to a per-head Python loop. The fallback decision
+        is cached as `None` so we don't re-check `isinstance` per call.
+        """
+        n_heads = x.shape[1]
+        if self.use_batched_compress and layer_idx not in layer_cache:
+            head_comps = [comps[(layer_idx, h)] for h in range(n_heads)]
+            if all(isinstance(c, PerCoordCompressor) for c in head_comps):
+                layer_cache[layer_idx] = tuple(t.to(x.device) for t in stack_per_head(head_comps))
+            else:
+                layer_cache[layer_idx] = None  # cache the fallback decision
+        if self.use_batched_compress and layer_cache[layer_idx] is not None:
+            return batched_roundtrip(x, *layer_cache[layer_idx])
+        out = torch.empty_like(x)
+        for h in range(n_heads):
+            out[:, h] = comps[(layer_idx, h)].to(x.device).roundtrip(x[:, h])
         return out
 
+    def _quantize_k(self, keys: torch.Tensor, layer_idx: int) -> torch.Tensor:
+        if layer_idx == 0 and self.layer0_full_precision:
+            return keys
+        return self._quantize_layer(keys, layer_idx, self._k_compressors, self._k_batched)
+
     def _quantize_v(self, values: torch.Tensor, layer_idx: int) -> torch.Tensor:
-        """Apply V compression per-head. values: (batch, n_kv_heads, seq_len, head_dim)."""
-        out = torch.empty_like(values)
-        for h in range(values.shape[1]):
-            comp = self._v_compressors[(layer_idx, h)].to(values.device)
-            out[:, h] = comp.roundtrip(values[:, h])
-        return out
+        if layer_idx == 0 and self.layer0_full_precision:
+            return values
+        return self._quantize_layer(values, layer_idx, self._v_compressors, self._v_batched)
 
     def compress(self, module, hidden_states, keys, values, attentions, kwargs):
         """Compress full K/V tensors (used at prefill and, in Mode B, on the last token)."""

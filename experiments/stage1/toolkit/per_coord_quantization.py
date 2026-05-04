@@ -14,6 +14,7 @@ import math
 from typing import Iterable
 
 import torch
+from einops import rearrange
 
 from experiments.stage1.toolkit.quantization import solve_lloyd_max
 
@@ -162,6 +163,74 @@ class PerCoordCompressor:
         if self.inverse_map is not None:
             out = out @ self.inverse_map
         return out.reshape(leading_shape + (self.d,))
+
+
+def _per_head_bmm(x: torch.Tensor, maps: torch.Tensor, B: int, S: int) -> torch.Tensor:
+    """Apply per-head linear map: `out[b, h, s, :] = x[b, h, s, :] @ maps[h]`.
+    Uses one bmm by repacking the batch dim into the seq axis.
+    """
+    flat = rearrange(x, "b h s d -> h (b s) d")
+    return rearrange(torch.bmm(flat, maps), "h (b s) d -> b h s d", b=B, s=S)
+
+
+@torch.no_grad()
+def batched_roundtrip(
+    states: torch.Tensor,        # (B, H, S, d)
+    forward_maps: torch.Tensor,  # (H, d, d)
+    inverse_maps: torch.Tensor,  # (H, d, d)
+    codebooks: torch.Tensor,     # (H, d, K_max)  — pad slots are +inf so argmin skips them
+) -> torch.Tensor:
+    """All `n_heads` heads of one layer's PerCoordCompressor as one op.
+
+    Apply `forward_maps[h]`, look up the per-(head, coord) nearest centroid in
+    `codebooks`, then apply `inverse_maps[h]`. Equivalent to looping `roundtrip`
+    over heads but with batched ops.
+
+    NOT byte-identical to the per-head loop. fp32 `mm` (used by per-head) and
+    fp32 `bmm` (used here) are different CUDA kernels with different reduction
+    orders; on A100 they differ by ~1e-6 per element. At 2-bit quantisation
+    that's enough to flip argmin near centroid boundaries on a small fraction
+    of elements, giving a few-pp F1 drift on tiny samples and ~0.1 pp at
+    fraction=1.0. Higher bits (3+) are effectively identical. Per-head is the
+    canonical path; this is gated behind `use_batched_compress` in JointQKPress.
+    """
+    B, H, S, d = states.shape
+    K_max = codebooks.shape[-1]
+
+    # Forward map: (B, H, S, d) → (B, H, S, d).
+    transformed = _per_head_bmm(states.float(), forward_maps, B, S)
+
+    # Per-coord nearest-centroid lookup. Chunk along S to bound the (B, H,
+    # chunk_S, d, K_max) diff tensor to ~1 GiB at fp32.
+    chunk_S = max(1, (1 << 30) // (max(B, 1) * H * d * K_max * 4))
+    cb = rearrange(codebooks, "h d k -> 1 h 1 d k")  # broadcasts over (B, S)
+    out = torch.empty_like(transformed)
+    for s0 in range(0, S, chunk_S):
+        s1 = min(s0 + chunk_S, S)
+        chunk = transformed[:, :, s0:s1]                            # (B, H, c, d)
+        idx = (chunk.unsqueeze(-1) - cb).abs().argmin(-1)           # (B, H, c, d)
+        out[:, :, s0:s1] = torch.take_along_dim(cb, idx.unsqueeze(-1), dim=-1).squeeze(-1)
+
+    # Inverse map.
+    recon = _per_head_bmm(out, inverse_maps, B, S)
+    return recon.to(states.dtype)
+
+
+def stack_per_head(comps: list["PerCoordCompressor"]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Stack n_heads PerCoordCompressors into (forward_maps, inverse_maps, codebooks).
+
+    Codebooks are padded along K_max to the per-layer max with +inf in unused
+    slots so argmin naturally skips them.
+    """
+    d = comps[0].d
+    K_max = max(int(c.codebooks_padded.shape[1]) for c in comps)
+    cb = torch.full((len(comps), d, K_max), float("inf"))
+    for h, c in enumerate(comps):
+        k = c.codebooks_padded.shape[1]
+        cb[h, :, :k] = c.codebooks_padded
+    fwd = torch.stack([c.forward_map for c in comps], dim=0)
+    inv = torch.stack([c.inverse_map for c in comps], dim=0)
+    return fwd, inv, cb
 
 
 def round_bits_to_integer(bits: torch.Tensor, total_bits: int | None = None) -> torch.Tensor:

@@ -29,11 +29,17 @@ class TurboQuantPress(BasePress):
     residual_window: int = 0            # decode managed via compress_decode flag
     seed: int = 42
     compress_decode: bool = False
+    layer0_full_precision: bool = False  # skip K/V quantization at layer 0 (anomalous attention sink)
     compression_ratio: float = 0.0
 
     _tq: dict = field(default_factory=dict, init=False, repr=False)
 
     def post_init_from_model(self, model):
+        # Idempotent: kvpress's BasePress.__call__ context manager calls this on
+        # every pipeline invocation; rebuilding 32 TurboQuantV3 objects each
+        # time wastes ~seconds × #context_groups per job.
+        if self._tq:
+            return
         head_dim = getattr(model.config, "head_dim", None)
         if head_dim is None:
             head_dim = model.config.hidden_size // model.config.num_attention_heads
@@ -53,6 +59,8 @@ class TurboQuantPress(BasePress):
 
     def compress(self, module, hidden_states, keys, values, attentions, kwargs):
         L = module.layer_idx
+        if L == 0 and self.layer0_full_precision:
+            return keys, values
         tq = self._tq[L]
         device = keys.device
         # MSECompressor inside TurboQuantV3 holds Pi/centroids on CPU; move to compress device.

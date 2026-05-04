@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-"""Calibrate Σ_V on a 24-bundle: per-(layer, kv_head) second-moment of V on prefill tokens."""
+"""Calibrate V statistics on a 24-bundle: per-(layer, kv_head) mean μ_V and
+centered covariance Cov[V] on prefill tokens.
+
+Saved fields (v_stats.pt):
+  - cov_v: (n_layers, n_kv_heads, d, d), centered Cov[V] = E[v v^T] - μ_v μ_v^T
+  - mu_v:  (n_layers, n_kv_heads, d),    E[v]
+  - sigma_v: (n_layers, n_kv_heads, d, d), uncentered E[v v^T]  (kept for
+    backward compat — old consumers fall back to this if mu_v / cov_v missing)
+
+The earlier version saved only `sigma_v` (uncentered), which biased the
+eigenbasis toward μ_v's direction. Mean-centering moves Lloyd-Max's zero-mean
+unit-Gaussian centroids onto the actual data distribution.
+"""
 from __future__ import annotations
 
 import argparse
@@ -27,7 +39,8 @@ def main() -> None:
 
     print(f"Found {len(example_files)} example files in {examples_dir}")
 
-    sum_outer = None  # (n_layers, n_kv_heads, head_dim, head_dim)
+    sum_outer = None     # Σ_t v_t v_t^T per (layer, kv_head), shape (L, H, D, D)
+    sum_v = None          # Σ_t v_t per (layer, kv_head), shape (L, H, D)
     total_count = 0
 
     for i, ex_file in enumerate(example_files):
@@ -36,31 +49,40 @@ def main() -> None:
         prompt_length = int(b["prompt_length"])
         if args.prefill_only:
             v = v[:, :, :prompt_length, :]
-        # Per-(layer, kv_head) outer product accumulated over tokens
         outer = torch.einsum("lhsd,lhse->lhde", v, v)
+        sum_v_i = v.sum(dim=2)  # (L, H, D)
         if sum_outer is None:
             sum_outer = outer.clone()
+            sum_v = sum_v_i.clone()
         else:
             sum_outer += outer
+            sum_v += sum_v_i
         total_count += v.shape[2]
         print(f"  [{i+1}/{len(example_files)}] {ex_file.name}: {v.shape[2]} tokens (cum {total_count})")
 
-    sigma_v = sum_outer / total_count  # (n_layers, n_kv_heads, head_dim, head_dim)
+    sigma_v = sum_outer / total_count                            # E[v v^T] (uncentered)
+    mu_v = sum_v / total_count                                   # E[v]
+    cov_v = sigma_v - torch.einsum("lhd,lhe->lhde", mu_v, mu_v)  # centered Cov[v]
     n_layers, n_kv_heads, d, _ = sigma_v.shape
 
-    # Sanity: PSD-ness via min eigenvalue
-    eigs = torch.linalg.eigvalsh(sigma_v)  # (n_layers, n_kv_heads, head_dim)
-    min_eig = eigs.min().item()
-    max_eig = eigs.max().item()
-    print(f"sigma_v shape: {tuple(sigma_v.shape)}")
-    print(f"eigenvalue range: [{min_eig:.4e}, {max_eig:.4e}]")
-    if min_eig < -1e-3:
-        print(f"WARNING: min eigenvalue is negative ({min_eig:.4e}); numerical issue?")
+    # PSD sanity on both moments.
+    eigs_sigma = torch.linalg.eigvalsh(sigma_v)
+    eigs_cov = torch.linalg.eigvalsh(cov_v)
+    print(f"sigma_v (uncentered) shape: {tuple(sigma_v.shape)}")
+    print(f"  uncentered eigenvalue range: [{eigs_sigma.min().item():.4e}, {eigs_sigma.max().item():.4e}]")
+    print(f"  centered Cov[v] eigenvalue range: [{eigs_cov.min().item():.4e}, {eigs_cov.max().item():.4e}]")
+    print(f"  ‖μ_v‖² stats per (L,H): min={(mu_v.norm(dim=-1) ** 2).min().item():.3e}, "
+          f"median={(mu_v.norm(dim=-1) ** 2).median().item():.3e}, "
+          f"max={(mu_v.norm(dim=-1) ** 2).max().item():.3e}")
+    if eigs_cov.min().item() < -1e-3:
+        print(f"WARNING: centered Cov[v] min eigenvalue is negative ({eigs_cov.min().item():.4e}); numerical issue?")
 
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     torch.save({
-        "sigma_v": sigma_v,
+        "cov_v": cov_v,             # centered — preferred for new consumers
+        "mu_v": mu_v,
+        "sigma_v": sigma_v,         # uncentered — kept for backward compat
         "metadata": {
             "n_layers": n_layers,
             "n_kv_heads": n_kv_heads,
@@ -69,8 +91,11 @@ def main() -> None:
             "total_token_count": total_count,
             "prefill_only": args.prefill_only,
             "bundle": str(bundle),
-            "min_eigenvalue": min_eig,
-            "max_eigenvalue": max_eig,
+            "uncentered_min_eigenvalue": eigs_sigma.min().item(),
+            "uncentered_max_eigenvalue": eigs_sigma.max().item(),
+            "centered_min_eigenvalue": eigs_cov.min().item(),
+            "centered_max_eigenvalue": eigs_cov.max().item(),
+            "version": 2,           # bumped from implicit v1 (sigma_v only)
         },
     }, out_path)
     print(f"Wrote {out_path}")
