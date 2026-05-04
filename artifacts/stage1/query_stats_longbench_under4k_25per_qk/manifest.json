@@ -1,0 +1,1618 @@
+{
+  "config": {
+    "configs": "qasper,hotpotqa,passage_retrieval_en",
+    "dataset": "longbench-e",
+    "device_map": "auto",
+    "dry_run": false,
+    "dtype": "float16",
+    "max_tokens": 12000,
+    "min_tokens": 4000,
+    "model": "Qwen/Qwen3-8B",
+    "num_examples_per_config": 25,
+    "output_dir": "artifacts/stage1/query_stats_longbench_under4k_25per_qk",
+    "resume": true,
+    "seed": 42
+  },
+  "configs": [
+    "qasper",
+    "hotpotqa",
+    "passage_retrieval_en"
+  ],
+  "dataset": "longbench-e",
+  "examples": [
+    {
+      "captured_length": 5436,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_000.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "SVM, No-Answer Baseline (NA) , Word Count Baseline, Human Performance",
+          "No-Answer Baseline (NA), Word Count Baseline, Human Performance"
+        ],
+        "length": 3855,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5436,
+      "row_index": 58,
+      "total_length": 5436
+    },
+    {
+      "captured_length": 4526,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_001.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "FoxNews, CNN, ESPN, New York Times, Time magazine, Huffington Post Weird News, The Guardian, Cartoon Network, Cooking Light, Home Cooking Adventure, Justin Bieber, Nickelodeon, Spongebob, Disney",
+          "FoxNews, CNN, ESPN, New York Times, Time magazine, Huffington Post Weird News, The Guardian, Cartoon Network, Cooking Light, Home Cooking Adventure, Justin Bieber, Nickelodeon, Spongebob, Disney."
+        ],
+        "length": 3411,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 4526,
+      "row_index": 0,
+      "total_length": 4526
+    },
+    {
+      "captured_length": 4373,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_002.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "No",
+          "No"
+        ],
+        "length": 3158,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 4373,
+      "row_index": 35,
+      "total_length": 4373
+    },
+    {
+      "captured_length": 9868,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_003.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "by answering always YES (in batch 2 and 3) "
+        ],
+        "length": 6817,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 9868,
+      "row_index": 157,
+      "total_length": 9868
+    },
+    {
+      "captured_length": 6826,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_004.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "probabilistic model",
+          "Logistic Regression, Multilayer Perceptron"
+        ],
+        "length": 4475,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6826,
+      "row_index": 165,
+      "total_length": 6826
+    },
+    {
+      "captured_length": 10392,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_005.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Yes",
+          "Yes"
+        ],
+        "length": 7837,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 10392,
+      "row_index": 114,
+      "total_length": 10392
+    },
+    {
+      "captured_length": 6419,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_006.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Yes",
+          "Unanswerable"
+        ],
+        "length": 4770,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6419,
+      "row_index": 183,
+      "total_length": 6419
+    },
+    {
+      "captured_length": 6642,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_007.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Yes",
+          "Yes"
+        ],
+        "length": 4592,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6642,
+      "row_index": 186,
+      "total_length": 6642
+    },
+    {
+      "captured_length": 4839,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_008.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Maximum Entropy, Weighted Finite State Transducer (WFST),  support vector machines (SVM), conditional random fields (CRF)",
+          "Maximum matching, Hidden Markov model , Maximum Entropy, Conditional Random Fields , Support Vector Machines"
+        ],
+        "length": 3471,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 4839,
+      "row_index": 71,
+      "total_length": 4839
+    },
+    {
+      "captured_length": 7133,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_009.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Conditional Copy (CC) model ",
+          "delayed copy model (DEL),  template system (TEM), conditional copy (CC), NCP+CC (NCP)"
+        ],
+        "length": 4746,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 7133,
+      "row_index": 163,
+      "total_length": 7133
+    },
+    {
+      "captured_length": 4473,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_010.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "They use text transcription.",
+          "both"
+        ],
+        "length": 3198,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 4473,
+      "row_index": 9,
+      "total_length": 4473
+    },
+    {
+      "captured_length": 5671,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_011.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Yes"
+        ],
+        "length": 4073,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5671,
+      "row_index": 142,
+      "total_length": 5671
+    },
+    {
+      "captured_length": 6398,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_012.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "average unique predictions, illustrate the difference of predictions between our proposed models, we show an example chosen from the KP20k validation set"
+        ],
+        "length": 4576,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6398,
+      "row_index": 139,
+      "total_length": 6398
+    },
+    {
+      "captured_length": 5540,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_013.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "create fair systems",
+          " broadcast recordings are also a valuable source of data for the speech processing community, recent works uncovering gender bias in several natural language processing (NLP) tools"
+        ],
+        "length": 4063,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5540,
+      "row_index": 172,
+      "total_length": 5540
+    },
+    {
+      "captured_length": 5995,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_014.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "The neural projector must be invertible.",
+          "we constrain our neural projector with two requirements: (1) INLINEFORM0 and (2) INLINEFORM1 exists"
+        ],
+        "length": 4323,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5995,
+      "row_index": 164,
+      "total_length": 5995
+    },
+    {
+      "captured_length": 10722,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_015.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Unanswerable"
+        ],
+        "length": 8508,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 10722,
+      "row_index": 201,
+      "total_length": 10722
+    },
+    {
+      "captured_length": 5860,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_016.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "59.4% on wikipedia dataset, 93.4% on peer-reviewed archive AI papers, 77.1%  on peer-reviewed archive Computation and Language papers, and 79.9% on peer-reviewed archive Machine Learning papers"
+        ],
+        "length": 4203,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5860,
+      "row_index": 190,
+      "total_length": 5860
+    },
+    {
+      "captured_length": 6890,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_017.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "answer questions by obtaining information from KB tuples ",
+          "hierarchical matching between questions and relations with residual learning"
+        ],
+        "length": 4527,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6890,
+      "row_index": 129,
+      "total_length": 6890
+    },
+    {
+      "captured_length": 10723,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_018.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "No",
+          "No"
+        ],
+        "length": 8509,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 10723,
+      "row_index": 216,
+      "total_length": 10723
+    },
+    {
+      "captured_length": 10723,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_019.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Domain experts and fellow researchers can provide feedback on questions and help with dynamically revising them., connect to multiple disciplines, dual use",
+          "Modeling considerations:  the variables (both predictors and outcomes)  are rarely simply binary or categorical;  using a particular classification scheme means deciding which variations are visible,; Supervised and unsupervised learning are the most common approaches to learning from data;  the unit of text that we are labeling (or annotating, or coding), either automatic or manual, can sometimes be different than one's final unit of analysis."
+        ],
+        "length": 8530,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 10723,
+      "row_index": 200,
+      "total_length": 10723
+    },
+    {
+      "captured_length": 6490,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_020.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "grammatical, spelling and word order errors",
+          "spelling, word order and grammatical errors"
+        ],
+        "length": 4579,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6490,
+      "row_index": 150,
+      "total_length": 6490
+    },
+    {
+      "captured_length": 6969,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_021.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Influential leaders are more likely to change their profile attributes than their followers; the leaders do not change their usernames, while their followers change their usernames a lot; the leaders  tend to make new changes related to previous attribute values, while the followers make comparatively less related changes to previous attribute values."
+        ],
+        "length": 5092,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 6969,
+      "row_index": 193,
+      "total_length": 6969
+    },
+    {
+      "captured_length": 5432,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_022.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Bert + Unanswerable",
+          "CNN, BERT"
+        ],
+        "length": 3845,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 5432,
+      "row_index": 11,
+      "total_length": 5432
+    },
+    {
+      "captured_length": 7976,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_023.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "the attention heads in the proposed adaptively sparse Transformer can specialize more and with higher confidence",
+          "We introduce sparse attention into the Transformer architecture"
+        ],
+        "length": 4902,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 7976,
+      "row_index": 116,
+      "total_length": 7976
+    },
+    {
+      "captured_length": 7390,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_024.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "attributes are determined by human viewers and their impressions of the characters, and are correlated with human-like characteristics"
+        ],
+        "length": 5136,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 0,
+      "prompt_length": 7390,
+      "row_index": 145,
+      "total_length": 7390
+    },
+    {
+      "captured_length": 4806,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_025.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Cleveland, Ohio"
+        ],
+        "length": 2928,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 4806,
+      "row_index": 52,
+      "total_length": 4806
+    },
+    {
+      "captured_length": 9765,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_026.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "no"
+        ],
+        "length": 6184,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 9765,
+      "row_index": 146,
+      "total_length": 9765
+    },
+    {
+      "captured_length": 5396,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_027.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "the Netherlands"
+        ],
+        "length": 3287,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 5396,
+      "row_index": 24,
+      "total_length": 5396
+    },
+    {
+      "captured_length": 5789,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_028.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Oldham County, Kentucky"
+        ],
+        "length": 3650,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 5789,
+      "row_index": 8,
+      "total_length": 5789
+    },
+    {
+      "captured_length": 6758,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_029.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "729 at the 2010 census"
+        ],
+        "length": 4198,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 6758,
+      "row_index": 114,
+      "total_length": 6758
+    },
+    {
+      "captured_length": 6159,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_030.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "lime"
+        ],
+        "length": 4196,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 6159,
+      "row_index": 125,
+      "total_length": 6159
+    },
+    {
+      "captured_length": 11396,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_031.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "National Mall"
+        ],
+        "length": 7951,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 11396,
+      "row_index": 166,
+      "total_length": 11396
+    },
+    {
+      "captured_length": 8620,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_032.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Newfoundland and Labrador"
+        ],
+        "length": 6263,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 8620,
+      "row_index": 157,
+      "total_length": 8620
+    },
+    {
+      "captured_length": 5171,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_033.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "professional tennis player."
+        ],
+        "length": 3035,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 5171,
+      "row_index": 75,
+      "total_length": 5171
+    },
+    {
+      "captured_length": 5599,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_034.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "yes"
+        ],
+        "length": 3216,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 5599,
+      "row_index": 60,
+      "total_length": 5599
+    },
+    {
+      "captured_length": 5432,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_035.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Costa"
+        ],
+        "length": 3552,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 5432,
+      "row_index": 70,
+      "total_length": 5432
+    },
+    {
+      "captured_length": 7498,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_036.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "August Heckscher"
+        ],
+        "length": 5267,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 7498,
+      "row_index": 194,
+      "total_length": 7498
+    },
+    {
+      "captured_length": 10897,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_037.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "1963"
+        ],
+        "length": 7077,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 10897,
+      "row_index": 185,
+      "total_length": 10897
+    },
+    {
+      "captured_length": 4620,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_038.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "12+3/4 mi northeast of Liverpool"
+        ],
+        "length": 2867,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 4620,
+      "row_index": 68,
+      "total_length": 4620
+    },
+    {
+      "captured_length": 6611,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_039.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "American theater producer and director, playwright, screenwriter"
+        ],
+        "length": 4512,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 6611,
+      "row_index": 136,
+      "total_length": 6611
+    },
+    {
+      "captured_length": 9484,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_040.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "R-Point"
+        ],
+        "length": 6289,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 9484,
+      "row_index": 164,
+      "total_length": 9484
+    },
+    {
+      "captured_length": 11791,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_041.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Andrew Lloyd Webber and Tim Rice"
+        ],
+        "length": 7659,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 11791,
+      "row_index": 182,
+      "total_length": 11791
+    },
+    {
+      "captured_length": 10172,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_042.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "independent ghost-entities"
+        ],
+        "length": 7110,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 10172,
+      "row_index": 126,
+      "total_length": 10172
+    },
+    {
+      "captured_length": 8650,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_043.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Canadian-American Association of Professional Baseball"
+        ],
+        "length": 5794,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 8650,
+      "row_index": 159,
+      "total_length": 8650
+    },
+    {
+      "captured_length": 10404,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_044.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "1926"
+        ],
+        "length": 6616,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 10404,
+      "row_index": 156,
+      "total_length": 10404
+    },
+    {
+      "captured_length": 11208,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_045.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "44,300"
+        ],
+        "length": 7261,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 11208,
+      "row_index": 195,
+      "total_length": 11208
+    },
+    {
+      "captured_length": 8825,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_046.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Warrington Town Football Club"
+        ],
+        "length": 5861,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 8825,
+      "row_index": 130,
+      "total_length": 8825
+    },
+    {
+      "captured_length": 11302,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_047.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "yes"
+        ],
+        "length": 7628,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 11302,
+      "row_index": 122,
+      "total_length": 11302
+    },
+    {
+      "captured_length": 10580,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_048.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "three Macy's stores, Sears, Nordstrom, Bloomingdale's, and Saks Fifth Avenue"
+        ],
+        "length": 7063,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 10580,
+      "row_index": 154,
+      "total_length": 10580
+    },
+    {
+      "captured_length": 9553,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_049.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "George Cayley"
+        ],
+        "length": 6579,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 0,
+      "prompt_length": 9553,
+      "row_index": 184,
+      "total_length": 9553
+    },
+    {
+      "captured_length": 5312,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_050.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 8"
+        ],
+        "length": 3925,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 5312,
+      "row_index": 58,
+      "total_length": 5312
+    },
+    {
+      "captured_length": 5068,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_051.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 4"
+        ],
+        "length": 3565,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 5068,
+      "row_index": 86,
+      "total_length": 5068
+    },
+    {
+      "captured_length": 4598,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_052.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 9"
+        ],
+        "length": 3120,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4598,
+      "row_index": 85,
+      "total_length": 4598
+    },
+    {
+      "captured_length": 4518,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_053.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 6"
+        ],
+        "length": 3239,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4518,
+      "row_index": 47,
+      "total_length": 4518
+    },
+    {
+      "captured_length": 8896,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_054.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 8"
+        ],
+        "length": 6315,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 8896,
+      "row_index": 181,
+      "total_length": 8896
+    },
+    {
+      "captured_length": 10124,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_055.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 22"
+        ],
+        "length": 7254,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 10124,
+      "row_index": 101,
+      "total_length": 10124
+    },
+    {
+      "captured_length": 9091,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_056.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 7"
+        ],
+        "length": 6436,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 9091,
+      "row_index": 113,
+      "total_length": 9091
+    },
+    {
+      "captured_length": 9736,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_057.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 24"
+        ],
+        "length": 6938,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 9736,
+      "row_index": 114,
+      "total_length": 9736
+    },
+    {
+      "captured_length": 11160,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_058.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 5"
+        ],
+        "length": 8207,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 11160,
+      "row_index": 263,
+      "total_length": 11160
+    },
+    {
+      "captured_length": 11116,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_059.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 23"
+        ],
+        "length": 8248,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 11116,
+      "row_index": 203,
+      "total_length": 11116
+    },
+    {
+      "captured_length": 6306,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_060.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 6"
+        ],
+        "length": 4480,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 6306,
+      "row_index": 194,
+      "total_length": 6306
+    },
+    {
+      "captured_length": 6076,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_061.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 9"
+        ],
+        "length": 4417,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 6076,
+      "row_index": 155,
+      "total_length": 6076
+    },
+    {
+      "captured_length": 4818,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_062.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 5"
+        ],
+        "length": 3396,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4818,
+      "row_index": 76,
+      "total_length": 4818
+    },
+    {
+      "captured_length": 4483,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_063.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 3"
+        ],
+        "length": 3315,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4483,
+      "row_index": 2,
+      "total_length": 4483
+    },
+    {
+      "captured_length": 7504,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_064.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 3"
+        ],
+        "length": 5287,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 7504,
+      "row_index": 182,
+      "total_length": 7504
+    },
+    {
+      "captured_length": 11276,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_065.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 14"
+        ],
+        "length": 8313,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 11276,
+      "row_index": 241,
+      "total_length": 11276
+    },
+    {
+      "captured_length": 9412,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_066.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 2"
+        ],
+        "length": 6907,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 9412,
+      "row_index": 153,
+      "total_length": 9412
+    },
+    {
+      "captured_length": 5005,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_067.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 3"
+        ],
+        "length": 3578,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 5005,
+      "row_index": 63,
+      "total_length": 5005
+    },
+    {
+      "captured_length": 11905,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_068.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 26"
+        ],
+        "length": 8638,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 11905,
+      "row_index": 234,
+      "total_length": 11905
+    },
+    {
+      "captured_length": 4746,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_069.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 1"
+        ],
+        "length": 3428,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4746,
+      "row_index": 3,
+      "total_length": 4746
+    },
+    {
+      "captured_length": 4080,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_070.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 2"
+        ],
+        "length": 2844,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4080,
+      "row_index": 14,
+      "total_length": 4080
+    },
+    {
+      "captured_length": 5015,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_071.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 9"
+        ],
+        "length": 3599,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 5015,
+      "row_index": 37,
+      "total_length": 5015
+    },
+    {
+      "captured_length": 11624,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_072.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 19"
+        ],
+        "length": 8579,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 11624,
+      "row_index": 201,
+      "total_length": 11624
+    },
+    {
+      "captured_length": 4560,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_073.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 10"
+        ],
+        "length": 3389,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 4560,
+      "row_index": 77,
+      "total_length": 4560
+    },
+    {
+      "captured_length": 6777,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_074.pt",
+      "generated_text": "",
+      "max_new_tokens_used": 0,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 7"
+        ],
+        "length": 5064,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 0,
+      "prompt_length": 6777,
+      "row_index": 172,
+      "total_length": 6777
+    }
+  ],
+  "num_examples": 75
+}

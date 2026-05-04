@@ -145,6 +145,53 @@ a regression came from K or V. Phases 1A (V-only) + 1B (K-only) isolate them.
     `rel_F1(combined) ≥ rel_F1(K-only) × rel_F1(V-only) − 0.05` held at every
     K. Logs in `experiments/stage1/logs/phase1c/` (3 OKs).
 
+12. **K-basis calibration stability (Phase 1D, added).**
+    `experiments/stage1/scripts/run_phase1d_k_basis_stability.py` is an offline
+    experiment to answer how much calibration data is needed before the K-side
+    `R_sym` basis stabilizes and whether a basis calibrated on one task
+    transfers to another. It recomputes Q/K second moments using the same
+    Sigma_Q convention as JointQK, fits `R_sym` from progressively larger
+    calibration subsets, and evaluates:
+    - top-r subspace overlap against full-task and pooled references,
+    - water-fill bit-allocation L1 drift at K∈{2,3,4},
+    - closed-form Q-weighted K-distortion regret on each eval task.
+
+    The initial 24-example run (`8/task`) was useful but not conclusive. A
+    larger prefill-only Q/K bundle now exists with `25/task`:
+    `artifacts/stage1/query_stats_longbench_under4k_25per_qk/` (75 examples,
+    563,398 total prefill tokens). It stores only `q_post` and `k_post` to avoid
+    unused `q_pre`/`V` storage. The expanded Phase 1D run uses
+    `n ∈ {1,2,4,8,16,25}`, stratified pooled calibration, and leave-one-task-out
+    calibration (`loo_excl_*`) for OOD transfer.
+
+    Launchers:
+    ```bash
+    bash experiments/stage1/scripts/launch_phase1d_k_basis_stability.sh --gpu 6
+    bash experiments/stage1/scripts/launch_phase1d_k_basis_stability.sh \
+      --gpus 0,1,2,3,4,5,6 \
+      --bundle artifacts/stage1/query_stats_longbench_under4k_25per_qk \
+      --output-dir artifacts/stage1/v_method_study/k_basis_stability_25per_loo \
+      --sample-sizes 1,2,4,8,16,25 \
+      --include-loo \
+      --moments-cache artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_moments_cache.pt
+    ```
+
+    Outputs:
+    - `artifacts/stage1/v_method_study/k_basis_stability/phase1d_k_basis_stability_rows.jsonl`
+    - `artifacts/stage1/v_method_study/k_basis_stability/phase1d_k_basis_stability_summary.json`
+    - `artifacts/stage1/v_method_study/k_basis_stability/phase1d_k_basis_stability_summary.md`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_k_basis_stability_rows.jsonl`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_k_basis_stability_summary.md`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/figures/*.png`
+
+    Current takeaway from the 25/task run: pooled-stratified calibration shows
+    clear convergence by `8-16` examples/task on pooled eval (`K=3` regret
+    `0.0142` at `n=8`, `0.0043` at `n=16`). Same-task bases continue to improve
+    with more examples, but single-task bases do not fully generalize across
+    tasks. Leave-one-task-out improves with calibration size, yet held-out
+    Qasper remains the hardest OOD case (`loo_excl_qasper_e`, eval qasper,
+    K=3 regret about `0.1345` even at `25` examples per non-held-out task).
+
 **Results / decision artifacts:**
 
 ```
@@ -451,8 +498,10 @@ This is judged after the final aggregators run.
 - `experiments/stage1/scripts/calibrate_sigma_v.py`
 - `experiments/stage1/scripts/precompute_newbases.py`
 - `experiments/stage1/scripts/launch_phase1ab.sh`, `launch_phase1c.sh`,
+  `launch_phase1d_k_basis_stability.sh`,
   `launch_llama_e3_e5.sh`, `launch_phase6_decode_scope.sh`,
   `launch_phase7_longbench.sh`, `launch_phase7_ruler.sh`
+- `experiments/stage1/scripts/run_phase1d_k_basis_stability.py`
 - `experiments/stage1/scripts/_phase6_chain.py`, `_phase7_chain.py`
 - `experiments/stage1/scripts/make_cross_model_chart.py`
 - `experiments/stage1/toolkit/v_compressor_adapter.py`,

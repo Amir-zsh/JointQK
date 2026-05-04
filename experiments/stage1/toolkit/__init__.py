@@ -11,6 +11,7 @@ if str(_KVPRESS_ROOT) not in sys.path:
 from experiments.stage1.toolkit.capture import (
     capture_rope_qk,
     run_generation_and_capture,
+    run_prefill_qk_post_capture,
     run_prefill_and_capture,
 )
 from experiments.stage1.toolkit.eval import (
@@ -89,6 +90,7 @@ __all__ = [
     "repeat_kv_states",
     "round_bits_to_integer",
     "run_generation_and_capture",
+    "run_prefill_qk_post_capture",
     "run_prefill_and_capture",
     "save_json",
     "solve_lloyd_max",

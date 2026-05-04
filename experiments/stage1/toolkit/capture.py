@@ -74,6 +74,53 @@ def _extract_cache_kv(cache, n_layers: int) -> tuple[torch.Tensor, torch.Tensor]
     return torch.stack(keys, dim=0), torch.stack(values, dim=0)
 
 
+def _extract_cache_keys(cache, n_layers: int) -> torch.Tensor:
+    keys = []
+    for layer in range(n_layers):
+        layer_keys = cache.layers[layer].keys.detach().to("cpu", dtype=torch.float16)
+        keys.append(layer_keys.squeeze(0))
+    return torch.stack(keys, dim=0)
+
+
+@torch.inference_mode()
+def run_prefill_qk_post_capture(
+    model: torch.nn.Module,
+    input_ids: torch.Tensor,
+) -> dict[str, torch.Tensor | int]:
+    """Capture prefill-only post-RoPE Q and K tensors.
+
+    This is the minimal artifact needed for K-basis calibration studies. It avoids
+    decode generation and does not materialize V cache tensors on CPU.
+    """
+    device = get_model_device(model)
+    if input_ids.dim() != 2 or input_ids.shape[0] != 1:
+        raise ValueError(f"Expected input_ids shape (1, L); got {tuple(input_ids.shape)}")
+    input_ids = input_ids.to(device)
+    prompt_length = int(input_ids.shape[-1])
+    n_layers = int(model.config.num_hidden_layers)
+
+    with capture_rope_qk(model) as (_q_pre_chunks, q_post_chunks, _k_pre_chunks, _k_post_chunks):
+        outputs = model(input_ids=input_ids, use_cache=True)
+
+    q_post = _assemble_per_layer(q_post_chunks, n_layers)
+    k_post_cache = _extract_cache_keys(outputs.past_key_values, n_layers)
+    captured_length = int(q_post.shape[2])
+    if captured_length != prompt_length or int(k_post_cache.shape[2]) != prompt_length:
+        raise RuntimeError(
+            f"Prefill capture length mismatch: prompt={prompt_length}, "
+            f"q_post={captured_length}, k_post={int(k_post_cache.shape[2])}"
+        )
+
+    return {
+        "q_post": q_post,
+        "k_post": k_post_cache,
+        "prompt_length": prompt_length,
+        "total_length": prompt_length,
+        "captured_length": captured_length,
+        "generated_token_ids": torch.empty(0, dtype=torch.long),
+    }
+
+
 @torch.inference_mode()
 def run_generation_and_capture(
     model: torch.nn.Module,

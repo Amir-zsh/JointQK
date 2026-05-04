@@ -24,3 +24,5 @@ experiments/stage1/logs/
 paper/
 turboquant_pytorch
 *.pt.pre_*
+texput.log
+*.partial.json
