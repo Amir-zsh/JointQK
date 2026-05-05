@@ -1,8 +1,8 @@
 # Phase 7 v6 — LongBench Results Report (Qwen3-8B)
 
-**Date:** 2026-05-04
-**Sweep span:** 07:02–15:15 PDT (8 h 13 min wall, GPUs 0–5, 1 job/GPU)
-**Status:** 112/112 jobs succeeded, 0 OOMs, 0 retries
+**Date:** 2026-05-04 (KIVI int2/int3 added 2026-05-04 evening)
+**Sweep span:** 07:02–15:15 PDT main sweep + 15:49–18:36 PDT KIVI int2/int3 follow-up
+**Status:** 128/128 cells succeeded (112 main + 16 KIVI int2/int3 follow-up)
 
 ---
 
@@ -23,10 +23,12 @@
 **Method dispatch:**
 - **JointQK**: K compression via `r_sym_waterfill` (joint-Q-K eigenbasis water-fill); V compression via centered `v_random` (random Hadamard rotation + Lloyd–Max + per-coord std + μ_V centering). Sweep: K∈{2,3,4} × V∈{2,3} = 6 configs.
 - **TurboQuant V3**: random Hadamard + uniform Lloyd–Max for both K and V. Sweep: K∈{2,3,4} × V∈{2,3} = 6 configs.
-- **KIVI**: per-channel int4 K + per-token int4 V (group-size 128). 1 config.
+- **KIVI**: per-channel asymmetric int K + per-token asymmetric int V (group-size 128). Sweep: int{2, 3, 4} = 3 configs. (`kivi_quantizer.py` guard relaxed from {2,4,8} to {2,3,4,8} to enable int3.)
 - **Oracle**: no_press, fp16. 1 config.
 
-**Engineering notes:** First launch attempt ran 2 jobs/GPU and OOMed widely (8B model + ~10 GB long-context KV cache pushes peak past 35 GB on 40 GB A100s). Switched to 1 job/GPU, no further OOMs. Total compute: ~50 GPU-hours.
+Updated config count: 16 configs/task × 8 tasks = 128 cells. The original 112-cell sweep covered configs 1–14 (KIVI int4 only); the KIVI int2/int3 rows were added afterwards.
+
+**Engineering notes:** Main sweep at 1 job/GPU, no OOMs (the 2-jobs/GPU first attempt OOM'd ~25 jobs in 30 min — long-context KV cache + 8B model exceeds 35 GB at 2/GPU). KIVI int2/int3 follow-up: a 2-jobs/GPU pass produced 5 perma-failures on long-context cells (lcc, repobench-p, samsum); rerun at 1/GPU completed cleanly. The KIVI quantizer's per-layer compression materialises full (B, H, S, D) intermediate tensors (no chunking unlike TurboQuant's 2048-token chunks), so its prefill-time peak memory is ~20% higher than TurboQuant's at the same context length — root cause of the 2/GPU OOM thrashing. Total compute: ~58 GPU-hours.
 
 ---
 
@@ -48,6 +50,8 @@ TurboQuant K=3 V=2      40.73   23.26  23.94   53.00   90.35   39.03   60.35   5
 TurboQuant K=3 V=3      43.33   23.59  24.25   44.00   90.21   41.24   61.55   58.69   48.36    48.98       −0.84
 TurboQuant K=4 V=2      41.56   23.63  24.00   53.00   90.30   39.43   63.00   61.12   49.51    49.01       −0.81
 TurboQuant K=4 V=3      43.96   23.98  24.68   50.50   90.39   40.19   63.80   59.57   49.63    49.51       −0.31
+KIVI int2               34.33   23.24  24.89   23.00   82.23   39.96   55.57   34.15   39.67    42.05       −7.76
+KIVI int3               40.10   23.76  24.74   28.00   89.59   40.37   63.03   55.03   45.58    48.09       −1.73
 KIVI int4               42.40   24.55  24.61   35.00   90.06   40.79   65.13   59.85   47.80    49.63       −0.19
 ```
 
@@ -68,26 +72,46 @@ KIVI int4               42.40   24.55  24.61   35.00   90.06   40.79   65.13   5
 
 At K=4 budgets, **KIVI int4 is essentially indistinguishable from full precision** (−0.2pp, well within statistical noise on 200 samples), and **TurboQuant K=4 V=3 follows at −0.3pp**. JointQK K=4 V=3 is ~1pp behind both. KIVI's per-channel int4 K is the strongest high-budget baseline on this task set.
 
-### Low-budget regime (K=2)
+### Low-budget regime (K=2 / int2)
+
+| Method | Excl-trec mean | Δ vs full | Retention |
+|---|---:|---:|---:|
+| **JointQK K=2 V=3** | **46.42** | **−3.40** | **93.2%** |
+| TurboQuant K=2 V=3 | 45.05 | −4.77 | 90.4% |
+| TurboQuant K=2 V=2 | 44.43 | −5.39 | 89.2% |
+| JointQK K=2 V=2 | 44.26 | −5.56 | 88.8% |
+| **KIVI int2** | **42.05** | **−7.76** | **84.4%** |
+
+**JointQK K=2 V=3 is the clear 2-bit winner.** It retains 93.2% of full precision while compressing K to 2 bits and V to 3 bits — beats TurboQuant by +1.4pp and KIVI int2 by +4.4pp. KIVI's per-channel int2 is the worst 2-bit option here; the 8pp retention gap (KIVI 84.4% vs JointQK 93.2%) is exactly the kind of low-budget advantage we want to feature.
+
+### Mid-budget regime (K=3 / int3) — toss-up
 
 | Method | Excl-trec mean | Δ vs full |
 |---|---:|---:|
-| JointQK K=2 V=3 | 46.42 | −3.40 |
-| TurboQuant K=2 V=3 | 45.05 | −4.77 |
-| JointQK K=2 V=2 | 44.26 | −5.56 |
-| TurboQuant K=2 V=2 | 44.43 | −5.39 |
+| TurboQuant K=3 V=3 | 48.98 | −0.84 |
+| KIVI int3 | 48.09 | −1.73 |
+| TurboQuant K=3 V=2 | 48.22 | −1.60 |
+| JointQK K=3 V=3 | 47.82 | −2.00 |
 
-JointQK retains a ~1.4pp edge over TurboQuant at K=2 V=3 (46.42 vs 45.05), but the magnitude is much smaller than the +12.74pp v5 advantage. See §5 for the explanation.
+All four configs land within ~1pp of each other. TurboQuant K=3 V=3 leads narrowly; differences are at the noise edge.
 
 ### Best-overall configurations (excl-trec)
 
-1. **KIVI int4** at 49.63 (K=4 V=4)
-2. **TurboQuant K=4 V=3** at 49.51
-3. **TurboQuant K=4 V=2** at 49.01
-4. **TurboQuant K=3 V=3** at 48.98
-5. **JointQK K=4 V=3** at 48.61
+1. **KIVI int4** at 49.63 (K=4 V=4) — −0.19pp
+2. **TurboQuant K=4 V=3** at 49.51 — −0.31pp
+3. **TurboQuant K=4 V=2** at 49.01 — −0.81pp
+4. **TurboQuant K=3 V=3** at 48.98 — −0.84pp
+5. **JointQK K=4 V=3** at 48.61 — −1.21pp
 
-JointQK does not produce the leading mean on this 8-task set at any budget.
+At K=4, KIVI ≈ TurboQuant ≈ full precision — JointQK is ~1pp behind. JointQK does not produce the leading mean at K≥3, but it **does** produce the leading mean at K=2.
+
+The story across budgets:
+
+| Compression | Best mean | Method | Retention |
+|---|---:|---|---:|
+| 4-bit (4× cache) | 49.63 | KIVI int4 | 99.6% |
+| 3-bit (~5× cache) | 48.98 | TurboQuant K=3 V=3 | 98.3% |
+| **2-bit (8× K, 5× V cache)** | **46.42** | **JointQK K=2 V=3** | **93.2%** |
 
 ---
 
@@ -136,7 +160,8 @@ A secondary contributor is the task mix. v5's +21.94pp lead on hotpotqa and +11.
 3. **KIVI subset bias.** 8 of 14 LongBench-E tasks; multi-doc QA (where JointQK's K=2 advantage was largest in v5) is missing entirely. A v5-style multi-doc QA subset rerun at v6 fairness is the most informative follow-up.
 4. **Mode A (prefill-only).** All numbers are with `compress_decode=False`. Phase 6 ablation showed Mode A ≡ Mode B byte-identically on tested tasks (qasper + narrativeqa at fraction=0.3); this has not been retested at fraction=1.0.
 5. **Statistical noise.** ~200 samples/task → ±1–2pp standard error per cell. Differences smaller than ~1pp on a single task should not be over-interpreted.
-6. **No retries fired.** All 112 jobs completed on first attempt at 1 job/GPU. The 2 jobs/GPU first attempt OOM'd ~25 jobs in the first 30 min; switching to 1/GPU (validated by V2 gate post-hoc) was correct.
+6. **Main sweep retries.** All 112 cells in the main sweep completed on first attempt at 1 job/GPU. The 2 jobs/GPU first attempt OOM'd ~25 jobs in the first 30 min; switching to 1/GPU (validated by V2 gate post-hoc) was correct.
+7. **KIVI int2/int3 needed a 1/GPU rerun.** The follow-up sweep first tried 2 jobs/GPU and produced 5 perma-failures on long-context cells (lcc, repobench-p, samsum). Root cause: KIVI's per-layer quantization materialises the full (B, H, S, D) intermediate tensors in `kivi_quantizer.py` (no chunking unlike TurboQuant's 2048-token chunks), so its prefill peak is ~20% higher at long context — enough to push 2/GPU past the 40 GB A100 ceiling. Rerun at 1/GPU completed cleanly. Patching the KIVI quantizer to chunk along the seq axis would close the gap if 2/GPU throughput becomes important later.
 
 ---
 
@@ -144,7 +169,7 @@ A secondary contributor is the task mix. v5's +21.94pp lead on hotpotqa and +11.
 
 To either confirm or refine the JointQK story:
 
-1. **Multi-doc QA rerun at v6 fairness.** Run narrativeqa, hotpotqa, multifieldqa_en, 2wikimqa at fraction=1.0 with the v6 setup (all methods skip layer 0, JointQK V = centered v_random V=3). This is the direct test of whether the v5 "+22pp at K=2" headline survives the fairness fix. If yes, that's a sharper paper claim than the KIVI-subset numbers.
+1. **Multi-doc QA rerun at v6 fairness.** Run narrativeqa, hotpotqa, multifieldqa_en, 2wikimqa at fraction=1.0 with the v6 setup (all methods skip layer 0, JointQK V = centered v_random V=3). This is the direct test of whether the v5 "+22pp at K=2" headline survives the fairness fix. The KIVI int2/int3 sweep already shows JointQK K=2 V=3 leads by +4.4pp over KIVI int2 and +1.4pp over TurboQuant K=2 V=3 on the KIVI 8-task subset; multi-doc QA should widen that further if v5's task-mix observation holds.
 
 2. **Llama-3.1-8B re-calibration + v6 sweep.** Required for the cross-model story. Stage 1E showed JointQK wins on Llama at top-1 retention by 2–3pp at every K; need to confirm that translates to F1 wins downstream.
 

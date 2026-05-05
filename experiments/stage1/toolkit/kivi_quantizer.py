@@ -31,8 +31,8 @@ def kivi_quantize_keys(keys: torch.Tensor, bits: int = 4, group_size: int = 128)
     producing one min/max pair per (B, H, sequence_group, channel).
     """
     B, H, S, D = keys.shape
-    if bits not in (2, 4, 8):
-        raise ValueError(f"KIVI supports bits in {{2, 4, 8}}, got {bits}")
+    if bits not in (2, 3, 4, 8):
+        raise ValueError(f"KIVI supports bits in {{2, 3, 4, 8}}, got {bits}")
     if group_size <= 0:
         raise ValueError(f"group_size must be positive, got {group_size}")
 
@@ -67,8 +67,8 @@ def kivi_quantize_values(values: torch.Tensor, bits: int = 4, group_size: int = 
     group, producing one min/max pair per (B, H, S, head_dim_group).
     """
     B, H, S, D = values.shape
-    if bits not in (2, 4, 8):
-        raise ValueError(f"KIVI supports bits in {{2, 4, 8}}, got {bits}")
+    if bits not in (2, 3, 4, 8):
+        raise ValueError(f"KIVI supports bits in {{2, 3, 4, 8}}, got {bits}")
     if D % group_size != 0:
         raise ValueError(f"head_dim={D} not divisible by group_size={group_size}")
     n_groups = D // group_size

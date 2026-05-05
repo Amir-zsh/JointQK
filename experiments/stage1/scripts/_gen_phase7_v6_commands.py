@@ -67,12 +67,13 @@ def main():
                     "layer0_full_precision": LAYER0_FP,
                 }
                 emit(rows, f"turboquant_k{kb}_v{vb}", "turboquant", kw, task)
-        # 4. KIVI int4
-        emit(rows, "kivi_int4", "kivi", {
-            "k_bits": 4, "v_bits": 4, "group_size": 128,
-            "compress_decode": COMPRESS_DECODE,
-            "layer0_full_precision": LAYER0_FP,
-        }, task)
+        # 4. KIVI int{2, 3, 4}
+        for kbits in (2, 3, 4):
+            emit(rows, f"kivi_int{kbits}", "kivi", {
+                "k_bits": kbits, "v_bits": kbits, "group_size": 128,
+                "compress_decode": COMPRESS_DECODE,
+                "layer0_full_precision": LAYER0_FP,
+            }, task)
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     cmds = LOG_DIR / "commands.jsonl"
