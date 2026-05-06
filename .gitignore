@@ -26,3 +26,13 @@ turboquant_pytorch
 *.pt.pre_*
 texput.log
 *.partial.json
+
+# Stage 1 final calibration: large raw + stats artifacts (~500 GB raw, ~38 GB stats)
+artifacts/stage1/calibration/*/01_raw/
+artifacts/stage1/calibration/*/02_stats/
+# Pre-fix snapshot of broken pre-2026-05-05 analysis run (kept locally for reference only)
+artifacts/stage1/calibration/*/04_analysis_pre_*/
+# Per-shard run logs (analysis/capture launchers; ephemeral)
+artifacts/stage1/calibration/*/logs/
+# Per-shard preview accumulator logs (the merged.json + launcher.log are kept)
+artifacts/stage1/calibration/*/05_reports/preview_pooled_n50/shard_*.log

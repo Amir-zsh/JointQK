@@ -1,0 +1,39 @@
+[18:15:09] launcher: 6 shards on GPUs ['0', '1', '2', '3', '4', '5']
+[18:15:09] output dir: artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50
+[18:15:09] launcher: spawned shard 0 on GPU 0 pid=22322 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_000.log
+[18:15:09] launcher: spawned shard 1 on GPU 1 pid=22323 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_001.log
+[18:15:09] launcher: spawned shard 2 on GPU 2 pid=22324 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_002.log
+[18:15:09] launcher: spawned shard 3 on GPU 3 pid=22325 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_003.log
+[18:15:09] launcher: spawned shard 4 on GPU 4 pid=22326 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_004.log
+[18:15:09] launcher: spawned shard 5 on GPU 5 pid=22327 log=artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/shard_005.log
+[18:57:46] launcher: shard 0 (GPU 0) ok
+[19:00:51] launcher: shard 1 (GPU 1) ok
+[19:00:51] launcher: shard 2 (GPU 2) ok
+[19:00:53] launcher: shard 3 (GPU 3) ok
+[19:14:05] launcher: shard 4 (GPU 4) ok
+[19:14:05] launcher: shard 5 (GPU 5) ok
+[19:14:05] launcher: all shards done; merging...
+[19:14:05] launcher: recomputing analytic baselines (CPU)...
+[19:14:05] loading aggregate (~2.4 GB)...
+[19:14:06] pooled regime: 400 train + 80 test
+[19:14:06] summing train stats over 400 examples...
+[19:15:03] summing eval stats over 80 examples...
+[19:15:08] stats cache: {'entries': 128, 'hits': 2, 'misses': 480, 'hit_rate': 0.004149377593360996}
+[19:15:09] building K bases...
+[19:20:04] launcher: wrote merged metrics to artifacts/stage1/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/merged.json
+
+[19:20:04] === FINAL COMPARISON (pooled, N=50, layer-0-excluded) ===
+method       | bits |     top1 |     top5 |      k_mse |  logit_err
+-------------------------------------------------------------------
+v3           | 2    |   0.3949 |   0.6561 |  6.055e-01 |  2.459e+02
+v3           | 3    |   0.5718 |   0.8488 |  1.771e-01 |  6.467e+01
+v3           | 4    |   0.7295 |   0.9569 |  4.866e-02 |  1.722e+01
+q_only       | 2    |   0.5446 |   0.8399 |  3.231e-01 |  3.496e+01
+q_only       | 3    |   0.7044 |   0.9327 |  1.014e-01 |  1.050e+01
+q_only       | 4    |   0.8017 |   0.9594 |  2.924e-02 |  3.124e+00
+k_only       | 2    |   0.3920 |   0.6612 |  2.083e-01 |  3.551e+01
+k_only       | 3    |   0.5402 |   0.7696 |  6.615e-02 |  1.099e+01
+k_only       | 4    |   0.6448 |   0.8202 |  1.945e-02 |  3.477e+00
+jointqk      | 2    |   0.6550 |   0.9209 |  2.266e-01 |  2.993e+01
+jointqk      | 3    |   0.7820 |   0.9796 |  7.130e-02 |  9.860e+00
+jointqk      | 4    |   0.8578 |   0.9934 |  2.075e-02 |  3.730e+00
