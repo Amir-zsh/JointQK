@@ -924,13 +924,10 @@ next direction for Stage 3.
 
 ## 12. Open theoretical items
 
-1. **Iterative joint-diagonalization vs $R_{\text{sym}}$.** Implement Jacobi-style
-   sweeps minimizing $\sum_j \log(A_{jj} B_{jj})$ directly and quantify the gain
-   over $R_{\text{sym}}$ on the Stage 1E calibration. The maximum achievable
-   improvement is bounded by the ratio of $R_{\text{sym}}$'s product-geomean to
-   the Hadamard floor, computed at ~1.22× on the held-out test moments (§8.2).
-   Translating through the per-layer prediction Pearson (~0.87), this is at most
-   ~1–3 pp top-1 upside.
+1. **Iterative joint-diagonalization vs $R_{\text{sym}}$.** Worked out in
+   detail as the LP-Jacobi proposal in §13. Maximum achievable improvement
+   is bounded by ~1.22× on held-out test moments (§8.2); through the per-layer
+   prediction Pearson (~0.87) this is at most ~1–3 pp top-1 upside.
 2. **Centered vs uncentered moments.** Stage 1E uses uncentered second moments
    ($\mathbb{E}[q q^\top]$, not $\mathrm{Cov}(q)$). The theory in §3–9 holds
    verbatim for either choice; centering changes top eigenvalues by
@@ -953,3 +950,182 @@ next direction for Stage 3.
    the same eigenbasis only when $\Sigma_Q$ and $\Sigma_K$ commute; in general
    they are different heuristics with different first-order behavior. E3 has
    only the one $R_{\text{sym}}$ variant; comparison is a Stage 3 study.
+   §13.4 argues none of these is likely to beat LP-Jacobi by more than a
+   few percent on the actual rate-distortion objective.
+
+## 13. Improving on $R_{\text{sym}}$: the LP-Jacobi proposal
+
+The analysis in §3–§9 identifies one concrete objective —
+
+$$
+\min_{R \text{ orthogonal}} \;\; \sum_{j=1}^{d} \log\!\big[(R^\top \Sigma_Q R)_{jj} \cdot (R^\top \Sigma_K R)_{jj}\big]
+$$
+
+— and §10 shows that $R_{\text{sym}}$ leaves ~22% headroom against the
+(unattainable) Hadamard floor on the held-out test moments. This section
+asks: given everything we have established, what is the principled
+next-step basis, and how much should we expect to gain from it?
+
+If we had to pick *one* new basis grounded entirely in the report's
+analysis, this is what it would be.
+
+### 13.1 The proposal: LP-Jacobi
+
+**LP-Jacobi**: an iterative Jacobi-sweep optimizer that minimizes the
+log-product objective directly, initialized from any sensible orthogonal
+starting point — $R_{\text{sym}}$ for fastest convergence, but $V_Q$,
+$V_h$, or even a random orthogonal start all converge to the same basin.
+
+This is the only candidate that the analysis actually *argues for* —
+every other named basis (including $R_{\text{sym}}$ itself) is a closed-form
+heuristic. LP-Jacobi attacks the actual quantity we want to minimize.
+
+### 13.2 Why this is what the analysis points to
+
+Three specific alignments with the report:
+
+- **§8.2** documents that $R_{\text{sym}}$ leaves a 1.22× gap to the
+  Hadamard floor on held-out test moments. Some $R^\star$ exists with
+  strictly smaller log-product than $R_{\text{sym}}$.
+- **§7.3** explicitly notes "the problem has no closed form and must be
+  solved iteratively (e.g., Jacobi sweeps)". The recipe was already
+  written; LP-Jacobi just runs it.
+- **§9.1** establishes that orthogonality is non-negotiable for top-1
+  ↔ geometry alignment. LP-Jacobi stays inside the orthogonal class,
+  preserving the rigorous structural properties (no inverse-map noise
+  amplification, equipartitioned Q-weighted budget under water-fill).
+
+### 13.3 Algorithm sketch
+
+Standard Jacobi-sweep structure for joint diagonalization, specialized to
+the log-product objective:
+
+1. **Initialize** $R \leftarrow R_{\text{sym}}$ (or any orthogonal warm start).
+2. **Sweep.** For each coordinate pair $(i, j)$ with $i < j$:
+   - Form the 2×2 sub-blocks $A^{[ij]} = R^\top \Sigma_Q R$ restricted to
+     coords $\{i, j\}$, and same for $B^{[ij]}$.
+   - Find $\theta^\star \in (-\pi/2, \pi/2]$ minimizing
+     $\log A_{ii}'(\theta) + \log A_{jj}'(\theta) + \log B_{ii}'(\theta) + \log B_{jj}'(\theta)$,
+     where the primed quantities are the diagonals after rotating coords
+     $(i, j)$ by $\theta$.
+   - Smooth 1-D problem with closed-form derivative; one Newton step from
+     $\theta = 0$ usually suffices, or 1-D bisection for robustness.
+   - Apply $R_{\theta^\star}$ to $R$ on coords $(i, j)$.
+3. **Repeat** until the global objective stops decreasing meaningfully
+   (typically 3–8 sweeps).
+
+Per-sweep cost is $O(d^3)$. For $d = 128$, a few million flops per
+(layer, kv_head) — negligible compared to computing the calibration moments.
+Total cost well under one minute for the full 288-head bundle.
+
+This is the same skeleton as Cardoso/JADE for blind source separation; we
+just plug in a different per-pair objective.
+
+### 13.4 Closed-form alternatives — and why none beats LP-Jacobi
+
+Each of the following is a natural-looking heuristic that someone proposing
+a new basis might write down. Each fails for a specific, articulable reason.
+
+**Generalized eigenvectors of $(\Sigma_Q, \Sigma_K)$**, solving
+$\Sigma_Q v = \lambda \Sigma_K v$.
+
+This is the textbook joint diagonalization: the resulting $V$ satisfies
+$V^\top \Sigma_Q V = \Lambda$ and $V^\top \Sigma_K V = I$ simultaneously.
+Tempting — but $V$ is **not orthogonal** under the standard inner product;
+it is $\Sigma_K$-orthogonal. The forward/inverse maps would be non-orthogonal,
+$R^{-\top}$ would amplify noise unevenly, and we land back at the F8/F11
+failure mode that motivated the orthogonal-basis discipline in §9.1.
+
+**Eigvecs of $\Sigma_K^{1/2} \Sigma_Q \Sigma_K^{1/2}$** (Mahalanobis-style
+"principal directions of $\Sigma_Q$ in $\Sigma_K$-whitened space").
+
+Symmetric PSD, so eigvecs are orthonormal. Better-behaved than
+$M = \frac{1}{2}(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)$ in one respect —
+it stays PSD (no indefinite spectrum from §8). But the resulting eigvecs
+do not diagonalize $\Sigma_Q$ or $\Sigma_K$ in the standard inner product;
+they are a heuristic cousin of $R_{\text{sym}}$ with no a priori reason
+to do better.
+
+**Cardoso/JADE objective** — minimize
+$\sum \|\mathrm{off}(R^\top \Sigma_Q R)\|_F^2 + \|\mathrm{off}(R^\top \Sigma_K R)\|_F^2$.
+
+This is the sum of squared off-diagonal entries across both matrices, a
+*related* but **different** objective from log-product. By the trace
+identity it equals maximizing $\sum_j A_{jj}^2 + B_{jj}^2$, which does not
+have the same minimizer as $\sum_j \log A_{jj} B_{jj}$ in general. JADE
+gives a third basis distinct from $R_{\text{sym}}$ and LP-Jacobi, with no
+claim of optimality for *our* objective. (This was exactly the conflation
+flagged as Thread 1 in [`math_review.md`](math_review.md).)
+
+**Eigvecs of arithmetic / geometric / harmonic matrix means** —
+$\Sigma_Q + \Sigma_K$, the matrix geometric mean
+$\Sigma_Q^{1/2}(\Sigma_Q^{-1/2} \Sigma_K \Sigma_Q^{-1/2})^{1/2}\Sigma_Q^{1/2}$,
+or $(\Sigma_Q^{-1} + \Sigma_K^{-1})^{-1}$.
+
+All members of the same heuristic family as $R_{\text{sym}}$: orthogonal
+eigvecs of some symmetric "blend" of $\Sigma_Q$ and $\Sigma_K$. Each is
+exact in the commuting case, where they all coincide. None has an a priori
+argument for beating $R_{\text{sym}}$, and empirically I would be surprised
+if any beat it by more than a few percent — leaving most of the 1.22×
+headroom unclaimed. They are equivalent positions in the same heuristic
+search space, not directions of progress.
+
+### 13.5 Expected payoff
+
+Honest estimate. The Hadamard floor is 1.4166 in product-geomean units
+(§10.1), $R_{\text{sym}}$ achieves 1.7353, and a global minimum of the
+orthogonal log-product problem sits strictly between these two. Plausible
+LP-Jacobi geomean: **1.50–1.60**, which is
+
+- **0.86–0.92×** the $R_{\text{sym}}$ geomean → 8–14% lower asymptotic
+  Bennett distortion;
+- through the per-layer prediction-vs-measured Pearson of 0.87 (§10.2),
+  that translates to **roughly +1 to +2.5 pp top-1 over $R_{\text{sym}}$**
+  at $b_{\text{avg}} = 3$;
+- the upper bound is **+3.0 pp** (the 1.22× theoretical max if you somehow
+  hit the Hadamard floor — impossible since $\Sigma_Q$ and $\Sigma_K$ do
+  not commute on real data, see Thread 7 in `math_review.md`).
+
+This is a real but **modest** improvement. The big win is already locked
+in by going from V3 (top-1 0.61) or $V_Q$ (top-1 0.73) to any
+joint-Q-K-aware basis. LP-Jacobi captures most of what remains.
+
+### 13.6 Two further directions outside the framework
+
+Outside the asymptotic-Bennett / orthogonal-only setup that frames §3–§9,
+two angles plausibly do better than LP-Jacobi.
+
+**(a) Bit-budget-aware basis selection.** The log-product objective is the
+$b \to \infty$ asymptote. At $b_{\text{avg}} = 3$, the §5.3 active-set
+analysis shows up to ~30 of 128 coordinates can get zero bits. A coordinate
+the asymptotic optimizer would put a small positive bit allocation on may
+instead be truncated entirely, contributing its full variance to distortion.
+Concretely, minimize over $R$,
+
+$$
+\sum_{j \notin A(R, b)} (R^\top \Sigma_Q R)_{jj} (R^\top \Sigma_K R)_{jj}
+\;+\; |A(R, b)| \cdot \theta_A(R, b),
+$$
+
+where $A(R, b)$ is the active set produced by reverse water-fill on $R$ at
+budget $b$. Solvable by alternating between water-filling at fixed $R$
+and Jacobi-stepping at fixed $A$. Probably a few additional percent at
+$b_{\text{avg}} = 2$, vanishing at $b_{\text{avg}} \geq 4$.
+
+**(b) Learn the basis end-to-end.** Treat $R$ as a parameter, run actual
+quantization-with-dequantization through the LLM, optimize on downstream
+loss (perplexity over a held-out corpus) via straight-through estimators.
+This abandons the calibration-only / no-retraining pitch of Stage 1E but,
+given enough GPU hours, would beat LP-Jacobi by some unknown amount because
+it directly optimizes the end-to-end objective rather than the Bennett
+proxy. Different paradigm; mention only.
+
+### 13.7 Bottom line
+
+If the project wants a principled next-step basis: **LP-Jacobi**. It
+attacks the rate-distortion objective the analysis identified, stays in
+the orthogonal class for the §9.1 reasons, has a clean per-pair update,
+costs nothing computationally, and has a reasonable expectation of
+recovering ~half to ~all of the remaining 22% headroom. Everything else
+in this section is either a heuristic in the same family as $R_{\text{sym}}$
+(no obvious advantage) or a different research paradigm (out of scope).
