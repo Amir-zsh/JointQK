@@ -1,0 +1,40 @@
+dataset: longbench
+data_dir: qmsum
+model: Qwen/Qwen3-8B
+device: null
+press_name: jointqk
+compression_ratio: 0.5
+key_channel_compression_ratio: null
+threshold: null
+fraction: 0.5
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/downstream_basis_compare_l0fp/jointqk_NEW_veu_l0fp_k4_v3_qmsum
+log_level: INFO
+model_kwargs:
+  attn_implementation: flash_attention_2
+  dtype: auto
+  device_map: auto
+press_init_command: JointQKPress(cca_stats_path='/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/cca_stats_longbench_compact8_n400.pt',
+  v_stats_path='/vault/amir/efficient-llm/teamily-project/artifacts/stage1/v_method_study/v_stats_longbench_compact8_n400.pt',
+  v_method='v_eigen_uniform', k_method='r_sym_waterfill', k_bits=4, v_bits=3, rank=64,
+  layer0_full_precision=True, quantize_k=True, quantize_v=True, compress_decode=False,
+  eps=1e-06, compression_ratio=0.5, compressor_cache_dir='artifacts/stage1/_compressor_cache',
+  use_batched_compress=False)
+press_kwargs:
+  cca_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/cca_stats_longbench_compact8_n400.pt
+  v_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/v_method_study/v_stats_longbench_compact8_n400.pt
+  v_method: v_eigen_uniform
+  k_bits: 4
+  v_bits: 3
+  compress_decode: false
+  layer0_full_precision: true
+  quantize_k: true
+  quantize_v: true
+seed: 42
+fp8: false

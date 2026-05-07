@@ -37,7 +37,7 @@ class JointQKPress(BasePress):
     k_bits: int = 4
     v_bits: int = 2
     rank: int = 64
-    layer0_full_precision: bool = False  # apples-to-apples: compress every layer like TurboQuant / KIVI
+    layer0_full_precision: bool = True  # skip K/V quantization at layer 0 (anomalous attention sink). Default True per 2026-05-06 fairness convention; pass False to compress layer 0 too.
     quantize_k: bool = True
     quantize_v: bool = True
     compress_decode: bool = False

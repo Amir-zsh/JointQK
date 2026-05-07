@@ -126,8 +126,24 @@ def validate_stats_stage(args: argparse.Namespace) -> None:
                 raise RuntimeError(f"{path} missing {name}")
             if name != "tokens" and not torch.isfinite(payload[name]).all():
                 raise RuntimeError(f"{path} {name} has non-finite values")
-        if int(payload["tokens"]) != int(row["prompt_length"]):
-            raise RuntimeError(f"{path} token mismatch: {payload['tokens']} vs {row['prompt_length']}")
+        # The manifest's prompt_length is tokenizer-locked (computed when the split
+        # was created, typically under Qwen3). Captures under a different model use a
+        # different tokenizer → different token count for the same text. Only enforce
+        # strict equality when capture used the same tokenizer as the manifest, which
+        # we detect via the tokenizer-locked prompt_sha256. Otherwise just sanity-check
+        # that tokens is a positive int.
+        if int(payload["tokens"]) <= 0:
+            raise RuntimeError(f"{path} non-positive tokens: {payload['tokens']}")
+        same_tokenizer = (
+            "prompt_sha256" in payload
+            and "prompt_sha256" in row
+            and payload["prompt_sha256"] == row["prompt_sha256"]
+        )
+        if same_tokenizer and int(payload["tokens"]) != int(row["prompt_length"]):
+            raise RuntimeError(
+                f"{path} token mismatch under same-tokenizer capture: "
+                f"payload={payload['tokens']} vs manifest={row['prompt_length']}"
+            )
     if missing:
         raise RuntimeError(f"Missing {len(missing)} stats files; first={missing[0]}")
     aggregate = paths.stats_dir / "aggregate.pt"

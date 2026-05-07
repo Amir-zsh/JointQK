@@ -21,6 +21,7 @@ from experiments.stage1.calibration.common import (
     add_shard_args,
     copy_split_manifest,
     log,
+    messages_hash,
     preflight_raw_storage,
     prompt_hash,
     raw_example_path,
@@ -31,6 +32,7 @@ from experiments.stage1.calibration.common import (
     should_keep_raw,
     stable_example_id,
     stats_example_path,
+    tokens_scale_from_sample,
     validate_shard_args,
     validate_split,
     write_stage_manifest,
@@ -142,6 +144,30 @@ def main() -> None:
     paths = RunPaths.from_args(args.artifact_root, args.run_id)
     paths.ensure()
 
+    # Run-root model guard. The first capture invocation under a fresh run-id
+    # writes _run_meta.json with the model name; subsequent invocations refuse
+    # to write into a directory captured against a *different* model. This
+    # prevents accidentally clobbering an existing model's calibration when
+    # the agent forgets to pass --run-id <model>-tagged-id.
+    run_meta_path = paths.root / "_run_meta.json"
+    if run_meta_path.exists():
+        existing = read_json(run_meta_path)
+        if existing.get("model") != args.model:
+            raise RuntimeError(
+                f"refusing to capture into run-id={args.run_id!r} (root {paths.root}): "
+                f"existing _run_meta.json has model={existing.get('model')!r}, "
+                f"current --model={args.model!r}. Use a distinct --run-id for the "
+                f"new model (e.g. {args.run_id}_<model_tag>) or delete the run-root "
+                f"to repurpose it."
+            )
+    else:
+        from experiments.stage1.calibration.common import write_json as _write_json
+        _write_json(run_meta_path, {
+            "model": args.model,
+            "run_id": args.run_id,
+            "created_by": "capture_raw.py",
+        })
+
     split_manifest = copy_split_manifest(args.split_manifest, paths)
     split = read_json(split_manifest)
     validate_split(split)
@@ -154,25 +180,45 @@ def main() -> None:
 
     rows_keeping_raw = [r for r in rows if should_keep_raw(r, args.keep_raw)]
     rows_dropping_raw = len(rows) - len(rows_keeping_raw)
+
+    # Load tokenizer + model config first (cheap, no weights) so the disk preflight
+    # can use the actual capture model's shape and an empirical tokens-per-prompt
+    # scale factor. This avoids over-estimating disk by ~30% on Llama against a
+    # Qwen-tokenized manifest.
+    from transformers import AutoConfig, AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+    config = AutoConfig.from_pretrained(args.model, trust_remote_code=True)
+    model_shape = {
+        "n_layers": int(config.num_hidden_layers),
+        "n_q_heads": int(config.num_attention_heads),
+        "n_kv_heads": int(getattr(config, "num_key_value_heads", config.num_attention_heads)),
+        "head_dim": int(getattr(config, "head_dim", config.hidden_size // config.num_attention_heads)),
+    }
+    spec = build_kvpress_dataset_spec(
+        name=args.dataset,
+        config_names=tuple(split["config"]["tasks"]),
+        metadata_fields=("task", "answers", "length", "all_classes"),
+    )
+
+    # Empirically derive the manifest→capture-tokenizer scale (1.0 if same model).
+    def _fetch(row):
+        return fetch_example(spec, row["config"], int(row["row_index"]), tokenizer)
+    tokens_scale = tokens_scale_from_sample(rows_keeping_raw or rows, _fetch, n_samples=5)
+    log(f"model shape: {model_shape} | tokens_scale (capture/manifest): {tokens_scale:.3f}")
+
     if args.keep_raw != "none":
         preflight_raw_storage(
             paths.raw_dir,
             rows_keeping_raw,
             smoke=args.smoke,
             keep_raw_mode=args.keep_raw,
+            model_shape=model_shape,
+            tokens_scale=tokens_scale,
         )
     log(
         f"shard {args.shard_id}/{args.num_shards} | examples={len(rows)} "
         f"| keep-raw mode={args.keep_raw} (raw written for {len(rows_keeping_raw)}, dropped for {rows_dropping_raw})"
-    )
-
-    from transformers import AutoTokenizer
-
-    tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
-    spec = build_kvpress_dataset_spec(
-        name=args.dataset,
-        config_names=tuple(split["config"]["tasks"]),
-        metadata_fields=("task", "answers", "length", "all_classes"),
     )
     log(f"loading model={args.model} device_map={args.device_map} dtype={args.dtype}")
     model, _ = load_model_and_tokenizer(args.model, device_map=args.device_map, dtype_name=args.dtype)
@@ -206,17 +252,35 @@ def main() -> None:
             })
             continue
 
+        # Fetch example FIRST so we can pass the actual capture-time prompt_length
+        # to the progress tracker. The manifest's prompt_length is tokenizer-locked
+        # to whichever model created the split (typically Qwen3) and would be wrong
+        # by ~30% under Llama.
+        example = fetch_example(spec, row["config"], int(row["row_index"]), tokenizer)
         progress.start_example(
             stable_example_id(row),
-            tokens=int(row["prompt_length"]),
+            tokens=int(example.prompt_length),
             idx_one_based=local_idx + 1,
         )
-        example = fetch_example(spec, row["config"], int(row["row_index"]), tokenizer)
         phash = prompt_hash(example.prompt_text)
-        if phash != row["prompt_sha256"]:
+        # Hash the canonical messages list (tokenizer-independent), not the
+        # rendered prompt_text, so the same manifest works across models with
+        # different chat templates (Qwen3 / Llama-3.1 / etc.). Falls back to
+        # prompt_sha256 for legacy manifests that don't have messages_sha256.
+        mhash = messages_hash(example.messages)
+        if "messages_sha256" in row:
+            if mhash != row["messages_sha256"]:
+                raise RuntimeError(
+                    f"Messages hash mismatch for {stable_example_id(row)}: "
+                    f"manifest={row['messages_sha256']} fetched={mhash} "
+                    f"(messages content drifted; the LongBench dataset row may have changed upstream)"
+                )
+        elif "prompt_sha256" in row and phash != row["prompt_sha256"]:
             raise RuntimeError(
                 f"Prompt hash mismatch for {stable_example_id(row)}: "
-                f"manifest={row['prompt_sha256']} fetched={phash}"
+                f"manifest={row['prompt_sha256']} fetched={phash} "
+                f"(legacy prompt_sha256 check; this is tokenizer-locked. Re-generate "
+                f"the manifest with messages_sha256 to support cross-model captures.)"
             )
         captured = run_prefill_qkv_capture(model, example.input_ids)
 
@@ -229,6 +293,7 @@ def main() -> None:
             device=device,
         )
         stats_artifact = build_stats_artifact(moments, row, prompt_sha256=phash)
+        stats_artifact["messages_sha256"] = mhash
         stats_tmp = stats_path.with_suffix(stats_path.suffix + f".tmp.{args.shard_id}.{local_idx}")
         torch.save(stats_artifact, stats_tmp)
         stats_tmp.replace(stats_path)
@@ -250,6 +315,7 @@ def main() -> None:
                 "split": row["split"],
                 "row_index": int(row["row_index"]),
                 "prompt_sha256": phash,
+                "messages_sha256": mhash,
                 "metadata": example.metadata,
                 "collection": "final_calibration_prefill_qpost_kpost_v",
             }

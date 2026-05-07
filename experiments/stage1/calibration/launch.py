@@ -31,6 +31,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split-manifest", type=Path, default=DEFAULT_SPLIT)
     parser.add_argument("--artifact-root", type=Path, default=DEFAULT_ARTIFACT_ROOT)
     parser.add_argument("--run-id", default=DEFAULT_RUN_ID)
+    parser.add_argument(
+        "--model",
+        default="Qwen/Qwen3-8B",
+        help="HuggingFace model id for the capture stage (forwarded to capture_raw.py). "
+        "Stats and analysis stages don't read the model directly.",
+    )
     parser.add_argument("--gpus", default="0")
     parser.add_argument("--jobs-per-gpu", type=int, default=1)
     parser.add_argument("--num-shards", default="auto")
@@ -115,6 +121,7 @@ def write_commands(args: argparse.Namespace, stage: str, n_shards: int) -> Path:
         extra += " --device cuda"
     if stage == "capture":
         extra += f" --keep-raw {args.keep_raw}"
+        extra += f" --model {shell_quote(args.model)}"
     if stage == "analysis":
         extra += " --empirical" if args.empirical else " --no-empirical"
     if stage == "analysis" and args.empirical_max_eval_examples > 0:

@@ -29,7 +29,7 @@ class TurboQuantPress(BasePress):
     residual_window: int = 0            # decode managed via compress_decode flag
     seed: int = 42
     compress_decode: bool = False
-    layer0_full_precision: bool = False  # skip K/V quantization at layer 0 (anomalous attention sink)
+    layer0_full_precision: bool = True  # skip K/V quantization at layer 0 (anomalous attention sink). Default True per 2026-05-06 fairness convention; pass False to compress layer 0 too.
     compression_ratio: float = 0.0
 
     _tq: dict = field(default_factory=dict, init=False, repr=False)

@@ -19,7 +19,7 @@ class KIVIPress(BasePress):
     v_bits: int = 4
     group_size: int = 128
     compress_decode: bool = False
-    layer0_full_precision: bool = False  # skip K/V quantization at layer 0 (anomalous attention sink)
+    layer0_full_precision: bool = True  # skip K/V quantization at layer 0 (anomalous attention sink). Default True per 2026-05-06 fairness convention; pass False to compress layer 0 too.
     compression_ratio: float = 0.0
 
     def post_init_from_model(self, model):

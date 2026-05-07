@@ -1,0 +1,30 @@
+dataset: longbench
+data_dir: trec
+model: Qwen/Qwen3-8B
+device: null
+press_name: kivi
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/downstream_v7/qwen3_8b/kivi_int4_trec
+log_level: INFO
+model_kwargs: {}
+press_init_command: KIVIPress(k_bits=4, v_bits=4, group_size=128, compress_decode=False,
+  layer0_full_precision=True, compression_ratio=1.0)
+press_kwargs:
+  k_bits: 4
+  v_bits: 4
+  group_size: 128
+  compress_decode: false
+  layer0_full_precision: true
+seed: 42
+fp8: false

@@ -1,0 +1,201 @@
+all_classes,predicted_answer,compression_ratio,language,length,question,max_new_tokens,dataset,_id,answers,task,answer_prefix
+," 43,000",0.5,en,11812,"Question: How many marchers were in the protest that Pelham D. Glassford ended? 
+",52,hotpotqa,b7af427ee230063a2aabb35691c7a81670c0b7e85ac3b7b2,"['43,000 marchers']",hotpotqa,Answer:
+, 2000 Summer Olympics,0.5,en,8651,"Question: Professional cyclist Sara Symington competed in which Olympic Games held in Sydeney, Australia?
+",52,hotpotqa,c261ca6aeaf366815232e91db1ef4dc8408cec3750c38ee9,['2000 Summer Olympic Games'],hotpotqa,Answer:
+," 12,817",0.5,en,12070,"Question: Yau Ma Tei North is a district of a city with how many citizens?
+",52,hotpotqa,cb677158d6f710ab0cb440b2024cc61c942a1ea4a963087d,['7.2 million'],hotpotqa,Answer:
+, Acting career.,0.5,en,7725,"Question: What career led Brandon James Routh to move to the city where Brian Ralston lives?
+",52,hotpotqa,e0a5da9581af9a4a573423cbdcf207c5436dc35ff8a9d380,['an acting career'],hotpotqa,Answer:
+, NASA Astrobiology Institute,0.5,en,11738,"Question: What organization does Sandra Pizzarello and Doctorate have in common?
+",52,hotpotqa,ad26b1fdaa97e8ef1c290a41a9151cc6b453756cb2715176,['University'],hotpotqa,Answer:
+, filmmaker and producer,0.5,en,8556,"Question: Sarah Price and Rob Schneider are both what profession? 
+",52,hotpotqa,7528b0be35e8e6007f07c98b9f2d45ee1c854298134aba5c,['director'],hotpotqa,Answer:
+, Yes.,0.5,en,11899,"Question: Are Mick Jagger and Brett Scallions both musicians?
+",52,hotpotqa,9a19f9594aa73716dd38bcbd5ff1c04e57a6649800570f80,['yes'],hotpotqa,Answer:
+, The Centre for Social Cohesion.,0.5,en,11212,"Question: For what ogranization does a commentator of Press TV serve as associate director?
+",52,hotpotqa,1df269c3eca341348a837f39c628f59aa40d663c07875d24,['Henry Jackson Society'],hotpotqa,Answer:
+, Babylon,0.5,en,10063,"Question: The Panel with striding lion  was one of many that lined the way north of the gate to the inner city of what location?
+",52,hotpotqa,bf8ee342564ae21a17b169023f83a20220a63198827a0232,['Babylon'],hotpotqa,Answer:
+, Both Keith Morris and Rome Ramirez are known for playing in punk bands.,0.5,en,9574,"Question: Which person is known for playing in punk bands, Keith Morris or Rome Ramirez?
+",52,hotpotqa,eac05e5d0936f802e28b0c5081a2c2a1a94fe4f2c20cb2df,['Keith Morris'],hotpotqa,Answer:
+, Deftones,0.5,en,9116,"Question: Which California band, whose debut album Adrenaline appeared in 1995, has been referred to as ""the Radiohead of metal""?
+",52,hotpotqa,75439ed8609c12817aaee0fa4f749aebb3e4a36dfa72390e,['Deftones'],hotpotqa,Answer:
+, University of Mississippi,0.5,en,8698,"Question: Where did the punter for the Dallas Cowboys in the 1980s play college football?
+",52,hotpotqa,de89026c970fbb6dff04176107b9cf20407d155bc1ae2eec,['Arizona State University'],hotpotqa,Answer:
+, Atlantic Ocean,0.5,en,2496,"Question: Which ocean would the ingredients likely come from for the She-crab soup?
+",52,hotpotqa,c9f8b2166f7c44bf2e0843b2c77fb9fa5738af275555ca73,['Atlantic Ocean'],hotpotqa,Answer:
+, coaxial cables,0.5,en,3945,"Question: SR connector is based on the connector that is often used for what type of cable?
+",52,hotpotqa,5e7675388334946fc508c4c8ac4ab0c491910fcc0e048bfd,['coaxial'],hotpotqa,Answer:
+, Jake Kasdan,0.5,en,10564,"Question: Who won more awards, Brothers Quay or Jake Kasdan?
+",52,hotpotqa,d3b2acfdec13f925424cd7d96b689557edfd08e6dd6177b7,['Brothers Quay'],hotpotqa,Answer:
+, 1978,0.5,en,10058,"Question: The player who laid motionless for ten minutes in the Todd Bertuzzi–Steve Moore incident was born in which year ?
+",52,hotpotqa,6c64a81fa526cb96d0a191d9cbd85a7e917b5d4f03b316d7,['1978'],hotpotqa,Answer:
+, Mike Leach currently coaches at Mississippi State.,0.5,en,10232,"Question: After coaching the red raiders to several winning seasons, where does Mike Leach currently coach at?
+",52,hotpotqa,47b3fb2eb0b90839a7887fa2138662a58c0170c96479190a,['Washington State'],hotpotqa,Answer:
+, Brian Stokes Mitchell,0.5,en,11179,"Question: What past honoree from the New Dramatists Organization is a powerful baritone who won the Tony Award for Best Actor in 2000?
+",52,hotpotqa,83df22880fee9f761464404ca2ff6ab21954e6b0827b4142,['Brian Stokes Mitchell'],hotpotqa,Answer:
+, Hawaii,0.5,en,11314,"Question: 1920 Politics was a Republican political strategy to reassert the authority of the white race in which US state?
+",52,hotpotqa,a16ac581bde4459861c8681858b07f82363f66142beed4c2,['Hawaii'],hotpotqa,Answer:
+, India,0.5,en,9331,"Question: Which country is home to Alsa Mall and Spencer Plaza?
+",52,hotpotqa,cf16ba255ad4b7b0fdae56093ac7d5fb58487dc24f2659e2,['India'],hotpotqa,Answer:
+, Ellie Kemper,0.5,en,11526,"Question: Who stars in the title role of a Netflix show co-created by Robert Carlock?
+",52,hotpotqa,22a4122731366b93dd7495f9cb64b9312537fbe85797efbc,['Ellie Kemper'],hotpotqa,Answer:
+, Claudio López,0.5,en,4109,"Question: Which retired Argentine footballer who played as a forward was a main player for Valencia CF?
+",52,hotpotqa,ab016faac478c4acc6e9ed3ed87f9e29dbed47fd946be244,['Claudio Javier López'],hotpotqa,Answer:
+, Veneto region of Northern Italy.,0.5,en,7336,"Question: The FIBT World Championships 1960 took place in a town located in which part of Italy ?
+",52,hotpotqa,781060824875cb0343a110f5e6f83d46e638cbb89e2ad7c6,['the Veneto region of Northern Italy'],hotpotqa,Answer:
+, poet,0.5,en,11567,"Question: What occupation is shared by both Marge Piercy and Richard Aldington?
+",52,hotpotqa,3df75e9b85781f83af8d3011cedb0c5fc6725f3489e48e54,['poet'],hotpotqa,Answer:
+, Vernon L. Smith,0.5,en,10589,"Question: What Nobel Laureate teaches at  Chapman University?
+",52,hotpotqa,f1c0b9a9ec47ccda8ba4b1be0ca7083b961ba0f06b2a4df7,['Vernon Smith'],hotpotqa,Answer:
+, British,0.5,en,12372,"Question: What is the nationality of the author of Fifty Shades Freed?
+",52,hotpotqa,93d2774c99edbde88789a9f989642ff160871ca09e66e46a,['English'],hotpotqa,Answer:
+, Due to complications with Alzheimer's disease.,0.5,en,11891,"Question: Why did the CEO of the football team based in Denver, Colorado step down in 2014?
+",52,hotpotqa,3e4cce5082e968aec7f0c008b1acbd111f505d0579d1c9ee,"[""due to the onset and progression of Alzheimer's disease""]",hotpotqa,Answer:
+, 796,0.5,en,8149,"Question: What was the population in 2010 of the town where The Stelljes House is located ?
+",52,hotpotqa,8a5d7c131d291d2c7cf2c20ea36a629f969402e0c50a8a8a,['810'],hotpotqa,Answer:
+, Yes.,0.5,en,8413,"Question: Are Yut and Tsuro both board games?
+",52,hotpotqa,c16a3dd0b5b97180359715cab5c41d528cf2a99e2744f037,['yes'],hotpotqa,Answer:
+, French mathematician and physicist,0.5,en,8995,"Question: What was the nationality and profession of the person responsible for the concept of a dimensionless number in physics and engineering?
+",52,hotpotqa,2bf8384417cec2f1a2d43a2602326d90a97622d87898b1cc,['French mathematician and physicist'],hotpotqa,Answer:
+, The Rebirth,0.5,en,6021,"Question: For which band, was the female member of Fitz and The Tantrums, the front woman for ten years ?
+",52,hotpotqa,a30caa5dafcc37835bfe4093f129017adf4c814e9016e10d,['The Rebirth'],hotpotqa,Answer:
+, Talk That Talk,0.5,en,10290,"Question: The song that came out ahead of The Wanted's ""Lightning"" on the UK Singles Chart was featured on which album?
+",52,hotpotqa,e4df9576e5cd102024e81baf94a43325335d0ba2d8892041,"['""Talk That Talk""']",hotpotqa,Answer:
+, Yes,0.5,en,9537,"Question: Are Yoo-hoo and Faygo both carbonated drinks?
+",52,hotpotqa,87fd3f0590498461d595ff1823632c79b66cf313cf55fbb3,['no'],hotpotqa,Answer:
+, 14 points,0.5,en,4029,"Question: The winner of the the London Riders' Championship in 1953 scored how many points in the 1952 Individual Speedway World Championship?
+",52,hotpotqa,f536646dd72a8a4f5ebddec61a67b8319dc9187d47bb7fc6,['14'],hotpotqa,Answer:
+, French forces,0.5,en,9898,"Question: In modern history of Syria this kingdom lasted for only four months, this kingdom surrendered to who?
+",52,hotpotqa,e8ba4badc3c5d30cc0942ede8df86a72257c492c07025dab,['French'],hotpotqa,Answer:
+, Yoruba,0.5,en,11592,"Question: Migene González-Wippler is leading expert on a religion that developed among which ethnic group ?
+",52,hotpotqa,4636487a1855382398fe1e54284cb7dd3d7b8d178ac4a476,['West African descendants'],hotpotqa,Answer:
+, Puli Alam,0.5,en,7563,"Question: Baraki Barak District is situated in the western part of a province whose capital is what?
+",52,hotpotqa,5748ce1eca37fc55596e58fcff71e45363396002d28e0af9,['Puli Alam'],hotpotqa,Answer:
+, Plato,0.5,en,12021,"Question: The ""New York Times"" bestselling book ""The 50th Law"" contains lessons and anecdotes from this historical figure who was a classical Greek (Athenian) philosopher who is known mainly through the writings of which philosopher?
+",52,hotpotqa,efc793ac73a0341a7cc35ea6872a89be3d4fed5f64c1e043,['Plato'],hotpotqa,Answer:
+," 4,000",0.5,en,10535,"Question: The arena where the Lewiston Maineiacs played their home games can seat how many people?
+",52,hotpotqa,0118217cf85bd94f6a5f65952212eb05e7176fd3b18c694a,"['3,677 seated']",hotpotqa,Answer:
+, Big 12 Conference,0.5,en,10490,"Question: A wide receiver for the Toronto Argonauts played college football for a team that represents the University of Oklahoma, which belongs to what conference?
+",52,hotpotqa,6e541b3b8fc7e59da0da6548a17932b403b2e865d4036982,['Big 12 Conference'],hotpotqa,Answer:
+, Wicked Twister,0.5,en,6415,"Question: Which is farther north, Steel Venom or Wicked Twister?
+",52,hotpotqa,8bcda9c521bb7cb5dcd9a8d4987bd5bcf4ec455a84c62f81,['Wicked Twister'],hotpotqa,Answer:
+, William,0.5,en,2412,"Question: What is the first name of the author who wrote the play in which Rønnaug Alten made her stage debut at Den Nationale Scene in 1930 as ""Viola""?
+",52,hotpotqa,4670f2a542ac06d27e47a74a042cf57f743fba34722a7dc5,['William'],hotpotqa,Answer:
+, Xcel Energy,0.5,en,11865,"Question: Which utility holding company did Alfred A. Marcus work as a consultant?
+",52,hotpotqa,72a769d6d0fd1c5c90974e60ab97e88e6853b9115a7fb85e,['Xcel Energy Inc.'],hotpotqa,Answer:
+, It's Always Sunny in Philadelphia,0.5,en,10483,"Question: Robbie Tucker plays in what series that follows a group of friends who run an Irish bar?
+",52,hotpotqa,26a5366c80c3a569c474a3990f3383beb125d34149e8ed3e,"[""It's Always Sunny in Philadelphia""]",hotpotqa,Answer:
+, Disappearances of people.,0.5,en,11168,"Question: What types of activities occur in both the Bennington and Bridgewater Triangles?
+",52,hotpotqa,9303f959145f198df63d2d7ec604a9d6efcb3e8daca89e91,['alleged paranormal phenomena'],hotpotqa,Answer:
+, Two Episodes of Mash,0.5,en,7720,"Question: what is the group called that Dianne Morgan and Joe Wilkinson a part of in the BBC comedy ""Two Episodes of Mash""
+",52,hotpotqa,40b5d54934bcf22bb9267e605c49d46509f3bd41b1a34c31,['the deadpan sketch group'],hotpotqa,Answer:
+, University of Southern California Trojans,0.5,en,11886,"Question: The 1958 Pro Bowl was played at the California stadium that is the home for which college?
+",52,hotpotqa,4b83e873a551cd83a2e409d2b4467f74dd332326fcbca843,['University of Southern California'],hotpotqa,Answer:
+, George Harrison,0.5,en,11185,"Question: Name a member of a British-American supergroup who recored a version of Nobody's child in 1990
+",52,hotpotqa,5e3362de0244d2b96c83958c4d3229151999292c369b0197,['Bob Dylan'],hotpotqa,Answer:
+, the father of liberalism,0.5,en,11398,"Question: Roger Stuart Woolhouse is a biographer of a philosopher commonly known as what ?
+",52,hotpotqa,1650b91e6fb722111b6461fc9524295246c3bd3b1a342267,['Father of Liberalism'],hotpotqa,Answer:
+, Leucippus and Democritus,0.5,en,11424,"Question: The Pluralist school is said to have included what creator of the theory of atomism? 
+",52,hotpotqa,7bb5645d62fc946b46910757e007f59e87f52bbf8535da58,['Leucippus'],hotpotqa,Answer:
+, Albert Park,0.5,en,3326,"Question: 1956 Night Series Cup games were played at what inner suburb of Melbourne that is 3km south of Melbourne's central business district?
+",52,hotpotqa,4d6aafffd109cb61fd543f44bda770fda0cf1e1c3798548b,['Albert Park'],hotpotqa,Answer:
+, Michael Tippett,0.5,en,11419,"Question: Which composer was wrote his music most recently, Michael Tippett or Luigi Cherubini?
+",52,hotpotqa,7d3bc2e36b406094cb586b4eeb07f13a7f1ac9dfbdce7d1f,['Michael Kemp Tippett'],hotpotqa,Answer:
+, Parliament,0.5,en,10034,"Question: Celebrity Fifteen to One has had more than one appearance by an English writer and former Conservative Member of what?
+",52,hotpotqa,97b31d6d7a9137c220726ad51a6dca3e957e2c94ce5e65b8,['Parliament'],hotpotqa,Answer:
+, Umina Beach,0.5,en,3539,"Question: What is the name of this suburb within the Central Coast Council local government area, where Tessa, of Microwave Jenny, grew up?
+",52,hotpotqa,d7d92c85b8becc33e60fc03507933f8eaf53b5e1067286de,"['Umina Beach, New South Wales']",hotpotqa,Answer:
+," John Musker, Ron Clements, Dave Michener, and Burny Mattinson.",0.5,en,11970,"Question: Who directed the film where Susanne Pollatschek voiced Olivia Flaversham?
+",52,hotpotqa,e54d1e07a1fc2ce2afdf7e75f79561d8fe0abd22f4d8bd53,"['Burny Mattinson, David Michener, and the team of John Musker and Ron Clements']",hotpotqa,Answer:
+, Capital Cities,0.5,en,8751,"Question: Which is in the pop genre, Capital Cities or Tweaker?
+",52,hotpotqa,11b4c60bf00735e20ae817b940d86aa8922e2fcdaa3a0b47,['Capital Cities'],hotpotqa,Answer:
+, Both Lavinia Greenlaw and Nâzım Hikmet are poets.,0.5,en,7658,"Question: What do Lavinia Greenlaw and Nâzım Hikmet have in common?
+",52,hotpotqa,75d66ce7bb5fbcea2d942895c0b10144ba9a94282e2e9f15,['poet and novelist'],hotpotqa,Answer:
+, Bill McCutcheon,0.5,en,6509,"Question: The owner of radio station KWPW has the same name as an American character actor. What is it?
+",52,hotpotqa,9fe92e20febe504670266d638939a94fc57c3cf8fe9cf948,['Bill McCutcheon'],hotpotqa,Answer:
+, Martin Scorsese,0.5,en,10355,"Question: Leonard Logsdail had a cameo role in the biographical film directed by whom?
+",52,hotpotqa,d3249d0550c7105bdd4ed60c9ca9d955db08d362574c2086,['Martin Scorsese'],hotpotqa,Answer:
+," Chicago, Illinois.",0.5,en,12038,"Question: Where is the airline company that operated United Express Flight 3411 on April 9, 2017 on behalf of United Express headquartered?
+",52,hotpotqa,666b2401378aceb59c9a4d6cc75b006f7c6af8a00c7d6f19,"['Indianapolis, Indiana']",hotpotqa,Answer:
+, A married World War II nurse who is transported back in time to 1743 Scotland and falls in love with the Highland warrior Jamie Fraser.,0.5,en,10461,"Question: What is the character of fictional character Claire Fraser in a British-American television drama series developed by Ronald D. Moore ?
+",52,hotpotqa,4cdf613f05eaa834f5867ee486ec94d47587f09b5a7bb6db,['Claire is a married World War II nurse'],hotpotqa,Answer:
+, 1909,0.5,en,9588,"Question: What was the first year a scientific journal published by an organization located in the Bronx was published?
+",52,hotpotqa,a2bb6c8de2a57c51b35e9d5c005cf46e1c0457f4086ef77d,['1909'],hotpotqa,Answer:
+, A123 Systems,0.5,en,10275,"Question: Spider9 was founded in 2011 by the head of which subsidiary of Wanxiang Group?
+",52,hotpotqa,4b1df711ec0557b9df23de534c1ce99b7f37528f643b8c29,"['A123 Systems, LLC']",hotpotqa,Answer:
+, Mary Astor,0.5,en,11127,"Question: Who starred in her final film role in the 1964 film directed by the man who also did Vera Cruz and Kiss Me Deadly?
+",52,hotpotqa,21bc398556b5612bf0437043cd2800e943bab5929c4bccc5,['Mary Astor'],hotpotqa,Answer:
+, Mika Häkkinen,0.5,en,11830,"Question: McLaren MP4/11 was driven by what Finnish former professional racing driver
+",52,hotpotqa,220230ff5154e6f0ccad63965d06ce69a9226bd72cc32fa4,['Mika Häkkinen'],hotpotqa,Answer:
+, Bassendean,0.5,en,11587,"Question: Don Holmes played for the football club that is based in what eastern suburb of Perth?
+",52,hotpotqa,b4dfcf1c4f152ba5684531d0eaa43f33ec5b185b92a36884,['Bassendean'],hotpotqa,Answer:
+, Eileen Atkins,0.5,en,8515,"Question: Which three-time Olivier Award winning English actress starred in the 1981 BBC television serial, Sons and Lovers?
+",52,hotpotqa,4c34b33d7a545c4eba3848d54fc4568fdf186e849897aa6e,['Dame Eileen June Atkins'],hotpotqa,Answer:
+," The actor that plays Sean Tully, Antony Cotton, defeated no one in a dancing contest. However, the character Sean Tully was involved in a storyline where he participated in a dance competition as part of the show ""Dancing on Ice"" in 2",0.5,en,11053,"Question: Who did the actor that plays Sean Tully defeat in a dancing contest?
+",52,hotpotqa,27190bb50ab7e97f74e2feec7dc3ef037f1a1c74d335ecb1,['Jodie Prenger'],hotpotqa,Answer:
+, The Big 12 Conference.,0.5,en,7697,"Question: Which conference is the team for which Justin Bannan played college football currently a member of?
+",52,hotpotqa,e7875d33cdf7138818681e7bb2a13310bba28ea94550d64f,['Pac-12 Conference'],hotpotqa,Answer:
+, BBC Formula One,0.5,en,4556,"Question: Who is a winner of the 2013 6 Hours of Silverstone a co-commentator for?
+",52,hotpotqa,302ee593ca790dfb2dcbfd4341817fc64f8d106f65f61867,['BBC Formula One'],hotpotqa,Answer:
+, Manchester United F.C.,0.5,en,11852,"Question: What football club plays in the area between the old tool gates: Brook Bar and Trafford bar?
+",52,hotpotqa,2903a54db35e788f31a967bdfa021d64ac18ed7e1aed919a,['Manchester United'],hotpotqa,Answer:
+, Cebu City,0.5,en,5487,"Question: What city in the Philippines is home to the Robinsons Galleria and the 4th largest shopping mall in the world?
+",52,hotpotqa,480b33cc38878ea4fe81b796d09ba2d10cca554611e323ec,['Metro Manila'],hotpotqa,Answer:
+, Bill Miner,0.5,en,7675,"Question: What stagecoach robber did Frederick John Fulton prosecute?
+",52,hotpotqa,a1cce86489841f2514678029dbe95b7289b9d47f52f44939,['Bill Miner'],hotpotqa,Answer:
+, stop motion animation,0.5,en,11635,"Question: For what type of work is the production company for The Year Without a Santa Claus best known?
+",52,hotpotqa,ed6c85899d2a29f6dc8e02ba62bc8f1b1043a8c135fdd132,"['seasonal television specials, particularly its work in stop motion animation']",hotpotqa,Answer:
+, WAMC,0.5,en,8524,"Question: What public radio network in New York has allowed Eric Plakun to dis his psychiatric work?
+",52,hotpotqa,034b6ac41cd902b7fbde6b304eb2930d8eea616924ba461f,['WAMC'],hotpotqa,Answer:
+, Yes.,0.5,en,10766,"Question: Are Tantrix and Personal Preference both types of games?
+",52,hotpotqa,795ed5382ff9378f90123aedc2b638c049411295c5678466,['yes'],hotpotqa,Answer:
+, Ribosomes,0.5,en,11209,"Question: The large subunit and small subunit that use two types of RNA are major components that make up what?
+",52,hotpotqa,1ceb1c91662d241b3421853112a91b5868d1b81fe3b88ce4,['Ribosomes'],hotpotqa,Answer:
+, Joe Gooch,0.5,en,11449,"Question: Who was born later, Jerry Garcia or Joe Gooch?
+",52,hotpotqa,dc14a859291c1d678432626f6f7974f8ecca536f4b7bdd6c,['Joe Gooch'],hotpotqa,Answer:
+, Polk County,0.5,en,10843,"Question: Bill Bryson grew up in a city that is the seat of which county ?
+",52,hotpotqa,2bfda75e23447ca7e3213d01331c31816f30190a2ff6df71,['Polk County'],hotpotqa,Answer:
+, Alice's Adventures in Wonderland,0.5,en,11993,"Question: The Red Queen's Race is a science fiction short story that uses the Red Queen's race from a novel by Lewis Carroll that is the sequel to what?
+",52,hotpotqa,56dbceaf2e826fbb177035f03d7a263d62365856f21f39da,"[""Alice's Adventures in Wonderland""]",hotpotqa,Answer:
+," Lowell, Michigan",0.5,en,11935,"Question: Prior to playing for Michigan State, Keith Nichol played football for a school located in what city?
+",52,hotpotqa,cb9214532284b8202912b1b75592832daef0b109593185a0,['Norman'],hotpotqa,Answer:
+," Brittany, Cornwall, Ireland, the Isle of Man, Scotland, and Wales.",0.5,en,10479,"Question: In which six Western European territories have Celtic languages or cultural traits survived?
+",52,hotpotqa,6eca7d7affce3375ec084f6356c6fc8ddf75eda0f6a4382f,"['Brittany, Cornwall, Ireland, Isle of Man, Scotland and Wales.']",hotpotqa,Answer:
+, YIVO,0.5,en,6346,"Question: Arnold Richards was the former chair of what organization that is a member of the Center for Jewish History?
+",52,hotpotqa,1a71b5a73ffb21cb52d41e09b1f861748b60f1e59273a080,['YIVO'],hotpotqa,Answer:
+, 72 feet (22 m),0.5,en,5636,"Question: How long is the river The Atherton Bridge spans?
+",52,hotpotqa,c5d6aa8cb0ad17a88eb66d578e86f783e3ac1f3684df9425,['37.5'],hotpotqa,Answer:
+, Allure,0.5,en,3506,"Question: Which is a beauty magazine, Allure or Claudia?
+",52,hotpotqa,d3b197d5b4da1198fc9c232524faced0f528b89f919b8061,['Allure'],hotpotqa,Answer:
+, Yes.,0.5,en,3135,"Question: Are Pothos and Tibouchina Aubl both flowering genus of plants?
+",52,hotpotqa,9dc6d234e2406aef691ea02ddc2064f343fc30cbc534c937,['yes'],hotpotqa,Answer:
+, Neighbours,0.5,en,8104,"Question: Kevin Yorn an American entertainment attorney who represents an Australian actor who  played the role of Josh Taylor in what soap opera?
+",52,hotpotqa,019dbd177ddcff6752aaabc8c0e459f3ae4003f718bd672b,['Neighbours'],hotpotqa,Answer:
+, Constantine,0.5,en,11091,"Question: Which of the movie which has Rich Lee 3-D previsualizations was directed by Francis Lawrence?
+",52,hotpotqa,01aff89f9ce55470c12450b595c268a225a638582dac204f,['Constantine'],hotpotqa,Answer:
+, Thames,0.5,en,11460,"Question: What river does Waterloo Bridge and London Eye have in common?
+",52,hotpotqa,b524574cca42824f963480aae00867719108113389d087d3,['Thames'],hotpotqa,Answer:
+, Yes.,0.5,en,3708,"Question: Were the Tundra Mine and Negus Mine located in the same country?
+",52,hotpotqa,de85aaa5c535ba20bdcad5fbabfe13a03687374265a57b44,['yes'],hotpotqa,Answer:
+, Jones Beach Island,0.5,en,3766,"Question: Oak Beach, New York and Great South Bay are both situated between what same island?
+",52,hotpotqa,3a75aba6bc2496016339474aef28ffdc9dbebdc00ccc166b,['Long Island'],hotpotqa,Answer:
+, O,0.5,en,10664,"Question: Le Rêve was created by the director behind what Cirque du Soleil production from 1998 onward?
+",52,hotpotqa,ea58013717bdbe9f0bad1991ed03d1afe3208bf514d9a2cd,['O'],hotpotqa,Answer:
+, James II,0.5,en,10994,"Question: Who was the last monarch of England to be overthrown before The English General Election, 1690?
+",52,hotpotqa,f1ea70c4e2c13d2fda1feda75a72a345c0e91f083220e95a,['King James II of England'],hotpotqa,Answer:
+, Taoiseach,0.5,en,11339,"Question: Charles Haughey held what position when he dissolved the list of members who were elected to the lower house of the Oireachtas of Ireland on 25 May 1989?
+",52,hotpotqa,3056e292ff1583fe84207873be57c6ec28c28b425087ca84,['Taoiseach of Ireland'],hotpotqa,Answer:
+, Ted Turner,0.5,en,11381,"Question: The Greatest Event in Television History aired on the channel that was founded by whom?
+",52,hotpotqa,77439b0a62b6de3a022b1d7a5678c1c00fa8d9af42fea1bf,['Betty Cohen'],hotpotqa,Answer:
+, 100 million records,0.5,en,11685,"Question: How many records did the singer who sang ""Four Seasons of Love"" sell worldwide?
+",52,hotpotqa,5fc84dadeb648a27c3aaa64698a5bec5d2ef23eb32e22e44,['140 million'],hotpotqa,Answer:
+, Veyil,0.5,en,6236,"Question: What was the first film scored by the man who composed the soundtrack for Udhayam NH4?
+",52,hotpotqa,d136a5063f8e7f5594182b51b05d626ca0671aea2ba22226,['Veyyil'],hotpotqa,Answer:
+, Thirukkalacherry is a village in the Indian town of Tharangambadi.,0.5,en,9438,"Question: Thirukkalacherry is a village in which Indian town?
+",52,hotpotqa,11a7ad9d646184c16480376226d58f1b2754b095563c8344,['Tharangambadi'],hotpotqa,Answer:
+, Dracula,0.5,en,5903,"Question: Whiich genus has more species, Dracula or Pistacia?
+",52,hotpotqa,7e525340152c2f4b26d7fba85c680dde7b75af77356a7c22,['Dracula'],hotpotqa,Answer:
+, duck,0.5,en,2491,"Question: Hardley Flood is an area of lagoons that support populations of the waterfowl that are a medium sized version of what animal?
+",52,hotpotqa,1fd7df3ba224e985f87e976c7a4a67ddc1012a249a542bea,['duck'],hotpotqa,Answer:

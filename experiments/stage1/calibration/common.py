@@ -230,6 +230,22 @@ def prompt_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def messages_hash(messages: list[dict]) -> str:
+    """Tokenizer-independent hash of a chat-style messages list.
+
+    Unlike `prompt_hash(prompt_text)`, this hashes the canonical (role, content)
+    representation BEFORE chat-template rendering. Rendering injects
+    tokenizer-specific special tokens (Qwen `<|im_start|>...` vs Llama
+    `<|begin_of_text|><|start_header_id|>...`), so a prompt_text-based hash is
+    locked to the tokenizer used at split-creation time. Hashing `messages`
+    instead lets the same calibration manifest drive captures on different
+    models without spurious mismatches.
+    """
+    import json
+    canonical = json.dumps(messages, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def disk_free_bytes(path: str | Path) -> int:
     path = Path(path)
     probe = path if path.exists() else path.parent
@@ -237,12 +253,73 @@ def disk_free_bytes(path: str | Path) -> int:
     return int(usage.free)
 
 
-def estimate_raw_bytes(rows: Sequence[dict[str, Any]], include_v: bool = True) -> int:
-    # Qwen3-8B: q=(36,32,T,128), k/v=(36,8,T,128), fp16.
-    q_bpt = 36 * 32 * 128 * 2
-    kv_bpt = 36 * 8 * 128 * 2
+def estimate_raw_bytes(
+    rows: Sequence[dict[str, Any]],
+    *,
+    include_v: bool = True,
+    model_shape: dict[str, int] | None = None,
+    tokens_scale: float = 1.0,
+) -> int:
+    """Estimate total raw fp16 q/k/v bytes for a set of capture rows.
+
+    The previous implementation hardcoded Qwen3-8B's shape (36 layers, 32 q heads,
+    8 kv heads, 128 head_dim) and used the manifest's tokenizer-locked
+    `prompt_length` directly. For cross-model use (Llama-3.1-8B has 32 layers,
+    a more efficient BPE → ~30% fewer tokens for the same text), both inputs need
+    to scale.
+
+    Args:
+        rows:        capture-row dicts with `prompt_length` (manifest-tokenized).
+        include_v:   include the V cache in the estimate (default True).
+        model_shape: dict with keys `n_layers, n_q_heads, n_kv_heads, head_dim`.
+                     Defaults to Qwen3-8B if None.
+        tokens_scale: factor mapping manifest prompt_length → capture tokenizer
+                     prompt_length. 1.0 for same-tokenizer captures; 0.75–0.85
+                     for Llama against a Qwen-tokenized manifest. Use
+                     `tokens_scale_from_sample()` to derive empirically.
+    """
+    if model_shape is None:
+        # Qwen3-8B
+        model_shape = {"n_layers": 36, "n_q_heads": 32, "n_kv_heads": 8, "head_dim": 128}
+    L = int(model_shape["n_layers"])
+    qh = int(model_shape["n_q_heads"])
+    kvh = int(model_shape["n_kv_heads"])
+    d = int(model_shape["head_dim"])
+    q_bpt = L * qh * d * 2
+    kv_bpt = L * kvh * d * 2
     per_token = q_bpt + kv_bpt + (kv_bpt if include_v else 0)
-    return int(sum(int(row["prompt_length"]) for row in rows) * per_token)
+    total_tokens = sum(int(row["prompt_length"]) for row in rows) * float(tokens_scale)
+    return int(total_tokens * per_token)
+
+
+def tokens_scale_from_sample(
+    rows: Sequence[dict[str, Any]],
+    fetch_example_fn,
+    *,
+    n_samples: int = 5,
+) -> float:
+    """Empirically derive a manifest→capture-tokenizer scaling factor.
+
+    Tokenizes up to `n_samples` rows with the active tokenizer (via
+    `fetch_example_fn(row) -> example_with_prompt_length`) and returns the mean
+    ratio of actual-tokens / manifest-tokens. Returns 1.0 if no samples are
+    available, which is the no-op default.
+
+    Used for the disk preflight estimate so a Llama capture against a Qwen-built
+    manifest doesn't over-estimate by ~30%.
+    """
+    ratios = []
+    for row in rows[:n_samples]:
+        try:
+            ex = fetch_example_fn(row)
+            mtok = int(row.get("prompt_length") or 0)
+            if mtok > 0:
+                ratios.append(float(ex.prompt_length) / float(mtok))
+        except Exception:
+            continue
+    if not ratios:
+        return 1.0
+    return sum(ratios) / len(ratios)
 
 
 def preflight_raw_storage(
@@ -252,8 +329,12 @@ def preflight_raw_storage(
     smoke: bool,
     keep_raw_mode: str | None = None,
     min_free_factor: float = 1.15,
+    model_shape: dict[str, int] | None = None,
+    tokens_scale: float = 1.0,
 ) -> None:
-    required = estimate_raw_bytes(rows, include_v=True)
+    required = estimate_raw_bytes(
+        rows, include_v=True, model_shape=model_shape, tokens_scale=tokens_scale,
+    )
     free = disk_free_bytes(path)
     # For full raw retention, require at least 3 TB regardless of split estimate to allow retry overhead.
     hard_min = 0 if smoke or (keep_raw_mode not in {None, "all"}) else 3_000_000_000_000
@@ -262,7 +343,9 @@ def preflight_raw_storage(
         raise RuntimeError(
             f"Insufficient free space for raw Q/K/V capture at {path}: "
             f"free={free / 1e12:.2f} TB, required~{threshold / 1e12:.2f} TB "
-            f"(estimate={required / 1e12:.2f} TB, smoke={smoke})."
+            f"(estimate={required / 1e12:.2f} TB, smoke={smoke}, "
+            f"tokens_scale={tokens_scale:.3f}, "
+            f"model_shape={model_shape})."
         )
 
 
