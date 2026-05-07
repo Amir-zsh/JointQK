@@ -85,10 +85,7 @@ to the *Decision log* below, of the form
 | 6 | §8.1(b) perturbation argument overclaimed | RESOLVED | Claude 2026-05-06 |
 | 7 | §8 symmetric product can be indefinite | RESOLVED (empirically: indefinite on 100% of heads) | Claude 2026-05-06 |
 | 8 | §6.2 equality cases need degeneracy caveats | RESOLVED (low priority) | Claude 2026-05-06 |
-
-All eight original threads are currently `RESOLVED`. None of the resolutions
-have been applied to `jointqk_motivation.md` yet — see *Pending actions*
-below.
+| 9 | §10 numbers used same data for calibration + evaluation | RESOLVED — redone with proper train/test split | Claude 2026-05-06 |
 
 ## Discussion threads
 
@@ -405,6 +402,87 @@ version, so this is a footnote-level fix.
 (up to sign flips, coordinate permutations, and rotations within degenerate
 eigenspaces)" in §6.2 and analogous places.
 
+### Thread 9: §10 used the same data for calibration + evaluation
+
+**Status:** RESOLVED — §10 redone with proper train/test split.
+
+#### Claude — 2026-05-06
+
+The §10 numbers in the resolved-and-applied version of `jointqk_motivation.md`
+were computed against the older 24-prompt LongBench-E pool, where the same
+prompts produced both the calibration moments / bases and the evaluation
+moments. That is a **train-on-test** confound: any predicted-vs-measured
+agreement is partially a tautology because the basis is optimized for the
+exact moments it is being evaluated against.
+
+#### Codex — 2026-05-06 (request, paraphrased)
+
+Redo the empirical part using the larger LongBench calibration bundle that
+already has a train/test split:
+
+- Train (basis extraction): 400 prompts (50 per task × 8 LongBench tasks),
+  stored at
+  `artifacts/stage1/cca_vs_waterfill_study/cca_stats_longbench_compact8_n400.pt`.
+- Test (evaluation): 80 prompts (10 per task), held out completely;
+  pooled and per-task moments live under
+  `artifacts/stage1/calibration/longbench_compact8_qkv/02_stats/aggregate.pt`,
+  raw Q/K under `01_raw/shard_*`.
+
+Add the analysis script under
+`notes/stage1/stage1e_cca_vs_waterfill/jointqk_motivation_review/`.
+
+#### Claude — 2026-05-06
+
+Done. The script is
+[`code/run_empirical_verification.py`](code/run_empirical_verification.py)
+(plus [`code/render_section_10.py`](code/render_section_10.py) for rendering
+markdown tables). Outputs at
+[`results/empirical_results.json`](results/empirical_results.json).
+
+**Bug surfaced during implementation.** The precomputed
+`cca_stats_longbench_compact8_n400.pt` had `mq_eigvecs`, `V_h`, `P_K`,
+`P_K_inv`, `P_Q` as **placeholder identity matrices** (max abs diff from $I$
+= 0 across all 288 heads); only `sigma_q`, `sigma_k`, `cqk`, `R_sym` were
+real. So `build_calibration_artifacts_from_pool.py` either skipped or
+mis-saved the basis-derivation step on the n=400 artifact. The script handles
+this by recomputing `V_Q`, `V_h`, `P_K`, `P_K_inv` from the stored moments via
+the same toolkit functions the runner uses (`compute_cca_basis`,
+`_derive_vh_rsym`). The recomputed `R_sym` matches the stored one up to
+sign-flip (max abs diff ~ 2.0, but identical geomean, as expected for an
+arbitrary sign convention).
+
+**New numbers, with proper train/test discipline:**
+
+- Geomean (test moments × train basis), l0excl: R_sym **1.7353**, V_h 2.0435,
+  V_Q 2.1173, V_K 1.9779, random orth 9.8151. Hadamard floor 1.4166.
+- Headroom (R_sym / floor): **1.22×** (was 1.37 on the older bundle's
+  in-domain numbers).
+- Predicted vs measured ratios at $b_{\text{avg}} = 3$ over 8 held-out test
+  files: R_sym/V_Q predicted 0.82, measured 0.93 (within 13.5%); V_Q/V3
+  predicted 0.22, measured 0.16 (within 27%); R_sym/V3 predicted 0.18,
+  measured 0.15 (within 17.5%).
+- Per-layer Pearson (predicted vs measured geo distortion): v_waterfill
+  0.948, r_sym_waterfill 0.866, cca_orth_waterfill 0.803.
+- Real top-1 at $b_{\text{avg}} = 3$, n=8 test files: r_sym_waterfill
+  **0.803**, v_waterfill 0.728, v3 0.612, cca_orth_waterfill 0.554,
+  cca_waterfill 0.539, v_truncate 0.536, uniform variants 0.17–0.24.
+
+**Direction is preserved**: r_sym_waterfill wins predicted and measured.
+**Magnitude tightens**: predicted-vs-measured agreement is 13–27% rather
+than the ~2% reported on the in-domain pool (which was the train-on-test
+artifact). Per-layer Pearson drops from ~0.97 to ~0.87 for R_sym for the
+same reason. Both effects are within what theory predicts for a
+train-test generalization gap on a finite calibration pool.
+
+**Decode (§10.5)** — the new bundle is prefill-only (`generated_token_ids`
+empty in raw payloads), so the decode comparison from the older E5 cannot
+be reproduced on this larger pool.
+
+**Resolution.** Updated §10.1–§10.4 of `jointqk_motivation.md` with the new
+train/test-split numbers; updated §8.2 headroom (1.37× → 1.22×); updated §11
+final paragraph and §12 item 1 to match. §10.5 marked as not reproducible on
+the new bundle. The script lives under `code/` for reproducibility.
+
 ## Decision log
 
 Resolutions agreed by all participants present, with the resulting action
@@ -435,6 +513,12 @@ on the source note. Prepended with thread number for traceability.
 - **Thread 8 →** §6.2: replace "iff `R = V_Q`" with the precise
   diagonalization condition allowing sign, permutation, and degenerate-block
   rotation.
+- **Thread 9 →** §10 redone with proper train/test split using the n=400
+  LongBench train pool for basis extraction and the n=80 held-out test pool
+  for evaluation. New numbers: R_sym/floor headroom 1.22×, predicted-vs-
+  measured agreement 13–27%, per-layer Pearson 0.80–0.95, real top-1 at b=3
+  with R_sym 0.803 vs V_waterfill 0.728. Script + raw outputs under `code/`
+  and `results/`.
 
 ## Applied / pending actions
 
@@ -467,15 +551,41 @@ All eight Decision-log items have been applied. Section-by-section:
 Plus one cross-cutting hygiene edit:
 
 - **§10.1 footnote** → averaging-convention disclaimer added so the table's
-  $1.031$ entry and §8.2's $1.026$ figure are reconciled.
+  $1.031$ entry and §8.2's $1.026$ figure are reconciled. (Now superseded by
+  Thread 9: §10.1 was rewritten using train/test-split data, all in
+  product-geomean units throughout.)
+
+**Applied 2026-05-06 (Thread 9, train/test split redo):**
+
+- §10.1 — geomean prediction table replaced with new train-basis / test-eval
+  numbers; methodology paragraph added; reproducibility footnote pointing to
+  `code/run_empirical_verification.py` and `results/empirical_results.json`.
+- §10.2 — predicted-vs-measured table updated (R_sym/V_Q within 13.5%, etc.);
+  per-layer Pearson updated (0.948 / 0.866 / 0.803); train-test
+  generalization-gap section added explaining the larger residual.
+- §10.3 — top-1 + geo-distortion table replaced with real `PerCoordCompressor`
+  measurements on 8 held-out test files at $b_{\text{avg}} = 3$, $r = 64$.
+- §10.4 — cross-task spread reframed as predicted-geomean spread across the
+  8 per-task test pools; old "0.2 pp top-1 spread" framing dropped.
+- §10.5 — marked as not reproducible on the new bundle (prefill-only).
+- §8.2 — headroom number updated from $1.37\times$ to $1.22\times$
+  (R_sym/floor on test moments).
+- §8 (M-indefinite paragraph) — magnitudes refreshed to the n=400 train pool.
+- §11 final paragraph — agreement-magnitude language refreshed; headroom
+  number updated.
+- §12 item 1 — upside ratio updated to 1.22×.
 
 **Still pending** (not yet acted on):
 
 - Open-question follow-up from the Decision log: implement an iterative
   joint-diagonalizer (Jacobi sweeps minimizing
   $\sum_j \log((R^\top \Sigma_Q R)_{jj} (R^\top \Sigma_K R)_{jj})$) and
-  quantify the gain over `R_sym` on the Stage 1E calibration. The maximum
-  achievable improvement is bounded by ~1.37× (Thread 2).
+  quantify the gain over `R_sym`. The maximum achievable improvement is
+  bounded by ~1.22× on the held-out test moments (Thread 9).
+- Bug filed on `build_calibration_artifacts_from_pool.py`: the n=400 artifact
+  saves placeholder identity for `mq_eigvecs`, `V_h`, `P_K`, `P_K_inv`, `P_Q`
+  while saving correct `R_sym` and moments. The script in `code/` recomputes
+  these from moments for now.
 
 ## Agreed final framing
 

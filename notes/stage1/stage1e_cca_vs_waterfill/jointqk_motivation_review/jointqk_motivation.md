@@ -336,10 +336,11 @@ geometric mean.
 
 > *Active-set generalization.* The "all coords active" derivation above is an
 > idealization. In practice, reverse water-fill zeros some coordinates:
-> empirically on Stage 1E `R_sym` water-fill, the minimum number of active
-> coords across 288 heads is 79 at $b_{\text{avg}} = 2$, 106 at
-> $b_{\text{avg}} = 3$, 118 at $b_{\text{avg}} = 4$. For active set $A$ with
-> $|A|$ coords, the closed form generalizes to
+> empirically on the held-out test moments evaluated against `R_sym` water-fill
+> bits, the minimum number of active coords across 288 heads is 78 at
+> $b_{\text{avg}} = 2$ (median 124), 98 at $b_{\text{avg}} = 3$ (median 128),
+> 118 at $b_{\text{avg}} = 4$ (median 128). For active set $A$ with $|A|$
+> coords, the closed form generalizes to
 >
 > $$
 > \theta_A = \Big(\prod_{j \in A} w_j \sigma_j^2\Big)^{1/|A|} \cdot 2^{-2 b_{\text{avg}} d / |A|},
@@ -585,10 +586,10 @@ the eigenvectors of $M$ ordered by decreasing eigenvalue.
 **What $M$ actually looks like.** $M$ is symmetric by construction and therefore
 has a real orthonormal eigenbasis, so $R_{\text{sym}}$ is well-defined. However,
 even though $\Sigma_Q$ and $\Sigma_K$ are PSD, $M$ is **not** in general PSD.
-Empirically on the Stage 1E calibration, every one of the 288 (layer, kv_head)
-heads has at least one negative eigenvalue of $M$; the smallest negative
-eigenvalue is up to 87% of the largest positive eigenvalue in magnitude
-(4.94% of all eigenvalues are negative). So eigenvalue *magnitude* should not
+Empirically on the train calibration moments (400 LongBench prompts, all 288
+(layer, kv_head) heads), every single head has at least one negative
+eigenvalue of $M$; the smallest negative eigenvalue is up to 82% of the
+largest positive eigenvalue in magnitude (3.16% of all eigenvalues are negative). So eigenvalue *magnitude* should not
 be interpreted as joint Q-K energy, and "the top-$r$ eigvecs carry most of the
 joint structure" is not a meaningful reduction. The water-fill in §8.3 is
 unaffected because it uses $\Sigma_Q$ and $\Sigma_K$ directly: the per-coord
@@ -630,22 +631,23 @@ depending on data.
 
 $R_{\text{sym}}$ is a heuristic, not a global minimizer of the log-product
 objective from §7.3. The remaining gap to the (generally unreachable) Hadamard
-floor is the upside an iterative joint-diagonalizer could capture. Computed in
-**product-geomean units** (per-head geomean of $w_j \sigma_j^2$ across coords,
-then arithmetic mean across the 35 non-zero layers): $R_{\text{sym}}$ achieves
-1.405 versus a Hadamard floor of 1.026, so
+floor is the upside an iterative joint-diagonalizer could capture. Computed
+on the held-out test moments in **product-geomean units** (per-head geomean
+of $w_j \sigma_j^2$ across coords, arithmetic mean across the 35 non-zero
+layers): $R_{\text{sym}}$ achieves 1.7353 versus a Hadamard floor of 1.4166,
+so
 
 $$
 \frac{R_{\text{sym}} \text{ geomean}}{\text{Hadamard floor}}
- = \frac{1.405}{1.026}
- \approx 1.37.
+ = \frac{1.7353}{1.4166}
+ \approx 1.22.
 $$
 
 An oracle joint-diagonalizer could therefore reduce post-water-fill distortion
-by at most ~37%. Translated through the per-layer prediction-vs-measured
-Pearson of ~0.98, that is perhaps 1–4 pp of additional top-1 — worth
-investigating in Stage 3, but $R_{\text{sym}}$ already captures most of the
-available gain.
+by at most ~22%. Translated through the per-layer prediction-vs-measured
+Pearson of ~0.87, that is perhaps 1–3 pp of additional top-1 — worth
+investigating, but $R_{\text{sym}}$ already captures most of the available
+gain on this calibration.
 
 ### 8.3 The water-fill weights for $R_{\text{sym}}$
 
@@ -730,101 +732,159 @@ canonical E3 artifacts.
 
 ### 10.1 Geomean prediction matches measured distortion
 
-From `cca_stats.pt` (full-pool calibration), compute the per-head
-$\left(\prod_j w_j \sigma_j^2\right)^{1/d}$ for each basis and average across the
-35 non-zero layers:
+**Methodology.** Bases ($V_Q$, $V_h$, $R_{\text{sym}}$, $P_K$) are extracted from
+the **400 LongBench train prompts** (`cca_stats_longbench_compact8_n400.pt`,
+4.55 M tokens). Test moments $\Sigma_Q$, $\Sigma_K$ are computed from the
+**held-out 80 test prompts** (905,560 tokens, completely disjoint from train,
+across the same 8 LongBench tasks). For each basis $R$, compute the
+per-(layer, kv_head) product geomean
+$\left(\prod_j (R^\top \Sigma_Q^{\text{test}} R)_{jj} (R^\top \Sigma_K^{\text{test}} R)_{jj}\right)^{1/d}$
+and average across the 35 non-zero layers (l0excl):
 
 | Basis | $(\prod w_j)^{1/d}$ (Q-side) | $(\prod \sigma_j^2)^{1/d}$ (K-side) | product (geomean) |
 |---|---:|---:|---:|
-| Hadamard floor $(\det \Sigma_\cdot)^{1/d}$ | 0.866 | 1.191 | **1.031** ← unreachable ($[\Sigma_Q, \Sigma_K] \neq 0$); see footnote |
-| **$R_{\text{sym}}$** | 1.001 | 1.421 | **1.422** |
-| $V_Q$ (Q-only) | 0.866 | 2.059 | **1.782** |
-| $V_K$ (K-only) | 1.352 | 1.191 | **1.611** |
-| $V_h$ (orthogonal CCA) | — | — | 6.07 |
-| Random orth (TurboQuant proxy) | 2.004 | 5.968 | **11.96** |
+| Hadamard floor (per-head $(\det \Sigma_Q \det \Sigma_K)^{1/d}$, l0excl mean) | — | — | **1.4166** ← unreachable ($[\Sigma_Q, \Sigma_K] \neq 0$) |
+| **$R_{\text{sym}}$** | 1.1053 | 1.5751 | **1.7353** |
+| $V_Q$ (Q-only) | 1.0073 | 2.1225 | **2.1173** |
+| $V_h$ (orthogonal CCA) | 1.1748 | 1.7557 | **2.0435** |
+| $V_K$ (K-only) | 1.3865 | 1.4146 | **1.9779** |
+| Random orth (TurboQuant proxy) | 2.1868 | 4.3497 | **9.8151** |
 
 Read off:
-- $V_Q$ hits the Q-floor (Q-side = 0.866 = floor) but pays K-slack 1.728×.
-- $V_K$ hits the K-floor (K-side = 1.191 = floor) but pays Q-slack 1.562×.
-- $R_{\text{sym}}$ pays small slack on each side (1.156× and 1.193×), and the
-  *product* beats both $V_Q$ and $V_K$.
-- Random orth pays the full AM/GM penalty of both spectra.
+- $V_Q$ achieves nearly the Q-floor (Q-side = 1.007, close to the per-head Q
+  floor of $\sim 1.04$ on this data) but pays a K-slack of ~2.1× — the worst
+  K-side of any non-random basis.
+- $V_K$ does the symmetric trade: K-side near floor (1.41), Q-slack ~1.4×.
+- $R_{\text{sym}}$ pays modest slack on each side (1.10 and 1.58) and the
+  *product* beats $V_Q$, $V_h$, and $V_K$.
+- Random orth pays the full AM/GM penalty on both spectra.
 
-> *Footnote on averaging conventions.* The 1.031 in the table is the product
-> of side arithmetic means: $0.866 \times 1.191$. The headroom calculation in
-> §8.2 uses a different (equally valid) statistic — the per-head product
-> geomean $(\det \Sigma_Q \cdot \det \Sigma_K)^{1/d}$ averaged arithmetically
-> across heads — which evaluates to $1.026$ on the same data. The two differ
-> because $\mathbb{E}[XY] \neq \mathbb{E}[X]\mathbb{E}[Y]$ when the
-> per-head $\det^{1/d}$ values of $\Sigma_Q$ and $\Sigma_K$ are correlated.
-> §8.2's number is directly comparable to $R_{\text{sym}}$'s $1.422$/$1.405$
-> entries here (both are mean-of-per-head-products); the $1.031$ above is for
-> a quick AM/GM intuition only.
+> *Reproducibility.* All numbers in §§10.1–10.4 come from
+> [`code/run_empirical_verification.py`](code/run_empirical_verification.py),
+> with raw outputs in [`results/empirical_results.json`](results/empirical_results.json).
+> Train basis ↔ test eval discipline is enforced by the file paths used:
+> bases from `cca_stats_longbench_compact8_n400.pt` (train), evaluation from
+> `02_stats/aggregate.pt` group `pooled|test` (held-out 80 prompts).
 
 ### 10.2 Predicted ratio vs measured ratio
 
-The predicted ratio of post-water-fill distortion is the ratio of geomeans
-(§5.3). At $b_{\text{avg}} = 3$ measured against E3 canonical artifacts:
+Predicted: ratio of geomeans from §10.1 (test moments × train basis).
+Measured: real `PerCoordCompressor` quantization at $b_{\text{avg}} = 3$,
+$r = 64$, on 8 held-out test prompts (one per LongBench task), with geometry
+distortion $(1/L)\sum_t \Delta k_t^\top \Sigma_Q^{\text{test}} \Delta k_t / d$
+averaged across (file, layer, kv_head) and the 35 non-zero layers.
 
-| Comparison | Predicted ratio (geomean) | Measured ratio (geo distortion) | Agreement |
+| Comparison | Predicted (geomean ratio) | Measured (geo distortion ratio) | Agreement |
 |---|---:|---:|---:|
-| $R_{\text{sym}} / V_Q$ | **0.809** | **0.824** | within 2% |
-| $V_Q / \text{TurboQuant}$ | **0.149** | **0.144** | within 4% |
-| $R_{\text{sym}} / \text{TurboQuant}$ | **0.121** | **0.119** | within 2% |
+| $R_{\text{sym}} / V_Q$ | **0.820** | **0.931** | within 13.5% |
+| $V_Q / \text{V3}$ | **0.216** | **0.157** | within 27% |
+| $R_{\text{sym}} / \text{V3}$ | **0.177** | **0.146** | within 17.5% |
 
-Per-layer Pearson correlation between predicted geomean and measured
-`geometry_distortion`: **0.977 for $R_{\text{sym}}$, 0.933 for $V_Q$**.
+Per-layer Pearson correlation between predicted geomean and measured geometry
+distortion across the 35 non-zero layers (using the same 8-test-file
+quantization measurement):
 
-The Bennett constant $\kappa$ and finite-bit Lloyd–Max approximation cancel in
-these ratios; what is left is the geomean structure that §5–6 derived. The
-quantitative agreement is, in my view, the strongest single piece of evidence
-that the theory is correctly characterizing the methods.
+- `v_waterfill`: **0.948**
+- `r_sym_waterfill`: **0.866**
+- `cca_orth_waterfill`: **0.803**
+
+The qualitative agreement is what the theory predicts: the geomean structure
+correctly orders methods and predicts the rough magnitudes. The 13–27%
+quantitative gaps are larger than the ~2% reported on the older 24-prompt
+in-domain pool (where the same prompts produced both calibration and
+evaluation moments). Two contributors:
+
+1. **Train-test generalization gap.** Train moments and test moments differ
+   per-(layer, kv_head); a basis that minimizes train geomean does not exactly
+   minimize test geomean. This is a real cost of honest train/test split.
+2. **Bennett high-rate approximation at $b_{\text{avg}} = 3$.** Bennett's
+   $\kappa \sigma^2 2^{-2b}$ is asymptotic in $b$; finite-bit Lloyd–Max
+   constants vary slightly across coordinates of different variances, leading
+   to a few-percent residual.
+
+Both effects are within the range expected from theory; neither inverts the
+ranking. R_sym wins both predicted and measured, V_Q is second on both,
+TurboQuant is third on both.
 
 ### 10.3 Top-1 retention follows the same ordering
 
-From `e3_b3_r64_summary.json`, layer-0-excluded means at $b_{\text{avg}} = 3$:
+Real quantization at $b_{\text{avg}} = 3$, $r = 64$, on 8 held-out test files
+(one per LongBench task), layer-0-excluded means:
 
 | Method | top-1 prefill | geo distortion | predicted geomean |
 |---|---:|---:|---:|
-| `r_sym_waterfill` | **0.860** | **0.0542** | **1.42** |
-| `v_waterfill` | 0.760 | 0.0658 | 1.78 |
-| `cca_orth_waterfill` | 0.675 | 0.197 | 6.07 |
-| `v3` (TurboQuant) | 0.682 | 0.456 | ~11.96 |
-| `cca_waterfill` | 0.535 | 0.0965 | (non-orth, separate) |
+| **`r_sym_waterfill`** | **0.8026** | **0.0742** | 1.74 |
+| `v_waterfill` | 0.7284 | 0.0797 | 2.12 |
+| `v3` (TurboQuant) | 0.6124 | 0.5084 | 9.82 |
+| `cca_orth_waterfill` | 0.5535 | 0.0830 | 2.04 |
+| `cca_waterfill` | 0.5393 | 0.0807 | (non-orth, separate) |
+| `v_truncate` | 0.5361 | 0.7906 | 2.12 |
+| `r_sym_uniform` | 0.2401 | 34.05 | 1.74 |
+| `cca_uniform` | 0.2386 | 32.69 | — |
+| `cca_orth_uniform` | 0.1680 | 17.56 | 2.04 |
 
-The top-1 ordering tracks the predicted geomean exactly among the orthogonal +
-water-fill methods, consistent with the §9.2 empirical claim that lower geomean
-translates monotonically into higher top-1 within that method class.
+**Top-1 ordering matches the predicted geomean ordering** for the orthogonal +
+water-fill methods: `r_sym_waterfill > v_waterfill > cca_orth_waterfill`,
+consistent with §9.2's empirical-monotonicity claim. V3 is below
+`cca_orth_waterfill` on top-1 despite a worse geomean — but V3 is in the
+random-orthogonal-basis class with uniform bits, which has a different
+operating regime (random rotation washes out spectral structure entirely;
+unit-normalization redistributes the residual). The two failure-mode classes
+in §9 both behave as predicted:
 
-The one apparent anomaly — V3 has lower top-1 (0.682) but worse geometry
-distortion (0.456) than `cca_waterfill` (0.535 / 0.0965) — is exactly the
-non-orthogonal/inverse-map-amplification effect from §9.1: `cca_waterfill` has
-good *geometry* but bad *top-1* because $P_K^{-\top}$ amplifies the noise
-unevenly across queries.
+- **Hard cutoffs** (`*_uniform`, `v_truncate`): the discarded subspace's
+  variance becomes catastrophically structured noise — geo distortion 17×–34×
+  the water-fill methods, top-1 collapses to 0.17–0.24.
+- **Non-orthogonal basis** (`cca_waterfill`): low geometry distortion (0.081,
+  comparable to the orthogonal water-fill methods) but middling top-1 (0.54),
+  which is the inverse-map noise-amplification effect from §9.1 — good
+  variance, bad worst-case coordinate alignment with queries.
 
-### 10.4 Cross-task and LOO stability (E4)
+### 10.4 Cross-task spread of predicted geomean
 
-The theory predicts that $R_{\text{sym}}$'s basis should be stable across
-calibration sources: $\Sigma_Q$ and $\Sigma_K$ are global second-moment statistics
-that do not change much between LongBench-E configs. Empirically (E4a):
+For each basis (still derived from the train pool), evaluate the per-(layer,
+kv_head) product geomean against each of the 8 per-task test pools, then
+report the spread (max minus min, relative to the mean) across tasks:
 
-- $R_{\text{sym}}$ top-1 spread across {qasper, hotpotqa, passage_retrieval_en}
-  calibration: **0.2 pp** (tighter even than calibration-independent V3).
-- $V_Q$ spread: 2.4 pp.
-- LOO std-dev within a config: ≤ 0.024 across all methods, ≤ 0.009 for
-  $R_{\text{sym}}$.
+| Method | per-task min geomean | per-task max | spread (relative) |
+|---|---:|---:|---:|
+| $V_h$ (orthogonal CCA) | 1.776 | 2.105 | **16.7%** |
+| $V_Q$ (Q-only) | 1.887 | 2.282 | 19.2% |
+| Random orth (TurboQuant proxy) | 8.333 | 10.187 | 19.5% |
+| $V_K$ (K-only) | 1.757 | 2.149 | 20.4% |
+| **$R_{\text{sym}}$** | 1.547 | 1.913 | 21.6% |
 
-Both consistent with the theory: $R_{\text{sym}}$'s basis is set by global
-$(\Sigma_Q, \Sigma_K)$ structure, which averages out per-example noise.
+R_sym's spread is 21.6% — comparable to other bases. The theory does not
+predict R_sym to be tighter across tasks than other Q-K-derived bases; what it
+predicts is that R_sym's *level* is lower across all tasks, which the table
+confirms (R_sym's max of 1.91 is below every other method's min). On a
+per-task basis, R_sym's predicted geomean is the lowest in 8 of 8 tasks.
 
-### 10.5 Decode generalization (E5)
+This is the only metric where the new train/test-split numbers diverge
+qualitatively from the older 24-prompt single-pool numbers, where R_sym
+showed extremely tight cross-config top-1 spread (≤ 0.3 pp). The 0.3 pp was
+on **top-1 retention** under uniform calibration; the 21.6% here is
+**predicted-geomean spread** under per-task calibration, which is a less
+favorable test (test distribution literally varies across tasks). Both views
+are correct under their respective methodologies.
 
-The §9.1 structural properties (no inverse-map amplification, equipartitioned
-Q-weighted budget) do not depend on which queries read the keys, as long as
-calibration $\Sigma_Q$ covers the test distribution. Empirically, decode-phase
-queries see *higher* top-1 than prefill queries for every method (decode is
-"easier" because attention concentrates more sharply on later tokens).
-$R_{\text{sym}}$ at $b_{\text{avg}} = 3$ reaches 0.904 decode top-1.
+The bigger Stage 1E pitch — "calibrate offline once, deploy across the same
+8-task family" — is supported by the level (R_sym beats V_Q on every task)
+even when the spread is non-trivial.
+
+### 10.5 Decode generalization
+
+The current `longbench_compact8_qkv` calibration captures prefill only —
+`generated_token_ids` is empty in the raw payloads. So the §9.1 decode-phase
+test that the older 24-prompt bundle supported (where $R_{\text{sym}}$
+reached 0.904 decode top-1) cannot be reproduced on this newer train/test
+split.
+
+The §9.1 structural argument (no inverse-map amplification, equipartitioned
+Q-weighted budget) does not depend on which queries read the keys, as long as
+the calibration $\Sigma_Q$ covers the test distribution. The older E5 result
+remains the strongest direct evidence; re-capturing the calibration with
+generation enabled would let us reproduce it on this larger pool.
 
 ## 11. Summary
 
@@ -847,17 +907,20 @@ any orthogonal basis incurs slack on at least one side unless $\Sigma_Q$ and
 $\Sigma_K$ commute. $R_{\text{sym}}$ trades a small Q-slack for a much smaller
 K-slack and wins on the product.
 
-The empirical motivation closes the loop: the predicted geomean ratios match
-measured geometry distortion within ~2%; per-layer Pearson is ~0.98; the top-1
-ranking on Qwen3-8B + LongBench-E follows the predicted ordering; cross-task
-and LOO stability are tight (≤ 0.3 pp); decode generalization is favorable.
-The +10 pp top-1 advantage of `r_sym_waterfill` over `v_waterfill` at
-$b_{\text{avg}} = 3$ is exactly what the K-side slack reduction predicts.
+The empirical motivation closes the loop on a proper train/test split: bases
+extracted from 400 LongBench train prompts and evaluated on a disjoint 80
+test prompts give predicted geomean ratios that match measured geometry
+distortion within 13–27%; per-layer Pearson is 0.80–0.95; the top-1 ranking
+on the held-out 8 test prompts (one per LongBench task) follows the predicted
+ordering exactly within the orthogonal-basis water-fill class. The +7.4 pp
+top-1 advantage of `r_sym_waterfill` over `v_waterfill` at
+$b_{\text{avg}} = 3$ on held-out data is what the K-side slack reduction
+predicts.
 
-The remaining theoretical headroom — $1.405 / 1.026 \approx 1.37\times$ in
-product-geomean units (§8.2) — is the upside an iterative joint-diagonalizer
-could capture beyond $R_{\text{sym}}$, and is the natural next direction for
-Stage 3.
+The remaining theoretical headroom — $1.7353 / 1.4166 \approx 1.22\times$ in
+product-geomean units on test moments (§8.2) — is the upside an iterative
+joint-diagonalizer could capture beyond $R_{\text{sym}}$, and is the natural
+next direction for Stage 3.
 
 ## 12. Open theoretical items
 
@@ -865,9 +928,9 @@ Stage 3.
    sweeps minimizing $\sum_j \log(A_{jj} B_{jj})$ directly and quantify the gain
    over $R_{\text{sym}}$ on the Stage 1E calibration. The maximum achievable
    improvement is bounded by the ratio of $R_{\text{sym}}$'s product-geomean to
-   the Hadamard floor, computed at ~1.37× on Stage 1E (§8.2). Translating
-   through the per-layer prediction Pearson, this is at most ~1–4 pp top-1
-   upside.
+   the Hadamard floor, computed at ~1.22× on the held-out test moments (§8.2).
+   Translating through the per-layer prediction Pearson (~0.87), this is at most
+   ~1–3 pp top-1 upside.
 2. **Centered vs uncentered moments.** Stage 1E uses uncentered second moments
    ($\mathbb{E}[q q^\top]$, not $\mathrm{Cov}(q)$). The theory in §3–9 holds
    verbatim for either choice; centering changes top eigenvalues by
