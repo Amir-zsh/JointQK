@@ -61,6 +61,10 @@ def parse_args() -> argparse.Namespace:
                    help="Overwrite existing cca_stats / v_stats files at the target paths. "
                         "Default is to refuse — protects against accidentally clobbering a "
                         "different model's calibration when --output-suffix is wrong.")
+    p.add_argument("--filter-config", default=None,
+                   help="If set, restrict the pooled train indices to rows whose per_example config "
+                        "matches this value (e.g. 'lcc' to build a single-task basis from a multi-task "
+                        "calibration run). Default: include all train rows.")
     return p.parse_args()
 
 
@@ -73,6 +77,13 @@ def main() -> None:
     agg = torch.load(paths.stats_dir / "aggregate.pt", map_location="cpu", weights_only=False)
     per_example = agg["per_example"]
     train_indices = [int(p["index"]) for p in per_example if p["split"] == "train"]
+    if args.filter_config:
+        before = len(train_indices)
+        train_indices = [int(p["index"]) for p in per_example
+                         if p["split"] == "train" and p.get("config") == args.filter_config]
+        print(f"[{ts()}] filter-config={args.filter_config!r}: {before} → {len(train_indices)} train examples", flush=True)
+        if not train_indices:
+            raise RuntimeError(f"No train rows matched filter-config={args.filter_config!r}")
     print(f"[{ts()}] pooling stats over {len(train_indices)} train examples", flush=True)
 
     train_stats = combine_stats(paths, per_example, train_indices, torch.device("cpu"))

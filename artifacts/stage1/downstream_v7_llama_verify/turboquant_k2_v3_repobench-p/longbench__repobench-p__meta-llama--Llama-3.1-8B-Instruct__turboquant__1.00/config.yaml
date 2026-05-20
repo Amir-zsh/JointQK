@@ -1,0 +1,29 @@
+dataset: longbench
+data_dir: repobench-p
+model: meta-llama/Llama-3.1-8B-Instruct
+device: null
+press_name: turboquant
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/stage1/downstream_v7_llama_verify/turboquant_k2_v3_repobench-p
+log_level: INFO
+model_kwargs: {}
+press_init_command: TurboQuantPress(k_bits=2, v_bits=3, protected_layers=0, residual_window=0,
+  seed=42, compress_decode=False, layer0_full_precision=True, compression_ratio=1.0)
+press_kwargs:
+  k_bits: 2
+  v_bits: 3
+  compress_decode: false
+  layer0_full_precision: true
+seed: 42
+fp8: false
