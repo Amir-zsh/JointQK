@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Modified from kvpress/evaluation/evaluate_registry.py (Apache-2.0). Changes:
+# Modified from vendor/kvpress/evaluation/evaluate_registry.py (Apache-2.0). Changes:
 #   - PRESS_REGISTRY and `from kvpress import ...` block removed.
 #   - Scorer imports rewritten from `benchmarks.<name>...` (flat sys.path) to
 #     `experiments.benchmarks.<name>...` (absolute package imports).

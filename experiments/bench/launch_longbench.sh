@@ -61,7 +61,7 @@ CMDS="$LOG_DIR/commands.txt"
 : > "$CMDS"
 
 VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
-PY_PATH="${REPO_ROOT}:${REPO_ROOT}/kvpress"
+PY_PATH="${REPO_ROOT}:${REPO_ROOT}/vendor/kvpress"
 ALLOC_CONF='PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True'
 
 # KIVI's 8-task LongBench subset (single-doc QA + summarization + few-shot + code).
@@ -71,7 +71,7 @@ TASKS=(qasper qmsum multi_news trec triviaqa samsum lcc repobench-p)
 
 emit() {
     local press="$1" json="$2" label_prefix="$3" task="$4"
-    local cmd="cd ${REPO_ROOT}/kvpress/evaluation && ${ALLOC_CONF} PYTHONPATH=${PY_PATH} ${VENV_PYTHON} -u evaluate.py \
+    local cmd="cd ${REPO_ROOT}/vendor/kvpress/evaluation && ${ALLOC_CONF} PYTHONPATH=${PY_PATH} ${VENV_PYTHON} -u evaluate.py \
         --press_name=${press} \
         --press_kwargs='${json}' \
         --model='${MODEL}' \
@@ -84,7 +84,7 @@ emit() {
 
 emit_oracle() {
     local task="$1"
-    local cmd="cd ${REPO_ROOT}/kvpress/evaluation && ${ALLOC_CONF} PYTHONPATH=${PY_PATH} ${VENV_PYTHON} -u evaluate.py \
+    local cmd="cd ${REPO_ROOT}/vendor/kvpress/evaluation && ${ALLOC_CONF} PYTHONPATH=${PY_PATH} ${VENV_PYTHON} -u evaluate.py \
         --press_name=no_press \
         --compression_ratio=0.0 \
         --model='${MODEL}' \

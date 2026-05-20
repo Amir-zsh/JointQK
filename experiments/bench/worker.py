@@ -34,8 +34,8 @@ import traceback
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-KVPRESS_EVAL = REPO_ROOT / "kvpress" / "evaluation"
-for p in (str(REPO_ROOT), str(REPO_ROOT / "kvpress"), str(KVPRESS_EVAL)):
+KVPRESS_EVAL = REPO_ROOT / "vendor" / "kvpress" / "evaluation"
+for p in (str(REPO_ROOT), str(REPO_ROOT / "vendor" / "kvpress"), str(KVPRESS_EVAL)):
     if p not in sys.path:
         sys.path.insert(0, p)
 

@@ -60,8 +60,11 @@ The full catalogue of methods, headline numbers, and per-experiment analyses liv
 │   ├── core/                #   Project framing and execution roadmap
 │   ├── reference/           #   Standalone derivations and references
 │   └── README.md            #   Index of the notes directory
-├── kvpress/                 # Vendored Apache-2.0 KV-compression library
-├── turboquant-pytorch/      # Vendored TurboQuant baseline
+├── vendor/                  # Vendored third-party libraries
+│   ├── kvpress/             #   Apache-2.0 KV-compression library (NVIDIA)
+│   ├── turboquant-pytorch/  #   TurboQuant baseline
+│   ├── turboquant_pytorch   #   symlink → turboquant-pytorch (so `import` works)
+│   └── kivi/                #   KIVI baseline
 └── README.md
 ```
 
@@ -74,17 +77,15 @@ conda env create -f environment.yml
 conda activate kv-rd
 ```
 
-This installs PyTorch (with CUDA), the scientific Python stack, and the dependencies needed by `kvpress`. The vendored `kvpress/` package is installed in editable mode by the same spec.
+This installs PyTorch (with CUDA), the scientific Python stack, and the dependencies needed by `kvpress`. The vendored `vendor/kvpress/` package is installed in editable mode by the same spec.
 
-The vendored `turboquant-pytorch/` directory uses a hyphen, which is not a valid Python module name. Create an underscore-name symlink so `import turboquant_pytorch` resolves:
+The vendored `vendor/turboquant-pytorch/` directory uses a hyphen, which is not a valid Python module name. The repo ships a symlink `vendor/turboquant_pytorch → turboquant-pytorch` so `import turboquant_pytorch` resolves; recreate it after every fresh clone if missing:
 
 ```bash
-ln -sfn turboquant-pytorch turboquant_pytorch
+ln -sfn turboquant-pytorch vendor/turboquant_pytorch
 ```
 
-The symlink is gitignored — recreate it after every fresh clone.
-
-Calibration artifacts (`artifacts/{v_bases,bases/llama31_8b,downstream,query_stats_longbench_under4k_llama31_8b}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/scripts/` after capturing a fresh Q/K/V bundle.
+Calibration artifacts (`artifacts/{v_bases,bases/llama31_8b,query_stats_longbench_under4k*}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/scripts/` after capturing a fresh Q/K/V bundle.
 
 ## Where to start reading
 
@@ -113,8 +114,9 @@ See `notes/bench_results_report.md` and `notes/jointqk_disconnect_investigation.
 
 | Path | Source | License |
 |---|---|---|
-| `kvpress/` | NVIDIA's [kvpress](https://github.com/NVIDIA/kvpress) library, used as a thin benchmarking adapter | Apache-2.0 (`kvpress/LICENSE`) |
-| `turboquant-pytorch/` | TurboQuant baseline implementation | see `turboquant-pytorch/LICENSE` |
+| `vendor/kvpress/` | NVIDIA's [kvpress](https://github.com/NVIDIA/kvpress) library, used as a thin benchmarking adapter | Apache-2.0 (`vendor/kvpress/LICENSE`) |
+| `vendor/turboquant-pytorch/` | TurboQuant baseline implementation | see `vendor/turboquant-pytorch/LICENSE` |
+| `vendor/kivi/` | KIVI baseline | see `vendor/kivi/LICENSE` |
 
 These are vendored rather than installed from PyPI to pin specific versions; their original licenses apply unchanged.
 

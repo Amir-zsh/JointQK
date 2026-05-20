@@ -33,14 +33,14 @@ CMDS="$LOG_DIR/commands.txt"
 : > "$CMDS"
 
 CONDA_ACTIVATE='source ~/miniconda3/etc/profile.d/conda.sh && conda activate efficient-llm'
-PY_PATH="${REPO_ROOT}:${REPO_ROOT}/kvpress"
+PY_PATH="${REPO_ROOT}:${REPO_ROOT}/vendor/kvpress"
 
 IFS=',' read -ra CTX_ARR <<< "$CTXS"
 IFS=',' read -ra K_ARR <<< "$KS"
 
 emit() {
     local model="$1" press="$2" json="$3" out_dir="$4" label="$5" ctx="$6"
-    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONPATH=${PY_PATH} python -u evaluate.py \
+    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/vendor/kvpress/evaluation && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONPATH=${PY_PATH} python -u evaluate.py \
         --press_name=${press} \
         --press_kwargs='${json}' \
         --model='${model}' \
@@ -52,7 +52,7 @@ emit() {
 
 emit_oracle() {
     local model="$1" out_dir="$2" label="$3" ctx="$4"
-    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONPATH=${PY_PATH} python -u evaluate.py \
+    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/vendor/kvpress/evaluation && PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True PYTHONPATH=${PY_PATH} python -u evaluate.py \
         --press_name=no_press \
         --compression_ratio=0.0 \
         --model='${model}' \

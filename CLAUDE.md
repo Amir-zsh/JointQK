@@ -20,7 +20,7 @@ See `README.md` for the public-facing high-level project description and `notes/
   - `tests/`, `notebooks/`, `logs/` (run logs, gitignored).
 - `artifacts/` — per-study output directories. Bench results live under `bench*/`; calibration captures under `calibration/`; Llama analysis under `decode_q_captures_llama/`, `q_distribution_shift/`, etc.
 - `notes/` — `core/` (framing), `reference/` (derivations), `<study>/` (per-study write-ups, bug trackers, shareable summaries).
-- `kvpress/`, `turboquant-pytorch/` — vendored Apache-2.0 / similar deps; do not modify directly without good reason.
+- `vendor/` — vendored Apache-2.0 / similar deps: `vendor/kvpress/`, `vendor/turboquant-pytorch/`, `vendor/kivi/`. Do not modify directly without good reason. (`vendor/turboquant_pytorch` is a symlink so `import turboquant_pytorch` resolves through the hyphen-named source dir.)
 
 ## How experiments are organised
 

@@ -1,6 +1,7 @@
 .venv/
-kvpress/
-turboquant-pytorch/
+vendor/kvpress/
+vendor/turboquant-pytorch/
+vendor/turboquant_pytorch
 *.pdf
 *.pyc
 *.pt
@@ -20,7 +21,6 @@ artifacts/_refactor_smoke/
 experiments/notebooks/data
 experiments/logs/
 paper/
-turboquant_pytorch
 *.pt.pre_*
 *.pre_messages_hash.*
 *.pre_v_turboquant_*

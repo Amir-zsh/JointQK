@@ -103,7 +103,7 @@ def test_longbench_e_scorer_returns_bucketed_scores():
 
 def test_vendored_longbench_matches_upstream_kvpress():
     """Lock the vendored copy against kvpress to catch silent drift if we re-vendor."""
-    upstream_path = Path("/vault/amir/efficient-llm/teamily-project/kvpress/evaluation")
+    upstream_path = Path("/vault/amir/efficient-llm/teamily-project/vendor/kvpress/evaluation")
     sys.path.insert(0, str(upstream_path))
     try:
         from benchmarks.longbench.calculate_metrics import (

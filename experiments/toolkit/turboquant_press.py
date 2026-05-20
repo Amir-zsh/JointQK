@@ -14,7 +14,7 @@ from kvpress.presses.base_press import BasePress
 from kvpress.utils import extract_keys_and_values
 
 # Ensure turboquant-pytorch is importable
-_TQ_DIR = Path(__file__).resolve().parents[2] / "turboquant-pytorch"
+_TQ_DIR = Path(__file__).resolve().parents[2] / "vendor" / "turboquant-pytorch"
 if str(_TQ_DIR.parent) not in sys.path:
     sys.path.insert(0, str(_TQ_DIR.parent))
 

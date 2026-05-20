@@ -40,13 +40,13 @@ CMDS="$LOG_DIR/commands.txt"
 : > "$CMDS"
 
 # Each command runs from the repo root with PYTHONPATH set; the underlying
-# kvpress/evaluation/evaluate.py needs to run with cwd=kvpress/evaluation/ for
+# vendor/kvpress/evaluation/evaluate.py needs to run with cwd=vendor/kvpress/evaluation/ for
 # its `from benchmarks.* import ...` style. We wrap each command in a subshell.
 
-# Each command: activate efficient-llm conda env, cd to kvpress/evaluation/,
+# Each command: activate efficient-llm conda env, cd to vendor/kvpress/evaluation/,
 # set PYTHONPATH so kvpress and project root are importable, then run evaluate.py.
 CONDA_ACTIVATE='source ~/miniconda3/etc/profile.d/conda.sh && conda activate efficient-llm'
-PY_PATH="${REPO_ROOT}:${REPO_ROOT}/kvpress"
+PY_PATH="${REPO_ROOT}:${REPO_ROOT}/vendor/kvpress"
 
 # Helper: emit one command line + label
 emit_cmd() {
@@ -55,7 +55,7 @@ emit_cmd() {
     local out_subdir="$3"
     local label="$4"
 
-    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
+    local cmd="${CONDA_ACTIVATE} && cd ${REPO_ROOT}/vendor/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
         --press_name=${press_name} \
         --press_kwargs='${press_kwargs_json}' \
         --model='${MODEL}' \
@@ -68,7 +68,7 @@ emit_cmd() {
 
 if [[ -z "$ONLY_VMETHOD" ]]; then
     # 1) Full-precision oracle (uses no_press)
-    echo "${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
+    echo "${CONDA_ACTIVATE} && cd ${REPO_ROOT}/vendor/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
         --press_name=no_press \
         --compression_ratio=0.0 \
         --model='${MODEL}' \
