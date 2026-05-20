@@ -2,6 +2,7 @@
 vendor/kvpress/
 vendor/turboquant-pytorch/
 vendor/turboquant_pytorch
+vendor/kivi/
 *.pdf
 *.pyc
 *.pt
