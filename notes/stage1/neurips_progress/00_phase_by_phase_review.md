@@ -160,9 +160,18 @@ a regression came from K or V. Phases 1A (V-only) + 1B (K-only) isolate them.
     larger prefill-only Q/K bundle now exists with `25/task`:
     `artifacts/stage1/query_stats_longbench_under4k_25per_qk/` (75 examples,
     563,398 total prefill tokens). It stores only `q_post` and `k_post` to avoid
-    unused `q_pre`/`V` storage. The expanded Phase 1D run uses
-    `n ∈ {1,2,4,8,16,25}`, stratified pooled calibration, and leave-one-task-out
-    calibration (`loo_excl_*`) for OOD transfer.
+    unused `q_pre`/`V` storage.
+
+    Important protocol correction: the first expanded `25/task` analysis used
+    the same examples to define the eval reference and to fit candidate bases.
+    That is useful as an in-sample diagnostic, but the `n=25` same-task and
+    pooled endpoints can go to zero by construction and should not be treated as
+    evidence of generalization. The corrected run holds out `9` examples per
+    task for eval and uses the remaining `16` examples per task for calibration.
+    References are computed only on the held-out eval examples, while candidate
+    bases use `n ∈ {1,2,4,8,16}` calibration examples. It still includes
+    stratified pooled calibration and leave-one-task-out calibration
+    (`loo_excl_*`) for OOD transfer.
 
     Launchers:
     ```bash
@@ -174,6 +183,15 @@ a regression came from K or V. Phases 1A (V-only) + 1B (K-only) isolate them.
       --sample-sizes 1,2,4,8,16,25 \
       --include-loo \
       --moments-cache artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_moments_cache.pt
+    bash experiments/stage1/scripts/launch_phase1d_k_basis_stability.sh \
+      --gpus 0,1,2,3,4,5,6 \
+      --bundle artifacts/stage1/query_stats_longbench_under4k_25per_qk \
+      --output-dir artifacts/stage1/v_method_study/k_basis_stability_25per_holdout9 \
+      --sample-sizes 1,2,4,8,16 \
+      --include-loo \
+      --moments-cache artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_moments_cache.pt \
+      --holdout-per-config 9 \
+      --holdout-seed 991
     ```
 
     Outputs:
@@ -183,14 +201,25 @@ a regression came from K or V. Phases 1A (V-only) + 1B (K-only) isolate them.
     - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_k_basis_stability_rows.jsonl`
     - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/phase1d_k_basis_stability_summary.md`
     - `artifacts/stage1/v_method_study/k_basis_stability_25per_loo/figures/*.png`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_holdout9/phase1d_k_basis_stability_rows.jsonl`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_holdout9/phase1d_k_basis_stability_summary.md`
+    - `artifacts/stage1/v_method_study/k_basis_stability_25per_holdout9/figures/*.png`
 
-    Current takeaway from the 25/task run: pooled-stratified calibration shows
-    clear convergence by `8-16` examples/task on pooled eval (`K=3` regret
-    `0.0142` at `n=8`, `0.0043` at `n=16`). Same-task bases continue to improve
-    with more examples, but single-task bases do not fully generalize across
-    tasks. Leave-one-task-out improves with calibration size, yet held-out
-    Qasper remains the hardest OOD case (`loo_excl_qasper_e`, eval qasper,
-    K=3 regret about `0.1345` even at `25` examples per non-held-out task).
+    Current held-out takeaway: pooled-stratified calibration improves sharply
+    with more examples, but the result is not yet enough to claim convergence.
+    On pooled eval, `K=3` regret falls from `0.1054` at `n=1` to `0.0113` at
+    `n=8` and `0.0022` at `n=16`; however, `n=16` has only one draw because it
+    uses the entire calibration split, so there is no variance estimate at the
+    largest point. Same-task bases also improve substantially but retain nonzero
+    held-out regret at `n=16` (`qasper_e`: `0.0110`, `hotpotqa_e`: `0.0243`,
+    `passage_retrieval_en_e`: `0.0168`, all at K=3). Cross-task transfer is
+    asymmetric: Qasper-calibrated bases transfer poorly to HotpotQA and Passage
+    Retrieval, and non-Qasper bases remain weak on Qasper. The leave-one-task-out
+    runs improve with more calibration data, but OOD Qasper remains the hardest
+    case (`loo_excl_qasper_e`, eval qasper, K=3 regret `0.1416` at `n=16`).
+    Next step: collect more than `25/task` so the held-out protocol can test
+    `n > 16` with repeated draws and determine whether the curves truly
+    plateau.
 
 **Results / decision artifacts:**
 

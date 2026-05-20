@@ -6,8 +6,8 @@ Inputs:
 - artifacts/stage1/v_method_study/sweep/{vonly_<method>_v<b>, konly_k<b>}/<...>/metrics.json
 
 Decisions:
-- V lock: smallest v_bits with rel_F1 >= threshold across all V methods; tiebreaker
-  v_eigen_waterfill > v_eigen_uniform > v_random.
+- V lock: smallest v_bits with rel_F1 >= threshold across all V methods; within
+  the same bit budget, choose the best measured rel_F1.
 - K floor: smallest k_bits with rel_F1 >= threshold for k_method=r_sym_waterfill.
 """
 from __future__ import annotations
@@ -17,7 +17,12 @@ import json
 import re
 from pathlib import Path
 
-V_METHOD_PRIORITY = {"v_eigen_waterfill": 3, "v_eigen_uniform": 2, "v_random": 1}
+V_METHOD_PRIORITY = {
+    "v_turboquant": 4,
+    "v_eigen_waterfill": 3,
+    "v_eigen_uniform": 2,
+    "v_random": 1,
+}
 
 
 def find_metric(run_dir: Path) -> float | None:
@@ -57,7 +62,7 @@ def main():
     print("\nV-only sweep (rel_F1 vs full):")
     print(f"{'method':<22s}  v=2     v=3     v=4")
     v_cells = {}  # (method, vb) -> rel_F1
-    for vmethod in ("v_random", "v_eigen_uniform", "v_eigen_waterfill"):
+    for vmethod in ("v_random", "v_eigen_uniform", "v_eigen_waterfill", "v_turboquant"):
         row = f"{vmethod:<22s}  "
         for vb in (2, 3, 4):
             d = root / f"vonly_{vmethod}_v{vb}"
@@ -87,8 +92,9 @@ def main():
     # V lock decision
     acceptable_v = [(vm, vb, rel) for (vm, vb), rel in v_cells.items() if rel >= args.threshold]
     if acceptable_v:
-        # Sort: smallest vb first, then by V_METHOD_PRIORITY descending
-        acceptable_v.sort(key=lambda t: (t[1], -V_METHOD_PRIORITY[t[0]]))
+        # Sort: smallest vb first, then best measured rel_F1. Priority is only
+        # a deterministic fallback for exact metric ties.
+        acceptable_v.sort(key=lambda t: (t[1], -t[2], -V_METHOD_PRIORITY[t[0]]))
         winner_vm, winner_vb, winner_rel = acceptable_v[0]
     else:
         # No cell meets threshold — pick the best by rel_F1

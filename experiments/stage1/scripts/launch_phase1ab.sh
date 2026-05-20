@@ -1,5 +1,5 @@
 #!/bin/bash
-# Phase 1AB launcher: V-only sweep (3 methods × 3 budgets) + K-only sweep (3 budgets) + 1 oracle.
+# Phase 1AB launcher: V-only sweep (4 methods × 3 budgets) + K-only sweep (3 budgets) + 1 oracle.
 #
 # Runs JointQKPress with quantize_k/quantize_v flags via the parallel launcher.
 # All jobs run on Qwen3-8B against LongBench/qasper at fraction 0.3.
@@ -21,12 +21,16 @@ CCA="${REPO_ROOT}/artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt"
 VST="${REPO_ROOT}/artifacts/stage1/v_method_study/v_stats.pt"
 OUT_BASE="${REPO_ROOT}/artifacts/stage1/v_method_study/sweep"
 LOG_DIR="${REPO_ROOT}/experiments/stage1/logs/phase1ab"
+DRY_RUN=0
+ONLY_VMETHOD=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --gpus) GPUS="$2"; shift 2 ;;
         --fraction) FRACTION="$2"; shift 2 ;;
         --task) TASK="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=1; shift ;;
+        --only-vmethod) ONLY_VMETHOD="$2"; shift 2 ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
@@ -62,32 +66,47 @@ emit_cmd() {
     echo "$cmd" >> "$CMDS"
 }
 
-# 1) Full-precision oracle (uses no_press)
-echo "${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
-    --press_name=no_press \
-    --compression_ratio=0.0 \
-    --model='${MODEL}' \
-    --dataset=longbench \
-    --data_dir=${TASK} \
-    --fraction=${FRACTION} \
-    --output_dir=${OUT_BASE}/full_precision # label=full_precision" >> "$CMDS"
+if [[ -z "$ONLY_VMETHOD" ]]; then
+    # 1) Full-precision oracle (uses no_press)
+    echo "${CONDA_ACTIVATE} && cd ${REPO_ROOT}/kvpress/evaluation && PYTHONPATH=${PY_PATH} python -u evaluate.py \
+        --press_name=no_press \
+        --compression_ratio=0.0 \
+        --model='${MODEL}' \
+        --dataset=longbench \
+        --data_dir=${TASK} \
+        --fraction=${FRACTION} \
+        --output_dir=${OUT_BASE}/full_precision # label=full_precision" >> "$CMDS"
+fi
 
-# 2) V-only sweep: 3 methods × 3 budgets = 9 jobs
-for vmethod in v_random v_eigen_uniform v_eigen_waterfill; do
+# 2) V-only sweep: calibrated V builders + TurboQuant V3 value compressor.
+for vmethod in v_random v_eigen_uniform v_eigen_waterfill v_turboquant; do
+    if [[ -n "$ONLY_VMETHOD" && "$vmethod" != "$ONLY_VMETHOD" ]]; then
+        continue
+    fi
     for vb in 2 3 4; do
-        json="{\"v_stats_path\": \"${VST}\", \"v_method\": \"${vmethod}\", \"v_bits\": ${vb}, \"quantize_k\": False, \"quantize_v\": True, \"compress_decode\": False}"
+        if [[ "$vmethod" == "v_turboquant" ]]; then
+            json="{\"v_method\": \"${vmethod}\", \"v_bits\": ${vb}, \"quantize_k\": False, \"quantize_v\": True, \"compress_decode\": False}"
+        else
+            json="{\"v_stats_path\": \"${VST}\", \"v_method\": \"${vmethod}\", \"v_bits\": ${vb}, \"quantize_k\": False, \"quantize_v\": True, \"compress_decode\": False}"
+        fi
         emit_cmd "jointqk" "$json" "vonly_${vmethod}_v${vb}" "vonly_${vmethod}_v${vb}"
     done
 done
 
-# 3) K-only sweep: 3 budgets = 3 jobs
-for kb in 2 3 4; do
-    json="{\"cca_stats_path\": \"${CCA}\", \"k_method\": \"r_sym_waterfill\", \"k_bits\": ${kb}, \"quantize_k\": True, \"quantize_v\": False, \"compress_decode\": False}"
-    emit_cmd "jointqk" "$json" "konly_k${kb}" "konly_k${kb}"
-done
+if [[ -z "$ONLY_VMETHOD" ]]; then
+    # 3) K-only sweep: 3 budgets = 3 jobs
+    for kb in 2 3 4; do
+        json="{\"cca_stats_path\": \"${CCA}\", \"k_method\": \"r_sym_waterfill\", \"k_bits\": ${kb}, \"quantize_k\": True, \"quantize_v\": False, \"compress_decode\": False}"
+        emit_cmd "jointqk" "$json" "konly_k${kb}" "konly_k${kb}"
+    done
+fi
 
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] Phase 1AB: $n_jobs jobs queued in $CMDS"
+if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[$(date '+%H:%M:%S')] DRY RUN: commands written to $CMDS, dispatcher SKIPPED"
+    exit 0
+fi
 echo "[$(date '+%H:%M:%S')] Dispatching across GPUs $GPUS, logs in $LOG_DIR/"
 
 python "${REPO_ROOT}/experiments/stage1/scripts/parallel_launcher.py" \
