@@ -12,7 +12,7 @@ The fastest path to all downstream metrics is **kvpress's existing harness**:
 - Compression hook fires per-layer after attention forward and is **auto-skipped during decode** (line 139). That is the prefill-only semantics Stage 1E used and the kvpress default — but **not** what KIVI/KVQuant/TurboQuant do in their published evaluations, which compress every key including decode-step keys. We need to evaluate both scopes (see "Decode-scope ablation" below).
 - kvpress also ships `PrefillDecodingPress` (`kvpress/kvpress/presses/prefill_decoding_press.py`) — a wrapper that delegates to a `prefilling_press` during prefill and a `decoding_press` during generation. We lean on this pattern for the prefill+decode mode.
 
-The Stage-1E driver `experiments/stage1/run_cca_vs_waterfill_study.py` is bundle-driven (operates on pre-captured Q/K stats; does not load a model). For W1 we re-run `experiments/stage1/collect_query_stats.py --model meta-llama/Llama-3.1-8B` to produce a Llama bundle, then everything downstream is unchanged.
+The Stage-1E driver `experiments/run_bases.py` is bundle-driven (operates on pre-captured Q/K stats; does not load a model). For W1 we re-run `experiments/collect_query_stats.py --model meta-llama/Llama-3.1-8B` to produce a Llama bundle, then everything downstream is unchanged.
 
 ## Decode-scope ablation (decision blocker for the headline number)
 
@@ -49,15 +49,15 @@ Independent: A, D/E, F, K can all start day 1. The blocking edges are A→B, D/E
 
 ### W1.1 Capture Q/K bundle for Llama (Day 1, ~4–8 h GPU)
 
-`experiments/stage1/collect_query_stats.py` already has `--model` (default `Qwen/Qwen3-8B`, line 26). Re-run with Llama:
+`experiments/collect_query_stats.py` already has `--model` (default `Qwen/Qwen3-8B`, line 26). Re-run with Llama:
 
 ```bash
 conda activate kv-rd
-python -u -m experiments.stage1.collect_query_stats \
+python -u -m experiments.collect_query_stats \
     --model meta-llama/Llama-3.1-8B-Instruct \
-    --output artifacts/stage1/query_stats_longbench_under4k_llama31_8b \
+    --output artifacts/query_stats_longbench_under4k_llama31_8b \
     --gpus 0,1 \
-    2>&1 | tee experiments/stage1/logs/capture_llama31.log
+    2>&1 | tee experiments/logs/capture_llama31.log
 ```
 
 **Verification:**
@@ -71,14 +71,14 @@ python -u -m experiments.stage1.collect_query_stats \
 
 ```bash
 # Calibration + E3 + E5 in one launcher (extends launch_cca_study.sh)
-bash experiments/stage1/scripts/launch_llama_e3_e5.sh \
-    --bundle artifacts/stage1/query_stats_longbench_under4k_llama31_8b \
+bash experiments/scripts/launch_llama_e3_e5.sh \
+    --bundle artifacts/query_stats_longbench_under4k_llama31_8b \
     --output-subdir llama31_8b \
     --gpus 0,1,2,3 \
-    2>&1 | tee experiments/stage1/logs/llama31_e3_e5.log
+    2>&1 | tee experiments/logs/llama31_e3_e5.log
 ```
 
-**New file:** `experiments/stage1/scripts/launch_llama_e3_e5.sh` (~30 lines). Models after `launch_cca_study.sh`. Hardcoded:
+**New file:** `experiments/scripts/launch_llama_e3_e5.sh` (~30 lines). Models after `launch_cca_study.sh`. Hardcoded:
 - bundle path → input
 - output_subdir → `llama31_8b`
 - methods → all 9 (TurboQuant + 8 calibrated variants)
@@ -86,18 +86,18 @@ bash experiments/stage1/scripts/launch_llama_e3_e5.sh \
 
 **Verification (W1 gate):**
 ```bash
-python -m experiments.stage1.gates.gate_e3 \
-    --output-dir artifacts/stage1/cca_vs_waterfill_study/llama31_8b/e3
-python -m experiments.stage1.gates.gate_e5 \
-    --output-dir artifacts/stage1/cca_vs_waterfill_study/llama31_8b/e5
+python -m experiments.gates.gate_e3 \
+    --output-dir artifacts/bases/llama31_8b/e3
+python -m experiments.gates.gate_e5 \
+    --output-dir artifacts/bases/llama31_8b/e5
 ```
 Gates auto-discover methods. Pass criterion: `r_sym_waterfill` is top-ranked at every (b, layer-0-excluded) cell with margin ≥ 5 pp top-1 over runner-up at b=3. **If fails → escalate to user before W1.3.**
 
 ### W1.3 Cross-model chart (Day 5)
 
-**New file:** `experiments/stage1/scripts/make_cross_model_chart.py` (~80 lines). Reads:
-- `artifacts/stage1/cca_vs_waterfill_study/e3/{e3_b{2,3,4}_r64_summary.json}` (Qwen, post-newbases)
-- `artifacts/stage1/cca_vs_waterfill_study/llama31_8b/e3/{e3_b{2,3,4}_r64_summary.json}` (new Llama)
+**New file:** `experiments/scripts/make_cross_model_chart.py` (~80 lines). Reads:
+- `artifacts/bases/e3/{e3_b{2,3,4}_r64_summary.json}` (Qwen, post-newbases)
+- `artifacts/bases/llama31_8b/e3/{e3_b{2,3,4}_r64_summary.json}` (new Llama)
 
 Produces `report_charts/cross_model_b_sensitivity.png` — two-panel (Qwen | Llama) of top-1 vs b_avg, highlighting JointQK WaterFill.
 
@@ -107,7 +107,7 @@ Produces `report_charts/cross_model_b_sensitivity.png` — two-panel (Qwen | Lla
 
 ### W2.1 — `JointQKPress` (Days 3–4)
 
-**New file:** `experiments/stage1/toolkit/jointqk_press.py`.
+**New file:** `experiments/toolkit/jointqk_press.py`.
 
 **Class skeleton:**
 ```python
@@ -115,7 +115,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import torch
 from kvpress.presses.base_press import BasePress
-from experiments.stage1.toolkit.per_coord_quantization import (
+from experiments.toolkit.per_coord_quantization import (
     PerCoordCompressor, build_method_compressor,
 )
 
@@ -193,13 +193,13 @@ For Mode B we could alternatively wrap two presses with `kvpress.PrefillDecoding
 
 **Notes:**
 1. Per-batch loop over heads is OK for evaluation (we're not optimizing throughput here).
-2. `cca_stats.pt` may need to have R_sym / V_h pre-computed and saved. Currently, `run_cca_vs_waterfill_study.py` derives them on-the-fly via `_derive_vh_rsym`. To keep press lean, **add a one-time pre-derivation step** that saves R_sym + V_h into cca_stats.pt for both models.
+2. `cca_stats.pt` may need to have R_sym / V_h pre-computed and saved. Currently, `run_bases.py` derives them on-the-fly via `_derive_vh_rsym`. To keep press lean, **add a one-time pre-derivation step** that saves R_sym + V_h into cca_stats.pt for both models.
 
-**Pre-derive script** (~30 lines): `experiments/stage1/scripts/precompute_newbases.py`. Loads cca_stats.pt, runs `_derive_vh_rsym` per (layer, head), writes cca_stats.pt back with two new keys. Idempotent.
+**Pre-derive script** (~30 lines): `experiments/scripts/precompute_newbases.py`. Loads cca_stats.pt, runs `_derive_vh_rsym` per (layer, head), writes cca_stats.pt back with two new keys. Idempotent.
 
 ### W2.2 — `TurboQuantPress` (Day 4, ~1h)
 
-**New file:** `experiments/stage1/toolkit/turboquant_press.py`. ~80 lines.
+**New file:** `experiments/toolkit/turboquant_press.py`. ~80 lines.
 
 Same skeleton as JointQKPress but no calibration: per layer/head, build a random Hadamard matrix once (seeded), use uniform Lloyd-Max bits. Reuses `PerCoordCompressor` directly with `forward_map = H_hadamard`, `inverse_map = H_hadamard.T`.
 
@@ -209,9 +209,9 @@ Same skeleton as JointQKPress but no calibration: per layer/head, build a random
 
 **Edit:** `kvpress/evaluation/evaluate_registry.py`.
 ```python
-from experiments.stage1.toolkit.jointqk_press import JointQKPress
-from experiments.stage1.toolkit.turboquant_press import TurboQuantPress
-from experiments.stage1.toolkit.kivi_press import KIVIPress
+from experiments.toolkit.jointqk_press import JointQKPress
+from experiments.toolkit.turboquant_press import TurboQuantPress
+from experiments.toolkit.kivi_press import KIVIPress
 
 PRESS_REGISTRY.update({
     "jointqk": JointQKPress,
@@ -231,7 +231,7 @@ python evaluate.py \
     --data_dir qasper \
     --fraction 0.05 \
     --model Qwen/Qwen3-8B \
-    --press_init_command 'JointQKPress(cca_stats_path="artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt", b_avg=3.0)' \
+    --press_init_command 'JointQKPress(cca_stats_path="artifacts/bases/cca_stats.pt", b_avg=3.0)' \
     --output_dir results/smoke_jointqk
 ```
 
@@ -239,7 +239,7 @@ python evaluate.py \
 
 ### W2.5 — Validate presses reproduce Stage-1E numbers (Day 6, ~2h)
 
-**New file:** `experiments/stage1/tests/test_press_roundtrip_parity.py`.
+**New file:** `experiments/tests/test_press_roundtrip_parity.py`.
 
 Loads:
 - One example from the 24-example bundle (e.g. `qasper_e_001.pt`)
@@ -259,8 +259,8 @@ If parity fails → bug in press wrapper, not in the underlying compressor.
 
 ```bash
 MODEL=Qwen/Qwen3-8B
-CCA=artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt
-OUT=artifacts/stage1/downstream/qwen3_8b/w2c_decode_scope
+CCA=artifacts/bases/cca_stats.pt
+OUT=artifacts/downstream/qwen3_8b/w2c_decode_scope
 
 for task in qasper narrativeqa; do
   for mode_flag in "False" "True"; do      # False=Mode A, True=Mode B
@@ -276,7 +276,7 @@ for task in qasper narrativeqa; do
 done
 ```
 
-**Aggregator:** `experiments/stage1/eval/aggregate_decode_scope.py` (~80 lines). Reads the 12 result.json files, prints the comparison table:
+**Aggregator:** `experiments/eval/aggregate_decode_scope.py` (~80 lines). Reads the 12 result.json files, prints the comparison table:
 
 ```
               | qasper      | narrativeqa
@@ -288,7 +288,7 @@ Mode B (both) | ...
 
 **Decision rule:** if `max(|Δ|) < 2.0 pp` across all 6 (task, b) cells → Mode B wins, set `JOINTQK_DEFAULT_MODE = B` for all subsequent W2b runs and the headline result. Otherwise Mode A wins, headline uses Mode A, Mode B numbers go into a paper appendix table titled "Decode-scope ablation".
 
-**New file:** `experiments/stage1/eval/aggregate_decode_scope.py`. Outputs both the comparison table (LaTeX) and a one-line "WINNER: Mode A/B" decision string consumed by W2b launchers.
+**New file:** `experiments/eval/aggregate_decode_scope.py`. Outputs both the comparison table (LaTeX) and a one-line "WINNER: Mode A/B" decision string consumed by W2b launchers.
 
 **W2c gate (C5.5 — see checkpoints):** decision string written to `$OUT/decision.txt`. W2b.1 reads this file to set `compress_decode` for all JointQK runs; this prevents the full sweep from racing the ablation.
 
@@ -304,8 +304,8 @@ Reads the W2c decision file before launching:
 
 ```bash
 MODEL=Qwen/Qwen3-8B
-CCA=artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt
-OUT=artifacts/stage1/downstream/qwen3_8b
+CCA=artifacts/bases/cca_stats.pt
+OUT=artifacts/downstream/qwen3_8b
 DECISION_FILE=$OUT/w2c_decode_scope/decision.txt
 COMPRESS_DECODE=$(grep -oE 'True|False' "$DECISION_FILE")  # set by W2c
 
@@ -343,11 +343,11 @@ python kvpress/evaluation/evaluate.py \
 
 **Compute estimate:** LongBench has 12 tasks, ~200 examples each, ~4–32k token contexts. On Qwen3-8B at fp16, prefill ~6 ms/token, generation ~25 ms/token, max_new_tokens ~200. Per-config: ~12 * 200 * (16k * 6ms + 200*25ms) ≈ 4 hours wall. 8 configs (4 methods × b=2/3/4 ish) × 2 models = a lot. Plan: parallelize across GPUs 0–3. Estimated end-to-end ~24 GPU-hours = 6 wall-hours on 4 GPUs.
 
-**Aggregator:** `experiments/stage1/eval/aggregate_longbench.py` (~100 lines). Reads all `$OUT/*/results.json`, builds a single `longbench_summary.json` with per-task × per-method × per-b cells, plus mean/std.
+**Aggregator:** `experiments/eval/aggregate_longbench.py` (~100 lines). Reads all `$OUT/*/results.json`, builds a single `longbench_summary.json` with per-task × per-method × per-b cells, plus mean/std.
 
 ### W2b.2 LongBench on Llama-3.1-8B (Day 8)
 
-Same as W2b.1 with `MODEL=meta-llama/Llama-3.1-8B-Instruct` and `CCA=artifacts/stage1/cca_vs_waterfill_study/llama31_8b/cca_stats.pt`. Note kvpress `evaluate.py` defaults to this model already.
+Same as W2b.1 with `MODEL=meta-llama/Llama-3.1-8B-Instruct` and `CCA=artifacts/bases/llama31_8b/cca_stats.pt`. Note kvpress `evaluate.py` defaults to this model already.
 
 ### W2b.3 RULER NIAH on both models (Days 8–10)
 
@@ -357,7 +357,7 @@ If time-pressed: drop to NIAH at length 16384 only; cite "compute budget" in the
 
 ### W2b.4 Bit-budget sensitivity tables/charts (Day 10)
 
-**New file:** `experiments/stage1/scripts/make_downstream_charts.py`. Inputs the aggregated `longbench_summary.json` and `ruler_summary.json`; produces:
+**New file:** `experiments/scripts/make_downstream_charts.py`. Inputs the aggregated `longbench_summary.json` and `ruler_summary.json`; produces:
 - `report_charts/downstream_longbench_table.tex` — LaTeX-ready table (12 tasks × 4 methods × b∈{2,3,4})
 - `report_charts/downstream_ruler_table.tex`
 - `report_charts/downstream_bit_budget_curve.png` — task score vs b_avg per method
@@ -370,7 +370,7 @@ If time-pressed: drop to NIAH at length 16384 only; cite "compute budget" in the
 
 ### W3.1 Implement KIVI K-quantizer (Day 5, ~6h)
 
-**New file:** `experiments/stage1/toolkit/kivi_quantizer.py` (~150 lines).
+**New file:** `experiments/toolkit/kivi_quantizer.py` (~150 lines).
 
 Per the KIVI paper (Liu et al. 2024): per-channel int4 quantization for K with group size G=128 along the channel axis (with G=head_dim=128, this collapses to per-channel asymmetric int4).
 
@@ -388,11 +388,11 @@ Per-channel asymmetric scheme: for each channel `c` and group `g`, `scale = (max
 
 ### W3.2 Wrap as KIVIPress (Day 6, ~1h)
 
-**New file:** `experiments/stage1/toolkit/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
+**New file:** `experiments/toolkit/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
 
 ### W3.3 Validate KIVI matches paper (Days 7–8)
 
-**New file:** `experiments/stage1/scripts/validate_kivi.py`. Runs KIVIPress at int4 on a subset of LongBench (qasper, narrative_qa) and compares to the KIVI paper's reported numbers (~0.85 retention vs full precision). Tolerance: ±3 pp.
+**New file:** `experiments/scripts/validate_kivi.py`. Runs KIVIPress at int4 on a subset of LongBench (qasper, narrative_qa) and compares to the KIVI paper's reported numbers (~0.85 retention vs full precision). Tolerance: ±3 pp.
 
 If gap > 3 pp, audit:
 - Is V quantized as well? KIVI's published numbers are with V quantized too (per-token int4). Our paper is K-only — so the comparison should be K-only KIVI, not full KIVI. Add a note in the paper: "we compare K-only KIVI for an apples-to-apples comparison of the K-cache quantization mechanism."
@@ -426,10 +426,10 @@ Each section starts as an outline with bullets, then prose. Source material cros
 
 | Section | Pages | Source | Days |
 |---|---|---|---|
-| Abstract | 0.25 | `notes/stage1/stage1e_one_pager.md` | 2 |
+| Abstract | 0.25 | `notes/stage1e_one_pager.md` | 2 |
 | Intro | 1 | One-pager + Stage 1E proposal `notes/core/kv_cache_rate_distortion_proposal.md` | 2–3 |
 | Related work | 1 | New (KIVI, KVQuant, H2O, FastGen, TurboQuant, Atom, Eigen-attn) | 6–8 |
-| Method | 2.5 | `notes/stage1/stage1e_summary_to_share.md` §2 — port math + pipeline figure | 3–6 |
+| Method | 2.5 | `notes/stage1e_summary_to_share.md` §2 — port math + pipeline figure | 3–6 |
 | Experiments | 3 | Stage 1E E3/E4/E5 + W1 (Llama) + W2b (downstream) results | 9–13 |
 | Discussion + limitations | 0.5 | New | 14 |
 | Conclusion | 0.25 | One-paragraph wrap | 14 |
@@ -438,7 +438,7 @@ Each section starts as an outline with bullets, then prose. Source material cros
 ### W4.3 Figures
 
 Two categories:
-- **Direct copy** — already publication-quality. Source PNGs live in `artifacts/stage1/cca_vs_waterfill_study/report_charts/`. Copy to `paper/main/figs/`. Reference via `\includegraphics[width=...]{figs/<name>.png}`.
+- **Direct copy** — already publication-quality. Source PNGs live in `artifacts/bases/report_charts/`. Copy to `paper/main/figs/`. Reference via `\includegraphics[width=...]{figs/<name>.png}`.
 - **Replot** — for typography consistency, replot the headline bit-budget chart in pgfplots inside the LaTeX source. Single chart, ~50 lines of pgfplots code.
 
 Required figures (main text):
@@ -504,21 +504,21 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 ### New files (count: ~14 code + ~10 paper)
 
 **Code:**
-- `experiments/stage1/scripts/launch_llama_e3_e5.sh`
-- `experiments/stage1/scripts/precompute_newbases.py`
-- `experiments/stage1/scripts/make_cross_model_chart.py`
-- `experiments/stage1/scripts/make_downstream_charts.py`
-- `experiments/stage1/scripts/validate_kivi.py`
-- `experiments/stage1/eval/aggregate_longbench.py`
-- `experiments/stage1/eval/aggregate_ruler.py`
-- `experiments/stage1/eval/aggregate_decode_scope.py` (W2c decision)
-- `experiments/stage1/toolkit/jointqk_press.py`
-- `experiments/stage1/toolkit/turboquant_press.py`
-- `experiments/stage1/toolkit/kivi_press.py`
-- `experiments/stage1/toolkit/kivi_quantizer.py`
-- `experiments/stage1/tests/test_press_roundtrip_parity.py`
-- `artifacts/stage1/cca_vs_waterfill_study/llama31_8b/` (output dir, populated by W1.2)
-- `artifacts/stage1/downstream/{qwen3_8b,llama31_8b}/` (output dirs, populated by W2b)
+- `experiments/scripts/launch_llama_e3_e5.sh`
+- `experiments/scripts/precompute_newbases.py`
+- `experiments/scripts/make_cross_model_chart.py`
+- `experiments/scripts/make_downstream_charts.py`
+- `experiments/scripts/validate_kivi.py`
+- `experiments/eval/aggregate_longbench.py`
+- `experiments/eval/aggregate_ruler.py`
+- `experiments/eval/aggregate_decode_scope.py` (W2c decision)
+- `experiments/toolkit/jointqk_press.py`
+- `experiments/toolkit/turboquant_press.py`
+- `experiments/toolkit/kivi_press.py`
+- `experiments/toolkit/kivi_quantizer.py`
+- `experiments/tests/test_press_roundtrip_parity.py`
+- `artifacts/bases/llama31_8b/` (output dir, populated by W1.2)
+- `artifacts/downstream/{qwen3_8b,llama31_8b}/` (output dirs, populated by W2b)
 
 **Paper:**
 - `paper/main/main.tex` and `paper/main/refs.bib`
@@ -528,15 +528,15 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 ### Edited files (small changes)
 
 - `kvpress/evaluation/evaluate_registry.py` — register 3 new presses (~6 lines added)
-- (No edits to `run_cca_vs_waterfill_study.py`, `build_method_compressor`, or `PerCoordCompressor` — they already work for both models)
+- (No edits to `run_bases.py`, `build_method_compressor`, or `PerCoordCompressor` — they already work for both models)
 
 ### Existing infrastructure reused unchanged
 
-- `experiments/stage1/run_cca_vs_waterfill_study.py` — bundle-driven, model-agnostic
-- `experiments/stage1/toolkit/per_coord_quantization.py` — `build_method_compressor` already supports JointQK
-- `experiments/stage1/toolkit/metric_transform.py` — water-fill, basis builders, polar orthogonalization
-- `experiments/stage1/toolkit/quantization.py` — Lloyd–Max codebooks
-- `experiments/stage1/gates/gate_e{3,5}.py` — auto-discovery, no edits needed
+- `experiments/run_bases.py` — bundle-driven, model-agnostic
+- `experiments/toolkit/per_coord_quantization.py` — `build_method_compressor` already supports JointQK
+- `experiments/toolkit/metric_transform.py` — water-fill, basis builders, polar orthogonalization
+- `experiments/toolkit/quantization.py` — Lloyd–Max codebooks
+- `experiments/gates/gate_e{3,5}.py` — auto-discovery, no edits needed
 - `kvpress/kvpress/presses/base_press.py` — BasePress, hook lifecycle (no edits)
 - `kvpress/evaluation/evaluate.py` — harness for both LongBench and RULER
 

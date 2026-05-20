@@ -177,4 +177,4 @@ That step should:
 - test whether estimated future-query statistics retain the oracle partial-spectrum gain
 - optionally test downstream generation quality for the oracle `gamma = 0.25` path before investing in estimator complexity
 
-Historical Stage 1 planning details remain in [stage1_plan_historical.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_plan_historical.md:1).
+Historical Stage 1 planning details remain in [stage1_plan_historical.md](/vault/amir/efficient-llm/teamily-project/notes/stage1_plan_historical.md:1).

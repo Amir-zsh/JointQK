@@ -1,28 +1,46 @@
 # Research Notes
 
-This directory organizes the project notes by role.
+This directory organises the project notes by role.
 
 ## Core
 
-- [kv_cache_rate_distortion_proposal.md](/vault/amir/efficient-llm/teamily-project/notes/core/kv_cache_rate_distortion_proposal.md:1)
+- [kv_cache_rate_distortion_proposal.md](core/kv_cache_rate_distortion_proposal.md)
   - high-level research framing and thesis
-- [research_plan.md](/vault/amir/efficient-llm/teamily-project/notes/core/research_plan.md:1)
-  - stage-by-stage execution roadmap
+- [research_plan.md](core/research_plan.md)
+  - execution roadmap
+- [neurips_submission_plan.md](core/neurips_submission_plan.md)
+  - target submission scope and scaffold
+- [neurips_implementation_plan.md](core/neurips_implementation_plan.md)
+  - complement to the submission plan — code paths and checkpoints
 
-## Stage 1
+## Bench results
 
-- [stage1_experiments_and_findings.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_experiments_and_findings.md:1)
-  - main Stage 1 synthesis and current overall takeaway
-- [stage1_plan_historical.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1_plan_historical.md:1)
-  - original Stage 1 execution plan kept for historical context
-- [stage1c_current_oracle_diagnosis_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1c_current_oracle_diagnosis_report.md:1)
-  - diagnosis of why the original `Lk` oracle path failed
-- [stage1d_norm_spread_ablation_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1d_norm_spread_ablation_report.md:1)
-  - follow-up ablation separating basis effects from scaling effects
-- [stage1e_partial_spectrum_report.md](/vault/amir/efficient-llm/teamily-project/notes/stage1/stage1e_partial_spectrum_report.md:1)
-  - follow-up showing `gamma = 0.25` partial-spectrum scaling generalizes across 2/3/4 bits
+- [bench_results_report.md](bench_results_report.md)
+  - canonical downstream F1 results (Qwen3-8B)
+- [bench_llama31_8b_results_report.md](bench_llama31_8b_results_report.md)
+  - downstream F1 on Llama-3.1-8B
+- [bench_cross_model_comparison.md](bench_cross_model_comparison.md)
+  - cross-model Qwen3 vs Llama comparison
+- [bench_llama_runbook.md](bench_llama_runbook.md)
+  - runbook for the Llama bench sweep
+
+## JointQK F1-inversion investigation (Llama)
+
+- [jointqk_disconnect_investigation.md](jointqk_disconnect_investigation.md)
+  - mechanism investigation: K-fidelity wins but F1 inverts
+- [jointqk_investigation_report.html](jointqk_investigation_report.html)
+  - self-contained HTML write-up with embedded charts
+- [q_distribution_shift.md](q_distribution_shift.md)
+  - Σ_Q top-16 subspace drift analysis
+
+## Synthesis
+
+- [experiments_and_findings.md](experiments_and_findings.md)
+  - current overall takeaway across calibration, bench, and analysis
+- [preview_pooled_n50_report.md](preview_pooled_n50_report.md)
+  - preview of the pooled-N50 calibration corpus
 
 ## Reference
 
-- [geometry_aware_kv_math.md](/vault/amir/efficient-llm/teamily-project/notes/reference/geometry_aware_kv_math.md:1)
-  - derivation note for the geometry-aware objective
+- [reference/](reference/)
+  - standalone derivations

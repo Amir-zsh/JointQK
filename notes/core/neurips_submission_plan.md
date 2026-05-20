@@ -18,7 +18,7 @@ Memory-savings claims are kept analytical (bytes saved per key); wall-clock late
 
 **In:** Qwen3-8B + Llama-3.1-8B; LongBench (full, not 24-example bundle) + RULER subset; baselines = full-precision + TurboQuant + KIVI; method = **JointQK WaterFill** (ours). Paper draft in `paper/main/`.
 
-**Comparison set (locked, 2026-05-03):** the paper compares exactly four configurations — `full`, `KIVI`, `TurboQuant`, and `JointQK` (ours). CCA-Orth WaterFill and Q-Eigen WaterFill were intermediate basis-design ablations during Stage 1E; CCA was empirically dominated by JointQK and Q-Eigen is an in-house non-published baseline. They stay in the methodology study (`run_cca_vs_waterfill_study.py`) as documentation of the path to the final basis, but **do not appear in paper figures or tables**.
+**Comparison set (locked, 2026-05-03):** the paper compares exactly four configurations — `full`, `KIVI`, `TurboQuant`, and `JointQK` (ours). CCA-Orth WaterFill and Q-Eigen WaterFill were intermediate basis-design ablations during Stage 1E; CCA was empirically dominated by JointQK and Q-Eigen is an in-house non-published baseline. They stay in the methodology study (`run_bases.py`) as documentation of the path to the final basis, but **do not appear in paper figures or tables**.
 
 **Out (descoped to future work, called out explicitly in the paper):** ∞Bench, larger Llama (70B), Mistral / Mixtral, wall-clock latency benchmarks, end-to-end systems integration. Theoretical optimality proof is appendix-only (sketch + empirical validation), not main-text claim.
 
@@ -31,7 +31,7 @@ The plan is structured as **four parallel workstreams** (W1–W4) to compress wa
 Confirm JointQK WaterFill wins on a second model family. Risk: if it doesn't, the paper scope shrinks dramatically.
 
 **Steps:**
-1. **Day 1–2: Adapt calibration to Llama-3.1-8B.** The driver `experiments/stage1/run_cca_vs_waterfill_study.py` already factors model loading from compression logic. Verify it runs unmodified on Llama-3.1-8B (same GQA shape, head dim 128, just different `model_id`); add a `--model-id` flag if not already present.
+1. **Day 1–2: Adapt calibration to Llama-3.1-8B.** The driver `experiments/run_bases.py` already factors model loading from compression logic. Verify it runs unmodified on Llama-3.1-8B (same GQA shape, head dim 128, just different `model_id`); add a `--model-id` flag if not already present.
 2. **Day 2–3: Run E3 on Llama** at b ∈ {2, 3, 4} with the 9 methods from Stage 1E. Use the same LongBench-E 24-example bundle for direct comparison.
 3. **Day 3–4: Run E5 (decode-phase) on Llama.** Reuse `make_e5_charts.py` to regenerate charts.
 4. **Day 4–5: Skip E2/E4 on Llama** unless W1 result surprises. E4 generalization is a Qwen3-8B claim; we can argue it transfers without re-running the 3×3 cross-task LOO.
@@ -40,11 +40,11 @@ Confirm JointQK WaterFill wins on a second model family. Risk: if it doesn't, th
 **Gate:** JointQK WaterFill wins at every b ∈ {2, 3, 4} on Llama, with a margin ≥ 5 pp top-1 over the next-best method at b=3. If it doesn't win, escalate to user before continuing — this is a paper-defining outcome.
 
 **New files:**
-- `experiments/stage1/scripts/launch_llama_e3_e5.sh` — orchestrator for E3+E5 on Llama
-- `experiments/stage1/scripts/make_cross_model_chart.py` — overlay chart
-- `artifacts/stage1/cca_vs_waterfill_study/llama31_8b/` — separate output directory for Llama runs
+- `experiments/scripts/launch_llama_e3_e5.sh` — orchestrator for E3+E5 on Llama
+- `experiments/scripts/make_cross_model_chart.py` — overlay chart
+- `artifacts/bases/llama31_8b/` — separate output directory for Llama runs
 
-**Existing reused:** `run_cca_vs_waterfill_study.py`, `build_method_compressor` (no new methods needed), `gates/gate_e3.py` (auto-discovers methods).
+**Existing reused:** `run_bases.py`, `build_method_compressor` (no new methods needed), `gates/gate_e3.py` (auto-discovers methods).
 
 ### W2 — Downstream task evaluation (Days 3–10)
 
@@ -65,14 +65,14 @@ This is the highest-leverage missing experiment. Reviewers will reject a 0.860 a
 **Gate:** JointQK at b=3 retains ≥ 90% of full-precision LongBench task score on both models, vs ≥ 85% for TurboQuant and KIVI at the same budget.
 
 **New files:**
-- `experiments/stage1/eval/longbench_runner.py` — generates predictions with each compression method, scores against gold
-- `experiments/stage1/eval/ruler_runner.py` — same for RULER NIAH subset
-- `experiments/stage1/toolkit/jointqk_press.py` — kvpress press wrapping JointQK
-- `experiments/stage1/toolkit/kivi_press.py` — KIVI baseline wrapped as kvpress press
-- `artifacts/stage1/downstream/{qwen3_8b,llama31_8b}/longbench_summary.json`
-- `artifacts/stage1/downstream/{qwen3_8b,llama31_8b}/ruler_summary.json`
+- `experiments/eval/longbench_runner.py` — generates predictions with each compression method, scores against gold
+- `experiments/eval/ruler_runner.py` — same for RULER NIAH subset
+- `experiments/toolkit/jointqk_press.py` — kvpress press wrapping JointQK
+- `experiments/toolkit/kivi_press.py` — KIVI baseline wrapped as kvpress press
+- `artifacts/downstream/{qwen3_8b,llama31_8b}/longbench_summary.json`
+- `artifacts/downstream/{qwen3_8b,llama31_8b}/ruler_summary.json`
 
-**Existing reused:** Calibration bundles already saved per (model, layer, head) in `artifacts/stage1/cca_vs_waterfill_study/calibration/` — feed the same bases into the press wrappers, no recomputation needed.
+**Existing reused:** Calibration bundles already saved per (model, layer, head) in `artifacts/bases/calibration/` — feed the same bases into the press wrappers, no recomputation needed.
 
 ### W3 — KIVI baseline (Days 5–8, parallel with W2)
 
@@ -93,7 +93,7 @@ The paper draft starts on Day 1, before experiments finish. Sections that are fa
 
 **Day 1–2: Skeleton + abstract + intro.** Use `paper/Formatting_Instructions_For_NeurIPS_2026/neurips_2026.tex` as the starting point. New file `paper/main/main.tex`. Draft the abstract using the locked title and the headline numbers from the existing two-pager. Intro: motivation (KV cache dominates serving cost), the per-layer-head calibration pipeline, JointQK as the answer, three contributions (basis derivation; water-fill on basis-diag weights; cross-model + downstream validation).
 
-**Day 3–5: Method section (§3).** Pipeline figure (compression triplet); Lloyd–Max codebook + per-coord scaling; basis families table (Q-Eigen / CCA-Orth / JointQK with their forward maps); allocation families (uniform / truncate / water-fill); the CCA objective-mismatch derivation that motivates JointQK (already in `notes/stage1/stage1e_summary_to_share.md` — port to LaTeX). Pipeline diagram is the only piece of original art; use TikZ.
+**Day 3–5: Method section (§3).** Pipeline figure (compression triplet); Lloyd–Max codebook + per-coord scaling; basis families table (Q-Eigen / CCA-Orth / JointQK with their forward maps); allocation families (uniform / truncate / water-fill); the CCA objective-mismatch derivation that motivates JointQK (already in `notes/stage1e_summary_to_share.md` — port to LaTeX). Pipeline diagram is the only piece of original art; use TikZ.
 
 **Day 6–8: Related work (§2).** KV-cache quantization (KIVI, KVQuant, Atom), KV-cache compaction (H2O, FastGen, expected attention), low-rank / projection methods (Eigen attention, ALISA), random-rotation methods (TurboQuant). One paragraph per category.
 
@@ -106,32 +106,32 @@ The paper draft starts on Day 1, before experiments finish. Sections that are fa
 **New files:**
 - `paper/main/main.tex` (the manuscript)
 - `paper/main/refs.bib`
-- `paper/main/figs/` — each figure is either copied from `artifacts/stage1/.../report_charts/` or a TikZ/pgfplots replot for consistent typography
+- `paper/main/figs/` — each figure is either copied from `artifacts/.../report_charts/` or a TikZ/pgfplots replot for consistent typography
 - `paper/main/sections/` — split sections (`intro.tex`, `method.tex`, `experiments.tex`, etc.) so changes are localized
 
-**Existing reused:** The two-pager, full report (`stage1e_summary_to_share.md`), and per-experiment review notes (`stage1e_cca_vs_waterfill/e*.md`) are the source of all narrative, math, and numbers. Charts in `artifacts/stage1/cca_vs_waterfill_study/report_charts/` are publication-grade for the most part — only the headline figure (bit-budget sensitivity) needs a polished re-export with consistent fonts.
+**Existing reused:** The two-pager, full report (`stage1e_summary_to_share.md`), and per-experiment review notes (`stage1e_cca_vs_waterfill/e*.md`) are the source of all narrative, math, and numbers. Charts in `artifacts/bases/report_charts/` are publication-grade for the most part — only the headline figure (bit-budget sensitivity) needs a polished re-export with consistent fonts.
 
 ## Critical files
 
 **To create or substantially extend:**
-- `experiments/stage1/scripts/launch_llama_e3_e5.sh`
-- `experiments/stage1/scripts/make_cross_model_chart.py`
-- `experiments/stage1/eval/longbench_runner.py`
-- `experiments/stage1/eval/ruler_runner.py`
-- `experiments/stage1/toolkit/jointqk_press.py`
-- `experiments/stage1/toolkit/kivi_press.py`
+- `experiments/scripts/launch_llama_e3_e5.sh`
+- `experiments/scripts/make_cross_model_chart.py`
+- `experiments/eval/longbench_runner.py`
+- `experiments/eval/ruler_runner.py`
+- `experiments/toolkit/jointqk_press.py`
+- `experiments/toolkit/kivi_press.py`
 - `paper/main/main.tex` and supporting files
 - `paper/main/figs/` (new figures + ports of existing artifacts)
 
 **To extend (small changes):**
-- `experiments/stage1/run_cca_vs_waterfill_study.py` — accept `--model-id` if not already there
-- `experiments/stage1/scripts/make_e3_charts.py`, `make_e5_charts.py` — multi-model overlay support
-- `experiments/stage1/gates/gate_e3.py` — Llama-specific thresholds if needed (likely not — auto-discovery handles it)
+- `experiments/run_bases.py` — accept `--model-id` if not already there
+- `experiments/scripts/make_e3_charts.py`, `make_e5_charts.py` — multi-model overlay support
+- `experiments/gates/gate_e3.py` — Llama-specific thresholds if needed (likely not — auto-discovery handles it)
 
 **To reuse unchanged:**
-- `experiments/stage1/toolkit/per_coord_quantization.py` (`build_method_compressor` already supports JointQK)
-- `experiments/stage1/toolkit/metric_transform.py` (water-fill solver, basis builders)
-- `experiments/stage1/toolkit/quantization.py` (Lloyd–Max)
+- `experiments/toolkit/per_coord_quantization.py` (`build_method_compressor` already supports JointQK)
+- `experiments/toolkit/metric_transform.py` (water-fill solver, basis builders)
+- `experiments/toolkit/quantization.py` (Lloyd–Max)
 - `kvpress/` (vendored library — wrap, don't fork)
 
 ## Decision points & risks

@@ -8,17 +8,17 @@ turboquant-pytorch/
 *.pt.pre_newbases
 .codex/
 .claude/
-artifacts/stage1/query_stats_longbench_under4k
-artifacts/stage1/query_stats_longbench_under4k_llama31_8b/
-artifacts/stage1/cca_vs_waterfill_study/e3_newbases/
-artifacts/stage1/cca_vs_waterfill_study/e4a_newbases/
-artifacts/stage1/cca_vs_waterfill_study/e4b_newbases/
-artifacts/stage1/cca_vs_waterfill_study/llama31_8b/
-artifacts/stage1/v_method_study/
-artifacts/stage1/_compressor_cache/
-artifacts/stage1/_refactor_smoke/
-experiments/stage1/notebooks/data
-experiments/stage1/logs/
+artifacts/query_stats_longbench_under4k
+artifacts/query_stats_longbench_under4k_llama31_8b/
+artifacts/bases/e3_newbases/
+artifacts/bases/e4a_newbases/
+artifacts/bases/e4b_newbases/
+artifacts/bases/llama31_8b/
+artifacts/v_bases/
+artifacts/_compressor_cache/
+artifacts/_refactor_smoke/
+experiments/notebooks/data
+experiments/logs/
 paper/
 turboquant_pytorch
 *.pt.pre_*
@@ -28,11 +28,11 @@ texput.log
 *.partial.json
 
 # Stage 1 final calibration: large raw + stats artifacts (~500 GB raw, ~38 GB stats)
-artifacts/stage1/calibration/*/01_raw/
-artifacts/stage1/calibration/*/02_stats/
+artifacts/calibration/*/01_raw/
+artifacts/calibration/*/02_stats/
 # Pre-fix snapshot of broken pre-2026-05-05 analysis run (kept locally for reference only)
-artifacts/stage1/calibration/*/04_analysis_pre_*/
+artifacts/calibration/*/04_analysis_pre_*/
 # Per-shard run logs (analysis/capture launchers; ephemeral)
-artifacts/stage1/calibration/*/logs/
+artifacts/calibration/*/logs/
 # Per-shard preview accumulator logs (the merged.json + launcher.log are kept)
-artifacts/stage1/calibration/*/05_reports/preview_pooled_n50/shard_*.log
+artifacts/calibration/*/05_reports/preview_pooled_n50/shard_*.log

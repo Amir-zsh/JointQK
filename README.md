@@ -32,30 +32,36 @@ Different (basis × allocation) choices produce dramatically different attention
   - *Q-weighted geometry distortion* — $\mathbb{E}\!\left[(k - \hat{k})^\top M_q (k - \hat{k})\right] / d$, the natural rate-distortion target with $M_q = \mathbb{E}[q\, q^\top]$.
   - *Logit MSE / cosine* and decode-phase top-1 against the compressed prefill cache (production scenario).
 
-The full catalogue of methods, headline numbers, and per-experiment analyses live in the **stage notes** under `notes/stage1/`. The latest line of work has its own deep-dive folder and shareable summaries (one-pager, two-pager, full report).
+The full catalogue of methods, headline numbers, and per-experiment analyses live under `notes/`.
 
 ## Repository layout
 
 ```
 .
-├── experiments/             # Drivers, gates, and toolkit code per research stage
-│   ├── stage1/              # Active research: calibration, real quantization, generalization, decode
-│   │   ├── toolkit/         # Reusable building blocks (Lloyd-Max, water-fill, per-coord compressor, …)
-│   │   ├── scripts/         # Launchers, mergers, chart generators, gate runners
-│   │   ├── gates/           # Sanity-check assertions on per-experiment outputs
-│   │   ├── notebooks/       # Exploratory notebooks
-│   │   └── logs/            # Run logs and heartbeats (gitignored)
-│   └── stage2/              # Reserved for the next research stage
-├── artifacts/               # Per-stage outputs (calibrated stats, run summaries, charts, gates)
-│   └── stage1/
-├── notes/                   # Research notes, organised by role
+├── experiments/
+│   ├── calibration/         # K/V capture + pooled second-moment computation
+│   ├── bench/               # Downstream LongBench/RULER F1 sweep (worker + launchers)
+│   ├── analysis/            # JointQK F1-inversion probes (logit-KL, Σ_Q drift, HTML report)
+│   ├── calibration_stability/  # Basis-stability ablation sweeps
+│   ├── toolkit/             # Reusable building blocks (Lloyd-Max, water-fill, JointQK press, …)
+│   ├── scripts/             # Calibration-build consumer utilities
+│   ├── eval/                # Aggregators (LongBench, RULER, decode-scope, integrity)
+│   ├── benchmarks/, data/   # Vendored kvpress data adapters
+│   ├── tests/               # Press parity, regression fingerprint
+│   └── logs/                # Run logs (gitignored)
+├── artifacts/
+│   ├── calibration/         # K/V captures + pooled second moments
+│   ├── bases/               # Joint Q-K basis files (cca_stats_*.pt)
+│   ├── v_bases/             # V-side basis files
+│   ├── bench/, bench_llama_*/  # Downstream F1 results
+│   ├── decode_q_captures_llama/, q_distribution_shift/  # Llama analysis outputs
+│   └── query_stats_longbench_under4k*  # Captured query stats (large, protected)
+├── notes/                   # Research notes
 │   ├── core/                #   Project framing and execution roadmap
 │   ├── reference/           #   Standalone derivations and references
-│   ├── stage1/              #   Per-stage findings, deep-dives, shareable summaries
 │   └── README.md            #   Index of the notes directory
-├── kvpress/                 # Vendored Apache-2.0 KV-compression library (see kvpress/LICENSE)
-├── turboquant-pytorch/      # Vendored TurboQuant baseline (see turboquant-pytorch/LICENSE)
-├── environment.yml          # Conda environment specification
+├── kvpress/                 # Vendored Apache-2.0 KV-compression library
+├── turboquant-pytorch/      # Vendored TurboQuant baseline
 └── README.md
 ```
 
@@ -78,7 +84,7 @@ ln -sfn turboquant-pytorch turboquant_pytorch
 
 The symlink is gitignored — recreate it after every fresh clone.
 
-Calibration artifacts (`artifacts/stage1/{v_method_study,cca_vs_waterfill_study/llama31_8b,downstream,query_stats_longbench_under4k_llama31_8b}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/stage1/scripts/` after capturing a fresh Q/K/V bundle.
+Calibration artifacts (`artifacts/{v_bases,bases/llama31_8b,downstream,query_stats_longbench_under4k_llama31_8b}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/scripts/` after capturing a fresh Q/K/V bundle.
 
 ## Where to start reading
 
@@ -87,20 +93,21 @@ For a guided tour of the project:
 1. **`notes/core/kv_cache_rate_distortion_proposal.md`** — high-level research framing and thesis.
 2. **`notes/core/research_plan.md`** — stage-by-stage execution roadmap.
 3. **`notes/README.md`** — index of all research notes, grouped by role.
-4. **`notes/stage1/stage1_experiments_and_findings.md`** — synthesis of the current stage's results.
+4. **`notes/experiments_and_findings.md`** — synthesis of the current stage's results.
 
 Each individual stage has its own per-experiment review notes plus a shareable summary set (one-pager / two-pager / full report) for colleagues outside the project. The latest stage's summary is the recommended on-ramp once you've read the framing.
 
 ## Reproducing experiments
 
-Experiments are organised under `experiments/<stage>/`. Each stage has:
+The pipeline:
 
-- A driver script that consumes a calibration bundle and emits per-(example, layer, kv_head) metrics.
-- Launcher scripts under `scripts/` that parallelise runs across GPUs.
-- Gate scripts under `gates/` that assert basic sanity on the outputs.
-- A merge/aggregation step that lifts per-run output into canonical summary JSONs and chart-ready row PTs.
+1. **Calibrate** with `experiments/calibration/` — capture K/V from a prompt corpus and pool per-(layer, kv_head) second moments.
+2. **Build bases** with `experiments/scripts/build_calibration_artifacts_from_pool.py` — produce a joint Q-K basis file under `artifacts/bases/`.
+3. **Bench** with `experiments/bench/launch.sh` — parallelise the LongBench/RULER worker across GPUs; each cell emits `metrics.json`.
+4. **Aggregate** with `experiments/eval/aggregate_*.py` — lift per-cell JSONs into canonical summary tables.
+5. **Analyse** with `experiments/analysis/` — fidelity probes (K-MSE, top-1, attention-KL, logit-KL, Σ_Q drift) against the same bases.
 
-See `notes/stage1/stage1e_cca_vs_waterfill_note.md` (or the most recent stage note) for the exact command sequence used to regenerate the canonical artifacts in `artifacts/stage1/`.
+See `notes/bench_results_report.md` and `notes/jointqk_disconnect_investigation.md` for the most recent runs and findings.
 
 ## Vendored dependencies
 
@@ -113,7 +120,7 @@ These are vendored rather than installed from PyPI to pin specific versions; the
 
 ## Citation
 
-A paper distilling this line of research is in preparation. Once published, citation details will appear here. In the meantime, please cite the relevant per-stage notes under `notes/stage1/` if you build on this work.
+A paper distilling this line of research is in preparation. Once published, citation details will appear here. In the meantime, please cite the relevant per-stage notes under `notes/` if you build on this work.
 
 ## License
 
