@@ -6,7 +6,7 @@
 # calibration subsets, and measures basis/allocation/distortion stability.
 #
 # Usage:
-#   bash experiments/stage1/scripts/launch_phase1d_k_basis_stability.sh --gpus 6,7
+#   bash experiments/stage1/calibration_stability/launch_d_k_basis.sh --gpus 6,7
 #   tail -f experiments/stage1/logs/phase1d_k_basis_stability.log
 
 set -euo pipefail
@@ -86,7 +86,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
         if [[ -n "$HOLDOUT_SEED" ]]; then
             holdout_arg="${holdout_arg} --holdout-seed ${HOLDOUT_SEED}"
         fi
-        echo "CUDA_VISIBLE_DEVICES=${gpu} ${REPO_ROOT}/.venv/bin/python ${REPO_ROOT}/experiments/stage1/scripts/run_phase1d_k_basis_stability.py --device cuda --bundle ${BUNDLE} --output-dir ${OUT} --sample-sizes ${SAMPLE_SIZES} --repetitions ${REPETITIONS} --ranks ${RANKS} --k-bits ${K_BITS} --num-shards ${N_SHARDS} --shard-id ${shard_id} --rows-filename ${rows_name} ${loo_arg} ${cache_arg} ${holdout_arg}"
+        echo "CUDA_VISIBLE_DEVICES=${gpu} ${REPO_ROOT}/.venv/bin/python ${REPO_ROOT}/experiments/stage1/calibration_stability/run_d_k_basis.py --device cuda --bundle ${BUNDLE} --output-dir ${OUT} --sample-sizes ${SAMPLE_SIZES} --repetitions ${REPETITIONS} --ranks ${RANKS} --k-bits ${K_BITS} --num-shards ${N_SHARDS} --shard-id ${shard_id} --rows-filename ${rows_name} ${loo_arg} ${cache_arg} ${holdout_arg}"
     done
     exit 0
 fi
@@ -100,7 +100,7 @@ for shard_id in "${!GPU_ARR[@]}"; do
     gpu="${GPU_ARR[$shard_id]}"
     rows_name="phase1d_k_basis_stability_rows.shard${shard_id}.jsonl"
     rows_files+=("${OUT}/${rows_name}")
-    cmd="CUDA_VISIBLE_DEVICES=${gpu} ${REPO_ROOT}/.venv/bin/python ${REPO_ROOT}/experiments/stage1/scripts/run_phase1d_k_basis_stability.py \
+    cmd="CUDA_VISIBLE_DEVICES=${gpu} ${REPO_ROOT}/.venv/bin/python ${REPO_ROOT}/experiments/stage1/calibration_stability/run_d_k_basis.py \
         --device cuda \
         --bundle ${BUNDLE} \
         --output-dir ${OUT} \
@@ -139,7 +139,7 @@ if [[ "$fail" -ne 0 ]]; then
     exit 1
 fi
 
-"${REPO_ROOT}/.venv/bin/python" "${REPO_ROOT}/experiments/stage1/scripts/aggregate_phase1d_k_basis_stability.py" \
+"${REPO_ROOT}/.venv/bin/python" "${REPO_ROOT}/experiments/stage1/calibration_stability/aggregate_d_k_basis.py" \
     --rows "${rows_files[@]}" \
     --output-dir "$OUT" 2>&1 | tee -a "$LOG"
 

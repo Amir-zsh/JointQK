@@ -12,7 +12,7 @@ Required keys: press_name, dataset, data_dir, output_dir.
 Optional: press_kwargs, fraction, compression_ratio, max_new_tokens, ...
 
 Usage:
-    phase7_worker.py \
+    worker.py \
         --model 'Qwen/Qwen3-8B' \
         --commands-file <jsonl> \
         --log-dir <dir> \
@@ -20,7 +20,7 @@ Usage:
         --jobs-per-gpu 2
 
 All workers in one invocation share the same model; for multi-model sweeps
-launch one phase7_worker.py per model with disjoint --gpus pools.
+launch one worker.py per model with disjoint --gpus pools.
 """
 from __future__ import annotations
 

@@ -82,7 +82,7 @@ done
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] queued $n_jobs jobs"
 
-${VENV_PYTHON} experiments/stage1/scripts/parallel_launcher.py \
+${VENV_PYTHON} experiments/stage1/bench/parallel_launcher.py \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

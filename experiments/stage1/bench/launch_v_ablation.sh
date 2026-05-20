@@ -1,7 +1,8 @@
 #!/bin/bash
-# Phase 2c: per-task basis evaluation.
-# Each task uses its OWN cca_stats.pt + v_stats.pt fitted on its 50 train examples.
-# Compare to pooled-400 (NEW) basis to test whether task-matched calibration helps.
+# Phase 1b: V-method ablation on JointQK.
+# Tests whether the K=4 F1 loss is V-side rather than K-side.
+# JointQK currently uses v_eigen_uniform (per v_lock.txt). This sweep replaces
+# V with v_random (TurboQuant's V method) at K∈{2,4}, holding the K basis fixed.
 
 set -euo pipefail
 
@@ -13,19 +14,16 @@ JOBS_PER_GPU="${JOBS_PER_GPU:-1}"
 FRACTION="${EVAL_FRACTION:-0.5}"
 
 MODEL="Qwen/Qwen3-8B"
-PER_TASK_CCA_DIR="${REPO_ROOT}/artifacts/stage1/cca_vs_waterfill_study/per_task"
-PER_TASK_VST_DIR="${REPO_ROOT}/artifacts/stage1/v_method_study/per_task"
+CCA_NEW="${REPO_ROOT}/artifacts/stage1/cca_vs_waterfill_study/cca_stats_longbench_compact8_n400.pt"
+VST_NEW="${REPO_ROOT}/artifacts/stage1/v_method_study/v_stats_longbench_compact8_n400.pt"
 
-# Override v_lock — v_random is the actual best V for these tasks (per Phase 1b
-# V-method ablation, which gave +6 pp at K=2 over the v_eigen_uniform default).
-V_METHOD=v_random
 V_BITS=3
 COMPRESS_DECODE=False
 
 OUT_BASE="${REPO_ROOT}/artifacts/stage1/downstream_basis_compare"
-LOG_DIR="${REPO_ROOT}/experiments/stage1/logs/phase7_per_task_basis"
+LOG_DIR="${REPO_ROOT}/experiments/stage1/logs/phase7_v_ablation"
 
-echo "[$(date '+%H:%M:%S')] Phase 2c per-task basis: V_METHOD=$V_METHOD V_BITS=$V_BITS FRACTION=$FRACTION"
+echo "[$(date '+%H:%M:%S')] Phase 1b V ablation: V_BITS=$V_BITS FRACTION=$FRACTION"
 
 mkdir -p "$OUT_BASE" "$LOG_DIR"
 CMDS="$LOG_DIR/commands.txt"
@@ -51,22 +49,17 @@ emit() {
 }
 
 for task in "${TASKS[@]}"; do
-    cca_path="${PER_TASK_CCA_DIR}/cca_stats_${task}.pt"
-    vst_path="${PER_TASK_VST_DIR}/v_stats_${task}.pt"
-    if [[ ! -f "$cca_path" ]]; then
-        echo "ERROR: missing $cca_path" >&2
-        exit 1
-    fi
     for kb in 2 4; do
-        json_jq="{\"cca_stats_path\": \"${cca_path}\", \"v_stats_path\": \"${vst_path}\", \"v_method\": \"${V_METHOD}\", \"k_bits\": ${kb}, \"v_bits\": ${V_BITS}, \"compress_decode\": ${COMPRESS_DECODE}, \"quantize_k\": True, \"quantize_v\": True}"
-        emit "jointqk" "$json_jq" "jointqk_TASK_k${kb}_v${V_BITS}" "$task"
+        # JointQK NEW basis with v_random (instead of v_eigen_uniform)
+        json_jq_vrand="{\"cca_stats_path\": \"${CCA_NEW}\", \"v_stats_path\": \"${VST_NEW}\", \"v_method\": \"v_random\", \"k_bits\": ${kb}, \"v_bits\": ${V_BITS}, \"compress_decode\": ${COMPRESS_DECODE}, \"quantize_k\": True, \"quantize_v\": True}"
+        emit "jointqk" "$json_jq_vrand" "jointqk_NEW_vrand_k${kb}_v${V_BITS}" "$task"
     done
 done
 
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] queued $n_jobs jobs"
 
-${VENV_PYTHON} experiments/stage1/scripts/parallel_launcher.py \
+${VENV_PYTHON} experiments/stage1/bench/parallel_launcher.py \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

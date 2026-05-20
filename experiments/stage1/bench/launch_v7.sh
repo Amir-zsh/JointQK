@@ -31,7 +31,7 @@ cd "$REPO_ROOT"
 
 GPUS="${GPUS:-0,1,2,3,4,5}"
 JOBS_PER_GPU="${JOBS_PER_GPU:-2}"            # 2 jobs/GPU; OOM-retried up to MAX_RETRIES.
-MAX_RETRIES="${MAX_RETRIES:-10}"             # OOM requeue count (phase7_worker).
+MAX_RETRIES="${MAX_RETRIES:-10}"             # OOM requeue count (worker).
 FRACTION="${EVAL_FRACTION:-1.0}"
 
 # Model selection. Default Qwen3-8B; pass --model {qwen3_8b,llama31_8b} to switch.
@@ -109,7 +109,7 @@ K_BITS=(2 3 4)
 V_BITS=(2 3)
 
 mkdir -p "$OUT_BASE" "$LOG_DIR"
-# JSONL for phase7_worker.py: one EvaluationConfig dict per line.
+# JSONL for worker.py: one EvaluationConfig dict per line.
 CMDS="$LOG_DIR/commands.jsonl"
 : > "$CMDS"
 
@@ -240,7 +240,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
     exit 0
 fi
 
-${VENV_PYTHON} experiments/stage1/scripts/phase7_worker.py \
+${VENV_PYTHON} experiments/stage1/bench/worker.py \
     --model "$MODEL" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \

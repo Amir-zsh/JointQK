@@ -5,7 +5,7 @@
 # All jobs run on Qwen3-8B against LongBench/qasper at fraction 0.3.
 #
 # Usage:
-#   bash experiments/stage1/scripts/launch_phase1ab.sh [--gpus 0,1,2,3,4,5] [--fraction 0.3]
+#   bash experiments/stage1/calibration_stability/launch_ab.sh [--gpus 0,1,2,3,4,5] [--fraction 0.3]
 #   tail -f experiments/stage1/logs/phase1ab/_overview.log
 
 set -euo pipefail
@@ -109,7 +109,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
 fi
 echo "[$(date '+%H:%M:%S')] Dispatching across GPUs $GPUS, logs in $LOG_DIR/"
 
-python "${REPO_ROOT}/experiments/stage1/scripts/parallel_launcher.py" \
+python "${REPO_ROOT}/experiments/stage1/bench/parallel_launcher.py" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

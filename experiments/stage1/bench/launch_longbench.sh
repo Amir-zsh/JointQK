@@ -115,7 +115,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
     exit 0
 fi
 
-"${VENV_PYTHON}" "${REPO_ROOT}/experiments/stage1/scripts/parallel_launcher.py" \
+"${VENV_PYTHON}" "${REPO_ROOT}/experiments/stage1/bench/parallel_launcher.py" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

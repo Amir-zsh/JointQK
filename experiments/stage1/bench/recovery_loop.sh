@@ -1,7 +1,7 @@
 #!/bin/bash
 # v7 sweep recovery loop — runs after the main 2-jobs/GPU launcher finishes.
 # Counts completed cells via metrics.json on disk. If <192, reruns the launcher
-# at progressively lower concurrency. phase7_worker.py's skip-if-exists guarantees
+# at progressively lower concurrency. worker.py's skip-if-exists guarantees
 # only the failed cells re-execute.
 #
 # Order:
@@ -37,8 +37,8 @@ echo "[$(ts)] LOG_DIR=$LOG_DIR"
 echo "[$(ts)] EXPECTED_TOTAL=$EXPECTED_TOTAL"
 
 # Wait for the main launcher to exit before doing anything.
-echo "[$(ts)] waiting for main launcher (phase7_worker.py) to finish..."
-while pgrep -f 'launch_phase7_v7|phase7_worker.py.*phase7_v7_qwen3_8b' > /dev/null; do
+echo "[$(ts)] waiting for main launcher (worker.py) to finish..."
+while pgrep -f 'launch_v7|worker.py.*phase7_v7_qwen3_8b' > /dev/null; do
     sleep 60
 done
 echo "[$(ts)] main launcher finished. Beginning recovery passes."
@@ -57,7 +57,7 @@ for cfg in "1 10" "1 5"; do
     fi
 
     echo "[$(ts)] launching recovery pass $PASS: --jobs-per-gpu $JPG --max-retries $RETRIES"
-    bash experiments/stage1/scripts/launch_phase7_v7.sh \
+    bash experiments/stage1/bench/launch_v7.sh \
         --model "$MODEL_TAG" \
         --gpus "$GPUS" \
         --jobs-per-gpu "$JPG" \

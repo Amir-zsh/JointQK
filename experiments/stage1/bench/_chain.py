@@ -54,7 +54,7 @@ def main():
     # Launch Phase 7 LongBench Qwen
     log("launching Phase 7 LongBench Qwen3-8B")
     subprocess.run([
-        "bash", str(REPO / "experiments/stage1/scripts/launch_phase7_longbench.sh"),
+        "bash", str(REPO / "experiments/stage1/bench/launch_longbench.sh"),
         "--gpus", "0,1,2,3,4,5",
         "--model", "qwen3_8b",
         "--fraction", "0.5",
@@ -62,7 +62,7 @@ def main():
 
     log("Phase 7 LongBench Qwen done; launching Llama")
     subprocess.run([
-        "bash", str(REPO / "experiments/stage1/scripts/launch_phase7_longbench.sh"),
+        "bash", str(REPO / "experiments/stage1/bench/launch_longbench.sh"),
         "--gpus", "0,1,2,3,4,5",
         "--model", "llama31_8b",
         "--fraction", "0.5",
@@ -70,7 +70,7 @@ def main():
 
     log("Phase 7 LongBench all done; launching RULER")
     subprocess.run([
-        "bash", str(REPO / "experiments/stage1/scripts/launch_phase7_ruler.sh"),
+        "bash", str(REPO / "experiments/stage1/bench/launch_ruler.sh"),
         "--gpus", "0,1,2,3,4,5",
         "--ks", "4",
         "--ctxs", "4096,8192,16384",

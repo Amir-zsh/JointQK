@@ -144,7 +144,7 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
     exit 0
 fi
 
-.venv/bin/python experiments/stage1/scripts/phase7_worker.py \
+.venv/bin/python experiments/stage1/bench/worker.py \
     --model "$MODEL" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \

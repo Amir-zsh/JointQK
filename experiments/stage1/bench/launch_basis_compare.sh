@@ -102,7 +102,7 @@ if [[ "${1:-}" == "--dry-run" ]]; then
     exit 0
 fi
 
-${VENV_PYTHON} experiments/stage1/scripts/parallel_launcher.py \
+${VENV_PYTHON} experiments/stage1/bench/parallel_launcher.py \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

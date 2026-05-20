@@ -71,7 +71,7 @@ done
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] queued $n_jobs JointQK K=2 V=3 cells (4 tasks × 2 bases)"
 
-.venv/bin/python experiments/stage1/scripts/phase7_worker.py \
+.venv/bin/python experiments/stage1/bench/worker.py \
     --model "$MODEL" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \

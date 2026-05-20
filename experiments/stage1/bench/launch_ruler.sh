@@ -94,7 +94,7 @@ done
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] Phase 7 RULER: $n_jobs jobs queued"
 
-python "${REPO_ROOT}/experiments/stage1/scripts/parallel_launcher.py" \
+python "${REPO_ROOT}/experiments/stage1/bench/parallel_launcher.py" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \
     --gpus "$GPUS" \

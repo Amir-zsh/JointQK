@@ -1,6 +1,6 @@
 #!/bin/bash
 # K=2-only focused Llama verify: only the missing cells from the prior run.
-# Reuses output_dir paths; phase7_worker.py skips if metrics.json exists.
+# Reuses output_dir paths; worker.py skips if metrics.json exists.
 
 set -euo pipefail
 
@@ -105,7 +105,7 @@ done
 n_jobs=$(wc -l < "$CMDS")
 echo "[$(date '+%H:%M:%S')] queued $n_jobs K=2 jobs (already-done cells will be skipped)"
 
-.venv/bin/python experiments/stage1/scripts/phase7_worker.py \
+.venv/bin/python experiments/stage1/bench/worker.py \
     --model "$MODEL" \
     --commands-file "$CMDS" \
     --log-dir "$LOG_DIR" \

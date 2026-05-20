@@ -22,7 +22,7 @@ from experiments.stage1.calibration.common import (
 
 REPO = Path(__file__).resolve().parents[3]
 PY = REPO / ".venv/bin/python"
-LAUNCHER = REPO / "experiments/stage1/scripts/parallel_launcher.py"
+LAUNCHER = REPO / "experiments/stage1/bench/parallel_launcher.py"
 
 
 def parse_args() -> argparse.Namespace:
