@@ -195,7 +195,7 @@ def build_v_compressor(
         bits_int = round_bits_to_integer(
             bits_continuous.unsqueeze(0), total_bits=total_bits
         ).squeeze(0)
-        # Match the K-side cap (per_coord_quantization.build_method_compressor):
+        # Match the K-side cap (per_coord_quantization.build_jointqk_compressor):
         # unit_gaussian_centroids(b) is a Lloyd–Max solve with 2^b levels, so
         # uncapped saturated allocations (water_fill defaults to max_bits=16)
         # would mean 65,536-level codebooks per coord. Cap at 8 and redistribute.

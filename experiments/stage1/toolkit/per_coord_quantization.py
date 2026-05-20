@@ -1,7 +1,7 @@
-"""Per-coordinate scalar quantizer for Stage 1E variants requiring non-uniform bit allocation.
+"""Per-coordinate scalar quantizer for the JointQK K-side path.
 
 Unlike `Stage1MSECompressor` (which unit-normalizes vectors before quantizing), this compressor:
-- Optionally rotates by a per-head matrix Pi.
+- Optionally rotates by a per-head matrix.
 - Per-coordinate, scalar-quantizes using a 1D Lloyd-Max codebook scaled to per-coordinate std.
 - Coordinates with `bits[j] = 0` collapse to zero output.
 
@@ -258,123 +258,70 @@ def round_bits_to_integer(bits: torch.Tensor, total_bits: int | None = None) -> 
     return out.reshape(leading_shape + (flat.shape[-1],)).to(torch.long)
 
 
-def build_method_compressor(
+def build_jointqk_compressor(
     method: str,
     sigma_q_for_head: torch.Tensor,
     sigma_k_for_head: torch.Tensor,
-    cca: dict[str, torch.Tensor] | None,
-    mq_eigvals: torch.Tensor | None,
-    mq_eigvecs: torch.Tensor | None,
+    R_sym: torch.Tensor,
     b_avg: float,
     r: int | None,
-    seed: int,
     head_dim: int,
-    V_h: torch.Tensor | None = None,
-    R_sym: torch.Tensor | None = None,
-) -> PerCoordCompressor | None:
-    """Construct a PerCoordCompressor for the requested method on a single head.
+    seed: int = 42,
+) -> PerCoordCompressor:
+    """Construct a PerCoordCompressor for JointQK on a single (layer, kv_head).
 
-    Returns None for the V3 baseline (caller uses Stage1MSECompressor for that path).
-
-    Inputs are per-head (no batch dim). cca contains per-head P_K, P_K_inv, rho, etc.
-    V_h: orthogonal CCA basis (P_K @ Σ_K^(1/2)) for cca_orth_* methods.
-    R_sym: joint Q-K eigenbasis (eigvec_descending((Σ_Q Σ_K + Σ_K Σ_Q)/2)) for r_sym_* methods.
+    `method` selects the bit-allocation tail and must be `r_sym_waterfill` or
+    `r_sym_uniform`. `R_sym` is the joint Q-K eigenbasis (eigvec of the
+    symmetrised (Σ_Q Σ_K + Σ_K Σ_Q)/2). All inputs are per-head (no batch dim).
     """
-    if method == "v3":
-        return None
-
+    if not method.startswith("r_sym_"):
+        raise ValueError(f"build_jointqk_compressor only supports r_sym_* methods, got '{method}'")
     total_bits = b_avg * head_dim
 
-    if method.startswith("v_"):
-        if mq_eigvecs is None or mq_eigvals is None:
-            raise ValueError("V-basis methods require mq_eigvals and mq_eigvecs")
-        # V (= mq_eigvecs) is orthogonal: V.T @ V = I. Forward map (row conv) = V; inverse = V.T.
-        forward_map = mq_eigvecs
-        inverse_map = mq_eigvecs.transpose(-1, -2)
-        Sk_in_basis = mq_eigvecs.transpose(-1, -2) @ sigma_k_for_head @ mq_eigvecs
-        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        weights = mq_eigvals.clamp_min(1e-30)
-    elif method.startswith("cca_orth_"):
-        if V_h is None:
-            raise ValueError("cca_orth_* methods require V_h")
-        # V_h is orthogonal: V_h V_h.T = I. Row form: canonical_row = k_row @ V_h.T.
-        forward_map = V_h.transpose(-1, -2)
-        inverse_map = V_h
-        Sk_in_basis = V_h @ sigma_k_for_head @ V_h.transpose(-1, -2)
-        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        Mq_in_basis = V_h @ sigma_q_for_head @ V_h.transpose(-1, -2)
-        weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-    elif method.startswith("r_sym_"):
-        if R_sym is None:
-            raise ValueError("r_sym_* methods require R_sym")
-        # R_sym is orthogonal (eigvec of symmetric matrix). Row form: c_row = k_row @ R_sym.
-        forward_map = R_sym
-        inverse_map = R_sym.transpose(-1, -2)
-        Sk_in_basis = R_sym.transpose(-1, -2) @ sigma_k_for_head @ R_sym
-        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        Mq_in_basis = R_sym.transpose(-1, -2) @ sigma_q_for_head @ R_sym
-        weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-    elif method.startswith("cca_"):
-        if cca is None:
-            raise ValueError("CCA methods require cca payload")
-        # P_K maps k_col → canonical_col. Row form: canonical_row = k_row @ P_K.T.
-        forward_map = cca["P_K"].transpose(-1, -2)
-        inverse_map = cca["P_K_inv"].transpose(-1, -2)
-        Sk_in_basis = cca["P_K"] @ sigma_k_for_head @ cca["P_K"].transpose(-1, -2)
-        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-        # CCA's P_K is non-orthogonal, so Q-weighted reconstruction MSE is not weighted
-        # by rho^2. Use the trace-formula metric in canonical-K coordinates:
-        # diag((P_K_inv)^T Sigma_Q P_K_inv). This matches the corrected E2 simulation
-        # and the F8/F11 Monte-Carlo derivation.
-        metric_in_basis = (
-            cca["P_K_inv"].transpose(-1, -2)
-            @ sigma_q_for_head
-            @ cca["P_K_inv"]
-        )
-        weights = metric_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-    else:
-        raise ValueError(f"Unknown method '{method}'")
+    # R_sym is orthogonal (eigvec of a symmetric matrix). Row form: c_row = k_row @ R_sym.
+    forward_map = R_sym
+    inverse_map = R_sym.transpose(-1, -2)
+    Sk_in_basis = R_sym.transpose(-1, -2) @ sigma_k_for_head @ R_sym
+    sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+    Mq_in_basis = R_sym.transpose(-1, -2) @ sigma_q_for_head @ R_sym
+    weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
 
-    if method.endswith("_truncate") or method.endswith("_uniform"):
+    if method.endswith("_uniform"):
         if r is None or r <= 0 or r > head_dim:
-            raise ValueError(f"Method '{method}' requires 1 <= r <= head_dim, got r={r}")
+            raise ValueError(f"r_sym_uniform requires 1 <= r <= head_dim, got r={r}")
         per_coord_bits_int = max(1, int(round(total_bits / r)))
-        bits = torch.zeros(head_dim, dtype=torch.long)
-        bits[:r] = per_coord_bits_int
-        # Adjust to exact total
-        deficit = int(total_bits) - int(bits.sum())
-        if deficit > 0:
-            extra_idx = 0
-            while deficit > 0 and extra_idx < r:
-                bits[extra_idx] += 1
-                deficit -= 1
-                extra_idx += 1
-        elif deficit < 0:
-            for j in range(r - 1, -1, -1):
-                if bits[j] > 0 and deficit < 0:
-                    bits[j] -= 1
-                    deficit += 1
-                if deficit == 0:
-                    break
-        bits_int = bits
+        bits_int = torch.zeros(head_dim, dtype=torch.long)
+        bits_int[:r] = per_coord_bits_int
+        # Reconcile to exact total: hand out (or take back) one bit at a time over the active coords.
+        deficit = int(total_bits) - int(bits_int.sum())
+        i = 0
+        while deficit > 0 and i < r:
+            bits_int[i] += 1
+            deficit -= 1
+            i += 1
+        for j in range(r - 1, -1, -1):
+            if deficit >= 0:
+                break
+            if bits_int[j] > 0:
+                bits_int[j] -= 1
+                deficit += 1
     elif method.endswith("_waterfill"):
         from experiments.stage1.toolkit.metric_transform import water_fill
         wf_input = (weights * sigma_k_diag).unsqueeze(0)  # add batch dim of 1
         bits_continuous = water_fill(wf_input, total_bits=total_bits).squeeze(0)
         bits_int = round_bits_to_integer(bits_continuous.unsqueeze(0), total_bits=int(total_bits)).squeeze(0)
         # Cap per-coord bits at 8 to bound K_max=256 (Lloyd-Max at 8b is ~continuous for
-        # Gaussian sources; saving these bits and redistributing to lower-bit coords).
+        # Gaussian sources; redistribute the saved bits to coords with the lowest current allocation).
         MAX_BITS = 8
-        excess = (bits_int - MAX_BITS).clamp_min(0).sum().item()
+        excess = int((bits_int - MAX_BITS).clamp_min(0).sum().item())
         bits_int = bits_int.clamp_max(MAX_BITS)
-        # Redistribute saved bits to coords with lowest current allocation (until they hit MAX_BITS).
         while excess > 0:
             below = (bits_int < MAX_BITS).nonzero(as_tuple=True)[0]
             if below.numel() == 0:
                 break
             min_val = bits_int[below].min()
             candidates = below[bits_int[below] == min_val]
-            take = min(int(candidates.numel()), int(excess))
+            take = min(int(candidates.numel()), excess)
             bits_int[candidates[:take]] += 1
             excess -= take
     else:

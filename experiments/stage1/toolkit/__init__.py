@@ -52,7 +52,7 @@ from experiments.stage1.toolkit.moments import (
 )
 from experiments.stage1.toolkit.per_coord_quantization import (
     PerCoordCompressor,
-    build_method_compressor,
+    build_jointqk_compressor,
     round_bits_to_integer,
     unit_gaussian_centroids,
 )
@@ -69,7 +69,7 @@ __all__ = [
     "Stage1MSECompressor",
     "TRANSFORM_FAMILIES",
     "apply_headwise_linear",
-    "build_method_compressor",
+    "build_jointqk_compressor",
     "build_metric_transform",
     "capture_rope_qk",
     "compute_attention_metrics",

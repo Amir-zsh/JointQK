@@ -3,7 +3,7 @@
 Strategy: build a small fake calibration bundle (subset of layers from the
 real one), instantiate a press with that bundle, and verify that for every
 (L, h) cell the press's compressor produces the same output as the offline
-build_method_compressor / build_v_compressor.
+build_jointqk_compressor / build_v_compressor.
 
 This avoids the 12+ minute press construction time of the full 36-layer x
 8-head grid (which dominates wall clock due to scipy.quad inside Lloyd-Max).
@@ -30,7 +30,7 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 from experiments.stage1.toolkit.jointqk_press import JointQKPress
-from experiments.stage1.toolkit.per_coord_quantization import build_method_compressor
+from experiments.stage1.toolkit.per_coord_quantization import build_jointqk_compressor
 from experiments.stage1.toolkit.v_compressor_adapter import build_v_compressor
 
 
@@ -129,21 +129,13 @@ def main():
             v = b["v"][orig_L, h].float()
 
             # Offline K compressor — built from full cca at original index
-            offline_k_comp = build_method_compressor(
+            offline_k_comp = build_jointqk_compressor(
                 method="r_sym_waterfill",
                 sigma_q_for_head=cca["sigma_q"][orig_L, h],
                 sigma_k_for_head=cca["sigma_k"][orig_L, h],
-                cca={
-                    "P_K": cca["P_K"][orig_L, h],
-                    "P_K_inv": cca["P_K_inv"][orig_L, h],
-                    "rho": cca["rho"][orig_L, h],
-                },
-                mq_eigvals=cca["mq_eigvals"][orig_L, h],
-                mq_eigvecs=cca["mq_eigvecs"][orig_L, h],
-                b_avg=float(K_BITS),
-                r=64, seed=42, head_dim=128,
-                V_h=cca["V_h"][orig_L, h],
                 R_sym=cca["R_sym"][orig_L, h],
+                b_avg=float(K_BITS),
+                r=64, head_dim=128,
             )
             offline_k_recon = offline_k_comp.roundtrip(k)
 

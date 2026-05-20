@@ -22,7 +22,7 @@ from kvpress.utils import extract_keys_and_values
 from experiments.stage1.toolkit.per_coord_quantization import (
     PerCoordCompressor,
     batched_roundtrip,
-    build_method_compressor,
+    build_jointqk_compressor,
     stack_per_head,
 )
 from experiments.stage1.toolkit.v_compressor_adapter import build_v_compressor
@@ -153,25 +153,15 @@ class JointQKPress(BasePress):
                 if L == 0 and self.layer0_full_precision:
                     continue
                 for h in range(n_kv_heads):
-                    comp = build_method_compressor(
+                    self._k_compressors[(L, h)] = build_jointqk_compressor(
                         method=self.k_method,
                         sigma_q_for_head=cca["sigma_q"][L, h],
                         sigma_k_for_head=cca["sigma_k"][L, h],
-                        cca={
-                            "P_K": cca["P_K"][L, h],
-                            "P_K_inv": cca["P_K_inv"][L, h],
-                            "rho": cca["rho"][L, h],
-                        },
-                        mq_eigvals=cca["mq_eigvals"][L, h] if "mq_eigvals" in cca else None,
-                        mq_eigvecs=cca["mq_eigvecs"][L, h] if "mq_eigvecs" in cca else None,
+                        R_sym=cca["R_sym"][L, h],
                         b_avg=float(self.k_bits),
                         r=self.rank,
-                        seed=42,
                         head_dim=d,
-                        V_h=cca["V_h"][L, h] if "V_h" in cca else None,
-                        R_sym=cca["R_sym"][L, h] if "R_sym" in cca else None,
                     )
-                    self._k_compressors[(L, h)] = comp
 
         if self.quantize_v:
             if self.v_method == "v_turboquant":

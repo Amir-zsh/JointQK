@@ -47,7 +47,7 @@ from experiments.stage1.toolkit.quantization import Stage1MSECompressor
 
 K_METHODS = ("v3", "q_only", "k_only", "jointqk")
 V_METHODS = ("v_random", "v_eigen_uniform", "v_eigen_waterfill")
-PRODUCTION_MAX_COORD_BITS = 8  # mirrors `build_method_compressor`'s MAX_BITS for waterfill methods
+PRODUCTION_MAX_COORD_BITS = 8  # mirrors `build_jointqk_compressor`'s MAX_BITS for waterfill methods
 
 
 def parse_args() -> argparse.Namespace:
@@ -138,7 +138,7 @@ def random_orthogonal(shape: tuple[int, int, int, int], seed: int, device: torch
 
 
 def allocate_bits(scores: torch.Tensor, bits: int, max_coord_bits: int = PRODUCTION_MAX_COORD_BITS) -> torch.Tensor:
-    """Per-coord integer bit allocation matching `build_method_compressor`'s waterfill path.
+    """Per-coord integer bit allocation matching `build_jointqk_compressor`'s waterfill path.
 
     Mirrors `experiments/stage1/toolkit/per_coord_quantization.py:_waterfill` byte-for-byte
     (continuous water-fill with iterative saturation at 16, largest-remainder rounding to
@@ -167,7 +167,7 @@ def allocate_bits(scores: torch.Tensor, bits: int, max_coord_bits: int = PRODUCT
     bits_int = round_bits_to_integer(bits_continuous, total_bits=total_bits)  # (N, d) long
 
     # Cap per-coord bits at max_coord_bits, redistribute the saved bits to coords with the
-    # lowest current allocation — same loop as build_method_compressor.
+    # lowest current allocation — same loop as build_jointqk_compressor.
     out = bits_int.clone()
     for i in range(out.shape[0]):
         excess = int((out[i] - max_coord_bits).clamp_min(0).sum().item())

@@ -62,9 +62,9 @@ Split: 480 rows = 60 per task × (50 train + 10 test) × 8 tasks (qasper, hotpot
 
 4. **No top-1 / argmax-retention metric.** Logit MSE and top-1 retention can disagree by 15 pp under identical `(method, b)`. Top-1 is the project's de-facto headline. Need to compute it directly: it's one extra line per (layer, head) in the empirical loop (`argmax(q@k.T) == argmax(q@k_hat.T)`).
 
-5. **Calibration's `allocate_bits` ≠ production `water_fill`.** The calibration's bisection + post-hoc cap_bits diverges from `experiments/stage1/toolkit/metric_transform.water_fill`'s iterative-saturation loop and from `build_method_compressor`'s rounding+cap. Calibration winner ≠ deployed winner is possible.
+5. **Calibration's `allocate_bits` ≠ production `water_fill`.** The calibration's bisection + post-hoc cap_bits diverges from `experiments/stage1/toolkit/metric_transform.water_fill`'s iterative-saturation loop and from `build_jointqk_compressor`'s rounding+cap. Calibration winner ≠ deployed winner is possible.
 
-   **Fix:** call `build_method_compressor` (or the same `water_fill`) from the calibration code, not a reimplementation.
+   **Fix:** call `build_jointqk_compressor` (or the same `water_fill`) from the calibration code, not a reimplementation.
 
 ### Medium priority — analysis correctness
 
@@ -103,13 +103,13 @@ Split: 480 rows = 60 per task × (50 train + 10 test) × 8 tasks (qasper, hotpot
 - [x] **P0.1** Add `cca_orth` (V_h) to `K_METHODS`. Routed through production helpers (`compute_cca_basis` + `_derive_vh_rsym`) so calibration's V_h is byte-identical to deployment's. `cqk` now surfaced from `combine_stats`. `cca_waterfill` (non-orthogonal P_K) deferred — Stage 1E's `cca_orth_waterfill` already dominates it.
 - [x] **P0.2** `--empirical` flipped to default ON via `argparse.BooleanOptionalAction`; `--no-empirical` opts out. Both `analyze_bases.py` and `launch.py` updated; launcher always forwards an explicit flag. README updated.
 - [x] **P0.3** Top-1 **and top-5** retention added to `empirical_k_metrics` (chunked over queries to bound peak memory at ~512 MiB per logit matrix at fp32). New keys: `empirical_top1_waterfill_k{bits}`, `empirical_top5_waterfill_k{bits}` (+ unsuffixed aliases).
-- [x] **P0.4** `analyze_bases.allocate_bits` rewritten as a thin wrapper around `metric_transform.water_fill` + `per_coord_quantization.round_bits_to_integer` + cap-and-redistribute loop. Verified byte-identical to `build_method_compressor`'s waterfill path on synthetic input.
+- [x] **P0.4** `analyze_bases.allocate_bits` rewritten as a thin wrapper around `metric_transform.water_fill` + `per_coord_quantization.round_bits_to_integer` + cap-and-redistribute loop. Verified byte-identical to `build_jointqk_compressor`'s waterfill path on synthetic input.
 
 ### P1 — analysis hygiene
 
 - [ ] **P1.1** Drop the un-suffixed `k_mse_k{bits}` / `logit_error_k{bits}` aliases. Charts and downstream consumers must pick `_waterfill` or `_uniform` explicitly.
 - [ ] **P1.2** Subspace overlap: compute (a) within-method stability across paired subsets and (b) cross-method pairwise; report both.
-- [ ] **P1.3** Math gates in `validate_artifacts.py`: `|Σb − b·d| ≤ 1`, basis orthogonality (`R Rᵀ = I` to 1e-4), Bennett-vs-empirical agreement at b=6 within 5%, jointqk equals R_sym from `build_method_compressor` to fp32.
+- [ ] **P1.3** Math gates in `validate_artifacts.py`: `|Σb − b·d| ≤ 1`, basis orthogonality (`R Rᵀ = I` to 1e-4), Bennett-vs-empirical agreement at b=6 within 5%, jointqk equals R_sym from `build_jointqk_compressor` to fp32.
 
 ### P2 — coverage / polish
 
@@ -147,7 +147,7 @@ Implementation note from the chart iteration: explicit uniform-vs-water-fill met
 
 All four P0 items applied to `analyze_bases.py` (+ `launch.py`, `validate_artifacts.py`, `README.md`):
 
-- **P0.4 (allocate_bits)** — `analyze_bases.allocate_bits` is now a thin wrapper around the toolkit's `water_fill` + `round_bits_to_integer` + the MAX_BITS=8 redistribute loop. Removed the old `cap_bits` helper. Cross-checked on a synthetic head: calibration's per-coord allocation matches `build_method_compressor`'s waterfill path **byte-for-byte** (`torch.equal == True`). Sums conserve to `b_avg * d` exactly when caps don't bite.
+- **P0.4 (allocate_bits)** — `analyze_bases.allocate_bits` is now a thin wrapper around the toolkit's `water_fill` + `round_bits_to_integer` + the MAX_BITS=8 redistribute loop. Removed the old `cap_bits` helper. Cross-checked on a synthetic head: calibration's per-coord allocation matches `build_jointqk_compressor`'s waterfill path **byte-for-byte** (`torch.equal == True`). Sums conserve to `b_avg * d` exactly when caps don't bite.
 
 - **P0.3 (top-1, top-5)** — Added `empirical_top1_waterfill_k{bits}` and `empirical_top5_waterfill_k{bits}` (plus the unsuffixed aliases for parity with the existing K MSE / logit-error keys) to `empirical_k_metrics`. Logits are computed in chunks over queries, capped at ~512 MiB per matrix, so it scales to 32k-token contexts without OOM. Top-5 = "real top-1 contained in approx top-5" (same definition as Stage 1E E3).
 

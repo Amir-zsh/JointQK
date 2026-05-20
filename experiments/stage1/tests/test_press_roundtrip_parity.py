@@ -1,7 +1,7 @@
-"""Parity test: press path produces same recon as offline build_method_compressor.
+"""Parity test: press path produces same recon as offline build_jointqk_compressor.
 
 For one (layer, kv_head) on a Qwen example, run:
-- offline: build_method_compressor(...).roundtrip(k)
+- offline: build_jointqk_compressor(...).roundtrip(k)
 - press:   JointQKPress(...)._k_compressors[(L,h)].roundtrip(k)
 Assert max-abs-diff < 1e-5.
 
@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
 from experiments.stage1.toolkit.jointqk_press import JointQKPress
-from experiments.stage1.toolkit.per_coord_quantization import build_method_compressor
+from experiments.stage1.toolkit.per_coord_quantization import build_jointqk_compressor
 from experiments.stage1.toolkit.v_compressor_adapter import build_v_compressor
 
 
@@ -39,19 +39,14 @@ def main():
     v_stats = torch.load(v_path, map_location="cpu", weights_only=False)
 
     # Offline K
-    offline_k_comp = build_method_compressor(
+    offline_k_comp = build_jointqk_compressor(
         method="r_sym_waterfill",
         sigma_q_for_head=cca["sigma_q"][LAYER, HEAD],
         sigma_k_for_head=cca["sigma_k"][LAYER, HEAD],
-        cca={"P_K": cca["P_K"][LAYER, HEAD], "P_K_inv": cca["P_K_inv"][LAYER, HEAD], "rho": cca["rho"][LAYER, HEAD]},
-        mq_eigvals=cca["mq_eigvals"][LAYER, HEAD],
-        mq_eigvecs=cca["mq_eigvecs"][LAYER, HEAD],
+        R_sym=cca["R_sym"][LAYER, HEAD],
         b_avg=float(K_BITS),
         r=64,
-        seed=42,
         head_dim=128,
-        V_h=cca["V_h"][LAYER, HEAD],
-        R_sym=cca["R_sym"][LAYER, HEAD],
     )
     offline_k_recon = offline_k_comp.roundtrip(k)
 
