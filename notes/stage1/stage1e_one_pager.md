@@ -1,9 +1,0 @@
-Summary
-
-We benchmarked 9 methods for compressing the K (key) side of the KV cache on Qwen3-8B over the LongBench-E 24-example bundle. Each method is a (basis × bit-allocation) pair: pick a linear basis to rotate keys into, then allocate a fixed bit budget across coordinates of that basis using uniform / hard-truncate / continuous water-fill.
-
-**Winner: JointQK WaterFill.** A per-coordinate scalar quantizer in an orthogonal *joint-Q-K* basis — the eigenvectors of the symmetric matrix (Σ_Q Σ_K + Σ_K Σ_Q) / 2 — paired with reverse water-fill bit allocation. At 3 bits per coordinate (layer-0 excluded), it reaches **0.860** attention top-1 retention vs the prior best of **0.760** (Q-Eigen WaterFill, +10 pp). At 4 bits, decode-phase top-1 hits **0.944** — within 6 pp of full-precision attention. **Even at 2 bits per coordinate, JointQK WaterFill (0.767) approaches 4-bit TurboQuant (0.806) — within 4 pp at half the bit budget — and decisively beats 3-bit TurboQuant (0.682) by 8.6 pp.** The advantage is sustained at every bit budget (2/3/4), across three calibration sources (qasper, hotpotqa, passage_retrieval_en), across 24 leave-one-out folds, and from prefill-Q to decode-Q evaluation. See §3 of the full report for the headline table and charts.
-
-**Why classical CCA underperformed.** Canonical Correlation Analysis maximizes the *correlation* between Q and K projections — a scale-invariant objective that whitens away K-variance. KV-cache compression actually minimizes the Q-weighted reconstruction error of K, which is scale-dependent: per-coordinate logit error scales as (Q-energy × K-variance), not as canonical correlation. JointQK's basis orders coordinates by exactly that joint-energy product, directly matching the compression objective; CCA does not. Full derivation in §2.6.
-
-**Full report:** — methods (§1–§2), experiments with charts (§3), recommendation (§4).
