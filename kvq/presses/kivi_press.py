@@ -7,7 +7,7 @@ import torch
 from kvpress.presses.base_press import BasePress
 from kvpress.utils import extract_keys_and_values
 
-from kvq.toolkit.kivi_quantizer import (
+from kvq.compression.kivi_quantizer import (
     kivi_quantize_keys,
     kivi_quantize_values,
 )

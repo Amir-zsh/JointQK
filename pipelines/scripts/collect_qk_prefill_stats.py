@@ -29,12 +29,9 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from kvq.data import get_dataset_spec, load_and_filter, register_all_benchmark_specs
-from kvq.toolkit import (
-    ensure_dir,
-    load_model_and_tokenizer,
-    run_prefill_qk_post_capture,
-    save_json,
-)
+from kvq.io import ensure_dir, save_json
+from kvq.capture.model import load_model_and_tokenizer
+from kvq.capture.hooks import run_prefill_qk_post_capture
 
 
 def log(message: str) -> None:

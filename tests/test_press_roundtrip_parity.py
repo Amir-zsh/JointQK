@@ -22,9 +22,9 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
-from kvq.toolkit.jointqk_press import JointQKPress
-from kvq.toolkit.per_coord_quantization import build_jointqk_compressor
-from kvq.toolkit.v_compressor_adapter import build_v_compressor
+from kvq.presses.jointqk_press import JointQKPress
+from kvq.compression.per_coord import build_jointqk_compressor
+from kvq.compression.v_compressor_adapter import build_v_compressor
 
 
 def main():

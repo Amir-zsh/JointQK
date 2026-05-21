@@ -42,9 +42,9 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from transformers import DynamicCache
-from kvq.toolkit.model import get_model_device, load_model_and_tokenizer
-from kvq.toolkit.jointqk_press import JointQKPress
-from kvq.toolkit.turboquant_press import TurboQuantPress
+from kvq.capture.model import get_model_device, load_model_and_tokenizer
+from kvq.presses.jointqk_press import JointQKPress
+from kvq.presses.turboquant_press import TurboQuantPress
 
 
 def ts() -> str:

@@ -49,8 +49,8 @@ import torch
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from kvq.toolkit.metric_transform import water_fill
-from kvq.toolkit.per_coord_quantization import round_bits_to_integer
+from kvq.compression.metric_transform import water_fill
+from kvq.compression.per_coord import round_bits_to_integer
 
 
 DEFAULT_CONFIGS = ("qasper_e", "hotpotqa_e", "passage_retrieval_en_e")

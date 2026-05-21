@@ -3,7 +3,7 @@
 
 For each task: run model.generate (greedy, full-precision K/V — no compression press)
 on N test prompts, capturing per-step Q via the apply_rotary_pos_emb hook from
-`kvq.toolkit.capture.capture_rope_qk`.
+`kvq.capture.hooks.capture_rope_qk`.
 
 Output: per-task per-prompt .pt file with key 'decode_q' shape (n_layers, n_q_heads, n_steps, d)
 saved under artifacts/decode_q_captures_llama/<task>/row<idx>.pt
@@ -27,8 +27,8 @@ import torch
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from kvq.toolkit.capture import capture_rope_qk
-from kvq.toolkit.model import get_model_device, load_model_and_tokenizer
+from kvq.capture.hooks import capture_rope_qk
+from kvq.capture.model import get_model_device, load_model_and_tokenizer
 from kvq.data.kvpress_adapter import build_kvpress_dataset_spec
 from kvq.data.base import fetch_example
 

@@ -31,7 +31,7 @@ from pathlib import Path
 
 import torch
 
-from kvq.toolkit.per_coord_quantization import (
+from kvq.compression.per_coord import (
     PerCoordCompressor,
     round_bits_to_integer,
 )
@@ -186,7 +186,7 @@ def build_v_compressor(
         # Uniform allocation: every coord gets `bits`.
         bits_int = torch.full((head_dim,), int(bits), dtype=torch.long)
     elif method.endswith("_waterfill"):
-        from kvq.toolkit.metric_transform import water_fill
+        from kvq.compression.metric_transform import water_fill
         # For V, the rate-distortion target is plain MSE: D = Σ_j σ²_j(V) · 2^{-2 b_j}.
         # The water-fill solver expects per-coord "weight × variance"; since the
         # weight here is uniform-1 (no Q-weighting), we pass sigma_v_diag itself.

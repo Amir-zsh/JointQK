@@ -5,7 +5,7 @@ import math
 import torch
 import torch.nn.functional as F
 
-from kvq.toolkit.metric_transform import repeat_kv_states
+from kvq.compression.metric_transform import repeat_kv_states
 
 
 def compute_attention_metrics(

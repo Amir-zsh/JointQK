@@ -147,9 +147,11 @@ within the project's pool.
 .
 ├── _bootstrap.py                 # sys.path setup helper (imported by every entry-point script)
 ├── kvq/                          # Importable library (`from kvq.X import Y`)
-│   ├── toolkit/                  #  Reusable building blocks: presses, Lloyd-Max, water-fill, capture hooks
+│   ├── presses/                  #  kvpress press classes: JointQK, TurboQuant, KIVI
+│   ├── compression/              #  Bit allocation + scalar quantization primitives
+│   ├── capture/                  #  Model loading + RoPE-aware Q/K/V capture hooks
 │   ├── benchmarks/, data/        #  Vendored kvpress data adapters + scorers
-│   └── __init__.py
+│   └── io.py                     #  Small utilities (save_json, ensure_dir, …)
 │
 ├── pipelines/                    # Production data flow (calibrate → bench → aggregate)
 │   ├── calibration/              #  Capture K/V + compute pooled second moments
@@ -217,10 +219,11 @@ within the project's pool.
 
 ## Running benchmarks
 
-There are three categories of run: **bench sweep** (the headline LongBench/
-RULER F1 pipeline), **single-cell debug**, and **analysis probes**. The
+The bench pipeline is the headline LongBench/RULER F1 sweep. The
 calibration step is rarely re-run because the captures are large; details
-are in [the calibration section below](#calibration-rare-rerun).
+are in [the calibration section below](#calibration-rare-rerun). Ad-hoc
+investigation scripts live in `analysis/` and have [their own section
+further down](#running-analysis-probes).
 
 ### Common preconditions
 
@@ -312,31 +315,6 @@ class change without queuing the full sweep.
 Each aggregator walks the per-cell `metrics.json` files and emits a
 canonical summary table for the report notes.
 
-### 5. Analysis probes (Llama JointQK F1-inversion)
-
-Used to understand *why* JointQK wins K-fidelity metrics but loses F1 on
-some Llama tasks (the disconnect documented in
-`notes/jointqk_disconnect_investigation.md`):
-
-```bash
-# K-fidelity per-prompt: K-MSE, top-1, top-5
-.venv/bin/python -m analysis.measure_llama_empirical_kmse_top1_top5
-
-# First-decode logit KL on 4 tasks × 20 prompts
-.venv/bin/python -m analysis.measure_logit_kl_llama
-
-# Decode-trajectory KL (teacher-forced per-step KL)
-.venv/bin/python -m analysis.measure_decode_trajectory_llama
-
-# Σ_Q top-16 subspace drift across tasks (prefill + decode bins)
-.venv/bin/python -m analysis.analyze_q_distribution_shift
-.venv/bin/python -m analysis.plot_q_distribution_shift
-
-# Regenerate the consolidated HTML report
-.venv/bin/python -m analysis.build_jq_investigation_html \
-    --out notes/jointqk_investigation_report.html
-```
-
 ### Verifying nothing regressed
 
 Every commit on the refactor branch is gated by a numerical fingerprint:
@@ -380,6 +358,40 @@ If you need to add a new calibration corpus or model:
 
 Step 2 is the expensive one (~30 min on 4 GPUs for 450 prompts at 16k
 context). Steps 3–4 take seconds.
+
+---
+
+## Running analysis probes
+
+Ad-hoc scripts under `analysis/` consume existing pipeline outputs (bases
+under `artifacts/bases/`, F1 results under `artifacts/bench*/`, decode
+captures under `artifacts/decode_q_captures_llama/`) to investigate
+specific phenomena — primarily the Llama JointQK F1-inversion documented
+in `notes/jointqk_disconnect_investigation.md`. Unlike the bench
+pipeline, these scripts are not parameterised for new sweeps; they are
+investigation sediment kept for reproducibility.
+
+```bash
+# K-fidelity per-prompt: K-MSE, top-1, top-5
+.venv/bin/python -m analysis.measure_llama_empirical_kmse_top1_top5
+
+# First-decode logit KL on 4 tasks × 20 prompts
+.venv/bin/python -m analysis.measure_logit_kl_llama
+
+# Decode-trajectory KL (teacher-forced per-step KL)
+.venv/bin/python -m analysis.measure_decode_trajectory_llama
+
+# Σ_Q top-16 subspace drift across tasks (prefill + decode bins)
+.venv/bin/python -m analysis.analyze_q_distribution_shift
+.venv/bin/python -m analysis.plot_q_distribution_shift
+
+# Regenerate the consolidated HTML report
+.venv/bin/python -m analysis.build_jq_investigation_html \
+    --out notes/jointqk_investigation_report.html
+```
+
+Direct file-path invocation works too — every script in `analysis/`
+ships the same `sys.path` bootstrap header as the pipeline entry points.
 
 ---
 

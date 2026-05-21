@@ -35,11 +35,11 @@ if str(REPO) not in sys.path:
 # KIVI's new_pack.py is at vendor/kivi/quant/new_pack.py
 sys.path.insert(0, str(REPO / "vendor" / "kivi"))
 
-from kvq.toolkit.kivi_quantizer import (
+from kvq.compression.kivi_quantizer import (
     kivi_quantize_keys,
     kivi_quantize_values,
 )
-from kvq.toolkit.kivi_press import KIVIPress
+from kvq.presses.kivi_press import KIVIPress
 from quant.new_pack import (
     quant_and_pack_kcache,
     quant_and_pack_vcache,

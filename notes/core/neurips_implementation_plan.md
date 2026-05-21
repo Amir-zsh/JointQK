@@ -107,7 +107,7 @@ Produces `report_charts/cross_model_b_sensitivity.png` — two-panel (Qwen | Lla
 
 ### W2.1 — `JointQKPress` (Days 3–4)
 
-**New file:** `src/kvq/toolkit/jointqk_press.py`.
+**New file:** `kvq/jointqk_press.py`.
 
 **Class skeleton:**
 ```python
@@ -115,7 +115,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import torch
 from kvpress.presses.base_press import BasePress
-from kvq.toolkit.per_coord_quantization import (
+from kvq.compression.per_coord import (
     PerCoordCompressor, build_method_compressor,
 )
 
@@ -199,7 +199,7 @@ For Mode B we could alternatively wrap two presses with `kvpress.PrefillDecoding
 
 ### W2.2 — `TurboQuantPress` (Day 4, ~1h)
 
-**New file:** `src/kvq/toolkit/turboquant_press.py`. ~80 lines.
+**New file:** `kvq/turboquant_press.py`. ~80 lines.
 
 Same skeleton as JointQKPress but no calibration: per layer/head, build a random Hadamard matrix once (seeded), use uniform Lloyd-Max bits. Reuses `PerCoordCompressor` directly with `forward_map = H_hadamard`, `inverse_map = H_hadamard.T`.
 
@@ -209,9 +209,9 @@ Same skeleton as JointQKPress but no calibration: per layer/head, build a random
 
 **Edit:** `kvpress/evaluation/evaluate_registry.py`.
 ```python
-from kvq.toolkit.jointqk_press import JointQKPress
-from kvq.toolkit.turboquant_press import TurboQuantPress
-from kvq.toolkit.kivi_press import KIVIPress
+from kvq.presses.jointqk_press import JointQKPress
+from kvq.presses.turboquant_press import TurboQuantPress
+from kvq.presses.kivi_press import KIVIPress
 
 PRESS_REGISTRY.update({
     "jointqk": JointQKPress,
@@ -370,7 +370,7 @@ If time-pressed: drop to NIAH at length 16384 only; cite "compute budget" in the
 
 ### W3.1 Implement KIVI K-quantizer (Day 5, ~6h)
 
-**New file:** `src/kvq/toolkit/kivi_quantizer.py` (~150 lines).
+**New file:** `kvq/kivi_quantizer.py` (~150 lines).
 
 Per the KIVI paper (Liu et al. 2024): per-channel int4 quantization for K with group size G=128 along the channel axis (with G=head_dim=128, this collapses to per-channel asymmetric int4).
 
@@ -388,7 +388,7 @@ Per-channel asymmetric scheme: for each channel `c` and group `g`, `scale = (max
 
 ### W3.2 Wrap as KIVIPress (Day 6, ~1h)
 
-**New file:** `src/kvq/toolkit/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
+**New file:** `kvq/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
 
 ### W3.3 Validate KIVI matches paper (Days 7–8)
 
@@ -512,10 +512,10 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 - `pipelines/eval/aggregate_longbench.py`
 - `pipelines/eval/aggregate_ruler.py`
 - `pipelines/eval/aggregate_decode_scope.py` (W2c decision)
-- `src/kvq/toolkit/jointqk_press.py`
-- `src/kvq/toolkit/turboquant_press.py`
-- `src/kvq/toolkit/kivi_press.py`
-- `src/kvq/toolkit/kivi_quantizer.py`
+- `kvq/jointqk_press.py`
+- `kvq/turboquant_press.py`
+- `kvq/kivi_press.py`
+- `kvq/kivi_quantizer.py`
 - `tests/test_press_roundtrip_parity.py`
 - `artifacts/bases/llama31_8b/` (output dir, populated by W1.2)
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/` (output dirs, populated by W2b)
@@ -533,9 +533,9 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 ### Existing infrastructure reused unchanged
 
 - `experiments/run_bases.py` — bundle-driven, model-agnostic
-- `src/kvq/toolkit/per_coord_quantization.py` — `build_method_compressor` already supports JointQK
-- `src/kvq/toolkit/metric_transform.py` — water-fill, basis builders, polar orthogonalization
-- `src/kvq/toolkit/quantization.py` — Lloyd–Max codebooks
+- `kvq/compression/per_coord.py` — `build_method_compressor` already supports JointQK
+- `kvq/metric_transform.py` — water-fill, basis builders, polar orthogonalization
+- `kvq/quantization.py` — Lloyd–Max codebooks
 - `experiments/gates/gate_e{3,5}.py` — auto-discovery, no edits needed
 - `kvpress/kvpress/presses/base_press.py` — BasePress, hook lifecycle (no edits)
 - `kvpress/evaluation/evaluate.py` — harness for both LongBench and RULER

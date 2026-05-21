@@ -74,8 +74,8 @@ Verify the toolkit imports before going further:
 ```bash
 .venv/bin/python -c "
 from pipelines.calibration.analyze_bases import combine_stats, jointqk_basis
-from kvq.toolkit.jointqk_press import JointQKPress
-from kvq.toolkit.turboquant_press import TurboQuantPress
+from kvq.presses.jointqk_press import JointQKPress
+from kvq.presses.turboquant_press import TurboQuantPress
 print('OK')
 "
 ```

@@ -29,8 +29,8 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from pipelines.calibration.analyze_bases import jointqk_basis
-from kvq.toolkit.capture import capture_rope_qk
-from kvq.toolkit.model import get_model_device, load_model_and_tokenizer
+from kvq.capture.hooks import capture_rope_qk
+from kvq.capture.model import get_model_device, load_model_and_tokenizer
 from kvq.data.kvpress_adapter import build_kvpress_dataset_spec
 from kvq.data.base import fetch_example
 

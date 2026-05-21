@@ -37,9 +37,9 @@ sys.path.insert(0, str(REPO))
 
 from pipelines.calibration.analyze_bases import combine_stats, jointqk_basis
 from pipelines.calibration.common import RunPaths
-from kvq.toolkit.per_coord_quantization import PerCoordCompressor, round_bits_to_integer
-from kvq.toolkit.metric_transform import water_fill
-from kvq.toolkit.quantization import Stage1MSECompressor
+from kvq.compression.per_coord import PerCoordCompressor, round_bits_to_integer
+from kvq.compression.metric_transform import water_fill
+from kvq.compression.lloyd_max import Stage1MSECompressor
 
 
 def ts() -> str:

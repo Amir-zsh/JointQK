@@ -14,7 +14,7 @@ The actual scorer code lives in
 
 - **`evaluate_registry.py`** — trimmed copy of
   `vendor/kvpress/evaluation/evaluate_registry.py` with the
-  press-registry block removed (press wiring lives in `kvq.toolkit`,
+  press-registry block removed (press wiring lives in `kvq`,
   not here). Re-exports `DATASET_REGISTRY` and `SCORER_REGISTRY` for
   in-project callers (`analysis/*`, `kvq.data.kvpress_adapter`,
   `tests/test_evaluation.py`).

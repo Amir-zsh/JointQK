@@ -43,9 +43,9 @@ import sys
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from kvq.toolkit.metric_transform import water_fill
-from kvq.toolkit.per_coord_quantization import round_bits_to_integer, PerCoordCompressor
-from kvq.toolkit.quantization import Stage1MSECompressor
+from kvq.compression.metric_transform import water_fill
+from kvq.compression.per_coord import round_bits_to_integer, PerCoordCompressor
+from kvq.compression.lloyd_max import Stage1MSECompressor
 
 
 def ts() -> str:

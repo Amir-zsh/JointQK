@@ -16,7 +16,7 @@ from typing import Iterable
 import torch
 from einops import rearrange
 
-from kvq.toolkit.quantization import solve_lloyd_max
+from kvq.compression.lloyd_max import solve_lloyd_max
 
 
 _UNIT_GAUSSIAN_CACHE: dict[int, torch.Tensor] = {}
@@ -306,7 +306,7 @@ def build_jointqk_compressor(
                 bits_int[j] -= 1
                 deficit += 1
     elif method.endswith("_waterfill"):
-        from kvq.toolkit.metric_transform import water_fill
+        from kvq.compression.metric_transform import water_fill
         wf_input = (weights * sigma_k_diag).unsqueeze(0)  # add batch dim of 1
         bits_continuous = water_fill(wf_input, total_bits=total_bits).squeeze(0)
         bits_int = round_bits_to_integer(bits_continuous.unsqueeze(0), total_bits=int(total_bits)).squeeze(0)

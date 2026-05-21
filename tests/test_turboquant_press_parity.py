@@ -32,7 +32,7 @@ REPO = Path(__file__).resolve().parents[1]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
-from kvq.toolkit.turboquant_press import TurboQuantPress
+from kvq.presses.turboquant_press import TurboQuantPress
 from turboquant_pytorch.compressors_v3 import TurboQuantV3
 
 

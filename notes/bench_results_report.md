@@ -252,7 +252,7 @@ The **relative ranking** is preserved: at K=4 the methods are within sampling no
 - Dispatcher overview: `logs/phase7_v7_qwen3_8b/_overview.log` (pass 2; pass 1 was overwritten when pass 2 launched — pass-1 status was at-rest 40 OK + 152 OOM!)
 - Pass-2 outer launcher log: `logs/phase7_v7_qwen3_8b_pass2_outer.log`
 - v7 launcher: `pipelines/scripts/launch.sh`
-- Press source: `src/kvq/toolkit/{jointqk_press,turboquant_press,kivi_press,v_compressor_adapter}.py`
+- Press source: `kvq/{jointqk_press,turboquant_press,kivi_press,v_compressor_adapter}.py`
 - v7 K calibration: `artifacts/bases/cca_stats_longbench_compact8_n400.pt` (sigma_q, sigma_k, R_sym pooled over 400 LongBench-compact8 train prompts)
 - v7 V calibration: `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` (cov_v, mu_v — unused by v_turboquant but retained)
 - v_lock.txt: `artifacts/v_bases/v_lock.txt` (`V_METHOD=v_turboquant V_BITS=3 V_REL_F1_AT_LOCK=1.0080`)

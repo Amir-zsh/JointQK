@@ -48,8 +48,8 @@ from pipelines.calibration.compute_stats import (
 )
 from kvq.data.base import fetch_example
 from kvq.data.kvpress_adapter import build_kvpress_dataset_spec
-from kvq.toolkit.capture import capture_rope_qk
-from kvq.toolkit.model import get_model_device, load_model_and_tokenizer
+from kvq.capture.hooks import capture_rope_qk
+from kvq.capture.model import get_model_device, load_model_and_tokenizer
 
 
 def parse_args() -> argparse.Namespace:

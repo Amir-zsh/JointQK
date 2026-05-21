@@ -45,9 +45,9 @@ from pipelines.calibration.common import (
     write_json,
     write_jsonl,
 )
-from kvq.toolkit.metric_transform import water_fill
-from kvq.toolkit.per_coord_quantization import PerCoordCompressor, round_bits_to_integer
-from kvq.toolkit.quantization import Stage1MSECompressor
+from kvq.compression.metric_transform import water_fill
+from kvq.compression.per_coord import PerCoordCompressor, round_bits_to_integer
+from kvq.compression.lloyd_max import Stage1MSECompressor
 
 
 K_METHODS = ("v3", "q_only", "k_only", "jointqk")
@@ -145,7 +145,7 @@ def random_orthogonal(shape: tuple[int, int, int, int], seed: int, device: torch
 def allocate_bits(scores: torch.Tensor, bits: int, max_coord_bits: int = PRODUCTION_MAX_COORD_BITS) -> torch.Tensor:
     """Per-coord integer bit allocation matching `build_jointqk_compressor`'s waterfill path.
 
-    Mirrors `src/kvq/toolkit/per_coord_quantization.py:_waterfill` byte-for-byte
+    Mirrors `kvq/compression/per_coord.py:_waterfill` byte-for-byte
     (continuous water-fill with iterative saturation at 16, largest-remainder rounding to
     preserve sum, then cap at `max_coord_bits` with redistribution to lowest-allocation coords).
     Calling the same toolkit primitives is the point — calibration's allocation must match

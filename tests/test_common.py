@@ -9,13 +9,13 @@ from unittest import mock
 
 import torch
 
-from kvq.toolkit import (
-    Stage1MSECompressor,
+from kvq.compression.lloyd_max import Stage1MSECompressor
+from kvq.compression.metric_transform import (
     apply_headwise_linear,
-    compute_query_moments,
     factorize_metric_batch,
     geometry_aware_roundtrip,
 )
+from kvq.capture.moments import compute_query_moments
 
 
 def test_compute_query_moments_shapes_and_covariance():

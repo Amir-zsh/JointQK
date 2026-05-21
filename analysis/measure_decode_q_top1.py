@@ -44,11 +44,11 @@ sys.path.insert(0, str(REPO))
 
 from pipelines.calibration.analyze_bases import jointqk_basis
 from pipelines.calibration.common import RunPaths
-from kvq.toolkit.capture import capture_rope_qk
-from kvq.toolkit.model import get_model_device, load_model_and_tokenizer
-from kvq.toolkit.per_coord_quantization import PerCoordCompressor, round_bits_to_integer
-from kvq.toolkit.metric_transform import water_fill
-from kvq.toolkit.quantization import Stage1MSECompressor
+from kvq.capture.hooks import capture_rope_qk
+from kvq.capture.model import get_model_device, load_model_and_tokenizer
+from kvq.compression.per_coord import PerCoordCompressor, round_bits_to_integer
+from kvq.compression.metric_transform import water_fill
+from kvq.compression.lloyd_max import Stage1MSECompressor
 
 
 def ts() -> str:

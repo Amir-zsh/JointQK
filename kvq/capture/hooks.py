@@ -6,7 +6,7 @@ from typing import Iterator
 
 import torch
 
-from kvq.toolkit.model import get_model_device
+from kvq.capture.model import get_model_device
 
 
 @contextmanager

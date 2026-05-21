@@ -19,13 +19,13 @@ import torch
 from kvpress.presses.base_press import BasePress
 from kvpress.utils import extract_keys_and_values
 
-from kvq.toolkit.per_coord_quantization import (
+from kvq.compression.per_coord import (
     PerCoordCompressor,
     batched_roundtrip,
     build_jointqk_compressor,
     stack_per_head,
 )
-from kvq.toolkit.v_compressor_adapter import build_v_compressor
+from kvq.compression.v_compressor_adapter import build_v_compressor
 
 
 @dataclass

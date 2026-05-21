@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from kvq.toolkit.quantization import Stage1MSECompressor
+from kvq.compression.lloyd_max import Stage1MSECompressor
 
 
 TRANSFORM_FAMILIES = [

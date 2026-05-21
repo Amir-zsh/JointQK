@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from kvq.toolkit.io import torch_dtype_from_name
+from kvq.io import torch_dtype_from_name
 
 
 def get_model_device(model: torch.nn.Module) -> torch.device:

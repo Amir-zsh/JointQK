@@ -5,7 +5,7 @@
 # - Scorers are imported directly from the vendored kvpress copy (no second-source
 #   duplication of calculate_metrics.py files).
 # - PRESS_REGISTRY and `from kvpress import ...` block are intentionally omitted —
-#   press wiring lives in kvq.toolkit, not here.
+#   press wiring lives in kvq, not here.
 
 import kvq.benchmarks  # noqa: F401  — side-effect: adds vendor/kvpress/evaluation/ to sys.path
 

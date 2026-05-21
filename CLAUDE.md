@@ -9,8 +9,11 @@ See `README.md` for the public-facing high-level project description and `notes/
 ## Repo layout (essentials)
 
 - `kvq/` — importable library.
-  - `toolkit/` — reusable building blocks (`jointqk_press`, `turboquant_press`, `kivi_press`, `per_coord_quantization`, `capture`, `metric_transform`, ...).
+  - `presses/` — kvpress press classes: `JointQKPress`, `TurboQuantPress`, `KIVIPress`.
+  - `compression/` — bit-allocation / scalar-quant primitives (`per_coord`, `lloyd_max`, `metric_transform`, `v_compressor_adapter`, `kivi_quantizer`, `eval`).
+  - `capture/` — model loading + RoPE-aware Q/K capture hooks + query-moment accumulators.
   - `benchmarks/`, `data/` — vendored kvpress data adapters + scorers.
+  - `io.py` — small generic utilities (`save_json`, `ensure_dir`, `torch_dtype_from_name`).
 - `pipelines/` — entry-point scripts and shell launchers.
   - `calibration/` — capture K/V from a prompt corpus, compute pooled second moments (`Σ_Q`, `Σ_K`, `C_QK`), build joint Q-K bases.
   - `bench/` — downstream LongBench/RULER F1 sweep. `worker.py` is the per-cell driver; `launch_*.sh` are the parallel launchers; `parallel_launcher.py` is the GPU pool scheduler; `_chain.py` is the multi-stage orchestrator.
@@ -42,7 +45,7 @@ Per-study directories under `artifacts/` follow a consistent pattern: `metrics.j
 - **Long studies run autonomously.** When the user asks for a multi-step study, treat it as one logical task: run end-to-end, stream progress to `logs/<run_name>.log` with a `<run_name>.heartbeat` touched periodically. Validate each step before proceeding to the next; never stack experiments on unvalidated upstream output. Use `python -u` (unbuffered) for any script that emits progress.
 - **Bug tracking.** `notes/<study>/fixes_to_apply.md` is for **bugs only** — root cause, fix description, verification result. Do not append "ran cleanly" / activity-log entries; that file is a tracker, not a journal.
 - **Regression baselines.** `tests/baselines/fingerprint_pre.json` pins F1 + Σ_Q drift numbers from the canonical artifacts. Use `python -m tests.regression_fingerprint check --baseline <path>` to detect drift before a commit lands.
-- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `kvq/toolkit/per_coord_quantization.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
+- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `kvq/compression/per_coord.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
 
 ## Common commands
 
@@ -78,7 +81,7 @@ bash pipelines/calibration_stability/launch_ab.sh --gpus 0,1,2,3
 ## Code style
 
 - **Comments only when the *why* is non-obvious.** Hidden constraints, workarounds, surprising invariants — yes. Restating what well-named code does — no. Don't add docstrings that just enumerate parameter types.
-- **Trust internal contracts.** Don't add error handling or fallbacks for scenarios that can't happen. Validate at system boundaries (user input, external APIs); inside the toolkit, internal callers are trusted.
+- **Trust internal contracts.** Don't add error handling or fallbacks for scenarios that can't happen. Validate at system boundaries (user input, external APIs); inside `kvq/`, internal callers are trusted.
 - **Edit before creating.** Prefer extending an existing file to introducing a new one. New files are justified when the work doesn't fit anywhere existing.
 - **Match existing patterns.** Method-dispatch through `build_jointqk_compressor`, gate-style sanity checks, log/heartbeat conventions in launcher scripts, `*_summary.json` + `*_rows.pt` artifact pairing.
 

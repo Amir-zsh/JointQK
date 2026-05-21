@@ -67,8 +67,8 @@ This is the highest-leverage missing experiment. Reviewers will reject a 0.860 a
 **New files:**
 - `pipelines/eval/longbench_runner.py` — generates predictions with each compression method, scores against gold
 - `pipelines/eval/ruler_runner.py` — same for RULER NIAH subset
-- `src/kvq/toolkit/jointqk_press.py` — kvpress press wrapping JointQK
-- `src/kvq/toolkit/kivi_press.py` — KIVI baseline wrapped as kvpress press
+- `kvq/jointqk_press.py` — kvpress press wrapping JointQK
+- `kvq/kivi_press.py` — KIVI baseline wrapped as kvpress press
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/longbench_summary.json`
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/ruler_summary.json`
 
@@ -118,8 +118,8 @@ The paper draft starts on Day 1, before experiments finish. Sections that are fa
 - `pipelines/scripts/make_cross_model_chart.py`
 - `pipelines/eval/longbench_runner.py`
 - `pipelines/eval/ruler_runner.py`
-- `src/kvq/toolkit/jointqk_press.py`
-- `src/kvq/toolkit/kivi_press.py`
+- `kvq/jointqk_press.py`
+- `kvq/kivi_press.py`
 - `paper/main/main.tex` and supporting files
 - `paper/main/figs/` (new figures + ports of existing artifacts)
 
@@ -129,9 +129,9 @@ The paper draft starts on Day 1, before experiments finish. Sections that are fa
 - `experiments/gates/gate_e3.py` — Llama-specific thresholds if needed (likely not — auto-discovery handles it)
 
 **To reuse unchanged:**
-- `src/kvq/toolkit/per_coord_quantization.py` (`build_method_compressor` already supports JointQK)
-- `src/kvq/toolkit/metric_transform.py` (water-fill solver, basis builders)
-- `src/kvq/toolkit/quantization.py` (Lloyd–Max)
+- `kvq/compression/per_coord.py` (`build_method_compressor` already supports JointQK)
+- `kvq/metric_transform.py` (water-fill solver, basis builders)
+- `kvq/quantization.py` (Lloyd–Max)
 - `kvpress/` (vendored library — wrap, don't fork)
 
 ## Decision points & risks

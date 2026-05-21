@@ -62,7 +62,7 @@ Split: 480 rows = 60 per task × (50 train + 10 test) × 8 tasks (qasper, hotpot
 
 4. **No top-1 / argmax-retention metric.** Logit MSE and top-1 retention can disagree by 15 pp under identical `(method, b)`. Top-1 is the project's de-facto headline. Need to compute it directly: it's one extra line per (layer, head) in the empirical loop (`argmax(q@k.T) == argmax(q@k_hat.T)`).
 
-5. **Calibration's `allocate_bits` ≠ production `water_fill`.** The calibration's bisection + post-hoc cap_bits diverges from `src/kvq/toolkit/metric_transform.water_fill`'s iterative-saturation loop and from `build_jointqk_compressor`'s rounding+cap. Calibration winner ≠ deployed winner is possible.
+5. **Calibration's `allocate_bits` ≠ production `water_fill`.** The calibration's bisection + post-hoc cap_bits diverges from `kvq/metric_transform.water_fill`'s iterative-saturation loop and from `build_jointqk_compressor`'s rounding+cap. Calibration winner ≠ deployed winner is possible.
 
    **Fix:** call `build_jointqk_compressor` (or the same `water_fill`) from the calibration code, not a reimplementation.
 
