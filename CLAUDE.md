@@ -15,14 +15,14 @@ See `README.md` for the public-facing high-level project description and `notes/
   - `benchmarks/`, `data/` — vendored kvpress data adapters + scorers.
   - `io.py` — small generic utilities (`save_json`, `ensure_dir`, `torch_dtype_from_name`).
 - `pipelines/` — entry-point scripts and shell launchers.
-  - `calibration/` — capture K/V from a prompt corpus, compute pooled second moments (`Σ_Q`, `Σ_K`, `C_QK`), build joint Q-K bases.
+  - `calibration/` — capture K/V from a prompt corpus, compute pooled second moments (`Σ_Q`, `Σ_K`, `C_QK`), build joint Q-K bases. `analyze_bases_pooled.py` is the multi-GPU pooled-regime K-basis sweep (parallel fast path to the full `analyze_bases.py` grid).
   - `bench/` — downstream LongBench/RULER F1 sweep. `worker.py` is the per-cell driver; `launch_*.sh` are the parallel launchers; `parallel_launcher.py` is the GPU pool scheduler; `_chain.py` is the multi-stage orchestrator.
   - `analysis/` — the Llama JointQK F1-inversion probes: K-fidelity measurement, attention-KL, logit-KL, decode-Q trajectory, Σ_Q drift, HTML report builder.
   - `calibration_stability/` — ablation sweeps studying basis stability across calibration corpora.
   - `scripts/` — calibration-build utilities (`build_calibration_artifacts_from_pool.py`, `create_longbench_calibration_split.py`, `collect_qk_prefill_stats.py`, ...).
   - `eval/` — aggregators (`aggregate_longbench`, `aggregate_ruler`, `aggregate_decode_scope`, `aggregate_phase1`, `aggregate_integrity`).
 - `tests/`, `notebooks/`, `logs/` (run logs, gitignored) — top-level utilities.
-- `artifacts/` — per-study output directories. Bench results live under `bench*/`; calibration captures under `calibration/`; Llama analysis under `decode_q_captures_llama/`, `q_distribution_shift/`, etc.
+- `artifacts/` — per-study output directories. Bench results under `bench*/`; calibration captures under `calibration/<run-id>/`; basis bundles under `bases/jointqk_*.pt` (joint Q-K) and `v_bases/v_stats_*.pt` (V-side); Llama analysis under `decode_q_captures_llama/`, `q_distribution_shift/`.
 - `notes/` — `core/` (framing), `reference/` (derivations), `<study>/` (per-study write-ups, bug trackers, shareable summaries).
 - `vendor/` — vendored Apache-2.0 / similar deps: `vendor/kvpress/`, `vendor/turboquant-pytorch/`, `vendor/kivi/`. Do not modify directly without good reason. (`vendor/turboquant_pytorch` is a symlink so `import turboquant_pytorch` resolves through the hyphen-named source dir.)
 
@@ -46,6 +46,8 @@ Per-study directories under `artifacts/` follow a consistent pattern: `metrics.j
 - **Bug tracking.** `notes/<study>/fixes_to_apply.md` is for **bugs only** — root cause, fix description, verification result. Do not append "ran cleanly" / activity-log entries; that file is a tracker, not a journal.
 - **Regression baselines.** `tests/baselines/fingerprint_pre.json` pins F1 + Σ_Q drift numbers from the canonical artifacts. Use `python -m tests.regression_fingerprint check --baseline <path>` to detect drift before a commit lands.
 - **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `kvq/compression/per_coord.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
+- **Calibration capture dirs are named per-model.** `artifacts/calibration/<corpus-tag>_qkv_<model-tag>/` (e.g. `longbench_compact8_qkv_qwen3_8b/`, `longbench_compact9_qkv_llama31_8b/`). Each dir has its own `_run_meta.json` recording the model id. Stages `00_split/`…`05_reports/` may not all be populated — Llama runs typically have just `01_raw/` + `02_stats/` since bases land in `artifacts/bases/` directly.
+- **Basis bundle naming.** Joint Q-K bundles: `artifacts/bases/jointqk_<model>_<corpus>_<n>.pt` (single-token defaults: `artifacts/bases/jointqk.pt` for Qwen3, `artifacts/bases/llama31_8b/jointqk.pt`). V-side: `artifacts/v_bases/v_stats_<model>_<corpus>_<n>.pt`. The press class consumes the joint-Q-K bundle via the `cca_stats_path=` kwarg (kwarg name predates the file rename — renaming it touches every bench-launcher JSON, separate refactor).
 
 ## Common commands
 
