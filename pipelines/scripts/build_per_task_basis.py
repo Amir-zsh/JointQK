@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build per-task cca_stats.pt artifacts from each task's 50 train examples.
+"""Build per-task jointqk.pt artifacts from each task's 50 train examples.
 
 Tests hypothesis D3: pooled-over-8-tasks calibration may be suboptimal vs
 task-matched basis. Per-task calibration uses only the 50 train examples
 from a single task, so the basis is fitted to that task's Q/K distribution.
 
 Outputs:
-  artifacts/bases/per_task/cca_stats_<task>.pt
+  artifacts/bases/per_task/jointqk_<task>.pt
   artifacts/v_bases/per_task/v_stats_<task>.pt
 """
 from __future__ import annotations
@@ -60,7 +60,7 @@ def build_for_task(paths, per_example, task: str, out_cca: Path, out_v: Path) ->
         "mq_eigvals": zeros_diag, "mq_eigvecs": eye, "V_h": eye,
         "n_layers": n_layers, "n_kv_heads": n_kv_heads, "head_dim": head_dim,
         "total_prefill_tokens": total_tokens,
-        "calibration_source": f"longbench_compact8_qkv per-task ({task}, {len(indices)} train prompts)",
+        "calibration_source": f"longbench_compact8_qkv_qwen3_8b per-task ({task}, {len(indices)} train prompts)",
         "calibration_date": "2026-05-05",
     }
     sigma_v = cov_v + torch.einsum("lhd,lhe->lhde", mu_v, mu_v)
@@ -71,7 +71,7 @@ def build_for_task(paths, per_example, task: str, out_cca: Path, out_v: Path) ->
             "n_layers": n_layers, "n_kv_heads": n_kv_heads, "head_dim": head_dim,
             "n_examples": len(indices), "total_token_count": total_tokens,
             "prefill_only": True,
-            "bundle": f"longbench_compact8_qkv per-task ({task})",
+            "bundle": f"longbench_compact8_qkv_qwen3_8b per-task ({task})",
             "version": 2,
         },
     }
@@ -89,13 +89,13 @@ def build_for_task(paths, per_example, task: str, out_cca: Path, out_v: Path) ->
 
 def main() -> None:
     artifact_root = REPO / "artifacts/calibration"
-    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv")
+    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv_qwen3_8b")
     agg = torch.load(paths.stats_dir / "aggregate.pt", map_location="cpu", weights_only=False)
     per_example = agg["per_example"]
 
     tasks = ["hotpotqa", "musique", "qasper", "qmsum"]
     for task in tasks:
-        out_cca = REPO / f"artifacts/bases/per_task/cca_stats_{task}.pt"
+        out_cca = REPO / f"artifacts/bases/per_task/jointqk_{task}.pt"
         out_v = REPO / f"artifacts/v_bases/per_task/v_stats_{task}.pt"
         build_for_task(paths, per_example, task, out_cca, out_v)
 

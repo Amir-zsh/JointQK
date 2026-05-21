@@ -14,7 +14,7 @@ JOBS_PER_GPU="${JOBS_PER_GPU:-1}"
 FRACTION="${EVAL_FRACTION:-0.5}"
 
 MODEL="Qwen/Qwen3-8B"
-CCA_NEW="${REPO_ROOT}/artifacts/bases/cca_stats_longbench_compact8_n400.pt"
+CCA_NEW="${REPO_ROOT}/artifacts/bases/jointqk_longbench_compact8_n400.pt"
 
 V_METHOD=v_turboquant
 V_BITS=3

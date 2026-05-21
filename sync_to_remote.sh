@@ -7,7 +7,7 @@
 #   default  -- code, notes, vendor, .git, paper. Excludes artifacts/, .venv/,
 #               logs/, notebooks/data/. ~165 MB.
 #   --phase7 -- default + the small artifacts Phase 7 needs to run on the
-#               remote: legacy v6 calibration files (cca_stats.pt, v_stats.pt,
+#               remote: legacy v6 calibration files (jointqk.pt, v_stats.pt,
 #               k_floor.txt for qwen3_8b and llama31_8b), the current v_lock.txt
 #               (which now selects v_turboquant per the v7 disconnect
 #               investigation), AND the calibration_splits/ directory the v7
@@ -126,8 +126,8 @@ if [[ $INCLUDE_PHASE7 -eq 1 && $INCLUDE_ARTIFACTS -eq 0 ]]; then
   # never push the multi-hundred-GB raw / stats trees.
   PHASE7_FILES=(
     # Legacy v6 calibration (kept for v6 reproducibility)
-    "artifacts/stage1/cca_vs_waterfill_study/cca_stats.pt"
-    "artifacts/stage1/cca_vs_waterfill_study/llama31_8b/cca_stats.pt"
+    "artifacts/stage1/cca_vs_waterfill_study/jointqk.pt"
+    "artifacts/stage1/cca_vs_waterfill_study/llama31_8b/jointqk.pt"
     "artifacts/stage1/v_method_study/v_stats.pt"
     "artifacts/stage1/v_method_study/v_stats_llama31_8b.pt"
     "artifacts/stage1/v_method_study/k_floor.txt"

@@ -167,7 +167,7 @@ within the project's pool.
 │
 ├── artifacts/                    # Pipeline outputs (mostly gitignored)
 │   ├── calibration/              #  Per-corpus raw captures + pooled stats (>10 GB protected; gitignored)
-│   ├── bases/                    #  Joint Q-K basis files: cca_stats_<model>_<corpus>_<n>.pt
+│   ├── bases/                    #  Joint Q-K basis files: jointqk_<model>_<corpus>_<n>.pt
 │   ├── v_bases/                  #  V-side basis files + v_lock.txt (active V method)
 │   ├── calibration_splits/       #  Train/test split manifests + exclude_train_indices_for_eval.json
 │   ├── bench/                    #  Downstream F1 sweep results (per-cell metrics.json)
@@ -207,7 +207,7 @@ within the project's pool.
 
 ### Naming conventions to be aware of
 
-- **`cca_stats_*.pt`** files in `artifacts/bases/` store the joint Q-K
+- **`jointqk_*.pt`** files in `artifacts/bases/` store the joint Q-K
   basis (`R_sym`), despite the historical "cca_" prefix. CCA-only fields
   remain in the file but are ignored by the K path.
 - **"Bench"** = the downstream LongBench/RULER F1 sweep (formerly called
@@ -232,7 +232,7 @@ Every bench run requires three artifacts to already exist:
 1. **A calibration corpus capture** under
    `artifacts/calibration/<run-id>/02_stats/` (gitignored; >10 GB
    protected).
-2. **A K basis file** like `artifacts/bases/cca_stats_<model>_<corpus>_<n>.pt`.
+2. **A K basis file** like `artifacts/bases/jointqk_<model>_<corpus>_<n>.pt`.
 3. **A V basis file** like `artifacts/v_bases/v_stats_<model>_<corpus>_<n>.pt`
    plus `artifacts/v_bases/v_lock.txt` (records the active V method).
 
@@ -291,7 +291,7 @@ the worker, bypassing the launcher's queue:
 ```bash
 # Build a one-line JSONL with the cell config:
 cat > /tmp/one_cell.jsonl <<'EOF'
-{"press_name": "jointqk", "dataset": "longbench", "data_dir": "qasper", "output_dir": "artifacts/_refactor_smoke/qasper_jq_k2v3", "press_kwargs": {"cca_stats_path": "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt", "v_stats_path": "artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "quantize_k": true, "quantize_v": true, "compress_decode": false, "layer0_full_precision": true}}
+{"press_name": "jointqk", "dataset": "longbench", "data_dir": "qasper", "output_dir": "artifacts/_refactor_smoke/qasper_jq_k2v3", "press_kwargs": {"cca_stats_path": "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt", "v_stats_path": "artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "quantize_k": true, "quantize_v": true, "compress_decode": false, "layer0_full_precision": true}}
 EOF
 
 # Run it:

@@ -15,7 +15,7 @@ Method:
 Scope: 8 test prompts × all 36 layers × 8 KV heads × b=4.
 Methods: v3, jointqk (NEW pooled basis).
 
-Output: artifacts/calibration/longbench_compact8_qkv/05_reports/softmax_kl.json
+Output: artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/softmax_kl.json
 """
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ def main() -> None:
     n_prompts = 8
 
     artifact_root = REPO / "artifacts/calibration"
-    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv")
+    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv_qwen3_8b")
     agg = torch.load(paths.stats_dir / "aggregate.pt", map_location="cpu", weights_only=False)
     per_example = agg["per_example"]
     test_examples = [p for p in per_example if p["split"] == "test"][:n_prompts]
@@ -199,7 +199,7 @@ def main() -> None:
         "per_layer_kl": {m: {L: per_layer_kl[m][L]["sum"] / max(1, per_layer_kl[m][L]["n"])
                               for L in range(n_layers)} for m in accums},
     }
-    out_path = REPO / "artifacts/calibration/longbench_compact8_qkv/05_reports/softmax_kl.json"
+    out_path = REPO / "artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/softmax_kl.json"
     out_path.write_text(json.dumps(out, indent=2, default=str) + "\n")
     print(f"\nwrote {out_path}")
 

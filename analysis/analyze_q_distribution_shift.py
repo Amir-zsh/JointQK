@@ -9,7 +9,7 @@ Two sources of windows:
 
 Metric (primary): top-16 subspace cosine between window Σ_Q and reference Σ_Q,
 averaged across (L≥1, h). Reference = pooled compact8 Σ_Q from the existing
-`cca_stats_llama31_8b_longbench_compact8_n400.pt` artifact.
+`jointqk_llama31_8b_longbench_compact8_n400.pt` artifact.
 
 Outputs:
   artifacts/q_distribution_shift/per_task_drift.json
@@ -202,7 +202,7 @@ def aggregate_decode_bins(decode_q_dir: Path, task: str, sigma_ref: torch.Tensor
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--reference-cca",
-        default=str(REPO / "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt"))
+        default=str(REPO / "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"))
     parser.add_argument("--compact8-raw",
         default=str(REPO / "artifacts/calibration/longbench_compact8_qkv_llama31_8b/01_raw"))
     parser.add_argument("--compact9-raw",

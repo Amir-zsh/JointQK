@@ -13,7 +13,7 @@ MAX_RETRIES="${MAX_RETRIES:-5}"
 FRACTION="${EVAL_FRACTION:-1.0}"
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-CCA="${REPO_ROOT}/artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt"
+CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
 VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
 
 V_LOCK_FILE="${REPO_ROOT}/artifacts/v_bases/v_lock.txt"

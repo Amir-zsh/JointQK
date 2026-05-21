@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build cca_stats.pt + v_stats.pt artifacts from the new pooled calibration stats.
+"""Build jointqk.pt + v_stats.pt artifacts from the new pooled calibration stats.
 
 Source: `combine_stats(train_indices)` over the train split of the calibration
 run (typically 400 LongBench-compact8 train prompts).
@@ -51,12 +51,12 @@ def ts() -> str:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--artifact-root", type=Path, default=Path("artifacts/calibration"))
-    p.add_argument("--run-id", default="longbench_compact8_qkv",
+    p.add_argument("--run-id", default="longbench_compact8_qkv_qwen3_8b",
                    help="Run id of the calibration artifacts (the 02_stats/aggregate.pt source).")
     p.add_argument("--output-suffix", default="longbench_compact8_n400",
                    help="Suffix attached to the output cca_stats / v_stats filenames. "
                         "Default 'longbench_compact8_n400' produces "
-                        "artifacts/bases/cca_stats_longbench_compact8_n400.pt etc.")
+                        "artifacts/bases/jointqk_longbench_compact8_n400.pt etc.")
     p.add_argument("--cca-out-dir", type=Path,
                    default=Path("artifacts/bases"))
     p.add_argument("--v-out-dir", type=Path,
@@ -135,7 +135,7 @@ def main() -> None:
     v_out_dir = (REPO / args.v_out_dir) if not args.v_out_dir.is_absolute() else args.v_out_dir
     cca_out_dir.mkdir(parents=True, exist_ok=True)
     v_out_dir.mkdir(parents=True, exist_ok=True)
-    cca_out = cca_out_dir / f"cca_stats_{args.output_suffix}.pt"
+    cca_out = cca_out_dir / f"jointqk_{args.output_suffix}.pt"
     v_out = v_out_dir / f"v_stats_{args.output_suffix}.pt"
     if not args.force:
         for p in (cca_out, v_out):

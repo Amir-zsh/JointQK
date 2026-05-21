@@ -10,7 +10,7 @@
 - 8 tasks: 6 in compact8 calibration (hotpotqa, qasper, qmsum, multi_news,
   repobench-p, musique) + 2 OOD (lcc, 2wikimqa).
 - Reference: pooled compact8 Σ_Q from
-  `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt`
+  `artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt`
   (the basis JQ actually uses in production).
 - Metric: **top-16 subspace cosine** between window Σ_Q and reference Σ_Q,
   averaged across (L≥1, h). Computed via batched GPU `torch.linalg.eigh`.

@@ -194,7 +194,7 @@ The trec column is interesting only as a marker that quantization happens to com
 
 ## 6. Comparison to v6 — what changed, what didn't
 
-v6 used the deployed `cca_stats.pt` (24 examples / 81 K tokens) + `v_eigen_uniform` V + 8-task KIVI subset. v7 uses pooled-400 calibration + `v_turboquant` V + 12 tasks (KIVI 8 + 4 multi-doc QA) + train-row exclusion.
+v6 used the deployed `jointqk.pt` (24 examples / 81 K tokens) + `v_eigen_uniform` V + 8-task KIVI subset. v7 uses pooled-400 calibration + `v_turboquant` V + 12 tasks (KIVI 8 + 4 multi-doc QA) + train-row exclusion.
 
 ### Cross-version side-by-side on the v6-overlap tasks (8 tasks: KIVI subset)
 
@@ -253,7 +253,7 @@ The **relative ranking** is preserved: at K=4 the methods are within sampling no
 - Pass-2 outer launcher log: `logs/phase7_v7_qwen3_8b_pass2_outer.log`
 - v7 launcher: `pipelines/scripts/launch.sh`
 - Press source: `kvq/{jointqk_press,turboquant_press,kivi_press,v_compressor_adapter}.py`
-- v7 K calibration: `artifacts/bases/cca_stats_longbench_compact8_n400.pt` (sigma_q, sigma_k, R_sym pooled over 400 LongBench-compact8 train prompts)
+- v7 K calibration: `artifacts/bases/jointqk_longbench_compact8_n400.pt` (sigma_q, sigma_k, R_sym pooled over 400 LongBench-compact8 train prompts)
 - v7 V calibration: `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` (cov_v, mu_v — unused by v_turboquant but retained)
 - v_lock.txt: `artifacts/v_bases/v_lock.txt` (`V_METHOD=v_turboquant V_BITS=3 V_REL_F1_AT_LOCK=1.0080`)
 - Eval exclude file: `artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json`

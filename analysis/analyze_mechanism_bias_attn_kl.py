@@ -335,12 +335,12 @@ def main():
     models = [
         {
             "label": "Qwen3-8B",
-            "cca": REPO / "artifacts/bases/cca_stats_longbench_compact8_n400.pt",
-            "raw": REPO / "artifacts/calibration/longbench_compact8_qkv/01_raw",
+            "cca": REPO / "artifacts/bases/jointqk_longbench_compact8_n400.pt",
+            "raw": REPO / "artifacts/calibration/longbench_compact8_qkv_qwen3_8b/01_raw",
         },
         {
             "label": "Llama-3.1-8B",
-            "cca": REPO / "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt",
+            "cca": REPO / "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt",
             "raw": REPO / "artifacts/calibration/longbench_compact8_qkv_llama31_8b/01_raw",
         },
     ]

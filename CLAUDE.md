@@ -30,7 +30,7 @@ See `README.md` for the public-facing high-level project description and `notes/
 
 The pipeline:
 
-1. **Calibrate.** `pipelines/calibration/` captures K/V from a calibration corpus and emits per-(layer, kv_head) second moments. The `scripts/build_calibration_artifacts_from_pool.py` consumer then pools captures into a basis artifact (`cca_stats_*.pt`).
+1. **Calibrate.** `pipelines/calibration/` captures K/V from a calibration corpus and emits per-(layer, kv_head) second moments. The `scripts/build_calibration_artifacts_from_pool.py` consumer then pools captures into a basis artifact (`jointqk_*.pt`).
 2. **Bench.** `pipelines/bench/launch_*.sh` parallelises `bench/worker.py` across GPUs; each worker runs one (method × bits × task) cell of the LongBench/RULER sweep and emits `metrics.json`.
 3. **Aggregate.** `pipelines/eval/aggregate_*.py` lifts the per-cell JSONs into canonical summary tables.
 4. **Analyse.** `analysis/` runs fidelity probes (K-MSE, top-1, attention-KL, logit-KL, decode trajectory) against the same bases and emits the JQ investigation HTML.

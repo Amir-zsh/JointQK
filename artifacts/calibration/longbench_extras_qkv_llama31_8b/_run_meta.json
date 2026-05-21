@@ -1,0 +1,5 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "run_id": "longbench_extras_qkv_llama31_8b",
+  "created_by": "capture_raw.py (retroactive 2026-05-20)"
+}

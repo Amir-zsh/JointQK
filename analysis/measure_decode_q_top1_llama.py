@@ -2,7 +2,7 @@
 """Llama-3.1-8B decode-q top-1 measurement (mirror of Qwen3 measure_decode_q_top1.py).
 
 Loads sigma_q/sigma_k directly from the prebuilt
-`cca_stats_llama31_8b_longbench_compact8_n400.pt` (we don't have a local
+`jointqk_llama31_8b_longbench_compact8_n400.pt` (we don't have a local
 aggregate.pt for Llama, so we skip the combine_stats path).
 
 Compares JointQK vs TurboQuant (Stage1MSECompressor) on decode-time queries
@@ -234,7 +234,7 @@ def pick_test_prompts(raw_root: Path, target_tasks: list[str]) -> list[dict[str,
 
 
 def main() -> None:
-    cca_path = REPO / "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt"
+    cca_path = REPO / "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
     raw_root = REPO / "artifacts/calibration/longbench_compact8_qkv_llama31_8b/01_raw"
     out_path = REPO / "artifacts/calibration/longbench_compact8_qkv_llama31_8b/05_reports/decode_q_top1_llama.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)

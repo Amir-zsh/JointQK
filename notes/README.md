@@ -37,7 +37,7 @@ This directory organises the project notes by role.
 
 - [experiments_and_findings.md](experiments_and_findings.md)
   - current overall takeaway across calibration, bench, and analysis
-- [preview_pooled_n50_report.md](preview_pooled_n50_report.md)
+- [pooled_n50_report.md](pooled_n50_report.md)
   - preview of the pooled-N50 calibration corpus
 
 ## Reference

@@ -65,7 +65,7 @@ python -u -m experiments.collect_query_stats \
 - Each `.pt` has `q_post`, `k_post` of shape `(n_layers=32, n_kv_heads=8, seq_len, head_dim=128)` (Llama-3.1-8B GQA: 32 Q-heads / 8 KV-heads). Note: layer count differs from Qwen (36).
 - Total bundle size ≈ matches Qwen's bundle within ~50% (capture length is per-example, model-dim independent).
 
-**Risks:** RoPE differences, model-specific attention sinks may shift second-moment shapes. Mitigation: `cca_stats.pt` will have `(32, 8, 128, 128)` rather than `(36, 8, 128, 128)` — Stage 1E driver handles this generically (it reads `n_layers` from the calibration manifest, line 424).
+**Risks:** RoPE differences, model-specific attention sinks may shift second-moment shapes. Mitigation: `jointqk.pt` will have `(32, 8, 128, 128)` rather than `(36, 8, 128, 128)` — Stage 1E driver handles this generically (it reads `n_layers` from the calibration manifest, line 424).
 
 ### W1.2 Run Stage-1E E3/E5 on Llama bundle (Days 2–3)
 
@@ -121,7 +121,7 @@ from kvq.compression.per_coord import (
 
 @dataclass
 class JointQKPress(BasePress):
-    cca_stats_path: str           # path to artifacts/.../cca_stats.pt
+    cca_stats_path: str           # path to artifacts/.../jointqk.pt
     b_avg: float = 3.0
     rank: int = 64
     method: str = "r_sym_waterfill"   # or v_waterfill, cca_orth_waterfill
@@ -193,9 +193,9 @@ For Mode B we could alternatively wrap two presses with `kvpress.PrefillDecoding
 
 **Notes:**
 1. Per-batch loop over heads is OK for evaluation (we're not optimizing throughput here).
-2. `cca_stats.pt` may need to have R_sym / V_h pre-computed and saved. Currently, `run_bases.py` derives them on-the-fly via `_derive_vh_rsym`. To keep press lean, **add a one-time pre-derivation step** that saves R_sym + V_h into cca_stats.pt for both models.
+2. `jointqk.pt` may need to have R_sym / V_h pre-computed and saved. Currently, `run_bases.py` derives them on-the-fly via `_derive_vh_rsym`. To keep press lean, **add a one-time pre-derivation step** that saves R_sym + V_h into jointqk.pt for both models.
 
-**Pre-derive script** (~30 lines): `pipelines/scripts/precompute_newbases.py`. Loads cca_stats.pt, runs `_derive_vh_rsym` per (layer, head), writes cca_stats.pt back with two new keys. Idempotent.
+**Pre-derive script** (~30 lines): `pipelines/scripts/precompute_newbases.py`. Loads jointqk.pt, runs `_derive_vh_rsym` per (layer, head), writes jointqk.pt back with two new keys. Idempotent.
 
 ### W2.2 — `TurboQuantPress` (Day 4, ~1h)
 
@@ -231,7 +231,7 @@ python evaluate.py \
     --data_dir qasper \
     --fraction 0.05 \
     --model Qwen/Qwen3-8B \
-    --press_init_command 'JointQKPress(cca_stats_path="artifacts/bases/cca_stats.pt", b_avg=3.0)' \
+    --press_init_command 'JointQKPress(cca_stats_path="artifacts/bases/jointqk.pt", b_avg=3.0)' \
     --output_dir results/smoke_jointqk
 ```
 
@@ -259,7 +259,7 @@ If parity fails → bug in press wrapper, not in the underlying compressor.
 
 ```bash
 MODEL=Qwen/Qwen3-8B
-CCA=artifacts/bases/cca_stats.pt
+CCA=artifacts/bases/jointqk.pt
 OUT=artifacts/downstream/qwen3_8b/w2c_decode_scope
 
 for task in qasper narrativeqa; do
@@ -304,7 +304,7 @@ Reads the W2c decision file before launching:
 
 ```bash
 MODEL=Qwen/Qwen3-8B
-CCA=artifacts/bases/cca_stats.pt
+CCA=artifacts/bases/jointqk.pt
 OUT=artifacts/downstream/qwen3_8b
 DECISION_FILE=$OUT/w2c_decode_scope/decision.txt
 COMPRESS_DECODE=$(grep -oE 'True|False' "$DECISION_FILE")  # set by W2c
@@ -347,7 +347,7 @@ python kvpress/evaluation/evaluate.py \
 
 ### W2b.2 LongBench on Llama-3.1-8B (Day 8)
 
-Same as W2b.1 with `MODEL=meta-llama/Llama-3.1-8B-Instruct` and `CCA=artifacts/bases/llama31_8b/cca_stats.pt`. Note kvpress `evaluate.py` defaults to this model already.
+Same as W2b.1 with `MODEL=meta-llama/Llama-3.1-8B-Instruct` and `CCA=artifacts/bases/llama31_8b/jointqk.pt`. Note kvpress `evaluate.py` defaults to this model already.
 
 ### W2b.3 RULER NIAH on both models (Days 8–10)
 

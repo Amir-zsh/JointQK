@@ -1,6 +1,6 @@
 #!/bin/bash
-# Phase 7 basis comparison: deployed cca_stats.pt (24-example calibration) vs
-# new cca_stats_longbench_compact8_n400.pt (400-example pooled calibration).
+# Phase 7 basis comparison: deployed jointqk.pt (24-example calibration) vs
+# new jointqk_longbench_compact8_n400.pt (400-example pooled calibration).
 #
 # Tasks: 4 LongBench (multi-doc QA + single-doc QA + summarization).
 # Configs: oracle, jointqk@OLD@K∈{2,4}V=3, jointqk@NEW@K∈{2,4}V=3,
@@ -19,8 +19,8 @@ JOBS_PER_GPU="${JOBS_PER_GPU:-1}"
 FRACTION="${EVAL_FRACTION:-0.5}"
 
 MODEL="Qwen/Qwen3-8B"
-CCA_OLD="${REPO_ROOT}/artifacts/bases/cca_stats.pt"
-CCA_NEW="${REPO_ROOT}/artifacts/bases/cca_stats_longbench_compact8_n400.pt"
+CCA_OLD="${REPO_ROOT}/artifacts/bases/jointqk.pt"
+CCA_NEW="${REPO_ROOT}/artifacts/bases/jointqk_longbench_compact8_n400.pt"
 VST_OLD="${REPO_ROOT}/artifacts/v_bases/v_stats.pt"
 VST_NEW="${REPO_ROOT}/artifacts/v_bases/v_stats_longbench_compact8_n400.pt"
 

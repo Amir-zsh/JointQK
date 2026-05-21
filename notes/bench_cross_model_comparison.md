@@ -138,7 +138,7 @@ We have the calibration moments for Qwen3 on disk; the Llama equivalent is on th
 
 1. **Investigate the lcc collapse on Llama at K=2** (Qwen JQ +4.3 vs Llama JQ −12.0). lcc is code completion — Llama's code Q/K distribution may have a sharper principal direction than Qwen3's, making JointQK's bit concentration hurt rather than help. Per-layer top-1 mining (analyze_perlayer_top1.py infrastructure exists) on the Llama capture would localize.
 
-2. **Compare the calibration eigenvalue spectra** between Qwen3 and Llama. If Llama's `Σ_K` is flatter, that explains why TurboQuant K=2 works on Llama. Pull `cca_stats_llama31_8b_longbench_compact8_n400.pt` from the remote and diff against `cca_stats_longbench_compact8_n400.pt`.
+2. **Compare the calibration eigenvalue spectra** between Qwen3 and Llama. If Llama's `Σ_K` is flatter, that explains why TurboQuant K=2 works on Llama. Pull `jointqk_llama31_8b_longbench_compact8_n400.pt` from the remote and diff against `jointqk_longbench_compact8_n400.pt`.
 
 3. **Bigger calibration corpus for cross-model robustness.** Maybe Llama needs more or different calibration data. Worth a separate ablation.
 

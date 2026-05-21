@@ -35,6 +35,6 @@ artifacts/calibration/*/02_stats/
 artifacts/calibration/*/04_analysis_pre_*/
 # Per-shard run logs (analysis/capture launchers; ephemeral)
 artifacts/calibration/*/logs/
-# Per-shard preview accumulator logs (the merged.json + launcher.log are kept)
-artifacts/calibration/*/05_reports/preview_pooled_n50/shard_*.log
+# Per-shard pooled-sweep accumulator logs (the merged.json + launcher.log are kept)
+artifacts/calibration/*/05_reports/pooled_n50/shard_*.log
 

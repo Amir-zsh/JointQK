@@ -26,11 +26,11 @@ This folder contains the final calibration pipeline for LongBench Q/K/V basis an
    - **Resume:** `--resume` skips any trial whose JSON already exists; rows from the cached JSON are spliced into the current shard's `rows.jsonl` at the end.
    - **Memory bounds:** `--stats-cache-entries` (default 128 ≈ ~10 GB) caps the per-shard stats LRU; `--raw-cache-entries` (default 0 = bypass) caps the per-trial raw LRU. The previous unbounded raw cache held all eval idx (~5 GB each → ~400 GB on pooled trials) and crashed the server; the inverted `for idx: for bits` loop order in the empirical funcs ensures each raw file is loaded **at most once per method call** even with the cache disabled.
 
-4. `preview_pooled.py` (multi-GPU preview)
-   - Standalone driver for the pooled-N=50 K-method comparison without waiting on the full sweep.
+4. `analyze_bases_pooled.py` (multi-GPU pooled-regime K-basis sweep)
+   - Parallelized fast path to `analyze_bases.py`'s pooled cell — runs the V3-vs-jointqk-vs-q_only-vs-k_only comparison without iterating the full grid.
    - **Launcher mode (default):** spawns one shard subprocess per visible GPU. Each shard processes a round-robin slice of the test idx and writes per-shard accumulator JSON. Launcher merges shards on CPU, recomputes analytic baselines, prints the V3-vs-basis headline table, writes `merged.json`.
    - **Shard mode (`--num-shards N --shard-id i`):** internal — single-process worker invoked by the launcher.
-   - Output: `05_reports/preview_pooled_n50/` — `shard_NNN.json` (per-shard accumulators), `shard_NNN.log` (per-shard stdout), `merged.json` (final per-method × layer0-mode metrics), `launcher.log`.
+   - Output: `05_reports/pooled_n50/` — `shard_NNN.json` (per-shard accumulators), `shard_NNN.log` (per-shard stdout), `merged.json` (final per-method × layer0-mode metrics), `launcher.log`.
    - Memory bounded: `StatsCache` cap=128, `RawLRU` cap=1 per shard. Peak resident ≈ 20 GB per shard.
 
 5. `make_charts.py`
@@ -70,7 +70,7 @@ Use the project's `.venv` (uv-managed Python 3.12) and the multi-GPU launcher.
 `--empirical` is **on by default** (computes raw `‖k − k̂‖²`, mean `(qᵀ err)²`, and top-1 / top-5
 attention-rank retention on held-out examples). The analytic Bennett proxy alone cannot detect
 clipping bias and disagrees with top-1 ranking — see `REVIEW_AND_PLAN.md` and the preview report
-at `notes/preview_pooled_n50_report.md`.
+at `notes/pooled_n50_report.md`.
 
 For analytic-only runs (no raw-tensor passes, much cheaper), pass `--no-empirical`. To bound the
 cost of the empirical pass on full sweeps, also pass e.g. `--empirical-max-eval-examples 4` (default
@@ -96,11 +96,11 @@ For a fast headline V3-vs-basis comparison without running the full grid:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 \
-  .venv/bin/python pipelines/calibration/preview_pooled.py \
+  .venv/bin/python pipelines/calibration/analyze_bases_pooled.py \
   --gpus 0,1,2,3,4,5
 ```
 
-Spawns one shard per GPU; ~30–40 min wall time on 6 GPUs (shard-imbalance bound — round-robin slicing doesn't balance prompt length). Headline lands in `launcher.log` and `merged.json` under `05_reports/preview_pooled_n50/`.
+Spawns one shard per GPU; ~30–40 min wall time on 6 GPUs (shard-imbalance bound — round-robin slicing doesn't balance prompt length). Headline lands in `launcher.log` and `merged.json` under `05_reports/pooled_n50/`.
 
 ### Smoke run
 
@@ -118,23 +118,23 @@ Smoke empirical metrics are intentionally bounded: one held-out raw example, two
 ## Default Artifacts
 
 - Split manifest: `artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/manifest.json`
-- Run root: `artifacts/calibration/longbench_compact8_qkv/`
+- Run root: `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/`
 - Raw tensors: `01_raw/shard_NNN/`
 - Stats: `02_stats/shard_NNN/` and `aggregate.pt`
 - Analysis: `04_analysis/shard_NNN/{trials/trial_*.json, rows.jsonl, manifest.json}` and merged `analysis_rows.jsonl` / `analysis_summary.json`
-- Reports: `05_reports/` (charts + `preview_pooled_n50/` from preview)
+- Reports: `05_reports/` (charts + `pooled_n50/` from the pooled K-basis sweep)
 
 The full raw Q/K/V capture is large (~500 GB at `--keep-raw test`, ~3 TB at `--keep-raw all`). Use `--artifact-root` to point full runs at storage with enough free space.
 
 ## Memory and resume safety (2026-05-05 fixes)
 
-A multi-trial pooled-eval analysis run on 2026-05-05 OOM-crashed the server. Root cause: the per-trial `raw_cache` was an **unbounded `dict`** that accumulated every loaded raw payload (~5 GB each × 80 eval idx = ~400 GB resident on pooled trials). Fixed in `analyze_bases.py` and `preview_pooled.py`:
+A multi-trial pooled-eval analysis run on 2026-05-05 OOM-crashed the server. Root cause: the per-trial `raw_cache` was an **unbounded `dict`** that accumulated every loaded raw payload (~5 GB each × 80 eval idx = ~400 GB resident on pooled trials). Fixed in `analyze_bases.py` and `analyze_bases_pooled.py`:
 
 - **`RawLRU`** (bounded LRU, default `max_entries=0` = bypass) replaces the unbounded dict.
 - **`for idx: for bits`** loop order in `empirical_v3_metrics`, `empirical_k_metrics`, `empirical_v_metrics` — each raw file loaded at most once per call (was previously once per `(bits, idx)` with unbounded caching).
 - **`_release_idx`** at the bottom of each idx loop: explicit `del raw + gc.collect() + torch.cuda.empty_cache()`.
 - **`StatsCache` default cap** raised from unbounded → 128 entries (~10 GB per shard).
 - **Atomic per-trial JSON** written via tmp+rename after each completed trial, plus working `--resume` (analyze_bases previously accepted the flag but ignored it).
-- **`return_accumulators=True`** mode on the empirical funcs — returns raw per-(bits, layer) accumulators for cross-shard merging in the multi-GPU preview.
+- **`return_accumulators=True`** mode on the empirical funcs — returns raw per-(bits, layer) accumulators for cross-shard merging in the multi-GPU pooled sweep.
 
-See `notes/preview_pooled_n50_report.md` for the first results from the post-fix preview.
+See `notes/pooled_n50_report.md` for the first results from the post-fix run.

@@ -5,7 +5,7 @@ This document is **self-contained** for an agent running the v7 sweep on Llama-3
 The pipeline has three stages:
 
 1. **Capture** — run model prefill on a fixed 480-prompt LongBench split, save fp16 q/k/v for the test-half (~80 prompts) and per-example second-moment stats for all 480.
-2. **Build calibration artifacts** — pool 400 train examples into a single `cca_stats.pt` (joint-Q-K eigenbasis) + `v_stats.pt`.
+2. **Build calibration artifacts** — pool 400 train examples into a single `jointqk.pt` (joint-Q-K eigenbasis) + `v_stats.pt`.
 3. **Run v7 sweep** — 192 cells (12 tasks × 16 configs) of LongBench evaluation with TurboQuant baselines, KIVI int{2,3,4}, and JointQK with the new calibration + v_turboquant V.
 
 Total wall time on 6× A100-40GB: **~1 h capture + ~10 min stats + ~15 min build + ~6–10 h v7 sweep** ≈ **~7–11 h end-to-end**. The v7 sweep is by far the longest stage because each cell does prefill *and* autoregressive generation; capture is prefill-only and therefore ~10× faster per prompt.
@@ -14,26 +14,26 @@ Total wall time on 6× A100-40GB: **~1 h capture + ~10 min stats + ~15 min build
 
 ## Cross-model isolation (won't clobber the Qwen3 calibration)
 
-The Llama run uses **distinct paths** at every stage so it cannot accidentally overwrite the existing Qwen3 artifacts at `artifacts/calibration/longbench_compact8_qkv/`:
+The Llama run uses **distinct paths** at every stage so it cannot accidentally overwrite the existing Qwen3 artifacts at `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/`:
 
 | stage | Qwen3 path (existing, must not be touched) | Llama path (new, this runbook) |
 |---|---|---|
-| Capture run-root | `artifacts/calibration/longbench_compact8_qkv/` | `artifacts/calibration/longbench_compact8_qkv_llama31_8b/` |
-| K calibration artifact | `artifacts/bases/cca_stats_longbench_compact8_n400.pt` | `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt` |
+| Capture run-root | `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/` | `artifacts/calibration/longbench_compact8_qkv_llama31_8b/` |
+| K calibration artifact | `artifacts/bases/jointqk_longbench_compact8_n400.pt` | `artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt` |
 | V calibration artifact | `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` | `artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt` |
 | Downstream F1 | `artifacts/bench/qwen3_8b/` | `artifacts/bench/llama31_8b/` |
 | Logs | `logs/phase7_v7_qwen3_8b/` | `logs/phase7_v7_llama31_8b/` |
 
 **Three safety guards are in place** in case a flag gets dropped by accident:
 
-1. **Capture run-root model guard.** `capture_raw.py` writes `_run_meta.json` to the run-root on first capture. Subsequent invocations refuse to write if the recorded `model` differs. The Qwen3 directory has been seeded with `{"model": "Qwen/Qwen3-8B"}`, so any attempt to capture Llama into `longbench_compact8_qkv` (the Qwen3 run-id) will fail with:
+1. **Capture run-root model guard.** `capture_raw.py` writes `_run_meta.json` to the run-root on first capture. Subsequent invocations refuse to write if the recorded `model` differs. The Qwen3 directory has been seeded with `{"model": "Qwen/Qwen3-8B"}`, so any attempt to capture Llama into `longbench_compact8_qkv_qwen3_8b` (the Qwen3 run-id) will fail with:
    ```
-   RuntimeError: refusing to capture into run-id='longbench_compact8_qkv' ... existing _run_meta.json has model='Qwen/Qwen3-8B', current --model='meta-llama/Llama-3.1-8B-Instruct'
+   RuntimeError: refusing to capture into run-id='longbench_compact8_qkv_qwen3_8b' ... existing _run_meta.json has model='Qwen/Qwen3-8B', current --model='meta-llama/Llama-3.1-8B-Instruct'
    ```
 
 2. **Build script overwrite guard.** `build_calibration_artifacts_from_pool.py` refuses to overwrite an existing output without `--force`. Running it without `--output-suffix` for Llama would target the Qwen3 file, but the existing file blocks the write:
    ```
-   RuntimeError: refusing to overwrite existing .../cca_stats_longbench_compact8_n400.pt (use --force to override).
+   RuntimeError: refusing to overwrite existing .../jointqk_longbench_compact8_n400.pt (use --force to override).
    ```
 
 3. **v7 launcher fail-loud.** `launch.sh --model llama31_8b` checks for the Llama-suffixed calibration files at start. If they don't exist (because step 3 wasn't run yet), it prints the exact build command and exits before queuing any jobs.
@@ -53,7 +53,7 @@ Together these mean: **the agent has to make three independent mistakes** — wr
   - All code, notes, vendored kvpress + turboquant-pytorch (~165 MB project tree).
   - `artifacts/v_bases/v_lock.txt` (selects `v_turboquant`).
   - `artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/` (manifest, train/test row jsonls, exclude file — ~760 KB total). The capture stage reads `manifest.json`; the v7 launcher reads `exclude_train_indices_for_eval.json`.
-  - Legacy v6 calibration artifacts (cca_stats.pt, v_stats.pt) for both qwen3_8b and llama31_8b — kept for v6 reproducibility, not used by v7.
+  - Legacy v6 calibration artifacts (jointqk.pt, v_stats.pt) for both qwen3_8b and llama31_8b — kept for v6 reproducibility, not used by v7.
   - **NOT included**: multi-hundred-GB raw and per-example stats directories. The Llama v7 calibration files (`cca_stats_llama31_8b_*.pt`, `v_stats_llama31_8b_*.pt`) are built **on the remote** in §2 below from the locally-captured prefill stats.
 
   Total transfer ~510 MB.
@@ -112,7 +112,7 @@ SMOKE_SUFFIX=llama31_8b_smoke
     --log-dir logs/phase7_v7_smoke \
     --commands-file <(cat <<EOF
 {"_label": "smoke_oracle_qasper", "press_name": "no_press", "compression_ratio": 0.0, "dataset": "longbench", "data_dir": "qasper", "fraction": 0.05, "output_dir": "artifacts/bench_smoke/llama31_8b/full_precision_qasper"}
-{"_label": "smoke_jointqk_qasper", "press_name": "jointqk", "press_kwargs": {"cca_stats_path": "artifacts/bases/cca_stats_${SMOKE_SUFFIX}.pt", "v_stats_path": "artifacts/v_bases/v_stats_${SMOKE_SUFFIX}.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "compress_decode": false, "layer0_full_precision": true, "quantize_k": true, "quantize_v": true}, "dataset": "longbench", "data_dir": "qasper", "fraction": 0.05, "output_dir": "artifacts/bench_smoke/llama31_8b/jointqk_k2_v3_qasper"}
+{"_label": "smoke_jointqk_qasper", "press_name": "jointqk", "press_kwargs": {"cca_stats_path": "artifacts/bases/jointqk_${SMOKE_SUFFIX}.pt", "v_stats_path": "artifacts/v_bases/v_stats_${SMOKE_SUFFIX}.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "compress_decode": false, "layer0_full_precision": true, "quantize_k": true, "quantize_v": true}, "dataset": "longbench", "data_dir": "qasper", "fraction": 0.05, "output_dir": "artifacts/bench_smoke/llama31_8b/jointqk_k2_v3_qasper"}
 EOF
 )
 
@@ -125,7 +125,7 @@ cat artifacts/bench_smoke/llama31_8b/jointqk_k2_v3_qasper/longbench__qasper*/met
 **What success looks like:**
 - Step 1: 16 capture entries (8 tasks × 2 prompts) finish in ~3 min on one GPU. Stats per shard written to `artifacts/calibration/<SMOKE_RUN_ID>/02_stats/`.
 - Step 2: `aggregate.pt` written, prints `total=16, train≈12, test≈4` (smoke uses smaller per-task counts; see `select_rows(split, smoke=True)`).
-- Step 3: `cca_stats_${SMOKE_SUFFIX}.pt` (~90 MB) + `v_stats_${SMOKE_SUFFIX}.pt` (~36 MB) written.
+- Step 3: `jointqk_${SMOKE_SUFFIX}.pt` (~90 MB) + `v_stats_${SMOKE_SUFFIX}.pt` (~36 MB) written.
 - Step 4: 2 cells run sequentially in ~10–15 min total (first cell pays the ~13 min compressor build; second hits the in-memory cache).
 - Step 5: both `metrics.json` files exist with a single float each (typical qasper F1 at fraction=0.05 is noisy — values 30–60 are normal at ~10 samples).
 
@@ -137,7 +137,7 @@ cat artifacts/bench_smoke/llama31_8b/jointqk_k2_v3_qasper/longbench__qasper*/met
 **Cleanup the smoke run** before launching real:
 ```bash
 rm -rf artifacts/calibration/longbench_compact8_qkv_llama31_8b_smoke \
-       artifacts/bases/cca_stats_llama31_8b_smoke.pt \
+       artifacts/bases/jointqk_llama31_8b_smoke.pt \
        artifacts/v_bases/v_stats_llama31_8b_smoke.pt \
        artifacts/bench_smoke \
        logs/phase7_v7_smoke
@@ -225,13 +225,13 @@ This pools the 400 train examples and emits the two artifact files the press wil
 ```
 
 Outputs:
-- `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt` (~90 MB)
+- `artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt` (~90 MB)
 - `artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt` (~36 MB)
 
 The script:
 - Sums per-example second moments across the 400 train indices.
 - Computes the joint-Q-K eigenbasis `R_sym = eigvec_descending((Σ_Q Σ_K + Σ_K Σ_Q)/2)` per (layer, kv_head).
-- Saves a `cca_stats.pt` payload with `sigma_q`, `sigma_k`, `R_sym`, plus identity / zero placeholders for CCA-only fields the press constructor reads but `r_sym_waterfill` doesn't actually use.
+- Saves a `jointqk.pt` payload with `sigma_q`, `sigma_k`, `R_sym`, plus identity / zero placeholders for CCA-only fields the press constructor reads but `r_sym_waterfill` doesn't actually use.
 - Saves a `v_stats.pt` with `cov_v`, `mu_v`, `sigma_v` (uncentered legacy field). **Note: `v_turboquant` does not read `v_stats.pt`** (it's calibration-free random Hadamard with a per-layer seed). The file is built for completeness in case you want to ablate `v_random` / `v_eigen_uniform` later.
 
 **Wall-time:** ~10 min CPU (mostly torch.load deserialization of 400 × 75 MB stats files).
@@ -364,7 +364,7 @@ Save the grid to `notes/bench_llama31_8b_results_report.md`. Compare to:
 | Per-example raw fp16 (test-split only) | `artifacts/calibration/longbench_compact8_qkv_llama31_8b/01_raw/shard_NNN/*.pt` |
 | Per-example stats | `artifacts/calibration/longbench_compact8_qkv_llama31_8b/02_stats/shard_NNN/*.pt` |
 | Aggregated stats | `artifacts/calibration/longbench_compact8_qkv_llama31_8b/02_stats/aggregate.pt` |
-| v7 K calibration artifact | `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt` |
+| v7 K calibration artifact | `artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt` |
 | v7 V calibration artifact | `artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt` |
 | `v_lock.txt` (V_METHOD=v_turboquant) | `artifacts/v_bases/v_lock.txt` |
 | v7 launcher | `pipelines/scripts/launch.sh` |

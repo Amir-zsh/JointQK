@@ -1,6 +1,6 @@
 #!/bin/bash
 # Phase 2c: per-task basis evaluation.
-# Each task uses its OWN cca_stats.pt + v_stats.pt fitted on its 50 train examples.
+# Each task uses its OWN jointqk.pt + v_stats.pt fitted on its 50 train examples.
 # Compare to pooled-400 (NEW) basis to test whether task-matched calibration helps.
 
 set -euo pipefail
@@ -51,7 +51,7 @@ emit() {
 }
 
 for task in "${TASKS[@]}"; do
-    cca_path="${PER_TASK_CCA_DIR}/cca_stats_${task}.pt"
+    cca_path="${PER_TASK_CCA_DIR}/jointqk_${task}.pt"
     vst_path="${PER_TASK_VST_DIR}/v_stats_${task}.pt"
     if [[ ! -f "$cca_path" ]]; then
         echo "ERROR: missing $cca_path" >&2

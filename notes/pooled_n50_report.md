@@ -1,8 +1,8 @@
 # Preview pooled-N=50 K-method comparison — results report
 
 **Date:** 2026-05-05
-**Run:** `artifacts/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/`
-**Source:** `pipelines/calibration/preview_pooled.py` (multi-GPU rewrite, 2026-05-05)
+**Run:** `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/pooled_n50/`
+**Source:** `pipelines/calibration/analyze_bases_pooled.py` (multi-GPU rewrite, 2026-05-05)
 
 ---
 
@@ -180,14 +180,14 @@ Per-layer slices and per-task slices can be mined from the existing per-shard JS
 
 ## Operational notes
 
-This preview triggered the OOM that crashed the server earlier. Root cause: the previous `analyze_bases.py` and `preview_pooled.py` held an unbounded `dict` of raw `.pt` payloads (≈ 5 GB each, 80 eval idx → ≈ 400 GB resident). Fixed before this re-run:
+This run triggered the OOM that crashed the server earlier. Root cause: the previous `analyze_bases.py` and `analyze_bases_pooled.py` held an unbounded `dict` of raw `.pt` payloads (≈ 5 GB each, 80 eval idx → ≈ 400 GB resident). Fixed before this re-run:
 
 - **`RawLRU`** (bounded LRU, default cap = 0 / bypass) replaces the unbounded dict.
 - **Inverted loop order** in all three empirical funcs (`for idx: for bits` instead of `for bits: for idx`) — each raw file is loaded at most once per method call.
 - **`_release_idx`** (`del raw + gc.collect() + empty_cache`) at the end of every idx iteration.
 - **`StatsCache` default cap** raised from unbounded → 128 entries (≈ 10 GB).
 - **Atomic per-trial JSON write + working `--resume`** in `analyze_bases.py` (it accepted the flag previously but didn't act on it). Each trial now persists to `04_analysis/shard_NNN/trials/trial_<idx>.json` immediately on completion; resume skips trials with existing JSON.
-- **Multi-GPU shard launcher** in `preview_pooled.py` — round-robin slice of eval idx, one subprocess per visible GPU, per-shard accumulator JSON, CPU merge.
+- **Multi-GPU shard launcher** in `analyze_bases_pooled.py` — round-robin slice of eval idx, one subprocess per visible GPU, per-shard accumulator JSON, CPU merge.
 
 This run: 6 shards on GPUs 0–5, ~38 min wall time. Peak resident RAM ≈ 120 GB across all shards (≈ 20 GB per shard: ≈ 5 GB raw + ≈ 10 GB stats cache + ≈ 5 GB bases/compressors). Wall time was bottlenecked by shard 4 — round-robin slicing didn't balance prompt length, so shards with longer-prompt eval idx took longer (ratio 285 s : 829 s for the V3 method, fastest vs slowest shard).
 

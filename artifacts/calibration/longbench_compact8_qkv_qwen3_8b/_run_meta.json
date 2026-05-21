@@ -1,5 +1,5 @@
 {
   "model": "Qwen/Qwen3-8B",
-  "run_id": "longbench_compact8_qkv",
+  "run_id": "longbench_compact8_qkv_qwen3_8b",
   "created_by": "capture_raw.py (retroactive 2026-05-06)"
 }

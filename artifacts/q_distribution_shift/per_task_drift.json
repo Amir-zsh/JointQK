@@ -13014,7 +13014,7 @@
       ]
     }
   },
-  "reference_cca": "/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/cca_stats_llama31_8b_longbench_compact8_n400.pt",
+  "reference_cca": "/vault/amir/efficient-llm/teamily-project/artifacts/stage1/cca_vs_waterfill_study/jointqk_llama31_8b_longbench_compact8_n400.pt",
   "top_k": 16,
   "window_size": 200,
   "decode_bins": [

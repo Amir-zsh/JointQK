@@ -3,7 +3,7 @@
 # investigation applied to maximize JointQK performance:
 #
 #   1. Calibration corpus: pooled-400 LongBench-compact8 (4.5M tokens) instead of
-#      the deployed cca_stats.pt (24 examples, 81k tokens). 50× more tokens.
+#      the deployed jointqk.pt (24 examples, 81k tokens). 50× more tokens.
 #   2. V method: v_turboquant (uncentered random Hadamard + uniform Lloyd-Max),
 #      replacing the v_eigen_uniform that was selected on a wrong tuning decision.
 #      v_lock.txt has been updated to reflect this change.
@@ -62,7 +62,7 @@ case "$MODEL_TAG" in
 esac
 
 # v7 calibration: pooled-N=400 LongBench-compact8 train prompts.
-CCA="${REPO_ROOT}/artifacts/bases/cca_stats_${CCA_SUFFIX}.pt"
+CCA="${REPO_ROOT}/artifacts/bases/jointqk_${CCA_SUFFIX}.pt"
 VST="${REPO_ROOT}/artifacts/v_bases/v_stats_${CCA_SUFFIX}.pt"
 if [[ ! -f "$CCA" ]]; then
     echo "ERROR: missing calibration $CCA" >&2

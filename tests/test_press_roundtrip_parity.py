@@ -38,7 +38,7 @@ def main():
     k = b["k_post"][LAYER, HEAD].float()  # (S, D)
     v = b["v"][LAYER, HEAD].float()
 
-    cca_path = "artifacts/bases/cca_stats.pt"
+    cca_path = "artifacts/bases/jointqk.pt"
     cca = torch.load(cca_path, map_location="cpu", weights_only=False)
     v_path = "artifacts/v_bases/v_stats.pt"
     v_stats = torch.load(v_path, map_location="cpu", weights_only=False)

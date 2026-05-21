@@ -2,8 +2,8 @@
 
 **Date:** 2026-05-05
 **Phase 7 v6 baseline:** `notes/phase7_v6_results_report.md`
-**Calibration preview baseline:** `notes/preview_pooled_n50_report.md`
-**Artifacts:** `artifacts/downstream_basis_compare/`, `artifacts/calibration/longbench_compact8_qkv/05_reports/{perlayer_top1.json,decode_q_top1.json,softmax_kl.json}`
+**Pooled K-basis baseline:** `notes/pooled_n50_report.md`
+**Artifacts:** `artifacts/downstream_basis_compare/`, `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/{perlayer_top1.json,decode_q_top1.json,softmax_kl.json}`
 
 ---
 
@@ -36,7 +36,7 @@ Tests hypothesis **A3**: JointQK's top-1 lead concentrated in F1-irrelevant laye
 
 **Partial confirmation.** JointQK's lead halves from early to late. Late-layer top-1 is still +9 pp ahead of v3, so this can't be the *whole* story behind a ~4 pp F1 loss — but it explains some of the gap.
 
-Output: `artifacts/calibration/longbench_compact8_qkv/05_reports/perlayer_top1.json`
+Output: `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/perlayer_top1.json`
 
 ### Phase 1b — V-method ablation (the dominant cause)
 
@@ -85,7 +85,7 @@ Tests hypothesis **A2**: calibration measures top-1 on prefill q's; real attenti
 
 **Surprising secondary finding:** decode-q top-1 is *higher* than prefill-q top-1 for both methods (e.g., qmsum v3: 0.755 → 0.871, +12 pp). Decode-time q's distill toward the answer-relevant principal directions where compression error is small. Both methods benefit, but JointQK benefits less because it was already aligned, leaving a smaller relative gap.
 
-Output: `artifacts/calibration/longbench_compact8_qkv/05_reports/decode_q_top1.json`
+Output: `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/decode_q_top1.json`
 
 ### Phase 2b — softmax KL divergence (disconfirms A1)
 
@@ -104,7 +104,7 @@ Tests hypothesis **A1**: JointQK's water-fill puts up to 8 bits on principal coo
 
 **A1 disconfirmed.** JointQK has **4× lower softmax-KL** than v3, AND higher top-1. The principal-direction concentration does not distort the distribution tail — JointQK is better at preserving the full attention distribution, both at the argmax and across all positions.
 
-Output: `artifacts/calibration/longbench_compact8_qkv/05_reports/softmax_kl.json`
+Output: `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/softmax_kl.json`
 
 ### Phase 2c — per-task basis vs pooled-400 basis
 
@@ -209,13 +209,13 @@ These numbers compress layer 0 for all methods. TurboQuant's random-Hadamard suf
 
 | artifact | path |
 |---|---|
-| Pooled-400 K-basis | `artifacts/bases/cca_stats_longbench_compact8_n400.pt` |
-| Per-task K-bases | `artifacts/bases/per_task/cca_stats_*.pt` |
+| Pooled-400 K-basis | `artifacts/bases/jointqk_longbench_compact8_n400.pt` |
+| Per-task K-bases | `artifacts/bases/per_task/jointqk_*.pt` |
 | Pooled-400 V-stats | `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` |
 | Per-task V-stats | `artifacts/v_bases/per_task/v_stats_*.pt` |
 | Downstream F1 outputs (28 + 8 + 8 + 8 = 52 cells) | `artifacts/downstream_basis_compare/` |
-| Per-layer top-1 mining | `artifacts/calibration/longbench_compact8_qkv/05_reports/perlayer_top1.json` |
-| Decode-q top-1 | `artifacts/calibration/longbench_compact8_qkv/05_reports/decode_q_top1.json` |
-| Softmax-KL | `artifacts/calibration/longbench_compact8_qkv/05_reports/softmax_kl.json` |
+| Per-layer top-1 mining | `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/perlayer_top1.json` |
+| Decode-q top-1 | `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/decode_q_top1.json` |
+| Softmax-KL | `artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/softmax_kl.json` |
 | Build / launcher / measurement scripts | `pipelines/scripts/{build_calibration_artifacts_from_pool,build_per_task_basis,launch_phase7_basis_compare,launch_phase7_v_ablation,launch_phase7_per_task_basis,launch_phase7_v_turboquant,analyze_perlayer_top1,measure_decode_q_top1,measure_softmax_kl}.{py,sh}` |
 | Per-cell run logs | `logs/phase7_{v_ablation,per_task_basis,v_turboquant}/`, `logs/{softmax_kl,softmax_kl_v2,decode_q_top1}.log` |

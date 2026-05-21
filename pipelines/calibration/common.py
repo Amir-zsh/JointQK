@@ -23,7 +23,7 @@ import torch
 
 DEFAULT_SPLIT = Path("artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/manifest.json")
 DEFAULT_ARTIFACT_ROOT = Path("artifacts/calibration")
-DEFAULT_RUN_ID = "longbench_compact8_qkv"
+DEFAULT_RUN_ID = "longbench_compact8_qkv_qwen3_8b"
 DEFAULT_K_BITS = (2, 3, 4)
 DEFAULT_V_BITS = (2, 3, 4)
 DEFAULT_SAMPLE_SIZES = (1, 2, 4, 8, 16, 32, 50)

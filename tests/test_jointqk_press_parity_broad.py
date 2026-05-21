@@ -81,7 +81,7 @@ def main():
     b = torch.load(bundle_path, map_location="cpu", weights_only=False)
     print(f"k_post shape: {b['k_post'].shape}", flush=True)
 
-    cca_full_path = REPO / "artifacts/bases/cca_stats.pt"
+    cca_full_path = REPO / "artifacts/bases/jointqk.pt"
     v_full_path = REPO / "artifacts/v_bases/v_stats.pt"
     cca = torch.load(cca_full_path, map_location="cpu", weights_only=False)
     v_stats = torch.load(v_full_path, map_location="cpu", weights_only=False)

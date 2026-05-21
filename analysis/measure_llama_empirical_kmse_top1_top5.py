@@ -94,7 +94,7 @@ def topk_pair(q_h, k_full, k_recon, device, k_top=5):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cca-path", default="artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt")
+    parser.add_argument("--cca-path", default="artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt")
     parser.add_argument("--raw-dir", default="artifacts/calibration/longbench_compact8_qkv_llama31_8b/01_raw")
     parser.add_argument("--bits", type=int, default=2)
     parser.add_argument("--out", default="artifacts/calibration/longbench_compact8_qkv_llama31_8b/05_reports/llama_empirical_kmse_top1_top5.json")

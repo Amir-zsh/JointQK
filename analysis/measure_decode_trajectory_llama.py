@@ -121,7 +121,7 @@ def kl_div(log_p: torch.Tensor, log_q: torch.Tensor) -> float:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="meta-llama/Llama-3.1-8B-Instruct")
-    parser.add_argument("--cca", default=str(REPO / "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt"))
+    parser.add_argument("--cca", default=str(REPO / "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"))
     parser.add_argument("--vst", default=str(REPO / "artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"))
     parser.add_argument("--exclude", default=str(REPO / "artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json"))
     parser.add_argument("--k-bits", type=int, default=2)

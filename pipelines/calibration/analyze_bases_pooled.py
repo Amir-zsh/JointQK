@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Multi-GPU preview of the pooled-N=50 trial.
+"""Multi-GPU K-basis sweep — pooled regime, parallelized fast path to analyze_bases.py.
 
 Two modes:
 
@@ -8,7 +8,7 @@ Two modes:
      and prints the final V3-vs-basis comparison.
 
          CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 \
-         ./.venv/bin/python pipelines/calibration/preview_pooled.py
+         ./.venv/bin/python pipelines/calibration/analyze_bases_pooled.py
 
   2. Shard mode (`--shard-id N --num-shards K`): single-process. Loads its slice of the
      eval set, computes per-bits per-layer accumulators for v3 / q_only / k_only / jointqk,
@@ -64,9 +64,9 @@ def ts() -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Multi-GPU preview pooled N=50 K-method comparison.")
+    parser = argparse.ArgumentParser(description="Multi-GPU pooled-regime K-basis sweep (v3 / q_only / k_only / jointqk).")
     parser.add_argument("--artifact-root", type=Path, default=Path("artifacts/calibration"))
-    parser.add_argument("--run-id", default="longbench_compact8_qkv")
+    parser.add_argument("--run-id", default="longbench_compact8_qkv_qwen3_8b")
     parser.add_argument("--k-bits", default="2,3,4")
     parser.add_argument("--methods", default="v3,q_only,k_only,jointqk")
     parser.add_argument("--gpus", default=None,
@@ -75,7 +75,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-eval-examples", type=int, default=0,
                         help="Cap eval examples (0 = all 80). Smaller is faster but noisier.")
     parser.add_argument("--out-dir", type=Path,
-                        default=Path("artifacts/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50"))
+                        default=Path("artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/pooled_n50"))
     parser.add_argument("--num-shards", type=int, default=0, help="Internal: shard mode if >0.")
     parser.add_argument("--shard-id", type=int, default=-1, help="Internal: 0-based shard index.")
     parser.add_argument("--seed", type=int, default=20260505)

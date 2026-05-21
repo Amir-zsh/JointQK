@@ -27,7 +27,7 @@ def b64_image(path: Path) -> str:
 def main():
     # ---- Load data ----
     llama_kmse = json.loads((REPO / "artifacts/calibration/longbench_compact8_qkv_llama31_8b/05_reports/llama_empirical_kmse_top1_top5.json").read_text())
-    qwen3_kmse = json.loads((REPO / "artifacts/calibration/longbench_compact8_qkv/05_reports/qwen3_empirical_kmse_top1_top5_b2.json").read_text())
+    qwen3_kmse = json.loads((REPO / "artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/qwen3_empirical_kmse_top1_top5_b2.json").read_text())
     mech = json.loads((REPO / "artifacts/calibration/mechanism_analysis_bias_attn_kl.json").read_text())
     logit_kl = json.loads((REPO / "artifacts/calibration/logit_kl_llama_k2.json").read_text())
     traj = json.loads((REPO / "artifacts/calibration/decode_trajectory_llama_k2.json").read_text())
@@ -167,7 +167,7 @@ random-Hadamard scheme on both methods (V=3). Layer 0 is always full-precision
 <li><strong>compact8</strong>: 400 train prompts pooled across 8 LongBench tasks
 (qasper, hotpotqa, musique, qmsum, multi_news, triviaqa, passage_retrieval_en,
 repobench-p). Used to fit R_sym on Llama → produces
-<span class="code">cca_stats_llama31_8b_longbench_compact8_n400.pt</span>. This is the
+<span class="code">jointqk_llama31_8b_longbench_compact8_n400.pt</span>. This is the
 "production" basis.</li>
 <li><strong>compact9</strong>: 450 prompts = compact8 + 50 lcc (new in this
 investigation, built to test whether lcc being OOD explains the F1 inversion).</li>

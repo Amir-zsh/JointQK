@@ -22,7 +22,7 @@ Scope:
 - Methods: v3, jointqk (NEW basis)
 
 Output:
-  artifacts/calibration/longbench_compact8_qkv/05_reports/decode_q_top1.json
+  artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/decode_q_top1.json
 """
 from __future__ import annotations
 
@@ -267,7 +267,7 @@ def reconstruct_v3(k_full: torch.Tensor, bits: int, seed: int, device: torch.dev
 
 def main() -> None:
     artifact_root = REPO / "artifacts/calibration"
-    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv")
+    paths = RunPaths.from_args(artifact_root, "longbench_compact8_qkv_qwen3_8b")
     agg = torch.load(paths.stats_dir / "aggregate.pt", map_location="cpu", weights_only=False)
     per_example = agg["per_example"]
     test_examples = [p for p in per_example if p["split"] == "test"]
@@ -370,7 +370,7 @@ def main() -> None:
         print(f"  jointqk-v3 prefill_top1: {task_result['jointqk']['prefill_top1']-task_result['v3']['prefill_top1']:+.4f}", flush=True)
         print(f"  jointqk-v3 decode_top1:  {task_result['jointqk']['decode_top1']-task_result['v3']['decode_top1']:+.4f}", flush=True)
 
-    out = REPO / "artifacts/calibration/longbench_compact8_qkv/05_reports/decode_q_top1.json"
+    out = REPO / "artifacts/calibration/longbench_compact8_qkv_qwen3_8b/05_reports/decode_q_top1.json"
     out.write_text(json.dumps(results, indent=2, default=str) + "\n")
     print(f"\n[{ts()}] wrote {out}", flush=True)
 

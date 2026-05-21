@@ -34,12 +34,12 @@ fi
 case "$MODEL_TAG" in
     qwen3_8b)
         MODEL="Qwen/Qwen3-8B"
-        CCA="${REPO_ROOT}/artifacts/bases/cca_stats.pt"
+        CCA="${REPO_ROOT}/artifacts/bases/jointqk.pt"
         VST="${REPO_ROOT}/artifacts/v_bases/v_stats.pt"
         ;;
     llama31_8b)
         MODEL="meta-llama/Llama-3.1-8B-Instruct"
-        CCA="${REPO_ROOT}/artifacts/bases/llama31_8b/cca_stats.pt"
+        CCA="${REPO_ROOT}/artifacts/bases/llama31_8b/jointqk.pt"
         VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b.pt"
         ;;
     *) echo "Unknown model tag: $MODEL_TAG"; exit 1 ;;

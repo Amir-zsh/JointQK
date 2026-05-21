@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-CCA="${REPO_ROOT}/artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt"
+CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
 VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
 [[ ! -f "$CCA" ]] && { echo "ERROR: missing $CCA" >&2; exit 1; }
 [[ ! -f "$VST" ]] && { echo "ERROR: missing $VST" >&2; exit 1; }

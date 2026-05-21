@@ -6,7 +6,7 @@ End-to-end run executed 2026-05-06 on 4× A100-40GB (GPUs 0,1,2,3).
 
 - **§1 Capture:** 480 LongBench prompts (8 tasks × 60, 50 train / 10 test, 2k–32k tokens) on 4 GPUs. Wall: ~23 min/shard. Cross-model split manifest reused via `messages_sha256` (tokenizer-independent).
 - **§2 Stats:** aggregated to `02_stats/aggregate.pt` (2.1 GB), 480 files validated.
-- **§3 Build:** pooled 400 train examples, computed `R_sym = eigvec((Σ_QΣ_K + Σ_KΣ_Q)/2)` per (layer, kv_head). Wrote `cca_stats_llama31_8b_longbench_compact8_n400.pt` (80 MB) and `v_stats_llama31_8b_longbench_compact8_n400.pt` (32 MB). Wall: 1.5 min.
+- **§3 Build:** pooled 400 train examples, computed `R_sym = eigvec((Σ_QΣ_K + Σ_KΣ_Q)/2)` per (layer, kv_head). Wrote `jointqk_llama31_8b_longbench_compact8_n400.pt` (80 MB) and `v_stats_llama31_8b_longbench_compact8_n400.pt` (32 MB). Wall: 1.5 min.
 - **§4 Sweep:** 192 cells (12 tasks × 16 configs). Two runs:
   - run1 (2 jobs/GPU) hit cascading multi_news OOMs; salvaged 23 cells.
   - run2 (1 job/GPU, idempotent skip) completed the remaining 169 cells with 0 hard failures and 3 OOM auto-retries. Wall: ~7 h.

@@ -16,8 +16,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$REPO_ROOT"
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
-CCA_COMPACT9="${REPO_ROOT}/artifacts/bases/cca_stats_llama31_8b_compact9_n450.pt"
-CCA_LCCONLY="${REPO_ROOT}/artifacts/bases/cca_stats_llama31_8b_lcc_only_n50.pt"
+CCA_COMPACT9="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_compact9_n450.pt"
+CCA_LCCONLY="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_lcc_only_n50.pt"
 VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
 
 V_LOCK_FILE="${REPO_ROOT}/artifacts/v_bases/v_lock.txt"
