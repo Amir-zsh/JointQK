@@ -1,23 +1,24 @@
 # SPDX-FileCopyrightText: Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Modified from vendor/kvpress/evaluation/evaluate_registry.py (Apache-2.0). Changes:
-#   - PRESS_REGISTRY and `from kvpress import ...` block removed.
-#   - Scorer imports rewritten from `benchmarks.<name>...` (flat sys.path) to
-#     `kvq.benchmarks.<name>...` (absolute package imports).
-#   - DATASET_REGISTRY and SCORER_REGISTRY contents are unchanged.
-# See src/kvq/benchmarks/VENDORED.md for full vendor notes.
+# Trimmed shim over vendor/kvpress/evaluation/evaluate_registry.py.
+# - Scorers are imported directly from the vendored kvpress copy (no second-source
+#   duplication of calculate_metrics.py files).
+# - PRESS_REGISTRY and `from kvpress import ...` block are intentionally omitted —
+#   press wiring lives in kvq.toolkit, not here.
 
-from kvq.benchmarks.aime25.calculate_metrics import calculate_metrics as aime25_scorer
-from kvq.benchmarks.infinite_bench.calculate_metrics import calculate_metrics as infinite_bench_scorer
-from kvq.benchmarks.longbench.calculate_metrics import calculate_metrics as longbench_scorer
-from kvq.benchmarks.longbench.calculate_metrics import calculate_metrics_e as longbench_scorer_e
-from kvq.benchmarks.longbenchv2.calculate_metrics import calculate_metrics as longbenchv2_scorer
-from kvq.benchmarks.loogle.calculate_metrics import calculate_metrics as loogle_scorer
-from kvq.benchmarks.math500.calculate_metrics import calculate_metrics as math500_scorer
-from kvq.benchmarks.needle_in_haystack.calculate_metrics import calculate_metrics as needle_in_haystack_scorer
-from kvq.benchmarks.ruler.calculate_metrics import calculate_metrics as ruler_scorer
-from kvq.benchmarks.zero_scrolls.calculate_metrics import calculate_metrics as zero_scrolls_scorer
+import kvq.benchmarks  # noqa: F401  — side-effect: adds vendor/kvpress/evaluation/ to sys.path
+
+from benchmarks.aime25.calculate_metrics import calculate_metrics as aime25_scorer  # noqa: E402
+from benchmarks.infinite_bench.calculate_metrics import calculate_metrics as infinite_bench_scorer  # noqa: E402
+from benchmarks.longbench.calculate_metrics import calculate_metrics as longbench_scorer  # noqa: E402
+from benchmarks.longbench.calculate_metrics import calculate_metrics_e as longbench_scorer_e  # noqa: E402
+from benchmarks.longbenchv2.calculate_metrics import calculate_metrics as longbenchv2_scorer  # noqa: E402
+from benchmarks.loogle.calculate_metrics import calculate_metrics as loogle_scorer  # noqa: E402
+from benchmarks.math500.calculate_metrics import calculate_metrics as math500_scorer  # noqa: E402
+from benchmarks.needle_in_haystack.calculate_metrics import calculate_metrics as needle_in_haystack_scorer  # noqa: E402
+from benchmarks.ruler.calculate_metrics import calculate_metrics as ruler_scorer  # noqa: E402
+from benchmarks.zero_scrolls.calculate_metrics import calculate_metrics as zero_scrolls_scorer  # noqa: E402
 
 
 DATASET_REGISTRY = {

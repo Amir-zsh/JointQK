@@ -1,51 +1,57 @@
-# Vendored from kvpress
+# `kvq.benchmarks` — thin shim over kvpress evaluation/benchmarks
 
-This tree is a vendored copy of [`kvpress/evaluation/benchmarks/`](https://github.com/NVIDIA/kvpress) — scorers and dataset-prep scripts for 9 long-context benchmarks (LongBench, LongBench-v2, RULER, Loogle, InfiniteBench, NIAH, AIME25, Math500, ZeroScrolls).
+This package no longer ships its own copy of the per-benchmark scorers.
+The actual scorer code lives in
+[`vendor/kvpress/evaluation/benchmarks/`](../../../vendor/kvpress/evaluation/benchmarks/)
+(Apache-2.0, NVIDIA).
 
-- **Source**: <https://github.com/NVIDIA/kvpress>
-- **Upstream path**: `kvpress/evaluation/benchmarks/`
-- **Snapshot**: local checkout at commit `d8349a952e31b16642eaa962c56eecb10c3873ca` (2026-04-13)
-- **License**: Apache-2.0 — see `LICENSE` and `NOTICE`. Per-file SPDX headers preserved verbatim.
+## What this directory contains
 
-## Modifications
+- **`__init__.py`** — at import time, inserts
+  `vendor/kvpress/evaluation/` into `sys.path` so the flat
+  `from benchmarks.<name>.calculate_metrics import ...` form (which
+  upstream's own `evaluate.py` uses) resolves to the vendored copy.
 
-Everything under the per-benchmark subdirectories (`aime25/`, `infinite_bench/`, `longbench/`, `longbenchv2/`, `loogle/`, `math500/`, `needle_in_haystack/`, `ruler/`, `zero_scrolls/`) is byte-identical to upstream — `calculate_metrics.py`, `create_huggingface_dataset.py`, `utils.py`, READMEs, and `__init__.py` files are all unchanged.
+- **`evaluate_registry.py`** — trimmed copy of
+  `vendor/kvpress/evaluation/evaluate_registry.py` with the
+  press-registry block removed (press wiring lives in `kvq.toolkit`,
+  not here). Re-exports `DATASET_REGISTRY` and `SCORER_REGISTRY` for
+  in-project callers (`pipelines/analysis/*`, `kvq.data.kvpress_adapter`,
+  `tests/test_evaluation.py`).
 
-Two files are new or modified at this tree's root:
+- **`LICENSE`, `NOTICE`** — kept for attribution; the SPDX headers in
+  the upstream scorers under `vendor/kvpress/` already carry the same
+  licence text.
 
-- **`evaluate_registry.py`** — trimmed copy of `kvpress/evaluation/evaluate_registry.py`. Changes:
-  - `PRESS_REGISTRY` and the `from kvpress import ...` block were removed (press-side compression is orthogonal to our pipeline).
-  - Scorer import paths rewritten from `benchmarks.<name>.calculate_metrics` (flat `sys.path`-based imports used by upstream's `evaluate.py`) to `kvq.benchmarks.<name>.calculate_metrics` (absolute imports now that this tree is a Python package).
-  - `DATASET_REGISTRY` and `SCORER_REGISTRY` contents are unchanged.
+## Why a shim and not the upstream registry directly?
 
-- **`__init__.py`** (top-level) — new file; upstream ships only per-subdirectory `__init__.py`s.
+Two reasons:
+1. The upstream registry imports `PRESS_REGISTRY` from `kvpress`, which
+   pulls in the entire press hierarchy and KVzipPress's stdout banner.
+   Our pipelines only want scorers, not presses.
+2. The upstream registry expects `benchmarks/` to be on `sys.path`
+   (`evaluate.py` does this implicitly via cwd). The shim normalises
+   that into a clean `from kvq.benchmarks.evaluate_registry import ...`
+   for in-project consumers.
 
 ## Usage
 
-Scorers are looked up by dataset name:
-
 ```python
-from kvq.benchmarks.evaluate_registry import SCORER_REGISTRY
+from kvq.benchmarks.evaluate_registry import SCORER_REGISTRY, DATASET_REGISTRY
+
 scorer = SCORER_REGISTRY["longbench-e"]
-scores = scorer(df)  # df has per-benchmark expected columns; see kvpress/evaluation/evaluate.py for the shape
+scores = scorer(df)  # df has per-benchmark expected columns
 ```
 
-`pipelines/evaluate_generations.py` uses this registry directly.
+## Updating the upstream snapshot
 
-A byte-equal-to-upstream regression test (`tests/test_evaluation.py::test_vendored_longbench_matches_upstream_kvpress`) guards against silent drift if this directory is re-vendored.
-
-## Re-vendoring from upstream
+There is nothing local to update — the scorers ARE the vendored copy.
+To take a newer upstream commit, just bump `vendor/kvpress/`:
 
 ```bash
-# From the repo root, assuming ../kvpress is the upstream checkout.
-rm -rf src/kvq/benchmarks/{aime25,infinite_bench,longbench,longbenchv2,loogle,math500,needle_in_haystack,ruler,zero_scrolls}
-cp -r kvpress/evaluation/benchmarks/* src/kvq/benchmarks/
-# Then manually re-apply the evaluate_registry.py modifications above
-# and update the commit SHA in NOTICE + this file.
+git -C vendor/kvpress fetch origin
+git -C vendor/kvpress checkout <commit-or-tag>
 ```
 
-## Citation
-
-From `kvpress/CITATION.cff`:
-
-> Simon Jegou, Maximilian Jeblick, Alessio Devoto. *Expected Attention: KV Cache Compression by Estimating Attention from Future Queries Distribution*. 2025. arXiv:[2510.00636](https://arxiv.org/abs/2510.00636). <https://github.com/NVIDIA/kvpress>
+Re-run `tests/test_evaluation.py::test_longbench_e_scorer_returns_bucketed_scores`
+and the bench smoke to confirm no behavioural regressions.

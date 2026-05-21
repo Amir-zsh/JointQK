@@ -10,7 +10,8 @@ import pandas as pd
 import pytest
 
 from kvq.benchmarks.evaluate_registry import DATASET_REGISTRY, SCORER_REGISTRY
-from kvq.benchmarks.longbench.calculate_metrics import calculate_metrics_e
+import kvq.benchmarks  # noqa: F401 — side-effect: vendored kvpress on sys.path
+from benchmarks.longbench.calculate_metrics import calculate_metrics_e  # noqa: E402
 from kvq.data import build_kvpress_dataset_spec, get_dataset_spec
 
 
@@ -99,23 +100,6 @@ def test_longbench_e_scorer_returns_bucketed_scores():
     for value in result.values():
         assert isinstance(value, float)
         assert 0.0 <= value <= 100.0
-
-
-def test_vendored_longbench_matches_upstream_kvpress():
-    """Lock the vendored copy against kvpress to catch silent drift if we re-vendor."""
-    upstream_path = Path("/vault/amir/efficient-llm/teamily-project/vendor/kvpress/evaluation")
-    sys.path.insert(0, str(upstream_path))
-    try:
-        from benchmarks.longbench.calculate_metrics import (
-            calculate_metrics_e as upstream_calculate_metrics_e,
-        )
-    finally:
-        sys.path.remove(str(upstream_path))
-
-    df = _tiny_longbench_e_df()
-    ours = calculate_metrics_e(df.copy())
-    upstream = upstream_calculate_metrics_e(df.copy())
-    assert ours == upstream
 
 
 def test_evaluator_end_to_end_smoke(tmp_path: Path):
