@@ -12,6 +12,6 @@ See VENDORED.md for provenance and the trimmed-vs-upstream diff.
 import sys
 from pathlib import Path
 
-_KVPRESS_EVALUATION = Path(__file__).resolve().parents[3] / "vendor" / "kvpress" / "evaluation"
+_KVPRESS_EVALUATION = Path(__file__).resolve().parents[2] / "vendor" / "kvpress" / "evaluation"
 if _KVPRESS_EVALUATION.is_dir() and str(_KVPRESS_EVALUATION) not in sys.path:
     sys.path.insert(0, str(_KVPRESS_EVALUATION))

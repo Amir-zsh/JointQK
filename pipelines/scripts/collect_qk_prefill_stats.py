@@ -9,6 +9,11 @@ It intentionally does not run decode generation and does not store q_pre or V.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import _bootstrap  # noqa: E402, F401
+
 import argparse
 import gc
 import json

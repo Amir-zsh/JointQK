@@ -36,7 +36,7 @@ from kvq.toolkit.per_coord_quantization import (
     round_bits_to_integer,
 )
 
-_TQ_DIR = Path(__file__).resolve().parents[3] / "vendor" / "turboquant-pytorch"
+_TQ_DIR = Path(__file__).resolve().parents[2] / "vendor" / "turboquant-pytorch"
 if str(_TQ_DIR.parent) not in sys.path:
     sys.path.insert(0, str(_TQ_DIR.parent))
 

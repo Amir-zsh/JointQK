@@ -8,10 +8,10 @@ See `README.md` for the public-facing high-level project description and `notes/
 
 ## Repo layout (essentials)
 
-- `src/kvq/` — importable library (`pip install -e .` exposes it as `kvq.*`).
+- `kvq/` — importable library.
   - `toolkit/` — reusable building blocks (`jointqk_press`, `turboquant_press`, `kivi_press`, `per_coord_quantization`, `capture`, `metric_transform`, ...).
   - `benchmarks/`, `data/` — vendored kvpress data adapters + scorers.
-- `pipelines/` — entry-point scripts and shell launchers (importable as `pipelines.*` via `pip install -e .`).
+- `pipelines/` — entry-point scripts and shell launchers.
   - `calibration/` — capture K/V from a prompt corpus, compute pooled second moments (`Σ_Q`, `Σ_K`, `C_QK`), build joint Q-K bases.
   - `bench/` — downstream LongBench/RULER F1 sweep. `worker.py` is the per-cell driver; `launch_*.sh` are the parallel launchers; `parallel_launcher.py` is the GPU pool scheduler; `_chain.py` is the multi-stage orchestrator.
   - `analysis/` — the Llama JointQK F1-inversion probes: K-fidelity measurement, attention-KL, logit-KL, decode-Q trajectory, Σ_Q drift, HTML report builder.
@@ -42,7 +42,7 @@ Per-study directories under `artifacts/` follow a consistent pattern: `metrics.j
 - **Long studies run autonomously.** When the user asks for a multi-step study, treat it as one logical task: run end-to-end, stream progress to `logs/<run_name>.log` with a `<run_name>.heartbeat` touched periodically. Validate each step before proceeding to the next; never stack experiments on unvalidated upstream output. Use `python -u` (unbuffered) for any script that emits progress.
 - **Bug tracking.** `notes/<study>/fixes_to_apply.md` is for **bugs only** — root cause, fix description, verification result. Do not append "ran cleanly" / activity-log entries; that file is a tracker, not a journal.
 - **Regression baselines.** `tests/baselines/fingerprint_pre.json` pins F1 + Σ_Q drift numbers from the canonical artifacts. Use `python -m tests.regression_fingerprint check --baseline <path>` to detect drift before a commit lands.
-- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `src/kvq/toolkit/per_coord_quantization.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
+- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `kvq/toolkit/per_coord_quantization.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
 
 ## Common commands
 

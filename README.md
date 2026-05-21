@@ -86,19 +86,28 @@ transformers + the bench dependencies). Conda is **not** used — the legacy
 ```bash
 source .venv/bin/activate
 # Or for one-shot invocations:
-./.venv/bin/python -m kvq.<module>
-./.venv/bin/python -m pipelines.<module>
+./.venv/bin/python pipelines/bench/worker.py --help
+./.venv/bin/python -m tests.regression_fingerprint --help
 ```
 
 A lockfile is shipped at `requirements.lock.txt`. If `.venv/` is missing,
 recreate it via `uv pip install -r requirements.lock.txt`.
 
-Finally, install the project itself in editable mode so `kvq.*` and
-`pipelines.*` are importable from anywhere:
+**No editable install is required.** Every entry-point script under
+`pipelines/` and `tests/` starts with a four-line `sys.path` bootstrap:
 
-```bash
-uv pip install -e . --python .venv/bin/python
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[N]))  # N: depth to repo root
+import _bootstrap  # noqa: F401  (adds vendor/kvpress to sys.path)
 ```
+
+That puts the repo root on `sys.path` (so `import kvq.*` and
+`import pipelines.*` work), and `_bootstrap.py` at the repo root appends
+`vendor/kvpress/` so `import kvpress` resolves through the upstream
+vendored copy. No `pip install -e`, no `PYTHONPATH`, no `.pth` magic — just
+two `sys.path` entries each script declares for itself.
 
 ### GPU allocation
 
@@ -112,11 +121,11 @@ within the project's pool.
 
 ```
 .
-├── src/
-│   └── kvq/                      # Importable library (`pip install -e .` → `import kvq.*`)
-│       ├── toolkit/              #  Reusable building blocks: presses, Lloyd-Max, water-fill, capture hooks
-│       ├── benchmarks/, data/    #  Vendored kvpress data adapters + scorers
-│       └── __init__.py
+├── _bootstrap.py                 # sys.path setup helper (imported by every entry-point script)
+├── kvq/                          # Importable library (`from kvq.X import Y`)
+│   ├── toolkit/                  #  Reusable building blocks: presses, Lloyd-Max, water-fill, capture hooks
+│   ├── benchmarks/, data/        #  Vendored kvpress data adapters + scorers
+│   └── __init__.py
 │
 ├── pipelines/                    # Entry-point scripts and shell launchers (importable as `pipelines.*`)
 │   ├── calibration/              #  Capture K/V + compute pooled second moments

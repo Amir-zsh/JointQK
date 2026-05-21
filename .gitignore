@@ -38,6 +38,3 @@ artifacts/calibration/*/logs/
 # Per-shard preview accumulator logs (the merged.json + launcher.log are kept)
 artifacts/calibration/*/05_reports/preview_pooled_n50/shard_*.log
 
-# Editable-install metadata
-*.egg-info/
-build/

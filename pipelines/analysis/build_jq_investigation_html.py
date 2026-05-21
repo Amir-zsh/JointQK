@@ -7,6 +7,11 @@ to notes/jointqk_investigation_report.html.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import _bootstrap  # noqa: E402, F401
+
 import base64
 import html
 import json
@@ -98,7 +103,7 @@ details[open] summary { margin-bottom: 8px; }
 
 <h1>Llama-3.1-8B JointQK F1-inversion: investigation report</h1>
 <p class="muted">Generated 2026-05-14. Investigation logs and source code under
-<span class="code">notes/</span> and <span class="code">experiments/</span>.</p>
+<span class="code">notes/</span> and <span class="code">pipelines/</span>.</p>
 
 <div class="tldr">
 <strong>TL;DR.</strong> On Llama-3.1-8B with K=2 V=3 KV-cache compression, JointQK

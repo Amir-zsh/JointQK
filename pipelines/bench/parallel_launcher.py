@@ -10,6 +10,11 @@ semantics; with N=2 two jobs share one A100, sharing CUDA_VISIBLE_DEVICES.
 Reads a commands file (one bash command per line, '#' comments allowed).
 Trailing '# label=foo' on a command sets the log filename suffix for that job.
 """
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import _bootstrap  # noqa: E402, F401
+
 import argparse
 import multiprocessing as mp
 import os

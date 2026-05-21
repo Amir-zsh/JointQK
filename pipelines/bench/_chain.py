@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Wait for Phase 6 (12 OK in overview) done, run aggregate_decode_scope.py,
 then launch Phase 7 LongBench (Qwen first, then Llama)."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import _bootstrap  # noqa: E402, F401
+
 import datetime as dt
 import re
 import subprocess
