@@ -59,55 +59,79 @@ F1-inversion investigation).
 
 ## Setup
 
-### Clone the project and the vendored deps
+Three steps after `git clone`. Total wall-clock: ~5 minutes on a fast link.
 
-The three vendored libraries live under `vendor/` as **separate git clones**
-(gitignored from the parent repo). After cloning this project:
+### 1. Clone the vendored libraries into `vendor/`
+
+The three third-party libs are intentionally **not** committed into this
+repo — each is its own upstream git clone, listed in `.gitignore`. Pull
+them at the pinned commits documented in [`vendor/README.md`](vendor/README.md):
 
 ```bash
-git clone https://github.com/NVIDIA/kvpress.git           vendor/kvpress
-git clone https://github.com/IBM/turboquant-pytorch.git   vendor/turboquant-pytorch
-git clone https://github.com/jy-yuan/KIVI.git             vendor/kivi
+git clone https://github.com/NVIDIA/kvpress.git         vendor/kvpress
+git clone https://github.com/IBM/turboquant-pytorch.git vendor/turboquant-pytorch
+git clone https://github.com/jy-yuan/KIVI.git           vendor/kivi
 
-# Underscore-name symlink so `import turboquant_pytorch` resolves (the
-# hyphen in the source dir isn't a valid Python module name):
+# Underscore-name symlink so `import turboquant_pytorch` resolves — the
+# hyphen in the source-dir name isn't a valid Python module name:
 ln -sfn turboquant-pytorch vendor/turboquant_pytorch
 ```
 
-Pinned commits and details of local modifications to `vendor/kvpress/` are
-documented in [`vendor/README.md`](vendor/README.md).
-
-### Python environment
-
-The project's `.venv/` is uv-managed (Python 3.12 + PyTorch CUDA 12.8 +
-transformers + the bench dependencies). Conda is **not** used — the legacy
-`kv-rd` conda env no longer exists.
+Optional but recommended — check out the pinned commits for reproducibility:
 
 ```bash
-source .venv/bin/activate
-# Or for one-shot invocations:
-./.venv/bin/python pipelines/bench/worker.py --help
-./.venv/bin/python -m tests.regression_fingerprint --help
+git -C vendor/kvpress            checkout d8349a9
+git -C vendor/turboquant-pytorch checkout 03e6112
+git -C vendor/kivi               checkout 876b4d2
 ```
 
-A lockfile is shipped at `requirements.lock.txt`. If `.venv/` is missing,
-recreate it via `uv pip install -r requirements.lock.txt`.
+### 2. Create the Python environment
 
-**No editable install is required.** Every entry-point script under
-`pipelines/` and `tests/` starts with a four-line `sys.path` bootstrap:
+The project's `.venv/` is uv-managed (Python 3.12 + PyTorch CUDA 12.8 +
+transformers + the bench dependencies). Conda is **not** used.
+
+```bash
+uv venv .venv --python 3.12
+uv pip install -r requirements.lock.txt --python .venv/bin/python
+```
+
+A pinned lockfile (`requirements.lock.txt`) ships in the repo. The
+single-command alternative `uv sync` will work once the upstream's
+pyproject is added.
+
+### 3. That's it — no project install needed
+
+This repo deliberately does **not** ship a `pyproject.toml` and does
+**not** require `pip install -e .`. Every entry-point script self-bootstraps
+its `sys.path` with a four-line header at the top:
 
 ```python
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[N]))  # N: depth to repo root
-import _bootstrap  # noqa: F401  (adds vendor/kvpress to sys.path)
+import _bootstrap  # noqa: E402, F401  (adds vendor/kvpress to sys.path)
 ```
 
 That puts the repo root on `sys.path` (so `import kvq.*` and
-`import pipelines.*` work), and `_bootstrap.py` at the repo root appends
-`vendor/kvpress/` so `import kvpress` resolves through the upstream
-vendored copy. No `pip install -e`, no `PYTHONPATH`, no `.pth` magic — just
-two `sys.path` entries each script declares for itself.
+`import pipelines.*` resolve), and `_bootstrap.py` at the repo root
+appends `vendor/kvpress/` (so `import kvpress` resolves through the
+upstream vendored copy). No `pip install -e`, no `PYTHONPATH`, no `.pth`
+magic — just two `sys.path` entries each script declares for itself.
+
+### Smoke test
+
+```bash
+# Run a script directly by file path (no `-m`):
+.venv/bin/python pipelines/bench/worker.py --help
+
+# Run the regression fingerprint to confirm artifacts still resolve:
+.venv/bin/python -m tests.regression_fingerprint check \
+    --baseline tests/baselines/fingerprint_pre.json
+
+# Should print: FINGERPRINT CHECK PASSED — 262 values match …
+```
+
+Both work without any pre-step beyond steps 1 and 2.
 
 ### GPU allocation
 
@@ -127,14 +151,14 @@ within the project's pool.
 │   ├── benchmarks/, data/        #  Vendored kvpress data adapters + scorers
 │   └── __init__.py
 │
-├── pipelines/                    # Entry-point scripts and shell launchers (importable as `pipelines.*`)
+├── pipelines/                    # Production data flow (calibrate → bench → aggregate)
 │   ├── calibration/              #  Capture K/V + compute pooled second moments
 │   ├── scripts/                  #  Calibration-build consumer utilities (basis files, manifests, holdout checks)
 │   ├── bench/                    #  Downstream LongBench / RULER F1 sweep (worker + launchers)
 │   ├── eval/                     #  Per-cell → summary table aggregators
-│   ├── analysis/                 #  Llama JointQK F1-inversion probes (logit-KL, Σ_Q drift, …)
 │   └── calibration_stability/    #  Basis-stability ablation sweeps
 │
+├── analysis/                     # Ad-hoc investigation scripts (Llama JointQK F1-inversion probes, HTML report)
 ├── tests/                        # Press parity tests + regression fingerprint
 ├── notebooks/                    # Exploratory notebooks
 ├── logs/                         # Run logs (gitignored)
@@ -296,20 +320,20 @@ some Llama tasks (the disconnect documented in
 
 ```bash
 # K-fidelity per-prompt: K-MSE, top-1, top-5
-.venv/bin/python -m pipelines.analysis.measure_llama_empirical_kmse_top1_top5
+.venv/bin/python -m analysis.measure_llama_empirical_kmse_top1_top5
 
 # First-decode logit KL on 4 tasks × 20 prompts
-.venv/bin/python -m pipelines.analysis.measure_logit_kl_llama
+.venv/bin/python -m analysis.measure_logit_kl_llama
 
 # Decode-trajectory KL (teacher-forced per-step KL)
-.venv/bin/python -m pipelines.analysis.measure_decode_trajectory_llama
+.venv/bin/python -m analysis.measure_decode_trajectory_llama
 
 # Σ_Q top-16 subspace drift across tasks (prefill + decode bins)
-.venv/bin/python -m pipelines.analysis.analyze_q_distribution_shift
-.venv/bin/python -m pipelines.analysis.plot_q_distribution_shift
+.venv/bin/python -m analysis.analyze_q_distribution_shift
+.venv/bin/python -m analysis.plot_q_distribution_shift
 
 # Regenerate the consolidated HTML report
-.venv/bin/python -m pipelines.analysis.build_jq_investigation_html \
+.venv/bin/python -m analysis.build_jq_investigation_html \
     --out notes/jointqk_investigation_report.html
 ```
 

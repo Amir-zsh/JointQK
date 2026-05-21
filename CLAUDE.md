@@ -30,7 +30,7 @@ The pipeline:
 1. **Calibrate.** `pipelines/calibration/` captures K/V from a calibration corpus and emits per-(layer, kv_head) second moments. The `scripts/build_calibration_artifacts_from_pool.py` consumer then pools captures into a basis artifact (`cca_stats_*.pt`).
 2. **Bench.** `pipelines/bench/launch_*.sh` parallelises `bench/worker.py` across GPUs; each worker runs one (method × bits × task) cell of the LongBench/RULER sweep and emits `metrics.json`.
 3. **Aggregate.** `pipelines/eval/aggregate_*.py` lifts the per-cell JSONs into canonical summary tables.
-4. **Analyse.** `pipelines/analysis/` runs fidelity probes (K-MSE, top-1, attention-KL, logit-KL, decode trajectory) against the same bases and emits the JQ investigation HTML.
+4. **Analyse.** `analysis/` runs fidelity probes (K-MSE, top-1, attention-KL, logit-KL, decode trajectory) against the same bases and emits the JQ investigation HTML.
 
 Per-study directories under `artifacts/` follow a consistent pattern: `metrics.json` per cell, optional aggregated `*_summary.json`, optional `report_charts/`.
 
@@ -62,9 +62,9 @@ bash pipelines/bench/launch_ruler.sh --gpus 0,1,2,3
 .venv/bin/python pipelines/bench/worker.py --commands-file <jsonl> --gpu 0
 
 # Llama JQ investigation probes:
-python -m pipelines.analysis.measure_logit_kl_llama --tasks lcc hotpotqa
-python -m pipelines.analysis.analyze_q_distribution_shift --tasks lcc
-python -m pipelines.analysis.build_jq_investigation_html \
+python -m analysis.measure_logit_kl_llama --tasks lcc hotpotqa
+python -m analysis.analyze_q_distribution_shift --tasks lcc
+python -m analysis.build_jq_investigation_html \
     --out notes/jointqk_investigation_report.html
 
 # Calibration build:

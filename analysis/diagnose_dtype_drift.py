@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import _bootstrap  # noqa: E402, F401
 
 import sys
@@ -25,7 +25,7 @@ from pathlib import Path
 
 import torch
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from pipelines.calibration.analyze_bases import jointqk_basis

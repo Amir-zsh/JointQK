@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import _bootstrap  # noqa: E402, F401
 
 import json
@@ -40,7 +40,7 @@ import torch
 import torch.nn.functional as F
 import sys
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
 from kvq.toolkit.metric_transform import water_fill

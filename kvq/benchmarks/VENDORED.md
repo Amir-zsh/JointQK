@@ -16,7 +16,7 @@ The actual scorer code lives in
   `vendor/kvpress/evaluation/evaluate_registry.py` with the
   press-registry block removed (press wiring lives in `kvq.toolkit`,
   not here). Re-exports `DATASET_REGISTRY` and `SCORER_REGISTRY` for
-  in-project callers (`pipelines/analysis/*`, `kvq.data.kvpress_adapter`,
+  in-project callers (`analysis/*`, `kvq.data.kvpress_adapter`,
   `tests/test_evaluation.py`).
 
 - **`LICENSE`, `NOTICE`** — kept for attribution; the SPDX headers in

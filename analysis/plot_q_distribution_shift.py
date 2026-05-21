@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import _bootstrap  # noqa: E402, F401
 
 import argparse
@@ -14,7 +14,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[1]
 
 TASKS_ORDER = ["hotpotqa", "qasper", "qmsum", "multi_news",
                "repobench-p", "musique", "lcc", "2wikimqa"]
