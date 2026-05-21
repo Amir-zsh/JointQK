@@ -1,129 +1,378 @@
 # KV-Cache Compression Research
 
-A research codebase studying how to **compress the key half of the KV cache** in transformer LLMs without losing the attention behaviour the model relies on. We test methods that calibrate offline from a small prompt corpus, transform keys into a basis chosen by those statistics, scalar-quantize each coordinate independently, and decompress on the fly when future queries need to compute attention.
+A research codebase studying how to compress the **key** half of the KV
+cache in transformer LLMs without losing the attention behaviour the model
+relies on, with downstream LongBench / RULER F1 as the headline metric.
 
-## Background
+---
 
-Modern transformer LLMs cache the keys (`K`) and values (`V`) from prefill so subsequent generated tokens can attend to the prompt without re-running the forward pass. This **KV cache** grows linearly with context length and dominates GPU memory at long contexts — gigabytes per active sequence on 8B-class models with 30k-token prompts. Cheap, high-quality KV-cache compression is one of the most consequential levers for serving long-context LLMs.
+## What this project is
 
-This project specifically investigates compression of the **K** half: per-(layer, kv_head) linear bases learned from second-moment statistics, paired with per-coordinate bit allocations. Compressing V is studied separately and is largely orthogonal.
+Modern transformer LLMs cache the keys (`K`) and values (`V`) produced
+during prefill so subsequent generated tokens can attend to the prompt
+without re-running the forward pass. This **KV cache** grows linearly with
+context length and dominates GPU memory at long contexts — gigabytes per
+active sequence on 8B-class models with 30k-token prompts. Cheap,
+high-quality KV-cache compression is one of the most consequential levers
+for serving long-context LLMs.
 
-## Approach
+This project specifically investigates compression of the **K** half:
+per-(layer, kv_head) linear bases learned from second-moment statistics,
+paired with per-coordinate bit allocations. The headline method, **JointQK
+WaterFill**, calibrates a joint Q-K eigenbasis $R_{\text{sym}} =
+\text{eigvec}\bigl((\Sigma_Q\Sigma_K + \Sigma_K\Sigma_Q)/2\bigr)$ offline
+from a small prompt corpus, then water-fills bits across coordinates by the
+Q-weighted reconstruction-MSE metric. V-side compression is benchmarked but
+treated separately and is largely orthogonal.
 
 Every method we evaluate fits a common three-phase template:
 
-1. **Calibration (offline, once).** Observe queries and keys on a small representative corpus; compute per-(layer, kv_head) second moments such as $\Sigma_Q$, $\Sigma_K$, and the cross-moment $C_{QK}$.
-2. **Compression (online, per prefill).** Linearly transform each prefill key into a basis chosen by the calibration. Independently scalar-quantize each coordinate of the transformed key to a small Lloyd–Max codebook scaled to that coordinate's standard deviation. Compressed keys replace raw keys in the cache.
-3. **Reconstruction (online, per generated token).** When a future query arrives, dequantize the cached keys and compute attention scores against them in the place of the originals.
+1. **Calibration (offline, once).** Observe queries and keys on a
+   representative corpus; compute per-(layer, kv_head) second moments
+   $\Sigma_Q$, $\Sigma_K$, and the cross-moment $C_{QK}$.
+2. **Compression (online, per prefill).** Linearly transform each prefill
+   key into a calibration-chosen basis. Independently scalar-quantize each
+   coordinate to a small Lloyd–Max codebook scaled to that coordinate's
+   standard deviation. The compressed keys replace raw keys in the cache.
+3. **Reconstruction (online, per generated token).** When a future query
+   arrives, dequantize the cached keys and compute attention scores against
+   them in place of the originals.
 
-Two design knobs govern this template:
+Two design knobs govern this template: **the basis** (random rotation,
+Q-eigenbasis, CCA, joint Q-K eigenbasis, …) and **the bit allocation**
+(uniform, top-r truncation, reverse water-fill on a per-coordinate weight).
+The codebase systematically evaluates them on real LLMs and real
+long-context tasks.
 
-- **The basis.** Which linear transform encodes "the directions that matter for attention"? Random rotation, Q-eigenbasis, CCA, joint Q-K eigenbases, …
-- **The bit allocation.** How are bits distributed across the coordinates of that basis? Uniform, hard top-r truncation, continuous water-fill on a per-coordinate weight, …
+### Headline metrics
+- **LongBench F1** (8–12 tasks) — per-task end-to-end task accuracy.
+- **RULER** (3 context lengths × 4 NIAH variants).
+- **Top-1 retention** — fraction of queries whose argmax over the
+  compressed keys matches the uncompressed baseline.
+- **Q-weighted reconstruction MSE**:
+  $\mathbb{E}\!\bigl[(k-\hat k)^\top \Sigma_Q (k-\hat k)\bigr]/d$.
 
-Different (basis × allocation) choices produce dramatically different attention top-1 retention at the same average bit budget. The codebase systematically evaluates them on real LLMs and real long-context tasks.
+Currently studied models: Qwen3-8B (production) and Llama-3.1-8B (for
+F1-inversion investigation).
 
-## What's evaluated
-
-- **Models.** Public open-weight LLMs (e.g. Qwen3-class). The compression methods apply per (layer, kv_head); architectural specifics matter for calibration but not for the methodology.
-- **Tasks.** Long-context benchmark suites (LongBench-E and similar). Calibration and evaluation use prefill activations from the bundled examples.
-- **Metrics.**
-  - *Attention top-1 / top-5 retention* — fraction of queries whose argmax (or top-5) over the compressed keys matches the uncompressed baseline. The production metric.
-  - *Q-weighted geometry distortion* — $\mathbb{E}\!\left[(k - \hat{k})^\top M_q (k - \hat{k})\right] / d$, the natural rate-distortion target with $M_q = \mathbb{E}[q\, q^\top]$.
-  - *Logit MSE / cosine* and decode-phase top-1 against the compressed prefill cache (production scenario).
-
-The full catalogue of methods, headline numbers, and per-experiment analyses live under `notes/`.
-
-## Repository layout
-
-```
-.
-├── experiments/
-│   ├── calibration/         # K/V capture + pooled second-moment computation
-│   ├── bench/               # Downstream LongBench/RULER F1 sweep (worker + launchers)
-│   ├── analysis/            # JointQK F1-inversion probes (logit-KL, Σ_Q drift, HTML report)
-│   ├── calibration_stability/  # Basis-stability ablation sweeps
-│   ├── toolkit/             # Reusable building blocks (Lloyd-Max, water-fill, JointQK press, …)
-│   ├── scripts/             # Calibration-build consumer utilities
-│   ├── eval/                # Aggregators (LongBench, RULER, decode-scope, integrity)
-│   ├── benchmarks/, data/   # Vendored kvpress data adapters
-│   ├── tests/               # Press parity, regression fingerprint
-│   └── logs/                # Run logs (gitignored)
-├── artifacts/
-│   ├── calibration/         # K/V captures + pooled second moments
-│   ├── bases/               # Joint Q-K basis files (cca_stats_*.pt)
-│   ├── v_bases/             # V-side basis files
-│   ├── bench/, bench_llama_*/  # Downstream F1 results
-│   ├── decode_q_captures_llama/, q_distribution_shift/  # Llama analysis outputs
-│   └── query_stats_longbench_under4k*  # Captured query stats (large, protected)
-├── notes/                   # Research notes
-│   ├── core/                #   Project framing and execution roadmap
-│   ├── reference/           #   Standalone derivations and references
-│   └── README.md            #   Index of the notes directory
-├── vendor/                  # Vendored third-party libraries
-│   ├── kvpress/             #   Apache-2.0 KV-compression library (NVIDIA)
-│   ├── turboquant-pytorch/  #   TurboQuant baseline
-│   ├── turboquant_pytorch   #   symlink → turboquant-pytorch (so `import` works)
-│   └── kivi/                #   KIVI baseline
-└── README.md
-```
+---
 
 ## Setup
 
-The repository ships a conda environment specification. Create and activate it once:
+### Clone the project and the vendored deps
+
+The three vendored libraries live under `vendor/` as **separate git clones**
+(gitignored from the parent repo). After cloning this project:
 
 ```bash
-conda env create -f environment.yml
-conda activate kv-rd
-```
+git clone https://github.com/NVIDIA/kvpress.git           vendor/kvpress
+git clone https://github.com/IBM/turboquant-pytorch.git   vendor/turboquant-pytorch
+git clone https://github.com/jy-yuan/KIVI.git             vendor/kivi
 
-This installs PyTorch (with CUDA), the scientific Python stack, and the dependencies needed by `kvpress`. The vendored `vendor/kvpress/` package is installed in editable mode by the same spec.
-
-The vendored `vendor/turboquant-pytorch/` directory uses a hyphen, which is not a valid Python module name. The repo ships a symlink `vendor/turboquant_pytorch → turboquant-pytorch` so `import turboquant_pytorch` resolves; recreate it after every fresh clone if missing:
-
-```bash
+# Underscore-name symlink so `import turboquant_pytorch` resolves (the
+# hyphen in the source dir isn't a valid Python module name):
 ln -sfn turboquant-pytorch vendor/turboquant_pytorch
 ```
 
-Calibration artifacts (`artifacts/{v_bases,bases/llama31_8b,query_stats_longbench_under4k*}/` and any `*.pt`) are gitignored. Regenerate with the scripts under `experiments/scripts/` after capturing a fresh Q/K/V bundle.
+Pinned commits and details of local modifications to `vendor/kvpress/` are
+documented in [`vendor/README.md`](vendor/README.md).
 
-## Where to start reading
+### Python environment
 
-For a guided tour of the project:
+The project's `.venv/` is uv-managed (Python 3.12 + PyTorch CUDA 12.8 +
+transformers + the bench dependencies). Conda is **not** used — the legacy
+`kv-rd` conda env no longer exists.
 
-1. **`notes/core/kv_cache_rate_distortion_proposal.md`** — high-level research framing and thesis.
-2. **`notes/core/research_plan.md`** — stage-by-stage execution roadmap.
-3. **`notes/README.md`** — index of all research notes, grouped by role.
-4. **`notes/experiments_and_findings.md`** — synthesis of the current stage's results.
+```bash
+source .venv/bin/activate
+# Or for one-shot invocations:
+./.venv/bin/python -m kvq.<module>
+./.venv/bin/python -m pipelines.<module>
+```
 
-Each individual stage has its own per-experiment review notes plus a shareable summary set (one-pager / two-pager / full report) for colleagues outside the project. The latest stage's summary is the recommended on-ramp once you've read the framing.
+A lockfile is shipped at `requirements.lock.txt`. If `.venv/` is missing,
+recreate it via `uv pip install -r requirements.lock.txt`.
 
-## Reproducing experiments
+Finally, install the project itself in editable mode so `kvq.*` and
+`pipelines.*` are importable from anywhere:
 
-The pipeline:
+```bash
+uv pip install -e . --python .venv/bin/python
+```
 
-1. **Calibrate** with `experiments/calibration/` — capture K/V from a prompt corpus and pool per-(layer, kv_head) second moments.
-2. **Build bases** with `experiments/scripts/build_calibration_artifacts_from_pool.py` — produce a joint Q-K basis file under `artifacts/bases/`.
-3. **Bench** with `experiments/bench/launch.sh` — parallelise the LongBench/RULER worker across GPUs; each cell emits `metrics.json`.
-4. **Aggregate** with `experiments/eval/aggregate_*.py` — lift per-cell JSONs into canonical summary tables.
-5. **Analyse** with `experiments/analysis/` — fidelity probes (K-MSE, top-1, attention-KL, logit-KL, Σ_Q drift) against the same bases.
+### GPU allocation
 
-See `notes/bench_results_report.md` and `notes/jointqk_disconnect_investigation.md` for the most recent runs and findings.
+GPUs 0–3 are the project's allocation on the shared host. Launchers default
+to `--gpus 0,1,2,3,4,5` but every script accepts `--gpus 0,1,2,3` to stay
+within the project's pool.
+
+---
+
+## Repository structure
+
+```
+.
+├── src/
+│   └── kvq/                      # Importable library (`pip install -e .` → `import kvq.*`)
+│       ├── toolkit/              #  Reusable building blocks: presses, Lloyd-Max, water-fill, capture hooks
+│       ├── benchmarks/, data/    #  Vendored kvpress data adapters + scorers
+│       └── __init__.py
+│
+├── pipelines/                    # Entry-point scripts and shell launchers (importable as `pipelines.*`)
+│   ├── calibration/              #  Capture K/V + compute pooled second moments
+│   ├── scripts/                  #  Calibration-build consumer utilities (basis files, manifests, holdout checks)
+│   ├── bench/                    #  Downstream LongBench / RULER F1 sweep (worker + launchers)
+│   ├── eval/                     #  Per-cell → summary table aggregators
+│   ├── analysis/                 #  Llama JointQK F1-inversion probes (logit-KL, Σ_Q drift, …)
+│   └── calibration_stability/    #  Basis-stability ablation sweeps
+│
+├── tests/                        # Press parity tests + regression fingerprint
+├── notebooks/                    # Exploratory notebooks
+├── logs/                         # Run logs (gitignored)
+│
+├── artifacts/                    # Pipeline outputs (mostly gitignored)
+│   ├── calibration/              #  Per-corpus raw captures + pooled stats (>10 GB protected; gitignored)
+│   ├── bases/                    #  Joint Q-K basis files: cca_stats_<model>_<corpus>_<n>.pt
+│   ├── v_bases/                  #  V-side basis files + v_lock.txt (active V method)
+│   ├── calibration_splits/       #  Train/test split manifests + exclude_train_indices_for_eval.json
+│   ├── bench/                    #  Downstream F1 sweep results (per-cell metrics.json)
+│   ├── bench_llama_verify/       #  Llama Mode-A F1 sweep
+│   ├── bench_llama_compact9/     #  Llama F1 with compact9-pooled basis
+│   ├── bench_llama_lcconly/      #  Llama F1 with lcc-only basis
+│   ├── decode_q_captures_llama/  #  Decode-Q tensors for Σ_Q drift analysis
+│   ├── q_distribution_shift/     #  Σ_Q top-16 drift JSON + charts
+│   ├── _compressor_cache/        #  Pre-built per-(layer, head) compressors keyed by SHA(calibration mtime + kwargs)
+│   └── query_stats_longbench_under4k*  #  Captured query stats (large, protected)
+│
+├── notes/                        # Research write-ups
+│   ├── README.md                 #  Index
+│   ├── core/                     #  Project framing + execution roadmap + paper plans
+│   ├── reference/                #  Standalone derivations
+│   ├── bench_results_report.md   #  Latest Qwen3-8B downstream F1 results
+│   ├── bench_llama31_8b_results_report.md  #  Llama-3.1-8B F1 results
+│   ├── bench_cross_model_comparison.md     #  Qwen3 vs Llama
+│   ├── bench_llama_runbook.md    #  Runbook for the Llama bench sweep
+│   ├── jointqk_disconnect_investigation.md
+│   ├── jointqk_investigation_report.html   #  Self-contained HTML write-up
+│   ├── q_distribution_shift.md   #  Σ_Q drift analysis
+│   ├── experiments_and_findings.md         #  Cross-cutting synthesis
+│   └── figs/                     #  Charts embedded in the notes above
+│
+├── background/                   # Reference papers (PDFs gitignored; README is the index)
+│
+├── vendor/                       # Third-party libraries
+│   ├── README.md                 #  Clone instructions + pinned commits
+│   ├── kvpress/                  #  NVIDIA's kvpress (Apache-2.0); local extensions to evaluate.py + evaluate_registry.py
+│   ├── turboquant-pytorch/       #  TurboQuant baseline
+│   ├── turboquant_pytorch        #  → turboquant-pytorch (symlink)
+│   └── kivi/                     #  KIVI baseline
+│
+└── paper/                        # Paper drafts (gitignored)
+```
+
+### Naming conventions to be aware of
+
+- **`cca_stats_*.pt`** files in `artifacts/bases/` store the joint Q-K
+  basis (`R_sym`), despite the historical "cca_" prefix. CCA-only fields
+  remain in the file but are ignored by the K path.
+- **"Bench"** = the downstream LongBench/RULER F1 sweep (formerly called
+  "Phase 7" in older notes/logs).
+- **"Bases"** = `artifacts/bases/` and `artifacts/v_bases/`, the calibrated
+  basis files consumed by the bench worker.
+
+---
+
+## Running benchmarks
+
+There are three categories of run: **bench sweep** (the headline LongBench/
+RULER F1 pipeline), **single-cell debug**, and **analysis probes**. The
+calibration step is rarely re-run because the captures are large; details
+are in [the calibration section below](#calibration-rare-rerun).
+
+### Common preconditions
+
+Every bench run requires three artifacts to already exist:
+
+1. **A calibration corpus capture** under
+   `artifacts/calibration/<run-id>/02_stats/` (gitignored; >10 GB
+   protected).
+2. **A K basis file** like `artifacts/bases/cca_stats_<model>_<corpus>_<n>.pt`.
+3. **A V basis file** like `artifacts/v_bases/v_stats_<model>_<corpus>_<n>.pt`
+   plus `artifacts/v_bases/v_lock.txt` (records the active V method).
+
+These are produced once per model+corpus by the calibration pipeline below.
+The currently active set is the Qwen3-8B and Llama-3.1-8B compact8/compact9
+pools.
+
+### 1. Headline bench sweep (the "v7" config)
+
+```bash
+bash pipelines/bench/launch.sh --gpus 0,1,2,3
+```
+
+This is the canonical 192-cell sweep documented in
+`notes/bench_results_report.md`. It runs, per model:
+
+- 1 full-precision oracle
+- 6 JointQK cells: $K\in\{2,3,4\}$ bits × $V\in\{2,3\}$ bits
+- 6 TurboQuant cells: same grid
+- 3 KIVI baselines: int2, int3, int4
+
+on 12 LongBench tasks (8 KIVI tasks + 4 multi-doc QA). All compressed
+methods use `layer0_full_precision=True` and `compress_decode=False` (Mode
+A — only prefill keys are compressed; decode-step keys stay fp16).
+
+Useful flags:
+- `--fraction 0.1` — sample 10% of each task (smoke test, ≈5 min/cell).
+- `--jobs-per-gpu 2` — pack two model copies per GPU (only with ≥40 GB
+  VRAM).
+- `--dry-run` — print the JSONL of work items without launching workers.
+- `--model qwen3_8b` (default) or `--model llama31_8b`.
+
+Output goes to `artifacts/bench/<model_tag>/<cell_name>/longbench__<task>__<model>__<press>__1.00/metrics.json`,
+which is a single F1 number per cell.
+
+### 2. Other bench sub-sweeps
+
+| launcher | purpose |
+|---|---|
+| `bench/launch.sh` | Headline v7 sweep (above). |
+| `bench/launch_longbench.sh` | Standalone LongBench-only sweep (KIVI's 8-task subset). |
+| `bench/launch_ruler.sh` | RULER NIAH at ctx ∈ {4096, 8192, 16384}. |
+| `bench/launch_basis_compare.sh` | Side-by-side: old basis vs newly-built basis. |
+| `bench/launch_v_turboquant.sh` | V-method ablation holding K fixed. |
+| `bench/launch_v_ablation.sh` | V-method ablation across K∈{2,4}. |
+| `bench/launch_per_task_basis.sh` | Per-task K bases (not pooled). |
+
+Every launcher writes per-cell `metrics.json` files under a launcher-named
+`artifacts/<dir>/` subtree.
+
+### 3. Single-cell debug
+
+To run one specific (model, basis, K, V, task) combination directly through
+the worker, bypassing the launcher's queue:
+
+```bash
+# Build a one-line JSONL with the cell config:
+cat > /tmp/one_cell.jsonl <<'EOF'
+{"press_name": "jointqk", "dataset": "longbench", "data_dir": "qasper", "output_dir": "artifacts/_refactor_smoke/qasper_jq_k2v3", "press_kwargs": {"cca_stats_path": "artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt", "v_stats_path": "artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "quantize_k": true, "quantize_v": true, "compress_decode": false, "layer0_full_precision": true}}
+EOF
+
+# Run it:
+.venv/bin/python pipelines/bench/worker.py \
+    --model meta-llama/Llama-3.1-8B-Instruct \
+    --commands-file /tmp/one_cell.jsonl \
+    --gpus 0 \
+    --jobs-per-gpu 1
+```
+
+Useful for reproducing a single F1 number, profiling, or debugging a press
+class change without queuing the full sweep.
+
+### 4. Aggregating per-cell results
+
+```bash
+.venv/bin/python -m pipelines.eval.aggregate_longbench  --root artifacts/bench
+.venv/bin/python -m pipelines.eval.aggregate_ruler      --root artifacts/bench
+```
+
+Each aggregator walks the per-cell `metrics.json` files and emits a
+canonical summary table for the report notes.
+
+### 5. Analysis probes (Llama JointQK F1-inversion)
+
+Used to understand *why* JointQK wins K-fidelity metrics but loses F1 on
+some Llama tasks (the disconnect documented in
+`notes/jointqk_disconnect_investigation.md`):
+
+```bash
+# K-fidelity per-prompt: K-MSE, top-1, top-5
+.venv/bin/python -m pipelines.analysis.measure_llama_empirical_kmse_top1_top5
+
+# First-decode logit KL on 4 tasks × 20 prompts
+.venv/bin/python -m pipelines.analysis.measure_logit_kl_llama
+
+# Decode-trajectory KL (teacher-forced per-step KL)
+.venv/bin/python -m pipelines.analysis.measure_decode_trajectory_llama
+
+# Σ_Q top-16 subspace drift across tasks (prefill + decode bins)
+.venv/bin/python -m pipelines.analysis.analyze_q_distribution_shift
+.venv/bin/python -m pipelines.analysis.plot_q_distribution_shift
+
+# Regenerate the consolidated HTML report
+.venv/bin/python -m pipelines.analysis.build_jq_investigation_html \
+    --out notes/jointqk_investigation_report.html
+```
+
+### Verifying nothing regressed
+
+Every commit on the refactor branch is gated by a numerical fingerprint:
+
+```bash
+.venv/bin/python -m tests.regression_fingerprint check \
+    --baseline tests/baselines/fingerprint_pre.json
+```
+
+This walks every `metrics.json` under `artifacts/bench*/` plus the
+`q_distribution_shift/per_task_drift.json` and compares values against the
+pinned baseline (246 F1 cells + 8 Σ_Q drift tasks, 262 values total). A
+clean refactor leaves all 262 values byte-identical.
+
+### Calibration (rare rerun)
+
+If you need to add a new calibration corpus or model:
+
+```bash
+# 1. Create a split manifest (which rows go to train vs eval):
+.venv/bin/python pipelines/scripts/create_longbench_calibration_split.py \
+    --tasks qasper,hotpotqa,musique,qmsum,multi_news,triviaqa,passage_retrieval_en,repobench-p,lcc \
+    --samples-per-task 60 --train-per-task 50 --test-per-task 10 \
+    --output-dir artifacts/calibration_splits/longbench_compact9_60_seed20260504_2k32k
+
+# 2. Capture K/V across the corpus + compute pooled stats (multi-GPU):
+.venv/bin/python -m pipelines.calibration.launch --stage all \
+    --split-manifest artifacts/calibration_splits/.../manifest.json \
+    --run-id longbench_compact9_qkv_llama31_8b \
+    --gpus 0,1,2,3 --num-shards 4
+
+# 3. Build the joint Q-K basis file from the train-split stats:
+.venv/bin/python pipelines/scripts/build_calibration_artifacts_from_pool.py \
+    --run-id longbench_compact9_qkv_llama31_8b \
+    --output-suffix llama31_8b_compact9_n450
+
+# 4. Build the V basis file (sigma_v / cov_v / mu_v):
+.venv/bin/python pipelines/scripts/calibrate_sigma_v.py \
+    --run-id longbench_compact9_qkv_llama31_8b
+```
+
+Step 2 is the expensive one (~30 min on 4 GPUs for 450 prompts at 16k
+context). Steps 3–4 take seconds.
+
+---
+
+## Where to read more
+
+- **`notes/core/kv_cache_rate_distortion_proposal.md`** — high-level
+  research framing.
+- **`notes/core/research_plan.md`** — execution roadmap.
+- **`notes/bench_results_report.md`** — latest Qwen3-8B F1 results.
+- **`notes/bench_llama31_8b_results_report.md`** — Llama F1 results.
+- **`notes/jointqk_disconnect_investigation.md`** + the HTML report — full
+  write-up of the K-fidelity-vs-F1 mismatch on Llama.
+- **`background/README.md`** — index of reference papers (TurboQuant,
+  Expected Attention, Attention Matching, QPTQ).
+
+---
 
 ## Vendored dependencies
 
-| Path | Source | License |
+| Path | Source | Role |
 |---|---|---|
-| `vendor/kvpress/` | NVIDIA's [kvpress](https://github.com/NVIDIA/kvpress) library, used as a thin benchmarking adapter | Apache-2.0 (`vendor/kvpress/LICENSE`) |
-| `vendor/turboquant-pytorch/` | TurboQuant baseline implementation | see `vendor/turboquant-pytorch/LICENSE` |
-| `vendor/kivi/` | KIVI baseline | see `vendor/kivi/LICENSE` |
+| `vendor/kvpress/` | NVIDIA's [kvpress](https://github.com/NVIDIA/kvpress) | Press base classes + the `evaluation/evaluate.py` harness. We extend it with `exclude_indices_file`, `press_kwargs`, and class-instantiation in `_setup_press`. |
+| `vendor/turboquant-pytorch/` | IBM's [TurboQuant](https://github.com/IBM/turboquant-pytorch) | Random-Hadamard + Lloyd-Max compressors. Used as a baseline (TurboQuantPress) and as the V-side `v_turboquant` method inside JointQK. |
+| `vendor/kivi/` | [jy-yuan/KIVI](https://github.com/jy-yuan/KIVI) | KIVI int2/int3/int4 baseline. Unmodified. |
 
-These are vendored rather than installed from PyPI to pin specific versions; their original licenses apply unchanged.
+Each is gitignored from this repo and cloned separately; pinned commits in
+`vendor/README.md`.
 
-## Citation
-
-A paper distilling this line of research is in preparation. Once published, citation details will appear here. In the meantime, please cite the relevant per-stage notes under `notes/` if you build on this work.
-
-## License
-
-The project's first-party code is provided as-is for research use. Vendored dependencies retain their own licenses (see the table above). A formal project-wide license will be added with the public release.
+---

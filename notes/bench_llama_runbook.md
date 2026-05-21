@@ -22,7 +22,7 @@ The Llama run uses **distinct paths** at every stage so it cannot accidentally o
 | K calibration artifact | `artifacts/bases/cca_stats_longbench_compact8_n400.pt` | `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt` |
 | V calibration artifact | `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` | `artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt` |
 | Downstream F1 | `artifacts/bench/qwen3_8b/` | `artifacts/bench/llama31_8b/` |
-| Logs | `experiments/logs/phase7_v7_qwen3_8b/` | `experiments/logs/phase7_v7_llama31_8b/` |
+| Logs | `logs/phase7_v7_qwen3_8b/` | `logs/phase7_v7_llama31_8b/` |
 
 **Three safety guards are in place** in case a flag gets dropped by accident:
 
@@ -73,9 +73,9 @@ Together these mean: **the agent has to make three independent mistakes** — wr
 Verify the toolkit imports before going further:
 ```bash
 .venv/bin/python -c "
-from experiments.calibration.analyze_bases import combine_stats, jointqk_basis
-from experiments.toolkit.jointqk_press import JointQKPress
-from experiments.toolkit.turboquant_press import TurboQuantPress
+from pipelines.calibration.analyze_bases import combine_stats, jointqk_basis
+from kvq.toolkit.jointqk_press import JointQKPress
+from kvq.toolkit.turboquant_press import TurboQuantPress
 print('OK')
 "
 ```
@@ -91,25 +91,25 @@ SMOKE_RUN_ID=longbench_compact8_qkv_llama31_8b_smoke
 SMOKE_SUFFIX=llama31_8b_smoke
 
 # 1. Capture: --smoke flag selects the built-in 2-prompt-per-task subset
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage capture --gpus 0 --jobs-per-gpu 1 --keep-raw test --smoke \
     --run-id "$SMOKE_RUN_ID" \
     --model meta-llama/Llama-3.1-8B-Instruct
 
 # 2. Aggregate stats
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage stats --gpus 0 --smoke --run-id "$SMOKE_RUN_ID"
 
 # 3. Build calibration artifacts on the smoke pool (smaller, faster)
-.venv/bin/python experiments/scripts/build_calibration_artifacts_from_pool.py \
+.venv/bin/python pipelines/scripts/build_calibration_artifacts_from_pool.py \
     --run-id "$SMOKE_RUN_ID" \
     --output-suffix "$SMOKE_SUFFIX"
 
 # 4. Run a 2-cell smoke sweep: full_precision + JointQK on qasper at fraction=0.05
-.venv/bin/python experiments/scripts/phase7_worker.py \
+.venv/bin/python pipelines/scripts/phase7_worker.py \
     --model meta-llama/Llama-3.1-8B-Instruct \
     --gpus 0 --jobs-per-gpu 1 --max-retries 1 \
-    --log-dir experiments/logs/phase7_v7_smoke \
+    --log-dir logs/phase7_v7_smoke \
     --commands-file <(cat <<EOF
 {"_label": "smoke_oracle_qasper", "press_name": "no_press", "compression_ratio": 0.0, "dataset": "longbench", "data_dir": "qasper", "fraction": 0.05, "output_dir": "artifacts/bench_smoke/llama31_8b/full_precision_qasper"}
 {"_label": "smoke_jointqk_qasper", "press_name": "jointqk", "press_kwargs": {"cca_stats_path": "artifacts/bases/cca_stats_${SMOKE_SUFFIX}.pt", "v_stats_path": "artifacts/v_bases/v_stats_${SMOKE_SUFFIX}.pt", "v_method": "v_turboquant", "k_bits": 2, "v_bits": 3, "compress_decode": false, "layer0_full_precision": true, "quantize_k": true, "quantize_v": true}, "dataset": "longbench", "data_dir": "qasper", "fraction": 0.05, "output_dir": "artifacts/bench_smoke/llama31_8b/jointqk_k2_v3_qasper"}
@@ -140,7 +140,7 @@ rm -rf artifacts/calibration/longbench_compact8_qkv_llama31_8b_smoke \
        artifacts/bases/cca_stats_llama31_8b_smoke.pt \
        artifacts/v_bases/v_stats_llama31_8b_smoke.pt \
        artifacts/bench_smoke \
-       experiments/logs/phase7_v7_smoke
+       logs/phase7_v7_smoke
 ```
 
 ---
@@ -158,7 +158,7 @@ This covers 8 LongBench tasks × 60 prompts each (50 train + 10 test) = 480 prom
 **Run capture:**
 ```bash
 cd /vault/amir/efficient-llm/teamily-project
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage capture \
     --gpus 0,1,2,3,4,5 \
     --jobs-per-gpu 1 \
@@ -171,7 +171,7 @@ cd /vault/amir/efficient-llm/teamily-project
 What this does:
 - Spawns one capture worker per GPU.
 - Each worker: loads Llama on its GPU, walks its shard of the 480 prompts, runs `model(input_ids, use_cache=True)` to do prefill, hooks q/k/v, computes per-example moments (`sq_sum`, `sk_sum`, `cqk_sum`, `sv_sum`, `sum_q`, `sum_k`, `sum_v`) inline, and saves to `02_stats/shard_NNN/<id>.pt`. Test-split prompts also get their fp16 raw payload saved to `01_raw/shard_NNN/<id>.pt`.
-- Per-shard structured progress logs go to `experiments/logs/phase_capture/`. Watch progress with:
+- Per-shard structured progress logs go to `logs/phase_capture/`. Watch progress with:
   ```bash
   tail -F artifacts/calibration/longbench_compact8_qkv_llama31_8b/logs/capture/_overview.log
   ```
@@ -190,7 +190,7 @@ What this does:
 After capture finishes, compute the merged aggregate:
 
 ```bash
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage stats \
     --gpus 0 \
     --run-id longbench_compact8_qkv_llama31_8b
@@ -219,7 +219,7 @@ Expect `total=480, train=400, test=80`.
 This pools the 400 train examples and emits the two artifact files the press will read.
 
 ```bash
-.venv/bin/python experiments/scripts/build_calibration_artifacts_from_pool.py \
+.venv/bin/python pipelines/scripts/build_calibration_artifacts_from_pool.py \
     --run-id longbench_compact8_qkv_llama31_8b \
     --output-suffix llama31_8b_longbench_compact8_n400
 ```
@@ -241,7 +241,7 @@ The script:
 ## 3. Run the v7 sweep
 
 ```bash
-.venv/bin/python experiments/scripts/launch.sh --model llama31_8b
+.venv/bin/python pipelines/scripts/launch.sh --model llama31_8b
 ```
 
 This launches **192 cells** (12 tasks × 16 configs):
@@ -262,7 +262,7 @@ This launches **192 cells** (12 tasks × 16 configs):
 
 **Watch progress:**
 ```bash
-tail -F experiments/logs/phase7_v7_llama31_8b/_overview.log
+tail -F logs/phase7_v7_llama31_8b/_overview.log
 ```
 
 **Output layout:**
@@ -349,7 +349,7 @@ Save the grid to `notes/bench_llama31_8b_results_report.md`. Compare to:
 - **JointQK compressor build hangs at first cell.** It's CPU-bound on 36 × 8 = 288 Lloyd-Max codebook solves per (layer, head). Expected duration ~13 min the first time per worker. Subsequent cells in the same worker process use the in-memory press cache (~5 sec). **Don't kill it.** With `phase7_worker.py` and 12 workers, you'll see ~12 of these initial builds racing in parallel — that's expected.
 - **KIVI cells OOM at long context with 2 jobs/GPU.** v7's `--max-retries 10` should auto-requeue them and they'll usually fit once neighbour cells finish and free memory. If a KIVI cell shows up as `OOM!` (final OOM after all retries) in `_overview.log`, rerun just the failed cells at 1/GPU:
   ```bash
-  bash experiments/scripts/launch.sh --model llama31_8b --jobs-per-gpu 1
+  bash pipelines/scripts/launch.sh --model llama31_8b --jobs-per-gpu 1
   ```
   (The worker's skip-if-exists guarantees only the failed cells re-execute.)
 - **Disk fill-up during capture.** Each test-split raw file is up to 10 GB. Make sure `df -h` shows >600 GB free under the artifact root before launching.
@@ -367,9 +367,9 @@ Save the grid to `notes/bench_llama31_8b_results_report.md`. Compare to:
 | v7 K calibration artifact | `artifacts/bases/cca_stats_llama31_8b_longbench_compact8_n400.pt` |
 | v7 V calibration artifact | `artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt` |
 | `v_lock.txt` (V_METHOD=v_turboquant) | `artifacts/v_bases/v_lock.txt` |
-| v7 launcher | `experiments/scripts/launch.sh` |
+| v7 launcher | `pipelines/scripts/launch.sh` |
 | Downstream F1 outputs | `artifacts/bench/llama31_8b/<config>_<task>/.../metrics.json` |
-| Per-cell logs | `experiments/logs/phase7_v7_llama31_8b/job_*_a0.log` |
+| Per-cell logs | `logs/phase7_v7_llama31_8b/job_*_a0.log` |
 | Compressor disk cache (built lazily) | `artifacts/_compressor_cache/*.pt` |
 
 ---
@@ -391,25 +391,25 @@ huggingface-cli login --token $HF_TOKEN
 # 0.5. Smoke test FIRST (~15 min, 1 GPU). See §0.5 for full script. DO NOT SKIP.
 
 # 1. Capture (~40-90 min; prefill-only)
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage capture --gpus "$GPUS" --jobs-per-gpu 1 --keep-raw test \
     --run-id longbench_compact8_qkv_llama31_8b \
     --model meta-llama/Llama-3.1-8B-Instruct --resume
 
 # 2. Aggregate stats (~2 min, single-GPU)
-.venv/bin/python experiments/calibration/launch.py \
+.venv/bin/python pipelines/calibration/launch.py \
     --stage stats --gpus "${GPUS%%,*}" \
     --run-id longbench_compact8_qkv_llama31_8b
 
 # 3. Build calibration artifacts (~15 min CPU)
-.venv/bin/python experiments/scripts/build_calibration_artifacts_from_pool.py \
+.venv/bin/python pipelines/scripts/build_calibration_artifacts_from_pool.py \
     --run-id longbench_compact8_qkv_llama31_8b \
     --output-suffix llama31_8b_longbench_compact8_n400
 
 # 4. v7 sweep (~6-10 h at 2 jobs/GPU + max-retries 10)
-nohup bash experiments/scripts/launch.sh \
+nohup bash pipelines/scripts/launch.sh \
     --model llama31_8b --gpus "$GPUS" \
-    > experiments/logs/phase7_v7_llama31_8b_outer.log 2>&1 &
+    > logs/phase7_v7_llama31_8b_outer.log 2>&1 &
 
 # 5. Aggregate F1 grid (see Section 4)
 ```

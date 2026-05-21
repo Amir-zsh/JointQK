@@ -237,7 +237,7 @@ The **relative ranking** is preserved: at K=4 the methods are within sampling no
 ## 8. Recommended next experiments
 
 1. **Llama-3.1-8B v7 reproduction** on a remote machine using the runbook (`notes/bench_llama_runbook.md`). Cross-model agreement on the JointQK K=2 multi-doc QA win is the strongest cross-validation we can do.
-2. **`--jobs-per-gpu 1` as v7 default** — update `experiments/scripts/launch.sh` so the next sweep starts directly at the safe concurrency level. This Qwen run wasted ~9 GPU-hours on pass-1 thrashing.
+2. **`--jobs-per-gpu 1` as v7 default** — update `pipelines/scripts/launch.sh` so the next sweep starts directly at the safe concurrency level. This Qwen run wasted ~9 GPU-hours on pass-1 thrashing.
 3. **Drop the trec metric artifact** at the scorer level — patch the LongBench `calculate_metrics` to strip leading/trailing markdown formatting before exact-match. With the strip, FP would jump from ~41 to ~65 on trec and the 12-task means become honest.
 4. **Per-layer / per-task contribution analysis.** Now that we have full v7 numbers, decompose JointQK's K=2 hotpotqa win by layer and head — does it come from a few attention heads, or uniformly?
 5. **Optional V revisit at K=2.** v_turboquant beat v_eigen_uniform by ~+6 pp at K=2 in the disconnect investigation. A focused v_random / v_eigen_waterfill rerun at v7 would check whether v_turboquant remains best with the new pooled-400 calibration.
@@ -248,11 +248,11 @@ The **relative ranking** is preserved: at K=4 the methods are within sampling no
 ## 9. Where things live
 
 - Raw results: `artifacts/bench/qwen3_8b/<config>_<task>/longbench__<task>__Qwen--Qwen3-8B__<press>__<ratio>/{metrics.json,predictions.csv,config.yaml}`. **Pass-1 successes write to canonical dir; pass-2 successes write to `<canonical>/N/` numbered subdirs.** The aggregator script in this report follows that convention.
-- Per-cell logs: `experiments/logs/phase7_v7_qwen3_8b/job_*_a*.log`
-- Dispatcher overview: `experiments/logs/phase7_v7_qwen3_8b/_overview.log` (pass 2; pass 1 was overwritten when pass 2 launched — pass-1 status was at-rest 40 OK + 152 OOM!)
-- Pass-2 outer launcher log: `experiments/logs/phase7_v7_qwen3_8b_pass2_outer.log`
-- v7 launcher: `experiments/scripts/launch.sh`
-- Press source: `experiments/toolkit/{jointqk_press,turboquant_press,kivi_press,v_compressor_adapter}.py`
+- Per-cell logs: `logs/phase7_v7_qwen3_8b/job_*_a*.log`
+- Dispatcher overview: `logs/phase7_v7_qwen3_8b/_overview.log` (pass 2; pass 1 was overwritten when pass 2 launched — pass-1 status was at-rest 40 OK + 152 OOM!)
+- Pass-2 outer launcher log: `logs/phase7_v7_qwen3_8b_pass2_outer.log`
+- v7 launcher: `pipelines/scripts/launch.sh`
+- Press source: `src/kvq/toolkit/{jointqk_press,turboquant_press,kivi_press,v_compressor_adapter}.py`
 - v7 K calibration: `artifacts/bases/cca_stats_longbench_compact8_n400.pt` (sigma_q, sigma_k, R_sym pooled over 400 LongBench-compact8 train prompts)
 - v7 V calibration: `artifacts/v_bases/v_stats_longbench_compact8_n400.pt` (cov_v, mu_v — unused by v_turboquant but retained)
 - v_lock.txt: `artifacts/v_bases/v_lock.txt` (`V_METHOD=v_turboquant V_BITS=3 V_REL_F1_AT_LOCK=1.0080`)

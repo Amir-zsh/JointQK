@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-05
 **Run:** `artifacts/calibration/longbench_compact8_qkv/05_reports/preview_pooled_n50/`
-**Source:** `experiments/calibration/preview_pooled.py` (multi-GPU rewrite, 2026-05-05)
+**Source:** `pipelines/calibration/preview_pooled.py` (multi-GPU rewrite, 2026-05-05)
 
 ---
 
@@ -197,7 +197,7 @@ This run: 6 shards on GPUs 0–5, ~38 min wall time. Peak resident RAM ≈ 120 G
 
 1. **Re-launch the full sweep** with the memory + resume fixes:
    ```
-   .venv/bin/python experiments/calibration/launch.py \
+   .venv/bin/python pipelines/calibration/launch.py \
      --stage analysis --gpus 0,1,2,3,4,5 --sample-sizes 10,30,50 --repetitions 1 --resume
    ```
    Now safe against OOM (bounded raw cache + freed per idx) and against crashes (atomic per-trial write + working resume). Estimated 3–4 h.

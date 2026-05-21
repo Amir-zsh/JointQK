@@ -19,8 +19,8 @@ artifacts/bases/llama31_8b/
 artifacts/v_bases/
 artifacts/_compressor_cache/
 artifacts/_refactor_smoke/
-experiments/notebooks/data
-experiments/logs/
+notebooks/data
+logs/
 paper/
 *.pt.pre_*
 *.pre_messages_hash.*
@@ -37,3 +37,7 @@ artifacts/calibration/*/04_analysis_pre_*/
 artifacts/calibration/*/logs/
 # Per-shard preview accumulator logs (the merged.json + launcher.log are kept)
 artifacts/calibration/*/05_reports/preview_pooled_n50/shard_*.log
+
+# Editable-install metadata
+*.egg-info/
+build/

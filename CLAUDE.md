@@ -8,16 +8,17 @@ See `README.md` for the public-facing high-level project description and `notes/
 
 ## Repo layout (essentials)
 
-- `experiments/`
+- `src/kvq/` — importable library (`pip install -e .` exposes it as `kvq.*`).
+  - `toolkit/` — reusable building blocks (`jointqk_press`, `turboquant_press`, `kivi_press`, `per_coord_quantization`, `capture`, `metric_transform`, ...).
+  - `benchmarks/`, `data/` — vendored kvpress data adapters + scorers.
+- `pipelines/` — entry-point scripts and shell launchers (importable as `pipelines.*` via `pip install -e .`).
   - `calibration/` — capture K/V from a prompt corpus, compute pooled second moments (`Σ_Q`, `Σ_K`, `C_QK`), build joint Q-K bases.
   - `bench/` — downstream LongBench/RULER F1 sweep. `worker.py` is the per-cell driver; `launch_*.sh` are the parallel launchers; `parallel_launcher.py` is the GPU pool scheduler; `_chain.py` is the multi-stage orchestrator.
   - `analysis/` — the Llama JointQK F1-inversion probes: K-fidelity measurement, attention-KL, logit-KL, decode-Q trajectory, Σ_Q drift, HTML report builder.
-  - `calibration_stability/` — ablation sweeps studying basis stability across calibration corpora (formerly "phase 1AB/1D").
-  - `scripts/` — calibration-build utilities (`build_calibration_artifacts_from_pool.py`, `create_longbench_calibration_split.py`, `collect_qk_prefill_stats.py`, ...). Thin consumer-side helpers; capture itself lives in `calibration/`.
-  - `toolkit/` — reusable building blocks (`jointqk_press`, `turboquant_press`, `kivi_press`, `per_coord_quantization`, `capture`, `metric_transform`, ...).
+  - `calibration_stability/` — ablation sweeps studying basis stability across calibration corpora.
+  - `scripts/` — calibration-build utilities (`build_calibration_artifacts_from_pool.py`, `create_longbench_calibration_split.py`, `collect_qk_prefill_stats.py`, ...).
   - `eval/` — aggregators (`aggregate_longbench`, `aggregate_ruler`, `aggregate_decode_scope`, `aggregate_phase1`, `aggregate_integrity`).
-  - `benchmarks/`, `data/` — vendored kvpress data adapters.
-  - `tests/`, `notebooks/`, `logs/` (run logs, gitignored).
+- `tests/`, `notebooks/`, `logs/` (run logs, gitignored) — top-level utilities.
 - `artifacts/` — per-study output directories. Bench results live under `bench*/`; calibration captures under `calibration/`; Llama analysis under `decode_q_captures_llama/`, `q_distribution_shift/`, etc.
 - `notes/` — `core/` (framing), `reference/` (derivations), `<study>/` (per-study write-ups, bug trackers, shareable summaries).
 - `vendor/` — vendored Apache-2.0 / similar deps: `vendor/kvpress/`, `vendor/turboquant-pytorch/`, `vendor/kivi/`. Do not modify directly without good reason. (`vendor/turboquant_pytorch` is a symlink so `import turboquant_pytorch` resolves through the hyphen-named source dir.)
@@ -26,10 +27,10 @@ See `README.md` for the public-facing high-level project description and `notes/
 
 The pipeline:
 
-1. **Calibrate.** `experiments/calibration/` captures K/V from a calibration corpus and emits per-(layer, kv_head) second moments. The `scripts/build_calibration_artifacts_from_pool.py` consumer then pools captures into a basis artifact (`cca_stats_*.pt`).
-2. **Bench.** `experiments/bench/launch_*.sh` parallelises `bench/worker.py` across GPUs; each worker runs one (method × bits × task) cell of the LongBench/RULER sweep and emits `metrics.json`.
-3. **Aggregate.** `experiments/eval/aggregate_*.py` lifts the per-cell JSONs into canonical summary tables.
-4. **Analyse.** `experiments/analysis/` runs fidelity probes (K-MSE, top-1, attention-KL, logit-KL, decode trajectory) against the same bases and emits the JQ investigation HTML.
+1. **Calibrate.** `pipelines/calibration/` captures K/V from a calibration corpus and emits per-(layer, kv_head) second moments. The `scripts/build_calibration_artifacts_from_pool.py` consumer then pools captures into a basis artifact (`cca_stats_*.pt`).
+2. **Bench.** `pipelines/bench/launch_*.sh` parallelises `bench/worker.py` across GPUs; each worker runs one (method × bits × task) cell of the LongBench/RULER sweep and emits `metrics.json`.
+3. **Aggregate.** `pipelines/eval/aggregate_*.py` lifts the per-cell JSONs into canonical summary tables.
+4. **Analyse.** `pipelines/analysis/` runs fidelity probes (K-MSE, top-1, attention-KL, logit-KL, decode trajectory) against the same bases and emits the JQ investigation HTML.
 
 Per-study directories under `artifacts/` follow a consistent pattern: `metrics.json` per cell, optional aggregated `*_summary.json`, optional `report_charts/`.
 
@@ -38,10 +39,10 @@ Per-study directories under `artifacts/` follow a consistent pattern: `metrics.j
 - **Headline numbers are layer-0 excluded.** Layer 0 has anomalous norm/condition properties (a finding from earlier in the project). Per-layer arrays are stored full; the headline mean drops index 0.
 - **Pre-merge backups.** Before a re-run replaces canonical artifacts, save `.pre_<fix>` copies of every JSON or row-PT it'll overwrite. Existing examples: `*.pre_f11`, `*.pre_newbases`. Large binaries (`*.pt.pre_<fix>`) are `.gitignore`'d; small JSONs are kept under version control for diff/audit.
 - **GPU allocation.** GPUs 0–3 are the user's allocation. Do not run on GPUs 4–6; unless asked explicitly.
-- **Long studies run autonomously.** When the user asks for a multi-step study, treat it as one logical task: run end-to-end, stream progress to `experiments/logs/<run_name>.log` with a `<run_name>.heartbeat` touched periodically. Validate each step before proceeding to the next; never stack experiments on unvalidated upstream output. Use `python -u` (unbuffered) for any script that emits progress.
+- **Long studies run autonomously.** When the user asks for a multi-step study, treat it as one logical task: run end-to-end, stream progress to `logs/<run_name>.log` with a `<run_name>.heartbeat` touched periodically. Validate each step before proceeding to the next; never stack experiments on unvalidated upstream output. Use `python -u` (unbuffered) for any script that emits progress.
 - **Bug tracking.** `notes/<study>/fixes_to_apply.md` is for **bugs only** — root cause, fix description, verification result. Do not append "ran cleanly" / activity-log entries; that file is a tracker, not a journal.
-- **Regression baselines.** `experiments/tests/baselines/fingerprint_pre.json` pins F1 + Σ_Q drift numbers from the canonical artifacts. Use `python -m experiments.tests.regression_fingerprint check --baseline <path>` to detect drift before a commit lands.
-- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `experiments/toolkit/per_coord_quantization.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
+- **Regression baselines.** `tests/baselines/fingerprint_pre.json` pins F1 + Σ_Q drift numbers from the canonical artifacts. Use `python -m tests.regression_fingerprint check --baseline <path>` to detect drift before a commit lands.
+- **New methods plug in at one place.** Method dispatch lives in `build_jointqk_compressor` inside `src/kvq/toolkit/per_coord_quantization.py`. A new method adds a branch that produces `forward_map`, `inverse_map`, `sigma_k_diag`, and `weights`, then reuses the existing `_uniform` / `_waterfill` allocation tail. Keep additions there rather than scattering them across the driver.
 
 ## Common commands
 
@@ -53,25 +54,25 @@ Per-study directories under `artifacts/` follow a consistent pattern: `metrics.j
 source .venv/bin/activate
 
 # Bench sweep (one method × bits × task at a time, parallelised across GPUs):
-bash experiments/bench/launch.sh --gpus 0,1,2,3
-bash experiments/bench/launch_longbench.sh --gpus 0,1,2,3
-bash experiments/bench/launch_ruler.sh --gpus 0,1,2,3
+bash pipelines/bench/launch.sh --gpus 0,1,2,3
+bash pipelines/bench/launch_longbench.sh --gpus 0,1,2,3
+bash pipelines/bench/launch_ruler.sh --gpus 0,1,2,3
 
 # Single-cell debug — call the worker directly with a JSONL config:
-.venv/bin/python experiments/bench/worker.py --commands-file <jsonl> --gpu 0
+.venv/bin/python pipelines/bench/worker.py --commands-file <jsonl> --gpu 0
 
 # Llama JQ investigation probes:
-python -m experiments.analysis.measure_logit_kl_llama --tasks lcc hotpotqa
-python -m experiments.analysis.analyze_q_distribution_shift --tasks lcc
-python -m experiments.analysis.build_jq_investigation_html \
+python -m pipelines.analysis.measure_logit_kl_llama --tasks lcc hotpotqa
+python -m pipelines.analysis.analyze_q_distribution_shift --tasks lcc
+python -m pipelines.analysis.build_jq_investigation_html \
     --out notes/jointqk_investigation_report.html
 
 # Calibration build:
-.venv/bin/python experiments/scripts/build_calibration_artifacts_from_pool.py \
+.venv/bin/python pipelines/scripts/build_calibration_artifacts_from_pool.py \
     --run-id longbench_compact9_qkv_llama31_8b --output-suffix llama31_8b_compact9_n450
 
 # Calibration-stability sweep:
-bash experiments/calibration_stability/launch_ab.sh --gpus 0,1,2,3
+bash pipelines/calibration_stability/launch_ab.sh --gpus 0,1,2,3
 ```
 
 ## Code style

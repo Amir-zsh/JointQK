@@ -217,5 +217,5 @@ These numbers compress layer 0 for all methods. TurboQuant's random-Hadamard suf
 | Per-layer top-1 mining | `artifacts/calibration/longbench_compact8_qkv/05_reports/perlayer_top1.json` |
 | Decode-q top-1 | `artifacts/calibration/longbench_compact8_qkv/05_reports/decode_q_top1.json` |
 | Softmax-KL | `artifacts/calibration/longbench_compact8_qkv/05_reports/softmax_kl.json` |
-| Build / launcher / measurement scripts | `experiments/scripts/{build_calibration_artifacts_from_pool,build_per_task_basis,launch_phase7_basis_compare,launch_phase7_v_ablation,launch_phase7_per_task_basis,launch_phase7_v_turboquant,analyze_perlayer_top1,measure_decode_q_top1,measure_softmax_kl}.{py,sh}` |
-| Per-cell run logs | `experiments/logs/phase7_{v_ablation,per_task_basis,v_turboquant}/`, `experiments/logs/{softmax_kl,softmax_kl_v2,decode_q_top1}.log` |
+| Build / launcher / measurement scripts | `pipelines/scripts/{build_calibration_artifacts_from_pool,build_per_task_basis,launch_phase7_basis_compare,launch_phase7_v_ablation,launch_phase7_per_task_basis,launch_phase7_v_turboquant,analyze_perlayer_top1,measure_decode_q_top1,measure_softmax_kl}.{py,sh}` |
+| Per-cell run logs | `logs/phase7_{v_ablation,per_task_basis,v_turboquant}/`, `logs/{softmax_kl,softmax_kl_v2,decode_q_top1}.log` |

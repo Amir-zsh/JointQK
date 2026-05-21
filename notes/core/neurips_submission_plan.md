@@ -40,8 +40,8 @@ Confirm JointQK WaterFill wins on a second model family. Risk: if it doesn't, th
 **Gate:** JointQK WaterFill wins at every b ∈ {2, 3, 4} on Llama, with a margin ≥ 5 pp top-1 over the next-best method at b=3. If it doesn't win, escalate to user before continuing — this is a paper-defining outcome.
 
 **New files:**
-- `experiments/scripts/launch_llama_e3_e5.sh` — orchestrator for E3+E5 on Llama
-- `experiments/scripts/make_cross_model_chart.py` — overlay chart
+- `pipelines/scripts/launch_llama_e3_e5.sh` — orchestrator for E3+E5 on Llama
+- `pipelines/scripts/make_cross_model_chart.py` — overlay chart
 - `artifacts/bases/llama31_8b/` — separate output directory for Llama runs
 
 **Existing reused:** `run_bases.py`, `build_method_compressor` (no new methods needed), `gates/gate_e3.py` (auto-discovers methods).
@@ -65,10 +65,10 @@ This is the highest-leverage missing experiment. Reviewers will reject a 0.860 a
 **Gate:** JointQK at b=3 retains ≥ 90% of full-precision LongBench task score on both models, vs ≥ 85% for TurboQuant and KIVI at the same budget.
 
 **New files:**
-- `experiments/eval/longbench_runner.py` — generates predictions with each compression method, scores against gold
-- `experiments/eval/ruler_runner.py` — same for RULER NIAH subset
-- `experiments/toolkit/jointqk_press.py` — kvpress press wrapping JointQK
-- `experiments/toolkit/kivi_press.py` — KIVI baseline wrapped as kvpress press
+- `pipelines/eval/longbench_runner.py` — generates predictions with each compression method, scores against gold
+- `pipelines/eval/ruler_runner.py` — same for RULER NIAH subset
+- `src/kvq/toolkit/jointqk_press.py` — kvpress press wrapping JointQK
+- `src/kvq/toolkit/kivi_press.py` — KIVI baseline wrapped as kvpress press
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/longbench_summary.json`
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/ruler_summary.json`
 
@@ -114,24 +114,24 @@ The paper draft starts on Day 1, before experiments finish. Sections that are fa
 ## Critical files
 
 **To create or substantially extend:**
-- `experiments/scripts/launch_llama_e3_e5.sh`
-- `experiments/scripts/make_cross_model_chart.py`
-- `experiments/eval/longbench_runner.py`
-- `experiments/eval/ruler_runner.py`
-- `experiments/toolkit/jointqk_press.py`
-- `experiments/toolkit/kivi_press.py`
+- `pipelines/scripts/launch_llama_e3_e5.sh`
+- `pipelines/scripts/make_cross_model_chart.py`
+- `pipelines/eval/longbench_runner.py`
+- `pipelines/eval/ruler_runner.py`
+- `src/kvq/toolkit/jointqk_press.py`
+- `src/kvq/toolkit/kivi_press.py`
 - `paper/main/main.tex` and supporting files
 - `paper/main/figs/` (new figures + ports of existing artifacts)
 
 **To extend (small changes):**
 - `experiments/run_bases.py` — accept `--model-id` if not already there
-- `experiments/scripts/make_e3_charts.py`, `make_e5_charts.py` — multi-model overlay support
+- `pipelines/scripts/make_e3_charts.py`, `make_e5_charts.py` — multi-model overlay support
 - `experiments/gates/gate_e3.py` — Llama-specific thresholds if needed (likely not — auto-discovery handles it)
 
 **To reuse unchanged:**
-- `experiments/toolkit/per_coord_quantization.py` (`build_method_compressor` already supports JointQK)
-- `experiments/toolkit/metric_transform.py` (water-fill solver, basis builders)
-- `experiments/toolkit/quantization.py` (Lloyd–Max)
+- `src/kvq/toolkit/per_coord_quantization.py` (`build_method_compressor` already supports JointQK)
+- `src/kvq/toolkit/metric_transform.py` (water-fill solver, basis builders)
+- `src/kvq/toolkit/quantization.py` (Lloyd–Max)
 - `kvpress/` (vendored library — wrap, don't fork)
 
 ## Decision points & risks

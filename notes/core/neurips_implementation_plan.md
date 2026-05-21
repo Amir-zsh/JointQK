@@ -57,7 +57,7 @@ python -u -m experiments.collect_query_stats \
     --model meta-llama/Llama-3.1-8B-Instruct \
     --output artifacts/query_stats_longbench_under4k_llama31_8b \
     --gpus 0,1 \
-    2>&1 | tee experiments/logs/capture_llama31.log
+    2>&1 | tee logs/capture_llama31.log
 ```
 
 **Verification:**
@@ -71,14 +71,14 @@ python -u -m experiments.collect_query_stats \
 
 ```bash
 # Calibration + E3 + E5 in one launcher (extends launch_cca_study.sh)
-bash experiments/scripts/launch_llama_e3_e5.sh \
+bash pipelines/scripts/launch_llama_e3_e5.sh \
     --bundle artifacts/query_stats_longbench_under4k_llama31_8b \
     --output-subdir llama31_8b \
     --gpus 0,1,2,3 \
-    2>&1 | tee experiments/logs/llama31_e3_e5.log
+    2>&1 | tee logs/llama31_e3_e5.log
 ```
 
-**New file:** `experiments/scripts/launch_llama_e3_e5.sh` (~30 lines). Models after `launch_cca_study.sh`. Hardcoded:
+**New file:** `pipelines/scripts/launch_llama_e3_e5.sh` (~30 lines). Models after `launch_cca_study.sh`. Hardcoded:
 - bundle path → input
 - output_subdir → `llama31_8b`
 - methods → all 9 (TurboQuant + 8 calibrated variants)
@@ -95,7 +95,7 @@ Gates auto-discover methods. Pass criterion: `r_sym_waterfill` is top-ranked at 
 
 ### W1.3 Cross-model chart (Day 5)
 
-**New file:** `experiments/scripts/make_cross_model_chart.py` (~80 lines). Reads:
+**New file:** `pipelines/scripts/make_cross_model_chart.py` (~80 lines). Reads:
 - `artifacts/bases/e3/{e3_b{2,3,4}_r64_summary.json}` (Qwen, post-newbases)
 - `artifacts/bases/llama31_8b/e3/{e3_b{2,3,4}_r64_summary.json}` (new Llama)
 
@@ -107,7 +107,7 @@ Produces `report_charts/cross_model_b_sensitivity.png` — two-panel (Qwen | Lla
 
 ### W2.1 — `JointQKPress` (Days 3–4)
 
-**New file:** `experiments/toolkit/jointqk_press.py`.
+**New file:** `src/kvq/toolkit/jointqk_press.py`.
 
 **Class skeleton:**
 ```python
@@ -115,7 +115,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import torch
 from kvpress.presses.base_press import BasePress
-from experiments.toolkit.per_coord_quantization import (
+from kvq.toolkit.per_coord_quantization import (
     PerCoordCompressor, build_method_compressor,
 )
 
@@ -195,11 +195,11 @@ For Mode B we could alternatively wrap two presses with `kvpress.PrefillDecoding
 1. Per-batch loop over heads is OK for evaluation (we're not optimizing throughput here).
 2. `cca_stats.pt` may need to have R_sym / V_h pre-computed and saved. Currently, `run_bases.py` derives them on-the-fly via `_derive_vh_rsym`. To keep press lean, **add a one-time pre-derivation step** that saves R_sym + V_h into cca_stats.pt for both models.
 
-**Pre-derive script** (~30 lines): `experiments/scripts/precompute_newbases.py`. Loads cca_stats.pt, runs `_derive_vh_rsym` per (layer, head), writes cca_stats.pt back with two new keys. Idempotent.
+**Pre-derive script** (~30 lines): `pipelines/scripts/precompute_newbases.py`. Loads cca_stats.pt, runs `_derive_vh_rsym` per (layer, head), writes cca_stats.pt back with two new keys. Idempotent.
 
 ### W2.2 — `TurboQuantPress` (Day 4, ~1h)
 
-**New file:** `experiments/toolkit/turboquant_press.py`. ~80 lines.
+**New file:** `src/kvq/toolkit/turboquant_press.py`. ~80 lines.
 
 Same skeleton as JointQKPress but no calibration: per layer/head, build a random Hadamard matrix once (seeded), use uniform Lloyd-Max bits. Reuses `PerCoordCompressor` directly with `forward_map = H_hadamard`, `inverse_map = H_hadamard.T`.
 
@@ -209,9 +209,9 @@ Same skeleton as JointQKPress but no calibration: per layer/head, build a random
 
 **Edit:** `kvpress/evaluation/evaluate_registry.py`.
 ```python
-from experiments.toolkit.jointqk_press import JointQKPress
-from experiments.toolkit.turboquant_press import TurboQuantPress
-from experiments.toolkit.kivi_press import KIVIPress
+from kvq.toolkit.jointqk_press import JointQKPress
+from kvq.toolkit.turboquant_press import TurboQuantPress
+from kvq.toolkit.kivi_press import KIVIPress
 
 PRESS_REGISTRY.update({
     "jointqk": JointQKPress,
@@ -239,7 +239,7 @@ python evaluate.py \
 
 ### W2.5 — Validate presses reproduce Stage-1E numbers (Day 6, ~2h)
 
-**New file:** `experiments/tests/test_press_roundtrip_parity.py`.
+**New file:** `tests/test_press_roundtrip_parity.py`.
 
 Loads:
 - One example from the 24-example bundle (e.g. `qasper_e_001.pt`)
@@ -276,7 +276,7 @@ for task in qasper narrativeqa; do
 done
 ```
 
-**Aggregator:** `experiments/eval/aggregate_decode_scope.py` (~80 lines). Reads the 12 result.json files, prints the comparison table:
+**Aggregator:** `pipelines/eval/aggregate_decode_scope.py` (~80 lines). Reads the 12 result.json files, prints the comparison table:
 
 ```
               | qasper      | narrativeqa
@@ -288,7 +288,7 @@ Mode B (both) | ...
 
 **Decision rule:** if `max(|Δ|) < 2.0 pp` across all 6 (task, b) cells → Mode B wins, set `JOINTQK_DEFAULT_MODE = B` for all subsequent W2b runs and the headline result. Otherwise Mode A wins, headline uses Mode A, Mode B numbers go into a paper appendix table titled "Decode-scope ablation".
 
-**New file:** `experiments/eval/aggregate_decode_scope.py`. Outputs both the comparison table (LaTeX) and a one-line "WINNER: Mode A/B" decision string consumed by W2b launchers.
+**New file:** `pipelines/eval/aggregate_decode_scope.py`. Outputs both the comparison table (LaTeX) and a one-line "WINNER: Mode A/B" decision string consumed by W2b launchers.
 
 **W2c gate (C5.5 — see checkpoints):** decision string written to `$OUT/decision.txt`. W2b.1 reads this file to set `compress_decode` for all JointQK runs; this prevents the full sweep from racing the ablation.
 
@@ -343,7 +343,7 @@ python kvpress/evaluation/evaluate.py \
 
 **Compute estimate:** LongBench has 12 tasks, ~200 examples each, ~4–32k token contexts. On Qwen3-8B at fp16, prefill ~6 ms/token, generation ~25 ms/token, max_new_tokens ~200. Per-config: ~12 * 200 * (16k * 6ms + 200*25ms) ≈ 4 hours wall. 8 configs (4 methods × b=2/3/4 ish) × 2 models = a lot. Plan: parallelize across GPUs 0–3. Estimated end-to-end ~24 GPU-hours = 6 wall-hours on 4 GPUs.
 
-**Aggregator:** `experiments/eval/aggregate_longbench.py` (~100 lines). Reads all `$OUT/*/results.json`, builds a single `longbench_summary.json` with per-task × per-method × per-b cells, plus mean/std.
+**Aggregator:** `pipelines/eval/aggregate_longbench.py` (~100 lines). Reads all `$OUT/*/results.json`, builds a single `longbench_summary.json` with per-task × per-method × per-b cells, plus mean/std.
 
 ### W2b.2 LongBench on Llama-3.1-8B (Day 8)
 
@@ -357,7 +357,7 @@ If time-pressed: drop to NIAH at length 16384 only; cite "compute budget" in the
 
 ### W2b.4 Bit-budget sensitivity tables/charts (Day 10)
 
-**New file:** `experiments/scripts/make_downstream_charts.py`. Inputs the aggregated `longbench_summary.json` and `ruler_summary.json`; produces:
+**New file:** `pipelines/scripts/make_downstream_charts.py`. Inputs the aggregated `longbench_summary.json` and `ruler_summary.json`; produces:
 - `report_charts/downstream_longbench_table.tex` — LaTeX-ready table (12 tasks × 4 methods × b∈{2,3,4})
 - `report_charts/downstream_ruler_table.tex`
 - `report_charts/downstream_bit_budget_curve.png` — task score vs b_avg per method
@@ -370,7 +370,7 @@ If time-pressed: drop to NIAH at length 16384 only; cite "compute budget" in the
 
 ### W3.1 Implement KIVI K-quantizer (Day 5, ~6h)
 
-**New file:** `experiments/toolkit/kivi_quantizer.py` (~150 lines).
+**New file:** `src/kvq/toolkit/kivi_quantizer.py` (~150 lines).
 
 Per the KIVI paper (Liu et al. 2024): per-channel int4 quantization for K with group size G=128 along the channel axis (with G=head_dim=128, this collapses to per-channel asymmetric int4).
 
@@ -388,11 +388,11 @@ Per-channel asymmetric scheme: for each channel `c` and group `g`, `scale = (max
 
 ### W3.2 Wrap as KIVIPress (Day 6, ~1h)
 
-**New file:** `experiments/toolkit/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
+**New file:** `src/kvq/toolkit/kivi_press.py` (~60 lines). BasePress subclass. `compress()` calls `kivi_quantize_keys(keys, ...)` then `kivi_dequantize_keys(...)` and returns the recon. No state per layer.
 
 ### W3.3 Validate KIVI matches paper (Days 7–8)
 
-**New file:** `experiments/scripts/validate_kivi.py`. Runs KIVIPress at int4 on a subset of LongBench (qasper, narrative_qa) and compares to the KIVI paper's reported numbers (~0.85 retention vs full precision). Tolerance: ±3 pp.
+**New file:** `pipelines/scripts/validate_kivi.py`. Runs KIVIPress at int4 on a subset of LongBench (qasper, narrative_qa) and compares to the KIVI paper's reported numbers (~0.85 retention vs full precision). Tolerance: ±3 pp.
 
 If gap > 3 pp, audit:
 - Is V quantized as well? KIVI's published numbers are with V quantized too (per-token int4). Our paper is K-only — so the comparison should be K-only KIVI, not full KIVI. Add a note in the paper: "we compare K-only KIVI for an apples-to-apples comparison of the K-cache quantization mechanism."
@@ -504,19 +504,19 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 ### New files (count: ~14 code + ~10 paper)
 
 **Code:**
-- `experiments/scripts/launch_llama_e3_e5.sh`
-- `experiments/scripts/precompute_newbases.py`
-- `experiments/scripts/make_cross_model_chart.py`
-- `experiments/scripts/make_downstream_charts.py`
-- `experiments/scripts/validate_kivi.py`
-- `experiments/eval/aggregate_longbench.py`
-- `experiments/eval/aggregate_ruler.py`
-- `experiments/eval/aggregate_decode_scope.py` (W2c decision)
-- `experiments/toolkit/jointqk_press.py`
-- `experiments/toolkit/turboquant_press.py`
-- `experiments/toolkit/kivi_press.py`
-- `experiments/toolkit/kivi_quantizer.py`
-- `experiments/tests/test_press_roundtrip_parity.py`
+- `pipelines/scripts/launch_llama_e3_e5.sh`
+- `pipelines/scripts/precompute_newbases.py`
+- `pipelines/scripts/make_cross_model_chart.py`
+- `pipelines/scripts/make_downstream_charts.py`
+- `pipelines/scripts/validate_kivi.py`
+- `pipelines/eval/aggregate_longbench.py`
+- `pipelines/eval/aggregate_ruler.py`
+- `pipelines/eval/aggregate_decode_scope.py` (W2c decision)
+- `src/kvq/toolkit/jointqk_press.py`
+- `src/kvq/toolkit/turboquant_press.py`
+- `src/kvq/toolkit/kivi_press.py`
+- `src/kvq/toolkit/kivi_quantizer.py`
+- `tests/test_press_roundtrip_parity.py`
 - `artifacts/bases/llama31_8b/` (output dir, populated by W1.2)
 - `artifacts/downstream/{qwen3_8b,llama31_8b}/` (output dirs, populated by W2b)
 
@@ -533,9 +533,9 @@ Days 16–19 are unallocated buffer; if everything is on rails, those days absor
 ### Existing infrastructure reused unchanged
 
 - `experiments/run_bases.py` — bundle-driven, model-agnostic
-- `experiments/toolkit/per_coord_quantization.py` — `build_method_compressor` already supports JointQK
-- `experiments/toolkit/metric_transform.py` — water-fill, basis builders, polar orthogonalization
-- `experiments/toolkit/quantization.py` — Lloyd–Max codebooks
+- `src/kvq/toolkit/per_coord_quantization.py` — `build_method_compressor` already supports JointQK
+- `src/kvq/toolkit/metric_transform.py` — water-fill, basis builders, polar orthogonalization
+- `src/kvq/toolkit/quantization.py` — Lloyd–Max codebooks
 - `experiments/gates/gate_e{3,5}.py` — auto-discovery, no edits needed
 - `kvpress/kvpress/presses/base_press.py` — BasePress, hook lifecycle (no edits)
 - `kvpress/evaluation/evaluate.py` — harness for both LongBench and RULER

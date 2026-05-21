@@ -159,8 +159,8 @@ structure**, not error magnitude or basis alignment.
   - `artifacts/q_distribution_shift/per_task_drift.json`
   - `notes/figs/q_drift/*.png`
 - Source code:
-  - `experiments/scripts/analyze_q_distribution_shift.py`
-  - `experiments/scripts/capture_decode_q_llama_multi_task.py`
-  - `experiments/scripts/plot_q_distribution_shift.py`
-  - `experiments/scripts/build_calibration_artifacts_from_pool.py` (now
+  - `pipelines/scripts/analyze_q_distribution_shift.py`
+  - `pipelines/scripts/capture_decode_q_llama_multi_task.py`
+  - `pipelines/scripts/plot_q_distribution_shift.py`
+  - `pipelines/scripts/build_calibration_artifacts_from_pool.py` (now
     supports `--filter-config <task>` for single-task bases)
