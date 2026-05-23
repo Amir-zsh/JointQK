@@ -149,6 +149,11 @@ class JointQKPress(BasePress):
             n_layers, n_kv_heads, d, _ = cca["sigma_q"].shape
             self._n_layers = n_layers
             self._n_kv_heads = n_kv_heads
+            # QPCA fields (optional). Bundle may contain them alongside R_sym when
+            # both bases were built at calibration time. When k_method = "qpca_*",
+            # they MUST be present; build_jointqk_compressor errors otherwise.
+            has_qpca = all(k in cca for k in ("qpca_forward", "qpca_inverse", "qpca_eigvals"))
+            has_rsym = "R_sym" in cca
             for L in range(n_layers):
                 if L == 0 and self.layer0_full_precision:
                     continue
@@ -157,10 +162,13 @@ class JointQKPress(BasePress):
                         method=self.k_method,
                         sigma_q_for_head=cca["sigma_q"][L, h],
                         sigma_k_for_head=cca["sigma_k"][L, h],
-                        R_sym=cca["R_sym"][L, h],
+                        R_sym=cca["R_sym"][L, h] if has_rsym else None,
                         b_avg=float(self.k_bits),
                         r=self.rank,
                         head_dim=d,
+                        qpca_forward=cca["qpca_forward"][L, h] if has_qpca else None,
+                        qpca_inverse=cca["qpca_inverse"][L, h] if has_qpca else None,
+                        qpca_eigvals=cca["qpca_eigvals"][L, h] if has_qpca else None,
                     )
 
         if self.quantize_v:

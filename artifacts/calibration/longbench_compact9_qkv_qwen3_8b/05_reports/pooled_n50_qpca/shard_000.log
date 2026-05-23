@@ -1,0 +1,38 @@
+[08:19:39] shard 0/4 on cuda (visible: 0)
+[08:19:39] loading aggregate (~2.5 GB)...
+[08:19:40] pooled regime: 450 train + 90 test
+[08:19:40] summing train stats over 450 examples...
+[08:21:50] stats cache: {'entries': 128, 'hits': 1, 'misses': 450, 'hit_rate': 0.0022172949002217295}
+[08:21:50] building QPCA basis (fp64 eigendecomps in M_q^±1/2 and A)...
+[08:21:52] QPCA shapes: forward=(36, 8, 128, 128) inverse=(36, 8, 128, 128) eigvals=(36, 8, 128)
+[08:21:52] shard 0: eval slice = 23 idx
+[08:21:52] === correctness gates ===
+[08:21:52]   gate 1 (F@G - I, Frobenius max over (L,H)): 2.449e-06 OK
+[08:21:54]   gate 2 (code variance vs Λ on row 67, L=1 H=0): empirical sorted-monotone-frac=0.59 theoretical=1.00 |log-ratio| median=0.09
+[08:21:56]   gate 3 (b=8 relative MSE on L=1 H=0): 6.211e-05 OK
+[08:21:58] building compressors for 288 (L,H) × 3 bits...
+[08:22:02] compressors ready
+[08:22:26] shard 0 idx 1/23 (#67) done in 23.6s
+[08:23:24] shard 0 idx 2/23 (#71) done in 58.3s
+[08:23:29] shard 0 idx 3/23 (#75) done in 4.6s
+[08:23:49] shard 0 idx 4/23 (#79) done in 20.5s
+[08:24:19] shard 0 idx 5/23 (#159) done in 29.2s
+[08:25:43] shard 0 idx 6/23 (#163) done in 84.3s
+[08:26:25] shard 0 idx 7/23 (#167) done in 41.9s
+[08:26:40] shard 0 idx 8/23 (#247) done in 14.9s
+[08:27:53] shard 0 idx 9/23 (#251) done in 73.2s
+[08:29:48] shard 0 idx 10/23 (#255) done in 115.3s
+[08:29:53] shard 0 idx 11/23 (#259) done in 4.9s
+[08:30:57] shard 0 idx 12/23 (#338) done in 64.1s
+[08:31:09] shard 0 idx 13/23 (#342) done in 12.0s
+[08:31:49] shard 0 idx 14/23 (#346) done in 39.7s
+[08:32:08] shard 0 idx 15/23 (#358) done in 19.0s
+[08:32:42] shard 0 idx 16/23 (#428) done in 34.3s
+[08:33:03] shard 0 idx 17/23 (#432) done in 21.2s
+[08:33:49] shard 0 idx 18/23 (#436) done in 45.4s
+[08:34:23] shard 0 idx 19/23 (#448) done in 33.8s
+[08:34:58] shard 0 idx 20/23 (#518) done in 35.5s
+[08:35:09] shard 0 idx 21/23 (#522) done in 10.7s
+[08:35:44] shard 0 idx 22/23 (#526) done in 35.4s
+[08:35:48] shard 0 idx 23/23 (#538) done in 3.5s
+[08:35:48] shard 0: wrote artifacts/calibration/longbench_compact9_qkv_qwen3_8b/05_reports/pooled_n50_qpca/shard_000.json (elapsed 825s)

@@ -1,0 +1,8 @@
+{
+  "model": "Qwen/Qwen3-8B",
+  "run_id": "longbench_compact9_qkv_qwen3_8b",
+  "created_by": "compact8_qkv_qwen3_8b + lcc-only capture (2026-05-21)",
+  "shared_01_raw_with": "longbench_compact8_qkv_qwen3_8b",
+  "shared_02_stats_shards_with": "longbench_compact8_qkv_qwen3_8b",
+  "notes": "01_raw/shard_000..005 and 02_stats/shard_000..005 are symlinks to the matching shards in compact8_qkv_qwen3_8b. New LCC captures write to compact8 via the symlinks (additive; no overwrites). compact8's manifest does not reference LCC rows so its downstream is unaffected."
+}

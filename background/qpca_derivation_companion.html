@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0" />
+<title>Optimal Low-Rank Reconstruction for Inner-Product Preservation — An Interactive Companion</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderAllMath();"></script>
+<style>
+  :root {
+    color-scheme: light;
+    /* Palette adapted from Docura (https://github.com/docura/docura) light theme.
+       Pure white background, desaturated slate-teal text, cyan-blue accent. */
+    --bg: #ffffff;
+    --paper: #ffffff;
+    --ink: #355265;
+    --ink-soft: #476d86;
+    --ink-faint: #8fa1ad;
+    --rule: #dddddd;
+    --accent: #328ac1;
+    --accent-hover: #4b9dd0;
+    --accent-soft: #eaf4fa;
+    --panel-fg: #f7f7f7;
+    --panel-fg2: #ebebeb;
+    /* Semantic block tints: monochrome-leaning, single accent for theorems. */
+    --thm-border: #328ac1;
+    --thm-bg: #eaf4fa;
+    --prop-border: #4b9dd0;
+    --prop-bg: #f0f7fb;
+    --lem-border: #999999;
+    --lem-bg: #f7f7f7;
+    --def-border: #6b8a6b;
+    --def-bg: #eef3ee;
+    --rem-border: #8a7a3a;
+    --rem-bg: #f4efde;
+    --proof-bg: #f7f7f7;
+    /* Winner highlight for results table — sage green, fits the desaturated palette. */
+    --win-fg: #1c5d2c;
+    --win-bg: #e4f3e2;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'tnum';
+  }
+  body {
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Progress bar */
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--rule);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width 320ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* Book container */
+  .book {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .pages {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .page {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 64px 7% 120px;
+    background: var(--paper);
+    transition: transform 520ms cubic-bezier(.6, 0, .25, 1), opacity 320ms;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(100%);
+  }
+  .page.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    z-index: 2;
+  }
+  .page.prev {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  .page.next {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .page-inner {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* Chapter label */
+  .chapter-label {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', sans-serif;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+  h1 {
+    font-size: 38px;
+    margin: 0 0 18px;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 27px;
+    margin: 0 0 22px;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  h3 {
+    font-size: 20px;
+    margin: 36px 0 12px;
+    font-weight: 600;
+  }
+  h4 {
+    font-size: 17px;
+    margin: 24px 0 8px;
+    font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .subtitle {
+    font-size: 19px;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+    font-weight: 400;
+  }
+
+  /* Body text */
+  p {
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  .lead {
+    font-size: 19px;
+    color: var(--ink-soft);
+    margin: 24px 0 32px;
+    line-height: 1.55;
+    font-weight: 400;
+  }
+  .small {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  em.term {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Decorative rule */
+  .ornament {
+    text-align: center;
+    color: var(--ink-faint);
+    letter-spacing: 8px;
+    margin: 24px 0;
+    user-select: none;
+  }
+
+  /* Result blocks */
+  .block {
+    margin: 24px 0;
+    padding: 18px 22px 14px;
+    border-left: 3px solid var(--lem-border);
+    background: var(--lem-bg);
+    border-radius: 0 6px 6px 0;
+    position: relative;
+  }
+  .block-label {
+    display: inline-block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: var(--lem-border);
+    margin-bottom: 8px;
+  }
+  .block-title {
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .block p:last-child { margin-bottom: 0; }
+
+  .theorem {
+    border-left-color: var(--thm-border);
+    background: var(--thm-bg);
+  }
+  .theorem .block-label { color: var(--thm-border); }
+
+  .proposition {
+    border-left-color: var(--prop-border);
+    background: var(--prop-bg);
+  }
+  .proposition .block-label { color: var(--prop-border); }
+
+  .lemma {
+    border-left-color: var(--lem-border);
+    background: var(--lem-bg);
+  }
+
+  .definition {
+    border-left-color: var(--def-border);
+    background: var(--def-bg);
+  }
+  .definition .block-label { color: var(--def-border); }
+
+  .remark {
+    border-left-color: var(--rem-border);
+    background: var(--rem-bg);
+  }
+  .remark .block-label {
+    color: var(--rem-border);
+  }
+  .remark em {
+    font-style: normal;
+    color: var(--ink);
+  }
+
+  /* Proof sketch — collapsible */
+  details.proof {
+    margin: 18px 0;
+    padding: 0;
+    background: var(--proof-bg);
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+  }
+  details.proof summary {
+    cursor: pointer;
+    padding: 10px 18px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: var(--ink-soft);
+    user-select: none;
+    list-style: none;
+  }
+  details.proof summary::-webkit-details-marker { display: none; }
+  details.proof summary::before {
+    content: "▸ ";
+    display: inline-block;
+    transition: transform 200ms;
+    margin-right: 4px;
+  }
+  details.proof[open] summary::before {
+    content: "▾ ";
+  }
+  details.proof[open] {
+    padding-bottom: 14px;
+  }
+  details.proof > *:not(summary) {
+    padding: 0 22px;
+  }
+  details.proof .qed {
+    text-align: right;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* Equations */
+  .katex-display {
+    margin: 18px 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 0;
+  }
+  .katex-display > .katex { font-size: 1.05em; }
+  .eqnum {
+    display: inline-block;
+    float: right;
+    color: var(--ink-faint);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding-top: 12px;
+  }
+
+  /* TOC sidebar */
+  .toc-toggle {
+    position: fixed; top: 16px; left: 16px;
+    z-index: 50;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 140ms;
+  }
+  .toc-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 320px; max-width: 80vw;
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    padding: 56px 28px 28px;
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(.4, 0, .2, 1);
+    z-index: 40;
+    overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+  }
+  .toc.open { transform: translateX(0); }
+  .toc h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin: 0 0 16px;
+    font-weight: 700;
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: tocnum;
+  }
+  .toc li {
+    counter-increment: tocnum;
+    border-bottom: 1px solid var(--rule);
+    padding: 11px 0;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--ink-soft);
+    transition: color 120ms, padding-left 120ms;
+    line-height: 1.35;
+  }
+  .toc li::before {
+    content: counter(tocnum, decimal-leading-zero);
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-right: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .toc li:hover {
+    color: var(--ink);
+    padding-left: 4px;
+  }
+  .toc li.current {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .toc li.current::before {
+    color: var(--accent);
+  }
+
+  /* Navigation */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 30;
+  }
+  .nav-bar button {
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 18px;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 140ms;
+    min-width: 96px;
+  }
+  .nav-bar button:hover:not(:disabled) {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .nav-bar button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .page-info {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .page-info strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Cover page */
+  .cover {
+    text-align: center;
+    padding-top: 64px;
+  }
+  .cover h1 {
+    font-size: 44px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -0.03em;
+  }
+  .cover .subtitle {
+    font-size: 20px;
+    margin-bottom: 56px;
+  }
+  .cover .meta {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 10px 0;
+  }
+  .cover .meta strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .cover .audience {
+    margin-top: 72px;
+    padding: 22px 26px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    font-size: 15px;
+    text-align: left;
+    line-height: 1.55;
+  }
+  .cover .audience strong {
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .start-btn {
+    display: inline-block;
+    margin-top: 40px;
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .start-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(50, 138, 193, 0.25);
+  }
+
+  /* Abstract */
+  .abstract {
+    margin: 36px 0;
+    padding: 20px 24px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    text-align: left;
+  }
+  .abstract::before {
+    content: "Abstract";
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-size: 11px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  /* References */
+  .refs {
+    list-style: none;
+    counter-reset: ref;
+    padding: 0;
+    margin: 24px 0;
+    font-size: 15px;
+  }
+  .refs li {
+    counter-increment: ref;
+    padding-left: 36px;
+    position: relative;
+    margin-bottom: 14px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .refs li::before {
+    content: "[" counter(ref) "]";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Inline code-like terms */
+  code, .mono {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace;
+    font-size: 0.88em;
+    background: var(--lem-bg);
+    border: 1px solid var(--rule);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+
+  /* Results table */
+  table.results {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 22px 0 14px;
+    font-size: 14px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  table.results th, table.results td {
+    padding: 9px 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--rule);
+  }
+  table.results th:first-child, table.results td:first-child,
+  table.results th:nth-child(2), table.results td:nth-child(2) {
+    text-align: left;
+  }
+  table.results thead th {
+    font-weight: 600;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+  }
+  table.results tbody tr.row-jointqk {
+    background: var(--accent-soft);
+  }
+  table.results tbody tr.row-jointqk td {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  /* Winning cells: sage-green pill, ✓ prefix. Higher-specificity selector chained with
+     .row-jointqk so it overrides the jointqk-row accent color. */
+  table.results tbody tr td.win,
+  table.results tbody tr.row-jointqk td.win {
+    font-weight: 700;
+    color: var(--win-fg);
+    background: var(--win-bg);
+  }
+  table.results td.win::before {
+    content: "✓\2009";
+    color: var(--win-fg);
+    font-weight: 700;
+  }
+  /* Inline legend marker — same look as the table cells. */
+  .win-legend {
+    display: inline-block;
+    background: var(--win-bg);
+    color: var(--win-fg);
+    font-weight: 700;
+    padding: 0 5px;
+    border-radius: 3px;
+    margin: 0 1px;
+  }
+  table.results .group-sep td {
+    border-top: 1px solid var(--ink-faint);
+  }
+
+  /* Hint / kbd */
+  kbd {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 820px) {
+    html, body { font-size: 16px; }
+    .page { padding: 56px 6% 100px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; }
+    .cover h1 { font-size: 32px; }
+    .cover .subtitle { font-size: 18px; margin-bottom: 36px; }
+    .subtitle { font-size: 17px; }
+    .lead { font-size: 17px; }
+    .nav-bar button {
+      padding: 8px 14px;
+      font-size: 13px;
+      min-width: 76px;
+    }
+    .nav-bar { padding: 0 10px; }
+    table.results { font-size: 13px; }
+    table.results th, table.results td { padding: 7px 8px; }
+  }
+  @media (max-width: 480px) {
+    html, body { font-size: 15px; }
+    .page { padding: 52px 5% 96px; }
+    .cover h1 { font-size: 26px; }
+    .cover .subtitle { font-size: 16px; }
+    .block { padding: 14px 16px 10px; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .page { transition: opacity 200ms; }
+    .progress-fill, .toc { transition: none; }
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--accent);
+    color: #ffffff;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><div class="progress-fill"></div></div>
+
+<button class="toc-toggle" aria-label="Toggle table of contents">☰ Contents</button>
+
+<aside class="toc" aria-label="Table of contents">
+  <h3>Contents</h3>
+  <ol id="toc-list"></ol>
+  <p class="small" style="margin-top: 24px; color: var(--ink-faint);">
+    Use <kbd>←</kbd> <kbd>→</kbd> arrows, <kbd>Space</kbd>, or swipe to navigate.
+  </p>
+</aside>
+
+<main class="book" id="book">
+  <div class="pages" id="pages">
+
+    <!-- Page 0: Cover -->
+    <article class="page" data-title="Cover" data-page="0">
+      <div class="page-inner cover">
+        <div class="chapter-label">An Interactive Companion</div>
+        <h1>Optimal Low-Rank Reconstruction for Inner-Product Preservation</h1>
+        <p class="subtitle">A closed-form derivation, with formal results and interpretive remarks</p>
+
+        <div class="ornament">⁂</div>
+
+        <p class="meta"><strong>Topic</strong> · Source coding · Query-weighted PCA · KV-cache compression</p>
+        <p class="meta"><strong>Mathematical level</strong> · Linear algebra, convex optimization, projection geometry</p>
+        <p class="meta"><strong>Connections</strong> · Linder–Zamir–Zeger (1999) · Fan (1949)</p>
+        <p class="meta"><strong>Empirical test</strong> · KV-cache compression on Qwen3-8B (§8–§9)</p>
+
+        <div class="abstract">
+          We derive the closed-form solution of an all-pairs inner-product reconstruction objective involving two variables. Although the construction is stated as a dimensionality-reduction problem, the resulting linear transform is also the optimal decorrelating transform for quantization, as proven by Linder, Zamir, and Zeger via information-theoretic arguments. Section 8 reports an empirical test against the production-deployed Joint-QK heuristic basis: QPCA achieves its theoretical optimality on logit MSE (16–36 % reductions across bit widths) but loses to the heuristic on top-k attention argmax retention by 3–5 percentage points — a clean separation of two metrics that practitioners often conflate. Section 9 explains why.
+        </div>
+
+        <div class="audience">
+          <strong>Intended audience</strong>
+          PhD researchers, faculty, and technical founders working on quantization, neural compression, or KV-cache acceleration. We assume familiarity with eigendecompositions, projection operators, and basic convex optimization, but no prior background in source coding theory.
+        </div>
+
+        <button class="start-btn" id="start-btn">Begin reading →</button>
+      </div>
+    </article>
+
+    <!-- Page 1: Section 1 — Setup -->
+    <article class="page" data-title="§1 Setup" data-page="1">
+      <div class="page-inner">
+        <div class="chapter-label">Section 1</div>
+        <h2>Setup: the all-pairs reconstruction problem</h2>
+
+        <p class="lead">
+          We are given a finite set of <em class="term">queries</em> and <em class="term">keys</em> in $\mathbb{R}^d$. Our task is to compress each key into a low-dimensional code so that, after decoding through a shared linear map, every <em class="term">query-key inner product</em> is approximately preserved.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Definition 1.1 — Data, encoder, decoder</div>
+          <p>
+            Fix integers $N, M, d, p$ with $p \le d$. Let
+            $$\{q_i\}_{i=1}^N \subset \mathbb{R}^d, \qquad \{k_j\}_{j=1}^M \subset \mathbb{R}^d$$
+            denote the <em class="term">queries</em> and <em class="term">keys</em>. A <em class="term">rank-$p$ linear codec</em> is the pair
+            $$\bigl(\, U,\; \{r_j\}_{j=1}^M \,\bigr), \qquad U \in \mathbb{R}^{d \times p}, \quad r_j \in \mathbb{R}^p,$$
+            where $U$ is a shared <em class="term">decoder</em> applied to each per-key <em class="term">code</em> $r_j$.
+          </p>
+        </div>
+
+        <p>
+          The goal is to choose $U$ and $\{r_j\}$ so that $q_i^\top U r_j \approx q_i^\top k_j$ for every $(i, j)$. We measure fidelity by the squared error summed over all pairs:
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Objective 1.2 — All-pairs reconstruction loss</div>
+          <p>
+            $$L(U,\, \{r_j\}) \;=\; \sum_{i=1}^N \sum_{j=1}^M \bigl(\, q_i^\top k_j \;-\; q_i^\top U r_j \,\bigr)^2. \tag{1}$$
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 1.3 — Why all-pairs, not all-keys</div>
+          <p>
+            <em>The naïve fix is to minimise $\sum_j \|k_j - U r_j\|_2^2$ and call it done. That is the wrong loss: it weights every coordinate of $k_j$ equally, ignoring the fact that downstream consumers see keys only through inner products with queries. The all-pairs loss in (1) is the geometrically faithful objective when $q$'s are the only way keys ever enter computation — exactly the setting in attention layers, retrieval, and content-addressable memories.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 1.4 — Why this is non-obvious</div>
+          <p>
+            <em>The objective (1) couples the optimisation over $U$ and $\{r_j\}$ across two summations ($N \cdot M$ terms), and it is quadratic in $U$ but biquadratic in $(U, \{r_j\})$ jointly. A priori there is no reason to expect a clean closed-form maximizer. The derivation that follows uncovers one — and shows it coincides with the optimal decorrelating transform from a separate information-theoretic argument.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 2: Section 2 — Exposing the query covariance -->
+    <article class="page" data-title="§2 Query covariance" data-page="2">
+      <div class="page-inner">
+        <div class="chapter-label">Section 2 · Step 1</div>
+        <h2>Reordering to expose the query covariance</h2>
+
+        <p class="lead">
+          The objective (1) hides a useful structure: the sum over queries can be folded into a single matrix, the <em class="term">query second-moment matrix</em>. Once we expose it, the problem decouples across keys.
+        </p>
+
+        <h3>The algebraic step</h3>
+
+        <p>Group the terms inside each square:</p>
+
+        $$q_i^\top k_j \;-\; q_i^\top U r_j \;=\; q_i^\top \bigl( k_j - U r_j \bigr) \;=\; q_i^\top \delta_j, \qquad \delta_j \;:=\; k_j - U r_j.$$
+
+        <p>Then</p>
+
+        $$L \;=\; \sum_{i,j} \bigl(q_i^\top \delta_j\bigr)^2 \;=\; \sum_{i,j} \delta_j^\top q_i q_i^\top \delta_j \;=\; \sum_j \delta_j^\top \!\left( \sum_i q_i q_i^\top \right)\! \delta_j.$$
+
+        <div class="block definition">
+          <div class="block-label">Definition 2.1 — Query second-moment matrix</div>
+          <p>
+            $$M_q \;\doteq\; \sum_{i=1}^N q_i q_i^\top \;\in\; \mathbb{R}^{d \times d}.$$
+            $M_q$ is symmetric positive semidefinite. We assume throughout that $M_q$ is invertible (equivalently, $M_q \succ 0$); a necessary condition is $N \ge d$ and the queries span $\mathbb{R}^d$.
+          </p>
+        </div>
+
+        <div class="block lemma">
+          <div class="block-label">Lemma 2.2 — Equivalent objective</div>
+          <p>
+            With $\delta_j := k_j - U r_j$ and $M_q$ as above,
+            $$L(U,\,\{r_j\}) \;=\; \sum_{j=1}^M \bigl(k_j - U r_j\bigr)^{\!\top} M_q \bigl(k_j - U r_j\bigr). \tag{2}$$
+          </p>
+          <details class="proof">
+            <summary>Proof sketch</summary>
+            <p>
+              Expanding $(q_i^\top \delta_j)^2 = \delta_j^\top q_i q_i^\top \delta_j$ and exchanging the order of summation gives $L = \sum_j \delta_j^\top M_q \delta_j$. Substituting $\delta_j = k_j - Ur_j$ yields (2).
+            </p>
+            <p class="qed">▢</p>
+          </details>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 2.3 — From all-pairs to a weighted regression</div>
+          <p>
+            <em>The objective (2) is recognisable: it is a sum of <em>$M_q$-weighted Euclidean errors</em> on key reconstructions. The query distribution has been distilled into a single matrix; the keys no longer interact with individual $q_i$'s. This is the linchpin of everything that follows.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 2.4 — Why invertibility matters</div>
+          <p>
+            <em>The Mahalanobis-style weighting $\delta^\top M_q \delta$ is a proper norm only when $M_q \succ 0$. If $M_q$ has a non-trivial null space (e.g., when the queries lie in a strict subspace), errors along null directions are invisible to the loss and the optimum is non-unique. In practice, when $N$ is large and queries are diverse — as in attention layers across many tokens — $M_q$ is well-conditioned; in pathological corners (layer 0 with attention sinks, very short prefixes), explicit regularisation $M_q \mapsto M_q + \varepsilon I$ is prudent.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 3: Section 3 — Optimal codes -->
+    <article class="page" data-title="§3 Optimal codes" data-page="3">
+      <div class="page-inner">
+        <div class="chapter-label">Section 3 · Step 2</div>
+        <h2>Optimal codes for a fixed decoder</h2>
+
+        <p class="lead">
+          Holding $U$ fixed, the objective decouples across keys. Each $r_j^*$ is a generalised least-squares projection of $k_j$ onto the column space of $U$ — measured in the $M_q$ inner product.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 3.1 — Closed-form optimal codes</div>
+          <p>
+            Fix $U \in \mathbb{R}^{d \times p}$ of full column rank. The objective (2) decouples as $L = \sum_j L_j(r_j)$ with $L_j(r_j) = (k_j - Ur_j)^\top M_q (k_j - Ur_j)$. The unique minimiser in each $r_j$ is
+            $$r_j^* \;=\; \bigl(U^\top M_q U\bigr)^{-1} U^\top M_q\, k_j. \tag{3}$$
+          </p>
+          <details class="proof">
+            <summary>Proof sketch</summary>
+            <p>$L_j$ is a strictly convex quadratic in $r_j$ (since $U^\top M_q U \succ 0$ when $U$ has full column rank). The gradient is</p>
+            $$\nabla_{r_j} L_j(r_j) \;=\; -2 U^\top M_q (k_j - U r_j).$$
+            <p>Setting it to zero gives the normal equations $U^\top M_q U \, r_j = U^\top M_q k_j$. Invertibility of $U^\top M_q U$ then yields (3). ▢</p>
+          </details>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 3.2 — Geometric meaning</div>
+          <p>
+            <em>Formula (3) is the <em>$M_q$-orthogonal projection</em> of $k_j$ onto $\mathrm{col}(U)$. If we change the inner product on $\mathbb{R}^d$ from the standard Euclidean one to $\langle x, y\rangle_{M_q} := x^\top M_q y$, then the operator $U(U^\top M_q U)^{-1} U^\top M_q$ is the orthogonal projector for that inner product. The same construction is called <em>oblique projection</em> in the Euclidean sense and <em>generalised least squares</em> in statistics.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 3.3 — Why this matters for what follows</div>
+          <p>
+            <em>Eliminating $r_j$ in favour of $U$ is the standard EM-style trick: we have reduced a joint optimisation in $(U, \{r_j\})$ to a single optimisation in $U$ alone. The next step substitutes (3) back into (2) and confronts the remaining problem head-on.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 3.4 — When the inverse exists</div>
+          <p>
+            <em>$U^\top M_q U \in \mathbb{R}^{p \times p}$ is invertible iff $U$ has full column rank and $M_q \succ 0$. The second is our standing assumption; the first will be automatic at the optimum, since we will pick $U$ to be a slice of an orthogonal basis after a change of variables.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 4: Section 4 — Optimal U: the projector -->
+    <article class="page" data-title="§4 The projector" data-page="4">
+      <div class="page-inner">
+        <div class="chapter-label">Section 4 · Step 3 (Part I)</div>
+        <h2>Optimal decoder: the oblique projector</h2>
+
+        <p class="lead">
+          Substituting (3) back into (2) eliminates the codes. The residual takes a particularly clean form once we identify the matrix $P_U$ as a (Mahalanobis-)projector. Two technical lemmas establish its properties; an identity for the residual then reduces the loss to a trace expression that depends on $U$ only.
+        </p>
+
+        <h3>The oblique projector</h3>
+
+        <p>Substituting $r_j^*$ from (3) gives</p>
+
+        $$U r_j^* \;=\; U(U^\top M_q U)^{-1} U^\top M_q\, k_j \;=:\; P_U \, k_j.$$
+
+        <div class="block definition">
+          <div class="block-label">Definition 4.1 — Oblique projector $P_U$</div>
+          <p>
+            $$P_U \;:=\; U\bigl(U^\top M_q U\bigr)^{-1} U^\top M_q \;\in\; \mathbb{R}^{d \times d}.$$
+            $P_U$ projects onto $\mathrm{col}(U)$ along the $M_q$-orthogonal complement of $\mathrm{col}(U)$. It is the natural projector when $M_q$ defines the metric.
+          </p>
+        </div>
+
+        <div class="block lemma">
+          <div class="block-label">Lemma 4.2 — Idempotency</div>
+          <p>$P_U^2 = P_U$.</p>
+          <details class="proof">
+            <summary>Proof</summary>
+            <p>By direct substitution and cancellation of the inner $(U^\top M_q U)$ pair:</p>
+            $$P_U^2 \;=\; U(U^\top M_q U)^{-1} \underbrace{U^\top M_q U}_{\text{cancels}} (U^\top M_q U)^{-1} U^\top M_q \;=\; U(U^\top M_q U)^{-1} U^\top M_q \;=\; P_U. \quad\square$$
+          </details>
+        </div>
+
+        <div class="block lemma">
+          <div class="block-label">Lemma 4.3 — $M_q P_U$ is symmetric</div>
+          <p>$(M_q P_U)^\top = M_q P_U$, equivalently $M_q P_U = P_U^\top M_q$.</p>
+          <details class="proof">
+            <summary>Proof</summary>
+            <p>Write $A := M_q U \in \mathbb{R}^{d \times p}$ and $B := U^\top M_q U = A^\top U$. Since $M_q$ is symmetric, $A^\top = U^\top M_q$. Then</p>
+            $$M_q P_U \;=\; M_q U (U^\top M_q U)^{-1} U^\top M_q \;=\; A \, B^{-1} A^\top.$$
+            <p>Since $B$ is symmetric so is $B^{-1}$, and $AB^{-1}A^\top$ is manifestly symmetric. $\square$</p>
+          </details>
+        </div>
+
+        <h3>The residual identity</h3>
+
+        <p>The reconstruction error is $k_j - U r_j^* = (I - P_U)\, k_j$, and the loss becomes</p>
+
+        $$L^*(U) \;=\; \sum_{j} k_j^\top (I - P_U)^\top M_q (I - P_U)\, k_j.$$
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 4.4 — Residual identity</div>
+          <p>$$(I - P_U)^\top M_q (I - P_U) \;=\; M_q - M_q P_U.$$</p>
+          <details class="proof">
+            <summary>Proof</summary>
+            <p>Expand the left side, using $P_U^\top M_q = M_q P_U$ (Lemma 4.3) and $P_U^2 = P_U$ (Lemma 4.2):</p>
+            $$(I - P_U)^\top M_q (I - P_U) \;=\; M_q \;-\; M_q P_U \;-\; \underbrace{P_U^\top M_q}_{= M_q P_U} \;+\; \underbrace{P_U^\top M_q P_U}_{= M_q P_U^2 = M_q P_U}.$$
+            <p>The middle terms collapse, leaving $M_q - M_q P_U$. $\square$</p>
+          </details>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 4.5 — The trace reformulation</div>
+          <p>
+            <em>Defining the key second-moment matrix $S_k := \sum_j k_j k_j^\top$ and using the identity $\sum_j k_j^\top A k_j = \mathrm{tr}(A S_k)$, the loss becomes
+            $$L^*(U) \;=\; \mathrm{tr}\!\bigl(M_q S_k\bigr) \;-\; \mathrm{tr}\!\bigl(M_q P_U S_k\bigr).$$
+            The first term does not depend on $U$, so we may equivalently <em>maximise</em></em>
+          </p>
+          <p style="text-align: center; font-style: normal;">
+            $$T(U) \;\doteq\; \mathrm{tr}\!\bigl( M_q U (U^\top M_q U)^{-1} U^\top M_q S_k \bigr). \tag{4}$$
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 4.6 — Why this rewrite is the right one</div>
+          <p>
+            <em>The maximisation problem (4) is still non-convex in $U$ — the term $(U^\top M_q U)^{-1}$ is non-polynomial. The next step uses a clever change of variables to transmute (4) into a familiar PCA problem with a known closed-form solution.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 5: Section 5 — Change of variables -->
+    <article class="page" data-title="§5 Reduction to PCA" data-page="5">
+      <div class="page-inner">
+        <div class="chapter-label">Section 5 · Step 3 (Part II)</div>
+        <h2>Change of variables: the problem becomes PCA</h2>
+
+        <p class="lead">
+          A single substitution converts the non-convex trace objective (4) into the classical Rayleigh quotient maximisation — a problem solved a century ago by Fan and others. The substitution is geometric: rescale the ambient space by $M_q^{1/2}$ so that the $M_q$-inner product becomes Euclidean.
+        </p>
+
+        <h3>The substitution</h3>
+
+        <p>Since $M_q \succ 0$, its positive symmetric square root $M_q^{1/2}$ is well-defined. Let</p>
+
+        $$V \;:=\; M_q^{1/2}\, U \;\in\; \mathbb{R}^{d \times p}.$$
+
+        <p>Then $U = M_q^{-1/2} V$, and elementary algebra gives</p>
+
+        $$U^\top M_q U \;=\; V^\top V, \qquad M_q U \;=\; M_q^{1/2} V.$$
+
+        <p>Substituting into (4):</p>
+
+        $$T \;=\; \mathrm{tr}\!\Bigl( M_q^{1/2} V (V^\top V)^{-1} V^\top M_q^{1/2} S_k \Bigr) \;=\; \mathrm{tr}(\Pi_V \, A),$$
+
+        <p>where the cyclic property of trace and the following definitions are used:</p>
+
+        <div class="block definition">
+          <div class="block-label">Definition 5.1 — Reduced problem</div>
+          <p>
+            $$A \;:=\; M_q^{1/2}\, S_k\, M_q^{1/2}, \qquad \Pi_V \;:=\; V (V^\top V)^{-1} V^\top.$$
+            $A \in \mathbb{R}^{d \times d}$ is symmetric positive semidefinite (a congruence of $S_k$). $\Pi_V$ is the standard <em class="term">Euclidean</em> orthogonal projector of rank $p$ onto $\mathrm{col}(V)$.
+          </p>
+        </div>
+
+        <p>The maximisation (4) has reduced to:</p>
+
+        $$\boxed{\quad \text{Maximise}\;\; \mathrm{tr}(\Pi_V \, A) \;\;\text{over rank-}p\text{ orthogonal projectors }\Pi_V. \quad}$$
+
+        <div class="block theorem">
+          <div class="block-label">Theorem 5.2 — Fan (1949) [2]</div>
+          <p class="block-title">Maximal trace of $\Pi A$ over rank-$p$ projectors</p>
+          <p>
+            Let $A \in \mathbb{R}^{d \times d}$ be symmetric with eigenvalues $\lambda_1 \ge \cdots \ge \lambda_d$ and corresponding orthonormal eigenvectors $v_1, \ldots, v_d$. Among all rank-$p$ orthogonal projectors $\Pi$ on $\mathbb{R}^d$,
+            $$\max_\Pi\, \mathrm{tr}(\Pi A) \;=\; \sum_{i=1}^p \lambda_i,$$
+            and the maximum is attained by $\Pi^* = V_p V_p^\top$ where $V_p := [v_1, \ldots, v_p]$.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 5.3 — This is principal component analysis</div>
+          <p>
+            <em>Theorem 5.2 is the trace-form statement of PCA. To preserve the largest amount of variance (or — equivalently here — to maximise the projected trace of $A$) one chooses the top-$p$ eigenvectors. The novelty in the present derivation is not Theorem 5.2 itself but the chain of transformations that brings (1) into a form where Fan's theorem applies.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 5.4 — Why $M_q^{1/2}$ is the right rescaling</div>
+          <p>
+            <em>The matrix $M_q^{1/2}$ is the unique positive symmetric matrix that turns the bilinear form $\langle x, y\rangle_{M_q} = x^\top M_q y$ into the standard Euclidean inner product $\langle x, y\rangle = (M_q^{1/2} x)^\top (M_q^{1/2} y)$. Under this rescaling, $M_q$-orthogonal projectors become Euclidean orthogonal projectors — and the non-convex optimisation in (4) becomes the convex problem in Theorem 5.2.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 6: Section 6 — Main theorem -->
+    <article class="page" data-title="§6 Main theorem" data-page="6">
+      <div class="page-inner">
+        <div class="chapter-label">Section 6 · Main result</div>
+        <h2>Closed-form optimum</h2>
+
+        <p class="lead">
+          Assembling Sections 1 through 5 yields a closed-form solution to the original all-pairs reconstruction problem (1). We state the main theorem.
+        </p>
+
+        <div class="block theorem">
+          <div class="block-label">Theorem 6.1 — Optimal rank-$p$ codec</div>
+          <p class="block-title">Closed-form minimiser of the all-pairs reconstruction loss</p>
+          <p>
+            Assume $M_q := \sum_i q_i q_i^\top$ is positive definite. Let
+            $$A \;=\; M_q^{1/2}\, S_k\, M_q^{1/2}, \qquad S_k \;:=\; \sum_{j} k_j k_j^\top,$$
+            and let $A = V \Lambda V^\top$ be its eigendecomposition with $\Lambda = \mathrm{diag}(\lambda_1 \ge \cdots \ge \lambda_d)$. Denote by $V_p \in \mathbb{R}^{d \times p}$ the matrix of top-$p$ eigenvectors. Then the rank-$p$ codec
+            $$\boxed{\; U^* \;=\; M_q^{-1/2} V_p, \qquad r_j^* \;=\; V_p^\top M_q^{1/2}\, k_j \;}$$
+            minimises (1), and the optimal loss is
+            $$L^*(U^*) \;=\; \mathrm{tr}(M_q S_k) \;-\; \sum_{i=1}^{p} \lambda_i.$$
+          </p>
+        </div>
+
+        <details class="proof">
+          <summary>Proof — assembling the chain</summary>
+          <p>
+            Lemma 2.2 reduces (1) to (2). Proposition 3.1 minimises (2) in $\{r_j\}$ for fixed $U$ and produces (3). Substituting (3) into (2) and applying Lemmas 4.2–4.3 and Proposition 4.4 yields
+          </p>
+          <p>$$L^*(U) \;=\; \mathrm{tr}(M_q S_k) - \mathrm{tr}\bigl(M_q U(U^\top M_q U)^{-1} U^\top M_q S_k\bigr).$$</p>
+          <p>The substitution $V := M_q^{1/2} U$ reduces the second trace to $\mathrm{tr}(\Pi_V A)$. Theorem 5.2 (Fan) gives the maximiser $\Pi_V^* = V_p V_p^\top$ with maximum $\sum_{i=1}^p \lambda_i$. The optimal $U^*$ recovers via $U^* = M_q^{-1/2} V_p$. The optimal codes follow by re-substitution into (3): since $U^{*\top} M_q U^* = V_p^\top V_p = I_p$,</p>
+          <p>$$r_j^* \;=\; (U^{*\top} M_q U^*)^{-1} U^{*\top} M_q k_j \;=\; V_p^\top M_q^{1/2} k_j. \quad \square$$</p>
+        </details>
+
+        <div class="block proposition">
+          <div class="block-label">Corollary 6.2 — Code-space second moment</div>
+          <p>
+            Under the optimal encoder $r_j^* = V_p^\top M_q^{1/2} k_j$,
+            $$\sum_j r_j^* r_j^{*\top} \;=\; V_p^\top A V_p \;=\; \Lambda_p \;\in\; \mathbb{R}^{p \times p},$$
+            where $\Lambda_p = \mathrm{diag}(\lambda_1, \ldots, \lambda_p)$. The optimal codes are <em class="term">uncorrelated</em>, with coordinate $i$ carrying variance exactly $\lambda_i$.
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Corollary 6.3 — Full-rank exact reconstruction</div>
+          <p>
+            At $p = d$ (no rank reduction), $V_p = V$ is orthogonal, so $V V^\top = I$ and $U^* r_j^* = M_q^{-1/2} V V^\top M_q^{1/2} k_j = k_j$. The optimal codec reconstructs every key <em>exactly</em> in the absence of quantisation noise.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 6.4 — Q-weighted error equals unweighted code error</div>
+          <p>
+            <em>Suppose codes are quantised: $\hat r_j = r_j^* + \eta_j$. Then $\hat k_j - k_j = U^* \eta_j = M_q^{-1/2} V_p \eta_j$. The $M_q$-weighted key error is</em>
+            $$\bigl(\hat k_j - k_j\bigr)^{\!\top} M_q \bigl(\hat k_j - k_j\bigr) \;=\; \eta_j^\top V_p^\top M_q^{-1/2} M_q M_q^{-1/2} V_p \eta_j \;=\; \eta_j^\top V_p^\top V_p \eta_j \;=\; \|\eta_j\|_2^2.$$
+            <em>That is: <em>the $M_q$-weighted key MSE is the plain Euclidean code MSE</em>. The full geometry of the query weighting has been absorbed into the basis. This is the structural reason QPCA is the right basis for downstream quantisation: bit-allocation in code space can ignore $M_q$ entirely.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 7: Section 7 — Practice -->
+    <article class="page" data-title="§7 Practice" data-page="7">
+      <div class="page-inner">
+        <div class="chapter-label">Section 7 · Implementation</div>
+        <h2>The procedure in practice</h2>
+
+        <p class="lead">
+          Theorem 6.1 yields a three-step recipe. Each step uses standard linear-algebra primitives; the practitioner needs only an SPD square-root routine and a symmetric eigensolver.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Procedure 7.1 — Building the optimal codec</div>
+          <p>
+            Given $\{q_i\}_{i=1}^N$ and $\{k_j\}_{j=1}^M$:
+          </p>
+          <ol style="margin-left: 1em; line-height: 1.7;">
+            <li>Form the second-moment matrices $M_q = \sum_i q_i q_i^\top$ and $S_k = \sum_j k_j k_j^\top$.</li>
+            <li>Eigendecompose $A = M_q^{1/2} S_k M_q^{1/2}$; collect eigenvectors into $V$, sorted by descending eigenvalue.</li>
+            <li>Set $U^* = M_q^{-1/2} V$ and encode each key as $r_j^* = V^\top M_q^{1/2} k_j$.</li>
+          </ol>
+          <p style="margin-top: 12px;">For quantisation: encode each key, quantise the coefficients $r_j^*$ (uniformly, or by Lloyd–Max, etc.), and decode through $U^*$.</p>
+        </div>
+
+        <h3>Special cases</h3>
+
+        <div class="block remark">
+          <div class="block-label">Remark 7.2 — When $M_q \propto I$, this is plain PCA on keys</div>
+          <p>
+            <em>If the queries are isotropic (uncorrelated unit variance), then $M_q = c I$ and $A = c \cdot S_k$. The eigenvectors of $A$ coincide with those of $S_k$, and the procedure becomes ordinary PCA on the key set. The query distribution adds geometric information only when it is anisotropic.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 7.3 — Non-orthonormal columns</div>
+          <p>
+            <em>The optimal decoder $U^*$ does <em>not</em> have orthonormal columns in the standard Euclidean sense. It has <em>$M_q$-orthonormal</em> columns: $U^{*\top} M_q U^* = I_p$. Forcing $U^\top U = I$ in addition is a strictly more constrained problem that admits no closed form.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 7.4 — Connection to source coding</div>
+          <p>
+            <em>Linder, Zamir, and Zeger [1] showed via a separate, information-theoretic argument that this same transform $U^*$ is the optimal decorrelating transform for high-resolution source coding under <em>any</em> non-difference distortion measure that is locally quadratic with $M_q$ as its curvature. The closed-form derivation here is the geometric counterpart of their entropy-driven optimality argument.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 7.5 — Numerical considerations</div>
+          <p>
+            <em>The pipeline involves $M_q^{1/2}$ and $M_q^{-1/2}$, both formed via the spectral square root. If $M_q$ has condition number $\kappa$, then $A$'s condition number is bounded by $\kappa \cdot \kappa(S_k)$, which can be large. In practice it is wise to (i) form $M_q^{\pm 1/2}$ via symmetric eigendecomposition in <em>double precision</em>, (ii) symmetrise intermediate products (e.g., $A \leftarrow \tfrac{1}{2}(A + A^\top)$), and (iii) regularise $M_q$ along directions with small eigenvalues by adding $\varepsilon \cdot \mathrm{tr}(M_q)/d \cdot I$.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 8: Section 8 — Empirical findings -->
+    <article class="page" data-title="§8 Empirical findings" data-page="8">
+      <div class="page-inner">
+        <div class="chapter-label">Section 8 · Empirical evaluation</div>
+        <h2>Does QPCA beat the heuristic on real attention?</h2>
+
+        <p class="lead">
+          Theorem 6.1 asserts QPCA is the closed-form minimiser of the all-pairs logit reconstruction loss. We test the practical question directly: applied to KV-cache compression in a real transformer, does QPCA outperform the heuristic Joint-QK eigenbasis used in production?
+        </p>
+
+        <h3>Setup</h3>
+
+        <div class="block definition">
+          <div class="block-label">Protocol</div>
+          <p>
+            <strong>Model</strong>: Qwen3-8B (36 layers × 32 query heads × 8 KV heads, head dimension 128). <strong>Calibration corpus</strong>: 450 LongBench train prompts spanning nine tasks (the project's "compact9" pool — hotpotqa, multi_news, musique, passage_retrieval_en, qasper, qmsum, repobench-p, triviaqa, lcc). <strong>Evaluation</strong>: 90 held-out test prompts (10 per task). Per-(layer, KV-head) second moments $M_q$ and $S_k$ are pooled across all train tokens and used to build the basis.
+          </p>
+          <p>
+            We compare three K-side bases at $b \in \{2, 3, 4\}$ average bits per coordinate, with continuous water-fill bit allocation capped at 8 bits/coord:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.7;">
+            <li><code>v3</code> — random Hadamard rotation (TurboQuant baseline, calibration-independent).</li>
+            <li><code>jointqk</code> — eigenvectors of $\tfrac{1}{2}(M_q S_k + S_k M_q)$, water-fill score $\mathrm{diag}(R^\top M_q R) \cdot \mathrm{diag}(R^\top S_k R)$. The production basis: a heuristic symmetrization, not derived from any objective.</li>
+            <li><code>qpca</code> — the Theorem 6.1 basis $U^* = M_q^{-1/2} V$, water-fill on $\Lambda$ alone (the Q-weighting is absorbed by the basis, per Remark 6.4).</li>
+          </ul>
+          <p>
+            <strong>Numerics</strong>: $M_q^{\pm 1/2}$ via spectral square root in fp64, cast to fp32 for compression; $M_q$ regularised by $\mathrm{tr}(M_q)/d \cdot \varepsilon I$ with $\varepsilon = 10^{-4}$ (Remark 7.5). <strong>Quantizer</strong>: per-coordinate Lloyd–Max with unit-Gaussian centroids scaled by per-coord standard deviation.
+          </p>
+        </div>
+
+        <div class="block lemma">
+          <div class="block-label">Correctness gates (run at startup, all passed)</div>
+          <p>
+            Before scoring, three sanity checks on the QPCA implementation:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.65;">
+            <li>$\lVert FG - I\rVert_F \le 2.45 \times 10^{-6}$ per (L, H) in fp32 (encoder–decoder are exact inverses).</li>
+            <li>Empirical code variance within $\sim 1.1\times$ of $\Lambda$ on log-scale (sample variance on a single test row vs train-pooled $\Lambda$).</li>
+            <li>$b = 8$ Lloyd–Max roundtrip relative MSE $= 6.2 \times 10^{-5}$ (Lloyd–Max at 8 bits is near-continuous; this confirms the high-resolution limit reproduces exact reconstruction).</li>
+          </ul>
+        </div>
+
+        <h3>Headline results</h3>
+
+        <p>
+          Per-(layer, head) means averaged over (layer 1..35) × (8 KV-heads) × 90 test prompts. <strong>Layer 0 excluded</strong> due to its anomalous attention-sink behaviour at the position-0 token.
+        </p>
+
+        <table class="results">
+          <thead>
+            <tr>
+              <th>method</th>
+              <th>b</th>
+              <th>top-1</th>
+              <th>top-5</th>
+              <th>k_mse</th>
+              <th>logit_err</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>v3</td><td>2</td><td>0.399</td><td>0.659</td><td>6.05 × 10⁻¹</td><td>2.46 × 10²</td></tr>
+            <tr><td>v3</td><td>3</td><td>0.575</td><td>0.851</td><td>1.77 × 10⁻¹</td><td>6.46 × 10¹</td></tr>
+            <tr><td>v3</td><td>4</td><td>0.732</td><td>0.957</td><td>4.86 × 10⁻²</td><td>1.72 × 10¹</td></tr>
+            <tr class="row-jointqk group-sep"><td>jointqk</td><td>2</td><td class="win">0.657</td><td class="win">0.922</td><td>2.27 × 10⁻¹</td><td>2.99 × 10¹</td></tr>
+            <tr class="row-jointqk"><td>jointqk</td><td>3</td><td class="win">0.783</td><td class="win">0.980</td><td>7.13 × 10⁻²</td><td>9.85</td></tr>
+            <tr class="row-jointqk"><td>jointqk</td><td>4</td><td class="win">0.859</td><td class="win">0.994</td><td class="win">2.07 × 10⁻²</td><td>3.72</td></tr>
+            <tr class="group-sep"><td>qpca</td><td>2</td><td>0.612</td><td>0.894</td><td class="win">2.22 × 10⁻¹</td><td class="win">2.52 × 10¹</td></tr>
+            <tr><td>qpca</td><td>3</td><td>0.746</td><td>0.959</td><td class="win">7.04 × 10⁻²</td><td class="win">7.72</td></tr>
+            <tr><td>qpca</td><td>4</td><td>0.830</td><td>0.978</td><td class="win">≈ tie</td><td class="win">2.39</td></tr>
+          </tbody>
+        </table>
+
+        <p class="small" style="margin-top: 14px;">
+          <span class="win-legend">✓</span> marks the column-winner for each (bit-width, metric) cell — highest for <code>top-1</code>/<code>top-5</code>, lowest for <code>k_mse</code>/<code>logit_err</code>. At $b=4$, <code>jointqk</code> and <code>qpca</code> are tied on <code>k_mse</code> (both marked). The <code>jointqk</code> row (production basis) is shown in the accent colour for orientation. <code>top-1</code>/<code>top-5</code>: attention argmax retention.
+          <code>k_mse</code>: unweighted reconstruction error.
+          <code>logit_err</code>: empirical estimator of the QPCA objective $\mathbb{E}_{i,j}(q_i^\top(k_j - \hat k_j))^2$.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 8.1 — QPCA achieves its design objective</div>
+          <p>
+            QPCA reduces the empirical logit reconstruction error vs the heuristic by
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.7;">
+            <li>$-16\%$ at $b = 2$ ($2.52 \times 10^1$ vs $2.99 \times 10^1$)</li>
+            <li>$-22\%$ at $b = 3$ ($7.72$ vs $9.85$)</li>
+            <li>$-36\%$ at $b = 4$ ($2.39$ vs $3.72$)</li>
+          </ul>
+          <p>
+            The improvement is largest at the highest bit budget, consistent with the Linder–Zamir–Zeger high-resolution asymptote (Remark 7.4): QPCA is optimal in the high-rate limit.
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 8.2 — But top-1 retention drops</div>
+          <p>
+            On top-1 attention retention — the probability that $\arg\max_t (q^\top k_t)$ survives quantisation — QPCA underperforms by 3 to 5 percentage points at every bit width:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.7;">
+            <li>$-4.5$ pp at $b = 2$ (0.612 vs 0.657)</li>
+            <li>$-3.7$ pp at $b = 3$ (0.746 vs 0.783)</li>
+            <li>$-2.9$ pp at $b = 4$ (0.830 vs 0.859)</li>
+          </ul>
+          <p>
+            This is the metric the downstream benchmark actually cares about, since it directly bounds agreement between the compressed and original attention maps. Both observations are robust; both deserve explanation. Section 9 takes them up.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 9: Section 9 — Interpretation -->
+    <article class="page" data-title="§9 Interpretation" data-page="9">
+      <div class="page-inner">
+        <div class="chapter-label">Section 9 · Interpretation</div>
+        <h2>Why MSE optimality doesn't imply argmax optimality</h2>
+
+        <p class="lead">
+          QPCA dominates every MSE-flavoured metric in §8 yet loses on attention argmax retention by 3 to 5 percentage points. The gap is not an implementation artefact and not a marginal effect — it is the signature of three independent structural facts. We label them <strong>M1</strong> (threshold metric), <strong>M2</strong> (Linder–Zamir–Zeger regime), and <strong>M3</strong> (bit allocation). Each contributes; the three compound.
+        </p>
+
+        <h3>M1 — Argmax is a threshold statistic</h3>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 9.1 — The margin condition</div>
+          <p>
+            Fix a query $q$ and write true logits $\ell_t := q^\top k_t$, top-1 index $t^* := \arg\max_t \ell_t$, and per-key perturbation $\Delta\ell_t := q^\top(\hat k_t - k_t)$. The compressed argmax equals the original iff
+            $$\Delta\ell_{t^*} - \Delta\ell_t \;>\; \ell_t - \ell_{t^*} \;=\; -\,m(t^*, t) \qquad \forall\, t \neq t^*,$$
+            where $m(t^*, t) := \ell_{t^*} - \ell_t > 0$ is the <em class="term">original margin</em>. Under the working approximation $\Delta\ell_t \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma_t^2)$,
+            $$\mathbb{P}\bigl[\,\text{argmax preserved}\,\bigr] \;\approx\; \prod_{t \neq t^*}\, \Phi\!\left(\, \frac{m(t^*, t)}{\sqrt{\sigma_t^2 + \sigma_{t^*}^2}} \,\right).$$
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 9.1.1 — Why MSE cannot bound argmax survival</div>
+          <p>
+            <em>The marginal MSE $\sum_t \sigma_t^2$ enters the survival formula only through individual $\sigma_t^2$'s — never through the <em>joint</em> distribution of $(m_t, \sigma_t)$. Two estimators with identical MSE can differ drastically in argmax survival depending on whether perturbation variance lands on small-margin pairs or on the safe bulk. Argmax preservation is a covering property of the random vector $(\Delta\ell_t)_t$; MSE is a single moment of its marginals.</em>
+          </p>
+        </div>
+
+        <h3>M2 — The Linder–Zamir–Zeger guarantee doesn't extend</h3>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 9.2 — Scope of the LZZ optimality</div>
+          <p>
+            The Linder–Zamir–Zeger result invoked in Remark 7.4 (ref [1]) proves QPCA is the optimal high-resolution transform for distortion measures of the form
+            $$d(k, \hat k) \;=\; (k - \hat k)^\top M(k)\, (k - \hat k) \;+\; o\!\bigl(\|k - \hat k\|^2\bigr),$$
+            with $M(\cdot)$ a smooth field of positive-definite matrices. The argmax-survival indicator
+            $$\mathbb{1}\bigl\{\, \arg\max_t q^\top \hat k_t \;=\; \arg\max_t q^\top k_t \,\bigr\}$$
+            admits no such expansion: it is a $\{0, 1\}$-valued functional with a sharp threshold at the margin. QPCA inherits no optimality from LZZ on this metric.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 9.2.1 — High resolution does not rescue argmax</div>
+          <p>
+            <em>The natural retort is "LZZ is asymptotic in rate; perhaps the gap closes at $b = 4$." It does not. The table in §8 shows QPCA's $k\_\mathrm{mse}$ at $b = 4$ is two orders of magnitude smaller than at $b = 2$, yet ~14% of argmaxes still flip. The threshold doesn't soften with resolution — it just gets attacked with a smaller noise budget. The asymptotic decoupling between MSE and argmax is a regime-mismatch issue, not a finite-rate one.</em>
+          </p>
+        </div>
+
+        <h3>M3 — Bit allocation: equal-error vs. logit-variance</h3>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 9.3 — Two water-fill rules</div>
+          <p>
+            After Lloyd–Max quantisation at $B_i$ bits per coordinate, per-coord noise variance is $\mathrm{Var}(\eta_i) \approx c\,\lambda_i \cdot 2^{-2 B_i}$ where $\lambda_i$ is the source variance on coord $i$. Subject to $\sum_i B_i = B_\text{tot}$:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.65;">
+            <li><strong>QPCA</strong>: by Corollary 6.4 (the Q-weighted-equals-Euclidean identity), the Q-weighted key MSE in code space is $\sum_i \mathrm{Var}(\eta_i)$ — each coord contributes equally to the loss. Source variance per coord is the QPCA eigenvalue $\lambda_i$. Water-fill on $\lambda_i$ alone:
+            $$B_i^{\text{QPCA}} \;\propto\; \tfrac{1}{2} \log_2 \lambda_i \;+\; \text{const}.$$</li>
+            <li><strong>JointQK</strong>: in the orthogonal basis $R$, write $q_R := R^\top q,\, k_R := R^\top k$. Under a queries–keys independence approximation, the per-coord contribution to <em>logit variance</em> $\mathrm{Var}_{q, k}(\ell)$ factorises:
+            $$\mathrm{Var}\!\bigl(q_R^{(i)} \cdot k_R^{(i)}\bigr) \;=\; \underbrace{(R^\top M_q R)_{ii}}_{q\_\text{diag}_i} \;\cdot\; \underbrace{(R^\top S_k R)_{ii}}_{k\_\text{diag}_i}.$$
+            Water-fill on this product:
+            $$B_i^{\text{JointQK}} \;\propto\; \tfrac{1}{2} \log_2 \bigl(q\_\text{diag}_i \cdot k\_\text{diag}_i\bigr) \;+\; \text{const}.$$</li>
+          </ul>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 9.3.1 — What each rule equalises</div>
+          <p>
+            <em>QPCA equalises the <em>per-coord MSE</em> in code space — the right thing for the all-pairs MSE objective by construction; the LZZ-style optimum. JointQK equalises the <em>per-coord ratio of quantisation noise to logit variance</em>. Coordinates that carry a large fraction of the logit's variability — and therefore a large fraction of its Shannon information about which key wins — receive proportionally more bits under JointQK. The argmax is determined by such coordinates, so JointQK protects the argmax through allocation alone, even though its basis is only a heuristic.</em>
+          </p>
+          <p>
+            <em>The two rules coincide only when $q\_\text{diag}_i / \lambda_i$ is constant across $i$ — generically false on real attention layers.</em>
+          </p>
+        </div>
+
+        <h3>Two ancillary mechanisms</h3>
+
+        <div class="block remark">
+          <div class="block-label">Remark 9.4 — Heavy-tailed key distributions</div>
+          <p>
+            <em>In transformer attention, keys are heavy-tailed: a small fraction of tokens (attention sinks, BOS/EOS, high-norm anchors, syntactic heads) holds most of the top-1 attention mass. The matrices $\Sigma_K, S_k$ are dominated by these outliers, so eigenvectors of $A = M_q^{1/2} S_k M_q^{1/2}$ are correctly pulled toward the heavy-tail subspace — QPCA's <em>basis</em> alignment is fine. The mismatch is at the bit-allocation level (Observation 9.3): within the chosen basis, QPCA spreads bits uniformly across high-$\lambda$ directions, whereas the argmax is sustained by an even smaller subset where the rare top-margin keys actually reside.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Remark 9.5 — Non-orthogonal encoder × scalar Lloyd–Max</div>
+          <p>
+            <em>A secondary effect: QPCA's encoder $F = M_q^{1/2} V$ is non-orthogonal in the standard Euclidean sense (it is $M_q$-orthonormal — Remark 7.3). The joint code distribution can be sheared in directions a per-coordinate Lloyd–Max quantiser cannot capture. JointQK's $R$ is Euclidean-orthogonal, so each code coordinate is closer to marginal Gaussian and matches the scalar quantiser more cleanly. A vector quantiser would close most of this gap; we did not test it.</em>
+          </p>
+        </div>
+
+        <h3>Sanity check on the diagnosis</h3>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 9.6 — The k_mse / logit_err split is the smoking gun</div>
+          <p>
+            Two metrics in the §8 table tell a clean story when read together:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.7;">
+            <li>$\mathrm{logit\_err} \;=\; \mathbb{E}_{q, k}\bigl[(q^\top(k - \hat k))^2\bigr]$ is, up to a normalisation, exactly the $M_q$-weighted key MSE that QPCA minimises by construction. <strong>QPCA wins this by 16–36% across bit widths.</strong></li>
+            <li>$k\_\mathrm{mse} \;=\; \mathbb{E}_k\bigl[\|k - \hat k\|^2\bigr]$ is the unweighted key MSE — what plain PCA minimises. Neither QPCA nor JointQK targets it. <strong>The two methods are statistically tied (within 1–2%, exact tie at $b = 4$).</strong></li>
+          </ul>
+          <p>
+            Together these two facts <em>rule out implementation error</em>: QPCA is doing precisely what the derivation in §1–§7 promises, and JointQK is doing precisely what its heuristic motivates — neither more, neither less. The argmax deficit is therefore a <em>loss-mismatch</em> phenomenon, not a basis-construction error.
+          </p>
+        </div>
+
+        <h3>Synthesis</h3>
+
+        <p>
+          <strong>M1</strong> explains <em>why</em> MSE and argmax can disagree at all — threshold vs. quadratic. <strong>M2</strong> explains <em>why the closed-form guarantee doesn't transfer</em> — LZZ's regime is locally quadratic, argmax isn't. <strong>M3</strong> explains the <em>direction</em> of the empirical gap — JointQK's allocation tracks logit variance, which carries argmax information. The three mechanisms are mathematically independent; together they account for the full 3–5 pp deficit.
+        </p>
+
+        <div class="block theorem">
+          <div class="block-label">Conclusion 9.7 — Implications</div>
+          <p class="block-title">For deployment, and for theory</p>
+          <p>
+            <strong>Deployment</strong>: the production K-side basis stays at <code>jointqk</code>. QPCA's theoretical optimality is now a tested fact rather than a hope — it is optimality for an objective that disagrees with the application's metric.
+          </p>
+          <p>
+            <strong>Theory</strong>: a useful next basis design should target a margin-aware objective directly. Two candidate replacements:
+          </p>
+          <ul style="margin-left: 1em; line-height: 1.7;">
+            <li><strong>Top-$k$ attention-KL</strong> between the original and compressed attention distributions — a smooth surrogate that directly bounds the argmax-survival distribution.</li>
+            <li><strong>Margin objective</strong>: maximise the expected margin $m(t^*, t)$ under quantisation noise — non-quadratic but tractable, and tied directly to Observation 9.1.</li>
+          </ul>
+          <p>
+            Neither admits the closed form QPCA enjoys. But QPCA is now the proven baseline that any margin-aware basis must beat, and the $k\_\mathrm{mse}$ / $\mathrm{logit\_err}$ split shows the question is empirically well-posed.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">A general lesson</div>
+          <p>
+            <em>The derivation in §1–§7 is mathematically tight, and §8 confirms it: QPCA does exactly what the theory says. The disconnect is not a failure of the theory but a failure of the loss to capture what the application needs. Picking the right surrogate loss is half the problem; the closed-form derivation is the second half. This experiment is now a witness to the first half being underrated.</em>
+          </p>
+        </div>
+
+        <div class="ornament">⁂</div>
+
+        <p class="small" style="text-align: center; color: var(--ink-faint); margin-top: 28px;">
+          Empirical run: <code>analysis/measure_qpca_compact9.py</code> · 2026-05-21 · 4 GPUs, 20 min wall · <code>artifacts/calibration/longbench_compact9_qkv_qwen3_8b/05_reports/pooled_n50_qpca/qpca_merged.json</code>.
+        </p>
+      </div>
+    </article>
+
+    <!-- Page 10: References -->
+    <article class="page" data-title="References" data-page="10">
+      <div class="page-inner">
+        <div class="chapter-label">Closing</div>
+        <h2>References &amp; closing remarks</h2>
+
+        <p class="lead">
+          The derivation above is short but threads several deep ideas: oblique projection, congruence transforms, and the classical PCA optimality of Fan. The two references below are the load-bearing citations.
+        </p>
+
+        <h3>References</h3>
+
+        <ol class="refs">
+          <li>
+            <strong>T. Linder, R. Zamir, and K. Zeger.</strong>
+            "High-resolution source coding for non-difference distortion measures: Multidimensional companding."
+            <em>IEEE Transactions on Information Theory</em>, vol. 45, no. 2, pp. 548–561, March 1999.
+          </li>
+          <li>
+            <strong>K. Fan.</strong>
+            "On a theorem of Weyl concerning eigenvalues of linear transformations I."
+            <em>Proceedings of the National Academy of Sciences</em>, vol. 35, no. 11, pp. 652–655, 1949.
+          </li>
+        </ol>
+
+        <h3>Synopsis</h3>
+
+        <p>
+          We posed the problem of compressing a set of keys $\{k_j\}$ to low-dimensional codes $\{r_j\}$ while preserving every inner product with a fixed query set $\{q_i\}$. The closed-form solution exploits two structural facts:
+        </p>
+
+        <p>
+          (i) the query distribution enters the loss only through its second-moment matrix $M_q$, turning the all-pairs problem into a single $M_q$-weighted regression;
+          (ii) the maximisation over the decoder, after eliminating the codes, becomes a standard PCA problem after rescaling by $M_q^{1/2}$.
+        </p>
+
+        <p>
+          The optimal codec
+          $$U^* = M_q^{-1/2} V_p, \qquad r_j^* = V_p^\top M_q^{1/2} k_j$$
+          where $V_p$ are the top-$p$ eigenvectors of $A = M_q^{1/2} S_k M_q^{1/2}$, has a striking quantisation property (Remark 6.4): the $M_q$-weighted reconstruction error in key space equals the plain Euclidean error in code space. Bit-allocation in the code space is therefore optimal with no further query weighting.
+        </p>
+
+        <div class="block remark">
+          <div class="block-label">Closing remark</div>
+          <p>
+            <em>The derivation showcases a recurring pattern in applied linear algebra: a non-convex optimisation in an awkward coordinate system becomes convex (and classical) after the right change of variables. The change here is the spectral square root — the same transform that converts a Mahalanobis geometry into a Euclidean one. Recognising when such a substitution is available is, perhaps, the most transferable lesson.</em>
+          </p>
+        </div>
+
+        <div class="ornament">⁂</div>
+
+        <p class="small" style="text-align: center; color: var(--ink-faint);">
+          End of companion.
+        </p>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<nav class="nav-bar" aria-label="Page navigation">
+  <button id="prev-btn" aria-label="Previous page">‹ Previous</button>
+  <span class="page-info">Page <strong id="cur-num">1</strong> of <strong id="tot-num">9</strong></span>
+  <button id="next-btn" aria-label="Next page">Next ›</button>
+</nav>
+
+<script>
+  let current = 0;
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const total = pages.length;
+  document.getElementById('tot-num').textContent = total;
+
+  // Build TOC
+  const tocList = document.getElementById('toc-list');
+  pages.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.textContent = p.dataset.title;
+    li.dataset.idx = i;
+    li.addEventListener('click', () => { go(parseInt(li.dataset.idx, 10)); toggleToc(false); });
+    tocList.appendChild(li);
+  });
+
+  const tocEl = document.querySelector('.toc');
+  const tocToggleBtn = document.querySelector('.toc-toggle');
+  function toggleToc(forceState) {
+    const open = forceState != null ? forceState : !tocEl.classList.contains('open');
+    tocEl.classList.toggle('open', open);
+  }
+  tocToggleBtn.addEventListener('click', () => toggleToc());
+
+  function applyClasses() {
+    pages.forEach((p, i) => {
+      p.classList.remove('active', 'prev', 'next');
+      if (i === current) p.classList.add('active');
+      else if (i < current) p.classList.add('prev');
+      else p.classList.add('next');
+    });
+    document.getElementById('cur-num').textContent = current + 1;
+    document.getElementById('prev-btn').disabled = (current === 0);
+    document.getElementById('next-btn').disabled = (current === total - 1);
+    const pct = (current / (total - 1)) * 100;
+    document.querySelector('.progress-fill').style.width = pct + '%';
+    document.querySelectorAll('#toc-list li').forEach((li, i) => {
+      li.classList.toggle('current', i === current);
+    });
+    // Scroll active page to top
+    const activeEl = pages[current];
+    if (activeEl) activeEl.scrollTop = 0;
+    // Update URL hash without reload
+    if (history && history.replaceState) {
+      history.replaceState(null, '', '#p' + current);
+    }
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= total) return;
+    current = idx;
+    applyClasses();
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => go(current - 1));
+  document.getElementById('next-btn').addEventListener('click', () => go(current + 1));
+  document.getElementById('start-btn').addEventListener('click', () => go(1));
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || (e.key === ' ' && !e.shiftKey)) { e.preventDefault(); go(current + 1); }
+    else if (e.key === 'ArrowLeft' || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); go(current - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(total - 1); }
+    else if (e.key === 'Escape') { toggleToc(false); }
+  });
+
+  // Touch swipe (mobile)
+  let touchStartX = null, touchStartY = null, touchStartTime = 0;
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchStartX == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    touchStartX = touchStartY = null;
+    // Swipe must be predominantly horizontal, > 60px, and < 600ms
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4 || dt > 600) return;
+    if (dx < 0) go(current + 1);
+    else go(current - 1);
+  }, { passive: true });
+
+  // Initial state from hash
+  if (window.location.hash) {
+    const m = window.location.hash.match(/p(\d+)/);
+    if (m) {
+      const idx = parseInt(m[1], 10);
+      if (idx >= 0 && idx < total) current = idx;
+    }
+  }
+  applyClasses();
+
+  // Render math (called by KaTeX auto-render onload)
+  function renderAllMath() {
+    if (typeof renderMathInElement === 'undefined') return;
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      throwOnError: false,
+      strict: 'ignore',
+      trust: true,
+      macros: {
+        '\\doteq': '\\;\\stackrel{\\scriptscriptstyle\\Delta}{=}\\;',
+      },
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -39,6 +39,8 @@ This directory organises the project notes by role.
   - current overall takeaway across calibration, bench, and analysis
 - [pooled_n50_report.md](pooled_n50_report.md)
   - preview of the pooled-N50 calibration corpus
+- [qpca_basis_report.md](qpca_basis_report.md)
+  - QPCA basis test: closed-form optimum for logit MSE. Wins logit_err by 16–36 % proxy and loses top-1 by 3–5 pp; downstream LongBench F1 confirms (−5.36 pp mean F1 at k=2). 3-experiment investigation (pooled K-fidelity → per-task K-fidelity → F1 sweep), production basis unchanged.
 
 ## Reference
 

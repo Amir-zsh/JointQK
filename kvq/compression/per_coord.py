@@ -262,29 +262,62 @@ def build_jointqk_compressor(
     method: str,
     sigma_q_for_head: torch.Tensor,
     sigma_k_for_head: torch.Tensor,
-    R_sym: torch.Tensor,
-    b_avg: float,
-    r: int | None,
-    head_dim: int,
+    R_sym: torch.Tensor | None = None,
+    b_avg: float = 0.0,
+    r: int | None = None,
+    head_dim: int = 0,
     seed: int = 42,
+    *,
+    qpca_forward: torch.Tensor | None = None,
+    qpca_inverse: torch.Tensor | None = None,
+    qpca_eigvals: torch.Tensor | None = None,
 ) -> PerCoordCompressor:
-    """Construct a PerCoordCompressor for JointQK on a single (layer, kv_head).
+    """Construct a PerCoordCompressor for a calibrated K-basis on a single (layer, kv_head).
 
-    `method` selects the bit-allocation tail and must be `r_sym_waterfill` or
-    `r_sym_uniform`. `R_sym` is the joint Q-K eigenbasis (eigvec of the
-    symmetrised (Σ_Q Σ_K + Σ_K Σ_Q)/2). All inputs are per-head (no batch dim).
+    Supports two basis families via the `method` prefix:
+
+    - `r_sym_*`: orthogonal joint-Q-K eigenbasis (`R_sym` is the eigenvectors of
+      the symmetrised `(Σ_Q Σ_K + Σ_K Σ_Q)/2`). Water-fill score is
+      `diag(R_sym^T Σ_Q R_sym) * diag(R_sym^T Σ_K R_sym)`.
+    - `qpca_*`: non-orthogonal closed-form optimum to the all-pairs
+      inner-product reconstruction loss (Linder–Zamir–Zeger 1999); see
+      `background/qpca_derivation_companion.html`. Forward map is
+      `M_q^{1/2} V` and inverse is `V^T M_q^{-1/2}` (not transposes). The
+      Q-weighted error becomes plain code-space MSE, so water-fill score is
+      `Λ` (the eigenvalues of `M_q^{1/2} S_k M_q^{1/2}`) alone — no `Σ_Q`
+      diagonal product needed.
+
+    All tensor inputs are per-head (no batch dim).
     """
-    if not method.startswith("r_sym_"):
-        raise ValueError(f"build_jointqk_compressor only supports r_sym_* methods, got '{method}'")
+    is_qpca = method.startswith("qpca_")
+    is_rsym = method.startswith("r_sym_")
+    if not (is_qpca or is_rsym):
+        raise ValueError(f"build_jointqk_compressor supports r_sym_* and qpca_* methods, got '{method}'")
     total_bits = b_avg * head_dim
 
-    # R_sym is orthogonal (eigvec of a symmetric matrix). Row form: c_row = k_row @ R_sym.
-    forward_map = R_sym
-    inverse_map = R_sym.transpose(-1, -2)
-    Sk_in_basis = R_sym.transpose(-1, -2) @ sigma_k_for_head @ R_sym
-    sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-    Mq_in_basis = R_sym.transpose(-1, -2) @ sigma_q_for_head @ R_sym
-    weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+    if is_qpca:
+        if qpca_forward is None or qpca_inverse is None or qpca_eigvals is None:
+            raise ValueError(
+                f"method '{method}' requires qpca_forward, qpca_inverse, and qpca_eigvals "
+                "(usually built into the calibration bundle by build_calibration_artifacts_from_pool.py)."
+            )
+        forward_map = qpca_forward
+        inverse_map = qpca_inverse
+        # Code-space variance per coord equals Λ by construction (E[r r^T] = V^T A V = Λ).
+        sigma_k_diag = qpca_eigvals.clamp_min(1e-30)
+        # Q-weighting is absorbed into the basis (Q-weighted key MSE = plain code MSE).
+        # Each coord contributes equally to the loss → uniform weights for water-fill.
+        weights = torch.ones_like(sigma_k_diag)
+    else:
+        if R_sym is None:
+            raise ValueError(f"method '{method}' requires R_sym")
+        # R_sym is orthogonal (eigvec of a symmetric matrix). Row form: c_row = k_row @ R_sym.
+        forward_map = R_sym
+        inverse_map = R_sym.transpose(-1, -2)
+        Sk_in_basis = R_sym.transpose(-1, -2) @ sigma_k_for_head @ R_sym
+        sigma_k_diag = Sk_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+        Mq_in_basis = R_sym.transpose(-1, -2) @ sigma_q_for_head @ R_sym
+        weights = Mq_in_basis.diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
 
     if method.endswith("_uniform"):
         if r is None or r <= 0 or r > head_dim:

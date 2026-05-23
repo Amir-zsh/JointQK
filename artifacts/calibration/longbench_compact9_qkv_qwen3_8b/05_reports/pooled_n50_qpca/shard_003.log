@@ -1,0 +1,33 @@
+[08:19:38] shard 3/4 on cuda (visible: 3)
+[08:19:38] loading aggregate (~2.5 GB)...
+[08:19:40] pooled regime: 450 train + 90 test
+[08:19:40] summing train stats over 450 examples...
+[08:21:48] stats cache: {'entries': 128, 'hits': 1, 'misses': 450, 'hit_rate': 0.0022172949002217295}
+[08:21:49] building QPCA basis (fp64 eigendecomps in M_q^±1/2 and A)...
+[08:21:50] QPCA shapes: forward=(36, 8, 128, 128) inverse=(36, 8, 128, 128) eigvals=(36, 8, 128)
+[08:21:50] shard 3: eval slice = 22 idx
+[08:21:53] building compressors for 288 (L,H) × 3 bits...
+[08:21:58] compressors ready
+[08:23:09] shard 3 idx 1/22 (#70) done in 71.2s
+[08:23:18] shard 3 idx 2/22 (#74) done in 9.0s
+[08:24:00] shard 3 idx 3/22 (#78) done in 41.6s
+[08:24:06] shard 3 idx 4/22 (#158) done in 5.9s
+[08:25:08] shard 3 idx 5/22 (#162) done in 62.6s
+[08:27:29] shard 3 idx 6/22 (#166) done in 140.1s
+[08:27:33] shard 3 idx 7/22 (#179) done in 4.7s
+[08:28:37] shard 3 idx 8/22 (#250) done in 63.3s
+[08:28:41] shard 3 idx 9/22 (#254) done in 4.7s
+[08:29:44] shard 3 idx 10/22 (#258) done in 62.6s
+[08:29:53] shard 3 idx 11/22 (#337) done in 9.1s
+[08:31:06] shard 3 idx 12/22 (#341) done in 72.9s
+[08:31:36] shard 3 idx 13/22 (#345) done in 30.4s
+[08:33:37] shard 3 idx 14/22 (#349) done in 120.7s
+[08:33:42] shard 3 idx 15/22 (#427) done in 4.6s
+[08:35:08] shard 3 idx 16/22 (#431) done in 86.1s
+[08:35:11] shard 3 idx 17/22 (#435) done in 2.9s
+[08:35:28] shard 3 idx 18/22 (#439) done in 16.9s
+[08:35:41] shard 3 idx 19/22 (#517) done in 13.0s
+[08:36:44] shard 3 idx 20/22 (#521) done in 63.4s
+[08:38:16] shard 3 idx 21/22 (#525) done in 92.4s
+[08:39:48] shard 3 idx 22/22 (#529) done in 91.1s
+[08:39:48] shard 3: wrote artifacts/calibration/longbench_compact9_qkv_qwen3_8b/05_reports/pooled_n50_qpca/shard_003.json (elapsed 1069s)

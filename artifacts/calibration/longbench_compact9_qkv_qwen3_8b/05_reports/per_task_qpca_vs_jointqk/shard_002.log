@@ -1,0 +1,26 @@
+[09:17:39] shard 2/6 on cuda (visible: 2)
+[09:17:39] loading aggregate (~2.5 GB)...
+[09:17:40] pooled regime: 450 train + 90 test
+[09:17:40] summing train stats over 450 examples...
+[09:20:58] stats cache: {'entries': 128, 'hits': 1, 'misses': 450, 'hit_rate': 0.0022172949002217295}
+[09:20:59] building jointqk basis (orthogonal eigvec)...
+[09:21:00] building qpca basis (fp64)...
+[09:21:01] shard 2: eval slice = 15 idx
+[09:21:01] building compressors: 2 methods × 288 (L,H) × 3 bits...
+[09:21:16] compressors ready
+[09:23:01] shard 2 idx 1/15 (#69, task=hotpotqa) done in 105.3s
+[09:23:09] shard 2 idx 2/15 (#75, task=triviaqa) done in 8.0s
+[09:23:30] shard 2 idx 3/15 (#157, task=qasper) done in 20.9s
+[09:26:13] shard 2 idx 4/15 (#163, task=qmsum) done in 163.3s
+[09:30:01] shard 2 idx 5/15 (#169, task=repobench-p) done in 227.5s
+[09:32:23] shard 2 idx 6/15 (#251, task=musique) done in 142.2s
+[09:33:27] shard 2 idx 7/15 (#257, task=passage_retrieval_en) done in 64.2s
+[09:35:29] shard 2 idx 8/15 (#338, task=hotpotqa) done in 122.4s
+[09:35:49] shard 2 idx 9/15 (#344, task=multi_news) done in 19.4s
+[09:36:24] shard 2 idx 10/15 (#358, task=lcc) done in 35.4s
+[09:38:44] shard 2 idx 11/15 (#430, task=musique) done in 139.5s
+[09:40:11] shard 2 idx 12/15 (#436, task=passage_retrieval_en) done in 86.8s
+[09:40:16] shard 2 idx 13/15 (#516, task=qasper) done in 5.6s
+[09:40:36] shard 2 idx 14/15 (#522, task=qmsum) done in 20.1s
+[09:43:16] shard 2 idx 15/15 (#528, task=repobench-p) done in 160.0s
+[09:43:16] shard 2: wrote artifacts/calibration/longbench_compact9_qkv_qwen3_8b/05_reports/per_task_qpca_vs_jointqk/shard_002.json (elapsed 1321s)

@@ -1,0 +1,956 @@
+language,task,question,predicted_answer,answers,_id,length,max_new_tokens,compression_ratio,dataset,answer_prefix,all_classes
+en,narrativeqa,"Question: What is Saltram's living situation?
+
+", Saltram lives with the Mulvilles.,['He is a guest in the home of the Mulvilles.'],341d214a2c377691bf20e5a30b8f7979696bd19141ad9c9f,22692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why does Ann not return Mary's feelings of affection?
+
+", Because Ann is already in a relationship with a man named Charles.,['Because she is in unrequited love with someone else'],26c6325283dece0b557e34cde9a5c57999ec5c68782e8194,23316,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does the witch live?
+
+", On Atlas' mountain in a cavern.,['The Atlas Mountains'],5b8d6fdd30a297e508ebb484f172ca5bce8d31b340eb3506,5397,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was the purpose of Crito's visit?
+
+", To persuade Socrates to escape from prison.,['To smuggle Socrates out of prison and into a life of exile.'],68fc4dee839213b5259d41718909195c2f5274665bc18036,6592,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why didn't Baron Henry just kill Otto instead of cutting his hand off?
+
+", Because Otto was the son of the Baron who had been killed.,['Otto was so young.'],36232c9c63d19d282643657b3da5b688cb14e3b44009c494,27745,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How long had Mortimer Trefinnis' sister been dead when the doctor examined the body?
+
+", At least six hours.,['Six hours.'],0bf1995158cbf08134d5dc15475c27f38b3ab5441c422419,10020,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: With whom does the entertainers' manager have an affair?
+
+", The entertainers' manager has an affair with the wife of the knight.,"[""Lisa, the blacksmith's wife.""]",9fbcbb5460066a68460ba92626c25371e0a1ff65b3bd5e84,18054,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who is the first person that falls under Vigo's spell?
+
+"," Dana Barrett
+
+**Step-by-Step Explanation:**
+
+1. **Identify the Question:** The question is asking for the first person who falls under Vigo's spell.
+2. **Understand the Context:** The story involves a supernatural element (Vigo) and a character (Dana) who is affected by a magical or supernatural event.
+3. **Locate the Reference:** The reference is to the character who is the first to be affected by the magical or supernatural event.
+4. **Analyze the Scene:** The scene where Dana is affected by the magical or supernatural event is when she is first exposed to the influence of Vigo.
+5. **Determine the Answer:** The first person to fall under Vigo's",['Dr. Janosz Poha'],f9cfda8abcc78f9e2f492d4f58ee4996430e9a8911e29726,25090,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What nationality is Ruth Anvoy?
+
+", American.,['She is an American.'],58b8a46c20c05540367b90490846c4f9808db630026b28d4,22692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who did the Witch want to have reveal their own lies?
+
+", The priests.,['The scribe.'],c89fd516348b68f96538948b052cb10d5b6f21bc441f5a55,5403,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why do the bosses of Wilma's gang believe that Anthony Rogers will be useful to them in the current conflict?
+
+", Anthony's knowledge of the past and his innovative ideas about rocketry and anti-gravity technology make him a valuable asset.,['Because he fought in the first world war.'],67933dc11fce5ce5b80acc04541f0442117aca5eccc06b6f,27521,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Which descriptions of the future world does Soames provide upon his return?
+
+"," Soames describes a future world where people are dressed in sanitary woolen uniforms, hairless, and with numbers on their arms.",['ones that are vague'],b097807317fd6df3e69b46d4332b558f2d6c7f1f893770a6,11201,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How long after Madame de Merret dies before people are allowed inter manor?
+
+", Fifty years.,['50 years'],24c995f1a10e348519cdc6cd24685ab64bcf6454554de945,8147,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who doe the Vervelle couple believe Grassou is the perfect match for?
+
+", Virginie Vervelle.,"['Their daughter, Virgine. ']",8134d2aaf4e735e59f38656a3c804171a8d1084faef2da93,7903,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Vervelle want his daughter to marry?
+
+", Pierre Grassou.,['Grassou'],321a85aa34669657c041d72547da9f30764447d789bf0e2d,7899,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How does the slime get into Dana's apartment?
+
+"," The slime is a psychoreactive substance that responds to human emotions, and it was accidentally introduced into Dana's apartment through a contaminated bathtub.","[""The slime gets into Dana's apartment from the bathtub.""]",31a2673d857b4ae705288436804dd94343b7f7d9bfdd1298,25088,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Elder Childers argue?
+
+", Elder Childers argues that the town needs improvements.,['That a mule bone is very powerful and can be a weapon.'],7e1df407b7018ef82e2ade488c601066798bbe67a39a6da4,14760,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why do the bosses of Wilma's gang believe that Anthony Rogers will be useful to them in the current conflict?
+
+", Anthony's knowledge of the past and his innovative ideas about rocketry and anti-gravity technology make him a valuable asset.,['Anthony Rogers has previous wartime and combatant experience.'],7efd1cc4cce3770765ac6c7304b68cfe28c83aec18c01577,27521,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Reiko see in the photograph that her ex-husband takes of her after she has seen the tape?
+
+", A photograph of herself with a cursed videotape.,['Her face is blurry'],677af5490eddd9e1d2ecd66ab0d1e038d1f7e7c5e985accf,17505,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How many ethical arguments does Socrates propose?
+
+", Three ethical arguments.,['Two'],8a46cc12564386606f3162cd88cae3ec0f868009efce1d33,6592,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why was Mortimer Trefinnis once estranged from his siblings?
+
+", A family quarrel over money.,['because of the division of proceeds from selling the family business.'],af8f267654c2ca703d2044593d63c658c8716e66306dd65a,10015,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What year is it when Anthony Rogers finally disembarks from the coal mine?
+
+", 2419 A.D.,['2419.'],b92c3f3f94368153267f267845b8140ccac30015795b574d,27514,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did Bill run to Texas?
+
+"," Bill ran to Texas to escape the harsh conditions of the city, seeking work and a fresh start in a new environment.",['he murdered someone'],949abce7e7abc634fc08ff28f996a235ddd6041358bee155,31692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Socrates compare going against the law to?
+
+", Socrates compares going against the law to injuring one's parents.,['Your parents'],e39f9c371b47fb74a202d1f30bc46e806791d0ee81b1b2d4,6594,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What relation to Ruth Anvoy is Lady Coxon?
+
+", Lady Coxon is Ruth Anvoy's aunt.,"[""Lady Coxon is Ruth's aunt.""]",60cacef36b194be88d2a8a4fa816324ffcb672f336197584,22695,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Reiko's job?
+
+", Reiko is a news reporter.,['Reiko is a reporter.'],d22828536f4d6bee11bd1f15f636bddd18fa8f246ef1be6c,17490,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why does Socrates ultimately decide it is unjust to escape?
+
+", Because escaping would violate the social contract with Athens.,['Because it violates his belief in the  laws of society.'],585ce1f974c0a35526da31a0cdc1541728ffc2df6a73b4f3,6595,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How is Drexl killed?
+
+", By a gunshot.,['he is shot'],880269c856197f51942d2649c32e0c37955409d7fdb3f369,29630,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did Anvoy do with the letter once she received it?
+
+", She did not open the letter.,['She declined to read it.'],0cb4ddf1bedade882d28e7940531bbac3ec45efb1f668635,22698,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was the description of the teens faces when they died?
+
+"," The teens' faces were described as twisted into a insane rictus of fear, with their mouths open and eyes wide and glassy.",['Twisted in fear'],562b8f8423dfb1c0fe308445710a9018f3d4e7508ef87e52,17497,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why does Soames get upset with Beerbohm?
+
+", Because Beerbohm inadvertently reveals the true nature of Soames's failure and his eventual fate.,['Beerbohm wrote a fictional story about Soames.'],ea7825ba7cc9beff14746f8a82ec525b3b9d536b467cdaba,11196,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How many days do viewers of the tape have to live after they watch it?
+
+", 7 days.,['Seven days'],b8c1df9064532860efef843054433b6588ec8c89071c027f,17501,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does not see death in the end?
+
+", The knight.,['all but Jof and the Juggler'],08eb5808e99ec50b74a3b2779c65c533fec812a1e70f5ed3,18053,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: When Mary was younger, how did her mother fill her free time?
+
+"," Her mother spent her free time in idle pursuits, indulging in frivolous amusements and neglecting her duties.",['she was obsessed with novels.'],13bff0d53a16f0e4ea96e342a517d30aab0357d624ee1ceb,23319,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What attratcs men to Anderson?
+
+", The story does not mention anything about men being attracted to Anderson.,['HER BEAUTY'],478201dd5ae2b46b44caacaa387140a11bf5437332820d41,8721,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why was Falder worried about Ruth?
+
+", Because he was afraid of being discovered as the lover of a married woman.,['Her husband abused her'],b91ede2d2d08ea6f5f3b894c932b70e141665dd59d334dc8,22762,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did Bill die?
+
+", He was shot dead by a bullet.,['He is killed by police.'],fd7551a90b78405f6b71079bb8565a2c9f60db1b7e4179c8,31690,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why are Holmes and Dr. Watson in Cornwall?
+
+", To investigate the Cornish Horror.,"[""For Holmes' health.""]",627d4b1bf8c78ab08d4da01abc81be9e724d1e8bcb2d2e6b,10014,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What ghost emerged from a painting at Dana's workplace?
+
+"," Vigo
+
+The ghost who emerged from the painting is Vigo, a historical figure and the central character in the story, who is the source of the supernatural events and the key to the plot. The painting of Vigo is a magical artifact that allows the supernatural to manifest, and it is the source of the supernatural. The ghost is Vigo, who is the evil spirit and the source of the supernatural. The painting is the vessel through which the supernatural enters the world. The ghost is Vigo, who is the evil spirit and the source of the supernatural. The painting is the vessel through which the supernatural enters the world. The ghost is Vigo, who is the evil spirit and the source of the supernatural. The painting is",['Vigo'],414ea192da69d6665e5ad41f59b34c6e1a8b5a59fa0703e5,25089,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How is Mary initially educated?
+
+"," Mary was educated in a manner that emphasized superficial accomplishments and social graces, rather than intellectual or moral development.",['Nature and books'],507378fadb4447d3f857ab09512a7bf0cae2c34083e449c6,23312,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does the slime attack Dana and Oscar?
+
+", The slime attacks Dana and Oscar in the bathtub.,['museum'],73705494f8a477420b27dee08ab2c02f30cad6025cd3e388,25088,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who made the original cursed videotape?
+
+"," Sadako, the daughter of Yamamura Shizuko and Professor Ikuma.",['Sadako Yamamura made the tape psionically.'],a8a172aa00eb9de7d74042b9cd27d07cf537b2056b93cf62,17492,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does this story take place?
+
+", In the prison of Socrates.,['In Socrates Cell?'],0efa676797a76ec31f8888ffea26cffe75b602ee3a38b7a2,6591,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did Shizuko Yamamura die?
+
+", She died by throwing herself into Mt. Mihara.,['She committed suicide.'],887b45fe14ce901239d9ec0eee625ec5f02c410b1eb426b4,17491,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did Bennett Landsmann need to defend Seth Lazurus in court?
+
+", To prevent the death penalty.,"[""because he's a lawyer""]",62fc0808be185047c6e6ec24c916c59def5d1acd30a95861,8727,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Which remarkable habit did Enoch Soames demonstrate with regard to choice of clothing?
+
+"," He wore a soft black hat of clerical kind, but of Bohemian intention.",['always wore a grey waterproof cape and a soft black hat'],41d2d4a499eabd3034b061845ae3c279f5befd0fce60f757,11202,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who did Baron Conrad kill?
+
+", Baron Frederick of Trutz-Drachen.,['Baron Frederick'],a5e44b1e2b98f80aabab5f1b8296d0fe66d53b31c1f3e332,27737,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How is Mary initially educated?
+
+"," Mary was educated in a manner that emphasized superficial accomplishments and social graces, rather than intellectual or moral development.",['She educates herself using books and the natural world.'],cf6cd2d8526658bac5ee4a39bc0237021c54eec652d27d1b,23312,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What religion supported Dave during Jim's trial?
+
+", Baptist.,"[""The Baptist's supported Dave. ""]",923329f49e6ae0c9f11914e9b90d01a64bc74f6c0dd663bd,14762,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Vane write about in her letter?
+
+", The American girl from New York.,['Louis Leverett'],ba016e084e6954d21521889759d81e159d1977cbf2b3354a,13954,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What are some important themes mentioned in this story?
+
+"," The themes of revenge, redemption, and the contrast between violence and peace.","['Be responsible,keep your word and be wise and peaceful.']",787d7fce3ea3a5afc996204942227e91ad057b882c3d3633,27741,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What happens to Tomoko?
+
+", Tomoko dies after watching a cursed videotape.,['Tomoko reveals that they watched a video tape with several friends a week ago and received a strange call after watching it. Tomoko is killed while Masami watches.'],040a455faa539cf124460b1b37165be70269fc8b8a9a0c60,17490,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was the description of the teens faces when they died?
+
+"," The teens' faces were described as twisted into a insane rictus of fear, with their mouths open and eyes wide and glassy.",['Their faces twisted in fear.'],19ec182d75e69f6f85cc7a4fa8f9ca22b124800bc8736b1d,17497,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who was the final raid in the story on?
+
+", The Sinsings.,['The Sinsings'],86d2cd2994feadad471854df8ce765545fe6bab1cee02259,27510,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who leaves Chicago with him?
+
+"," Bill leaves Chicago with his brother Steve. 
+
+**Reasoning:** The story begins with Bill, a young man from Chicago, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+with his brother Steve, who is
+",['His girlfriend Abby and her sister Linda.'],b03244c8cc2681df1008d27c974d81415336396dff81f06d,31691,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What do the Ghostbusters do to stop an argument between Ray and Winston?
+
+"," They argue about the
+ghost
+and
+the
+slime.",['Take their clothes off'],973ac7fc4eb400348ec30dae56ba4d177d0ade45a3529d3e,25093,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Frank Saltram do for work?
+
+"," Frank Saltram is a lecturer and writer, known for his intellectual discussions and lectures.",['He does not work.'],3ab2add236bd7cba3c5f398e53ab0b6581fa82dae827c871,22694,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who did Ruth Honeywill plan to escape with?
+
+", William Falder.,['Falder'],9420daeb72715dee209b0b33539597d033d14ca5fa6b2365,22764,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What Medical school does Laura attend?
+
+", Laura attends the University of Michigan Medical School.,['Laura attends Harvard Medical school.'],e726a44d5d159de71612e7733d453f36d881d6f19f484fe4,8722,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What gift did the mayor give to the Ghostbusters?
+
+", A new city park.,['key to the city'],1e06ea4077ecabcd5cc72281c2a3e843f0c17dccd8af3183,25089,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does the Witch create?
+
+", A living image of perfect purity.,['Hermaphroditus.'],cffc706d1ed5ecaa2b18b058e30ec11b1f8fc8a42f455048,5397,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where did the lover hide?
+
+", In the closet.,['In a closet.'],deaf226b06424a0b0603f5aba885cb4420774c9df944bbf1,8139,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who greeted Jacob in his apartment after Jacob finally came to terms with his military ordeal?
+
+"," The story ""Jacob's Ladder"" is a 1998 film directed by. It is a film about a man who is
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the
+the",['His son Gabe'],acc4bde34060bc451a73e0e1e0d0bc7e1ca93695bc8112a1,36418,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where were Jim and Dave from?
+
+"," The story is set in Eatonville, Florida.",['Eatonville'],15ff32c8af396eaac6495b631f649886830d897c008bdc84,14761,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who discovered the Tregennis siblings the morning after the tragedy?
+
+", Dr. Leon Sterndale.,['The housekeeper'],077293776804b7d32e78db5ef172d5c960716006e8b446da,10016,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who killed Jacob?
+
+"," The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer: The
+
+Answer:",['One of his fellow soldiers.'],f4e1da583a42af305bdf0bca385229d260cc7b93af90a426,36405,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Landsmann's ultimate profession?
+
+", Doctor.,['A lawyer'],90cd90dd2b5ecaa57b899f172cabca1baa2db41646acedd2,8721,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Gravener want Ruth to do with the money?
+
+", Gravener wants Ruth to use the money for the Endowment of Research.,['Keep it to buy a house '],8ac0d86e207a81bc5c11e419220042c59535dc8f50204439,22697,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: To whom does Miranda write her letters?
+
+", To her mother.,['Her mother.'],89fa29fe98311bcd10f72a7d965065e2527f282e89594c37,13953,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How many days do viewers of the tape have to live after they watch it?
+
+", 7 days.,['7 days'],aab61294906308c2c4f4410552bfe47885450370839736ad,17501,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was Grassou's wife's name?
+
+", Virginie,['Virginie.'],c549a937e1ff08308e3afe359c4db27ba066adcabb4b2425,7896,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Reiko do differently that causes her not to die like the others?
+
+"," She watches the video and makes a copy, breaking the curse.",['She made a copy of the tape and gives it to her husband to study.'],91c715bd83e23bb735511450936df79969d1871bd0dda0cc,17500,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is death disguised as?
+
+", Death is disguised as a chess game.,['A monk.'],5eaa334fa7a1d55b36d65745662a6d44a0b13c32a8a773a8,18050,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does a citizen willingly do if they agree to live in Athens?
+
+", Agrees to obey the laws of Athens.,['Comply with the laws'],5e4a40a8b41c5d30f46458198614c34f7f789a67796d050d,6598,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How does Falder break his neck?
+
+", He jumps from a window.,['He throws himself down the stairs'],f8c64a0b7b14d8547ec79d736d74a5be64f611f65bd96988,22762,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Reiko discover saves viewers of the tape from their imminent death?
+
+"," The video's curse is broken by copying and sharing it, which prevents the viewer from dying.",['Making a copy and showing it to someone else'],26c58dd3a2eb5eb56503bf26f523dd9017bc802edc1d4223,17499,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is the name of Mortimer Treginnis' sister?
+
+", Brenda Tregennis.,['Brenda.'],e4763b2d20ad1b86e79d853759b3c68636b69b8fc58c9a5e,10014,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did Madam de Merret and her husband do after walling off the closet?
+
+", They left the house and fled to Merret.,['They stayed in the bedroom for a few days with the sounds of her lover trapped. '],8341f7a6590de673c41b1847546ba9a2b7bef46906443a29,8148,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Prior to her brother's death, how did Mary spend most of her time outside of the home? 
+
+", Mary spent most of her time outside of the home reading novels and engaging in solitary contemplation.,['With her charity'],1f4e0b8679c63575a052299e5d266741fe47c6eb672ece9e,23324,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Clifford's profession?
+
+", Police Officer.,['A security guard.'],7570a52d69ab93c5f54eba4c45d44a3411650c1e4694760a,29630,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was Rodgers exposed to while investigating?
+
+", The radioactive gas and the dangers of the mine.,['Radioactive gas'],d660c82758a6d8d265d8214e779593755f968c1f75acfb87,27508,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where is the rental cabin located that Reiko found the tape?
+
+", The rental cabin is located in Izu.,['Izu Oshima Island'],141a3f0713e008f2b19cb78757c28d61c8f71427d4613c44,17497,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Clarence take from the apartment? 
+
+", A gun.,['A bag that contains cocaine'],3b93fd7360b75c5207a3de730296a6a1a968289c27ea1d6c,29633,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How many years into the future was Soames sent?
+
+", 100 years.,['100.'],ef34f858c45b105916d82027347c397ca58151b0a6bd37aa,11198,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did the housekeeper's feet get wet during Holmes' visit?
+
+", The housekeeper's feet got wet because Holmes spilled water from a watering pot.,['Holmes accidentally kicks over a water pot'],00e523b3da92cec012d5262c1d0c98507f6c4b67e3c8aaf4,10016,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What would Socrates turn into if he agreed to break out of prison?
+
+", A doer of evil.,['He would turn into an outlaw.'],b7b3b83227d5bd105ada694c356855ffe9e2a5e09dd613ab,6598,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who acts as Falder's lawyer?
+
+", No one acts as Falder's lawyer; he is a clerk in a law firm.,['Frome'],effb0e0c603a8569abcfe4078c09c8c63f3c6f57e85df43c,22761,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who asks the Ghostbusters for help?
+
+", The Ghostbusters are asked by Dana to help with the baby's strange behavior.,['Dana'],0db2f34454b48e055fc1f54e54f6f19c4e2bd41c2e52795f,25086,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Soames unhappy about?
+
+", His lack of recognition and failure to leave a lasting impact.,['the his works are not recognized'],add987fbf4b13d64b945bf44fb0b7cc5a9284a6a5b75d71c,11194,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Mary's mother's name?
+
+", Eliza,['Eliza'],971da5c683ec66c727895dbbab133b42bd4aff3e75c8eda5,23312,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What gang did Rodgers and the other humans fight while he was at the camp?
+
+", The Bad Bloods gang.,['The Hans'],7b71f8fab58b267e1a174412725a0d0df25f260d596d9c70,27516,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does Alabama meet Clarence for the first time? 
+
+", At the diner.,['At a Detroit theater. '],ac44a02780985754f0c439cdc0fa9b0ed3a9f80e76da0304,29635,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How is Oscar related to Dana?
+
+", Oscar is Dana's son.,"[""It's her son""]",e1514d530becf70246cb43e50b44a1c615cbbded416ccb15,25086,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Socrates believe about being judged in the after life if he breaks out of prison?
+
+", Socrates believes he will be judged by the Laws of the world below.,['It would have a negative effect'],fb2d8ee43b24c62eaa479e62d1ac1fabdbb461cc1a60099b,6602,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Madame de Merret threatened to leave her husband if he did what?
+
+", opened the closet.,['Opened the closet'],99ff684ab5baa313a2e0a02355fa055b0c4ae1137b44a153,8146,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who moved to Chicago to perform mercy killings?
+
+", No one moved to Chicago to perform mercy killings.,['Seth Lazarus'],ba3c942a713b66ab70a132aed673b0e9f46faf4727d59f6b,8724,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How does the art-dealer describe Grassou's skill level to Virginie's father?
+
+", As a painter of mediocre skill.,['A grand master.'],a1d871fbe70ac6b9dcec5a8c89c6bf0cf26230b0b4f1968b,7902,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Grassous biggest disappointment?
+
+", His work is mocked by true artists.,"[""He doesn't feel he is a true artist.""]",8317d375904e2fcba00401b32177f783d5f8d348a1ef503f,7896,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Don Vincenzo Coccotti work for? 
+
+", The mob.,"['A mobster named ""Blue Lou Boyle"". ']",dd97ebb3408847191356780310676099e897a13ba1b1b4d0,29633,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did the police come back for Falder after he left prison?
+
+", Because he was a convict and had a ticket-of-leave.,['He failed to report'],fa81b8a2b6a29cc83f00088ce2bca908175658075648bad2,22768,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Falder believe could be murdered by her husband?
+
+", Ruth Honeywill.,['Ruth Honeywill'],e3828e0aa23a133903295abea7fdf8d449ce1edf2f202593,22766,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where is Alabama's son born?
+
+"," Detroit
+
+",['Mexico.'],1842b0ff1882e545a6d41d5caf67bba5312872423fa48e74,29631,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Eliza, on her death bed, request of her daughter Mary?
+
+", Eliza requests Mary to take care of her dogs.,['That she marry Charles'],d298b30eedffe37aa3082a45a8be4cc7dfe4f2b9cba5dc96,23319,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Death ask Antonius?
+
+", What are you waiting for?,"['If Antonius has succeeded in his ""one meaningful deed.""']",cb76250ae8598592d1baa7ca35e914646a3d5dcbf8220896,18050,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who defends Lazarus during his murder trial?
+
+", No one.,['bennett landsmann'],04f150c4bf11012af442b15c455ff708641861c80bd7e7dc,8723,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Mary taught after her brother dies?
+
+", Mary is taught to be independent and to take care of her family.,['accomplishments'],de0f895b76472481f0f37ea6b4a386d3f6cde97ae64e0516,23315,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is death disguised as?
+
+", Death is disguised as a chess game.,['a priest'],3cef32e4b61eee93ced7c533804485d3c49ee09560b72120,18050,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did Mary marry Charles?
+
+", Mary married Charles to escape her oppressive marriage and seek a new life.,['Because her mother requested it on her deathbed.'],cb00113ac346ae33f58e2d4729f7c2bc5ef5a6e32adc193b,23312,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Mortimer blame for the death of his sister?
+
+", Dr. Leon Sterndale.,['the devil'],28e5088749902173994fdcde40990b3f316d69bdbdaea0f8,10016,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How does Jacob first meet Michael Newman?
+
+"," Jacob meets Michael Newman in the scene where he is
+the one who has been with Jacob in the
+story. The
+answer is that Jacob meets Michael
+Newman in the
+scene where he is
+the one who has
+been with Jacob
+in the story.
+The
+answer is that
+Jacob meets
+Michael
+Newman in
+the scene
+where he is
+the one who
+has been with
+Jacob in the
+story. The
+answer is that
+Jacob meets
+Michael
+Newman in the
+scene where he
+is the one who
+has been with
+Jacob in the
+story. The
+answer is that
+Jacob meets
+Michael
+Newman in the
+scene where he
+is the",['He treated him in Vietnam.'],eb73d93ce14c59f39742a50530616f774ff426eab7427f99,36409,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What nationality is Ruth Anvoy?
+
+", American.,['American'],1cf24ba18f6900bb1f182594f614a8da725a8467d6255e08,22692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Rogers destroyed what gang's airship?
+
+", The Bad Bloods' airship.,['The Han gang.'],d844057a13c2cc7018e8328dfe10767938b3e28689e359ff,27506,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: When does Reiko realize the curse is still unbroken?
+
+"," When the video is watched by others, the curse continues.",['After her husband calls her'],76ebc13c929fa3fb7b51d0c58d1d1f86214b096b53f8351b,17495,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who traveled to Britain to visit her aunt?
+
+", Ruth Anvoy traveled to Britain to visit her aunt.,['Ruth Anvoy'],16cbcc8b763a701d2c65eb13cb180e3195868e65de706ea5,22695,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where do Jim and Dave go after seeing Daisy for the last time?
+
+", They go to the trial.,"['They both return to Eatonville, Florida. ']",1309d6cce29b59587533ab35e031789c33f1186e988ebc91,14768,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is the setting of the story?
+
+"," The story is set in medieval Germany, with castles, forests, and monasteries.",['Germany'],640cd8b132ca6e7906758f1b7401c6f0512e5350af0ecbbe,27739,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What then happens to Reikos husband?
+
+", The husband is killed by the curse.,['has a heart attack'],d96a627657534494f9c586e0c1b74d6b746c29e35f12a2c4,17492,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where did Falder work after he got out of prison?
+
+", In a solicitor's office.,['James How & Son '],f833f7b0219b25a96177a2aa6c9b30afadcb6d3fc95235f9,22766,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is Saltram's living situation?
+
+", Saltram lives with the Mulvilles.,['Lives with mulvilles '],979294831f2e204dd0340f8017a76400d0e67bf7feb92629,22692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where did the lover hide?
+
+", In the closet.,['In the closet'],0a567230f3e2096d313699858dc654ee517ed5acbc9d96ce,8139,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why is Grassou still resentful, despite his potentially advantageous marriage?
+
+", He feels undervalued by artists and overlooked by critics.,['He feels as the he is still not a real artist.'],42a2c14632d52bae9db7d4ba4ee0e76a033d95762dc7b88b,7901,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is it that the teenagers were discussing?
+
+", The cursed videotape and its deadly consequences.,['A videotape which is cursed and is rumored to bear a curse that kills the viewer in seven days after watching.'],24b64b063d69befcdfb40fc1cfedc18591ca72fbf30b8d76,17494,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was Alabama's profession?
+
+", Call girl.,['Alabama was a call girl.'],9b7e93c37eda3b907a9caa5eba250f8b25484613a10f8d95,29630,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who was Jezzie?
+
+"," Jezzie is a character in the story, but the question is about the character's name, which is Jezzie. However, the story is titled ""Jacob's Ladder,"" and the character is named after the protagonist, Jacob, who is a mailman in the story. The question is about the character Jezzie, who is a woman in the story. The answer is Jezzie. She is the one who is the love of the story. The answer is Jezzie. She is the one who is the love of the story. The answer is Jezzie. She is the one who is the love of the story. The answer is Jezzie. She is the one who is the love",['The woman he dated and lived with after the war.'],968946b19201f80e7a25eab638238ca70ec79b905d22bf38,36405,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Louis tell Jacob that hell burns away?
+
+"," The
+",['Your memories and attachments.'],287326088a17e7eb46973099e2a58e3374d50280f6cb1e27,36411,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What contract would be broken if he had escaped?
+
+", The implicit contract between Socrates and the laws of Athens.,['The social contract.'],a24cee35ff6ec6914bf94c1ef8b6cd4f9730a77d4caaa8b2,6594,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How does the art-dealer describe Grassou's skill level to Virginie's father?
+
+", As a painter of mediocre skill.,['he calls Grassou a grand master'],6400c535cd592c9e7e30d15803baa5c7f98e2c06e7ea1da6,7902,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who argues on behalf of Dave?
+
+", Elder Simms.,['Elder Childers'],6207b43d3369505e941b78f47a230efea8edde3b68bf50f4,14761,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was Jim's punishment for being found guilty?
+
+", Jim was locked up in the barn.,['Jim was banished from his town for two years.'],a4d4338ea46bcf775691966f2308ed8e1eae9d4f21581279,14763,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Which of her children does Eliza favor over the other?
+
+", Eliza favored her son over her daughter.,['Eliza favors her son over her daughter.'],563e90502f5614d7c6767f0d1c54677e8ad7523dd9627bc6,23317,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Upon his upbringing, what is Otto known for?
+
+", His gentle and kind heart.,['His wise counsel and peaceful nature'],de8d64e55be4e4abc78ab3c27e7f28ebd28c7484c111b435,27740,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who is Eliza's favorite?
+
+", Mary.,['Her son'],cb33b635d4a123fa9708b209bbfa323f19af169d0b71bb2f,23311,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where in Pennsylvania was Buck Rodgers investigating reports of phenomena?
+
+"," In the Wyoming Valley, Pennsylvania.",['Wyoming Valley'],5fdcf93eab07256e5d12a724f77d59505203dda0a1b89a0a,27511,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did T.K. Nupton think of Soames' existance?
+
+", T.K. Nupton thought Soames was a fictional character.,['He thought he was a fictional character.'],a5a146aef10058746200bd69eda1c3dc093261cc97ec32ce,11197,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why was Mortimer Trefinnis once estranged from his siblings?
+
+", A family quarrel over money.,['The matter of the division of the proceeds from selling the family business.'],0431126a12d83a266d88603f505ac4f1014bcb3d8cc02c10,10015,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does Dwyer open his in vitro clinic?
+
+", In a basement.,['Hawaii'],5c19d56ccc3fd2563e9d5ff9a5683a6ed8ee9ff506797a01,8724,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Monsieur  Vervelle want his child to wed?
+
+", Pierre Grassou.,['Pierre Grassou.'],82c3336e4f0ee4fc778e163032ecdfcd091dd8c91f50929c,7900,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did Madam de Merret's husband discover about her?
+
+", He discovered she had a secret lover in the closet.,['That she was having an affair. '],7284b797cdd8a5d15d986be4fc7ed72512fe1d164bb8c0db,8143,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What hidden message does Reiko find within the video?
+
+", The video contains a hidden message that warns of a deadly curse.,"['Frolic in brine, goblins be thine']",989c68a5afa115a48dd9edac8b946a517fae775b6062b3be,17495,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is La Grande Breteche?
+
+", A decaying mansion left in a state of deliberate neglect.,['The ruins of an abandoned manor. '],78e1602679a5ca1b22f32e665e8c31039b1a0c16a099efe5,8139,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What happened as a result of Anvoy and her fiance discussing giving the money to Saltram?
+
+"," The Coxon Fund was established, and Frank Saltram received the money.",['They broke off their engagement.'],d41198bdebd7b9472ae77beecbe8b7e1b7a46dca92d2d8f2,22703,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is the name of the character who is from New York?
+
+", Evelyn Vane,['Violet Ray.'],3aeebc5be470ddd2eafefee76cf25d8e6b08cbd669adc9e4,13958,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who encourages the farmer to marry the girl he falls in love with?
+
+"," Bill
+
+**Reason:** The story is a romantic drama that explores themes of love, sacrifice, and the struggle for survival, with Bill as the protagonist who falls in love with Abby, and the story is a romantic drama that explores the theme of love through the characters of Bill and Abby.
+
+**Answer:** Bill
+
+**Reason:** The story is a romantic drama that explores the theme of love through the characters of Bill and Abby.
+
+**Answer:** Bill
+
+**Reason:** The story is a romantic drama that explores the theme of love through the characters of Bill and Abby.
+
+**Answer:** Bill
+
+**Reason:** The story is a romantic drama that explores the theme of love through the characters of Bill and Abby.
+
+**Answer:** Bill
+
+**",['Bill'],9b448b0d8f056d1ddebb9503e4560a913dc529309759b358,31699,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What are the names of the two teenagers of this story? 
+
+", Masami and Tomoko.,['Masami and Tomoko'],9faec974fe4711c5b929ebc90f89336aeafe4ad8c5801872,17497,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: In what war did Rogers learn his battle knowledge?
+
+", The First World War.,"['World War 1, or The Great War']",33a9901ae9f88659b67c4f203e1a37b1c346d54c42b5b507,27510,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: When invited to Vervelle's home, what does Grassou discover?
+
+", He discovers his own paintings among Vervelle's collection.,['A number of his own forgeries.'],327947f2fade3b7bda5cfa6d24919d42d2afe66dc15d98d4,7900,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What event reunites Jacob with the other men from his platoon?
+
+"," The event that reunites Jacob with the other men from his platoon is the **return of the
+**.**
+
+
+**Answer: The event that reunites Jacob with the other men from his platoon is the **return of the
+**.**
+
+
+**Answer: The event that reunites Jacob with the other men from his platoon is the **return of the
+**.**
+
+
+**Answer: The event that reunites Jacob with the other men from his platoon is the **return of the
+**.**
+
+
+**Answer: The event that reunites Jacob with the other men from his platoon is the **return of the
+**.**
+
+
+**Answer: The event that reunites Jacob with the","[""Paul's death.""]",c0442bb0d481a92b102c0a19f1b9ffeb338f9094d0fdea97,36413,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What analogy does socrates compare citizens and the law to?
+
+", Socrates compares citizens and the law to a child and its parents.,['Citizens are bound to laws the same as children are bound to parents.'],b3234117bf4b7f313d5f79d32cb3a7ad90abf474d9baa814,6595,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did the Witch throw into a ditch?
+
+", The coffin.,['A coffin.'],2f4afd346731e656a9ea321b5a004ffc71da657b2cf2bb5f,5400,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: In what year did Rogers awaken from his deep slumber?
+
+", 2419 A.D.,['2419'],d99cd0d28d5737d137c97f32cd4f4938884b389d7a382687,27511,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What happens shortly after Otto returns to his father's castle?
+
+", Otto is taken to St. Michaelsburg.,['The nephew of Baron Frederick storms the castle and kidnaps Otto'],e944eedcb7ca073f4325399091571bdfc54a9492d964fe25,27742,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What happens before the shoot-out begins? 
+
+"," The story is a fictionalized version of a real event, a fictional narrative that is not based on a real event. It is a fictional story. It is a fictional narrative. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional story. It is a fictional",['Elliot accidentally reveals himself as an informant.'],07dc816717f2e2e35ef0d53c75e5c1985eb54cb342416357,29632,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What town did Daisy encounter Jim in?
+
+", Eatonville.,['Story did not mention'],e7d4896765966f6a5c728acac7feaacf20b9424a57be29ba,14762,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who is the owner of the manor in the story?
+
+", Madame de Merret.,['Madame de Merret'],b379cad63ae59ca3d948327329ba6481b0205675a4669a26,8144,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What was Gravener urging Anvoy to do?
+
+", Gravener urged Anvoy to accept the Coxon Fund for Frank Saltram.,['Keep the money.'],b4fc3cd3603720687018d2b4ec677a948aa3555ed8b218f9,22694,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: According to the deal Soames made, how would he find out whether his poetic talent would have been recognized in the future? 
+
+", He would be projected into the future to see his work's recognition.,['By selling his soul to the devil.'],1c4fffbc6acfb659de69246ce9d1e1a47a7e0df4f07c467e,11211,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who is the Bull god?
+
+", The Bull god is Apis.,['Apis'],616db78bbe044951aa6dd2cf7694fa9cb2679093fa94bb25,5397,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How many people fainted after seeing Brenda's dead body?
+
+", Two people fainted.,['2'],497f82e4a0a991e4a4dbf9c120e4b0e1b8c0aec1d0eecd15,10015,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Clarence marry?
+
+"," Alabama
+
+</p>",['Alabama Whitman'],43867169c16323f8898535ee903c8541238c249da965d6f8,29630,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who kills the farmer with a screwdriver?
+
+"," Bill
+
+**Reason:** The story is set in a way that reflects the themes of **freedom** and **individuality**. The characters' actions and the setting are **not** the same as the **film**. The story is a **narrative** that **moves** through **time**. The **characters** are **not** the same as the **story**. The **story** is **not** the same as the **film**. The **story** is **not** the same as the **film**. The **story** is **not** the same as the **film**. The **story** is **not** the same as the **film**. The **story**",['Bill'],38169ee3afb1356b30f468b13f180aa30364be96506f31ba,31693,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Grassou paint the forgeries for?
+
+", Elie Magus.,['The greats'],6feac558ee5f3ecb14b0b926193cc88a083acf356292b42d,7898,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What song does the crowd outside sing that weakens Vigo?
+
+"," ""Higher and Higher"" by the Ghostbusters.",['Auld Lang Syne'],70b284b8df3a6b792b62c91b56a951f6ec946b73a14e8250,25090,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is the fatal thought that Grassou is believed unable to remove from his heart?
+
+", Artists laugh at his work.,['That artists laugh at and ridicule his work.'],cd10cf90d7eb19a9f362b7075c408e6c24e66663e051ee57,7906,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does Mary marry?
+
+", Mary marries a man named Charles.,['Charles'],7098b345b24738b291638f32aa4638357c96f0298ae4a1a0,23311,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is La Grande Breteche?
+
+", A decaying mansion left in a state of deliberate neglect.,['Abandon manor'],0f21dd0fa76866f8616c3241e94707bb5096f62eac7b22d7,8139,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: When the Ghostbusters go to the museum on New Years' Eve, what song are the people singing?
+
+"," ""Higher and Higher""",['Auld Lang Saye'],8afafdee3d1ecc8c8c3ed128add65835b825bc8958b760a2,25097,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where is the abandoned manor located?
+
+", Near the river Loir.,['Near the town Vendome'],ec7663a53f4cf9f8b08db6e01c53149998f86870fa5e2bf2,8140,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did Jim and Dave fight?
+
+", Because Daisy was between them.,"[""For Daisy's affection. ""]",bf3efe2d554a3bc0403a12e8b7789b4a1fd36857536a302c,14761,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who created ""The Ladder""?
+
+"," The Ladder was created by the
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+<b> </b>
+",['The US Army chemical weapons division.'],21584219f298228a2f511fdf76d201926a3f3a1878562e90,36406,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why did Baroness Matillda went into premature labor?
+
+", To save her husband from the wrath of the people.,"[""Because she saw her husband's battle wounds""]",54f2f879348f7aee93be9a778ebe8a61a072c924be745986,27740,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did the less beautiful receive from the Witch?
+
+", Strange dreams that made their purposes more vain.,['Strange dreams.'],0269d09695c64f23e4e0555aad0e972d86289e6ad01e92dd,5401,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where do Mr. and Mrs. Vervelle live?
+
+", Ville d'Avray.,"[""In a mansion in Ville-d'Avray. ""]",1a3461af057c1e598b8c78ce5227e30baa7d706e6dcebf9e,7898,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Why does Baron Henry attack Castle Drachenhausen?
+
+"," To avenge the death of his uncle, Baron Frederick.","['Baron Conrad killed his uncle, Baron Frederick.']",379ccfa193f4938199579c116c1faa1fa5a90c370c02c280,27739,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did Bill die?
+
+", He was shot dead by a bullet.,['he was killed by the police'],fbeb825de92309788269da33aa6bd189c7b1d46b997746f4,31690,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who represents Jim in the trial?
+
+", Daisy Taylor.,['Elder Simms'],a4ec8d17e607318bd203d7bf1dd2b9230d7d97641cf1d9c2,14761,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did Soames's presence in the future affect others? 
+
+", Soames's presence in the future caused confusion and disbelief among the people in the reading-room.,['It caused a stir.'],2647b0dec2c7dcf97dede643e97d1e4235093b77165c692d,11198,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does the wealthy farmer marry?
+
+"," Chuck
+
+**Reasoning:** The story is ""Days of Heaven"" by Terrence Malick, a film that explores the theme of the ""rich"" and the ""poor"" in the context of human experience. The question ""Who does the wealthy farmer marry?"" is a metaphor for the film's exploration of the ""rich"" and the ""poor"" in the context of the film's narrative. The answer is **Chuck**. The wealthy farmer is Chuck, and he marries Abby, the ""beautiful"" woman, in a romantic and emotional journey that is the central theme of the film. The answer is **Chuck**. The wealthy farmer is Chuck, and he marries Abby, the ""beautiful"" woman, in",['Abby'],32e116c58a3c59fc170aa5f4e1dde414c8f3881872889826,31692,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What job does the mayor want to have?
+
+", The mayor wants to have the job of restoring the city's history.,['Governor'],45662812b248370fa585a5422dfbf7866258845c93e7819f,25088,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What is unique about the phonetic spelling of the 'future' article that discussed Beerbohm's story? 
+
+", The phonetic spelling of the 'future' article is in the form of a fictionalized historical narrative.,['The English lanuage has evolved.'],9ccdedc1bdfe2f5c9c2783c15663113648879dff0f68e94c,11204,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does the drug that Micheal created do?
+
+"," The drug is an antidote to the Ladder, a drug that causes the
+demonic visions and the violent hallucinations. It is a
+psychological and spiritual
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+and
+",['It makes people crazy and homicidal'],dc14ba3e85c6c3400f0d61e663b1948b8893b106c37403e5,36410,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who do Mary and Ann meet is Lisbon?
+
+", Mary and Ann meet Henry in Lisbon.,['The duo meet Henry on their travels to Lisbon.'],48745b35fb74c5b08e6ee08d609f6acc4d2968e0140e0a6c,23315,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does Virgil die?
+
+", He is shot dead in the bathroom.,['In the hotel.'],e76cb4d216f09e3bab6d769ae770429fe10498e6a2ca9aad,29630,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What did the lawyer discover about Jacob and his unit regarding their service in the war?
+
+"," Jacob's unit is the United States Army, and the story is about the psychological effects of the Vietnam War on American soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the psychological effects of the war on the soldiers, including the",['They were never deployed and were discharged for psychological reasons.'],f12f81dc7e8c1770eabc4532db20617e6697be92f1df70f6,36418,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Madame de Merret ask the mason to do before walling off the closet with bricks?
+
+", To leave a crack at the bottom.,['Break a piece of the door that she may look on her lover one last time'],cfed47773fbf92534a78d3d5ab856bdaac7cab28c348ab3f,8151,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where does the Witch live?
+
+", On Atlas' mountain in a cavern.,['Witch lives in cave on Atlas Mountains'],599409eeecf634d84a56ff6b47703f235f0f655a318e44b0,5397,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: After escaping from Baron Henry, where does Otto take refuge?
+
+", At the Monastery of St. Michaelsburg.,['The monastery where he grew up.'],86ee167f1c1b90775808f5d595a56d8c0fe1b2ff3cc46197,27742,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What would Socrates turn into if he agreed to break out of prison?
+
+", A doer of evil.,['An outlaw'],a4f3fcfc5fd3a7c726e59cebfa848065b74902ab3517fdff,6598,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Leon focus on in writing his letters?
+
+", The women and their interactions.,['The beauty of the women'],fdf07620fd1004f6da364b2f495439949740b9ea217ba467,13955,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What of mankind was the Witch able to perceive?
+
+", The Witch perceived the soul.,['The fears and desires of mankind.'],034d2735a442e6790227916fa064860a57daf365d3d30f2c,5401,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Where did Bill work when he lived in Chicago?
+
+"," He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the story. 
+
+**Answer:** He worked as a harvestman in the",['Bill worked in a steel mill.'],df6c6350671baab25c635bfa495eea90c69a7d201b5fe460,31695,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Which boarder realizes that none of the boarders like each other?
+
+", The American girl from New York.,['the German professor'],a8c929d6037b84d914b05d984865cbd3651b578544f0e3bf,13957,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How much was the check that was issued by Robert Cokeson forged for?
+
+", $9.,['Ninety pounds'],f3f4f8f810afa5e12cd332360f52d4f4fe63919cb3fe7b26,22769,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: How did the housekeeper's feet get wet during Holmes' visit?
+
+", The housekeeper's feet got wet because Holmes spilled water from a watering pot.,['Sherlock had wet the floor by overturning a water-filled pot.'],cfc986e72c167c2a8f3bff0498f2f2234bfa038cc8ca9f7f,10016,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What then happens to Reikos husband?
+
+", The husband is killed by the curse.,['He watches the video and dies of Cardiac arrest.'],d41b617b77c8dddd9d04661856245994ab1c78e88b111632,17492,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What town did Daisy encounter Jim in?
+
+", Eatonville.,['outside town'],d4bc46084679d5f1301df1a824097be4c5c47203e0ca2682,14762,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who died in this story?
+
+", Dr. Leon Sterndale.,['Brenda Tregennis'],52c910fb919a865d201b4d6a723f624290e2c663d282315a,10011,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What does Holmes observe in the fireplace?
+
+"," A strange, dark powder.",['The remains of afire in the fireplace.'],c22368c99a8cf7d7a3a2bc96d1faeffd21403576f605519b,10013,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: What kind of business was Anthony Rogers working for in 1927?
+
+", Scientific research and exploration of radioactive gases.,['Radioactive gas'],230ec746dd2dce443e9338acc52ffc45c3b79b6708ae7c0e,27512,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: Who does not see death in the end?
+
+", The knight.,['Everyone except for Jof'],a3bfcf39ca219cf1af8a91c3f3e30bdcf3f16f7f8f0f1adb,18053,148,0.5,narrativeqa,Answer:,
+en,narrativeqa,"Question: When does Reiko realize the curse is still unbroken?
+
+"," When the video is watched by others, the curse continues.",['She received a call from Ryuji during his last minutes alive.'],a813ddeac39b98eaa48da96b448ec147298ac8b1f370f212,17495,148,0.5,narrativeqa,Answer:,

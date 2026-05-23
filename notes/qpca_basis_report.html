@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0" />
+<title>K-Cache Quantization on Qwen3-8B: TurboQuant, JointQK, QPCA</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderAllMath();"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --paper: #ffffff;
+    --ink: #355265;
+    --ink-soft: #476d86;
+    --ink-faint: #8fa1ad;
+    --rule: #dddddd;
+    --accent: #328ac1;
+    --accent-hover: #4b9dd0;
+    --accent-soft: #eaf4fa;
+    --panel-fg: #f7f7f7;
+    --panel-fg2: #ebebeb;
+    --thm-border: #328ac1;
+    --thm-bg: #eaf4fa;
+    --prop-border: #4b9dd0;
+    --prop-bg: #f0f7fb;
+    --lem-border: #999999;
+    --lem-bg: #f7f7f7;
+    --def-border: #6b8a6b;
+    --def-bg: #eef3ee;
+    --rem-border: #8a7a3a;
+    --rem-bg: #f4efde;
+    --proof-bg: #f7f7f7;
+    --win-bg: #eef3ee;
+    --loss-bg: #fcecec;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'tnum';
+  }
+  body { min-height: 100vh; overflow: hidden; }
+
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--rule); z-index: 100; }
+  .progress-fill { height: 100%; background: var(--accent); width: 0; transition: width 320ms cubic-bezier(.4, 0, .2, 1); }
+
+  .book { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  .pages { position: relative; width: 100%; height: 100%; }
+  .page {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 64px 7% 120px; background: var(--paper);
+    transition: transform 520ms cubic-bezier(.6, 0, .25, 1), opacity 320ms;
+    opacity: 0; pointer-events: none; transform: translateX(100%);
+  }
+  .page.active { opacity: 1; pointer-events: auto; transform: translateX(0); z-index: 2; }
+  .page.prev { opacity: 0; transform: translateX(-100%); }
+  .page.next { opacity: 0; transform: translateX(100%); }
+  .page-inner { max-width: 820px; margin: 0 auto; }
+
+  .chapter-label {
+    text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px;
+    color: var(--accent); font-weight: 700; margin-bottom: 16px;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ink); font-weight: 600; line-height: 1.2; letter-spacing: -0.015em;
+  }
+  h1 { font-size: 38px; margin: 0 0 18px; letter-spacing: -0.025em; font-weight: 700; }
+  h2 { font-size: 27px; margin: 0 0 22px; letter-spacing: -0.02em; font-weight: 600; }
+  h3 { font-size: 20px; margin: 30px 0 10px; font-weight: 600; }
+  h4 { font-size: 17px; margin: 24px 0 8px; font-weight: 600; color: var(--ink-soft); }
+  .subtitle { font-size: 19px; color: var(--ink-soft); margin-bottom: 36px; font-weight: 400; }
+
+  p { margin: 0 0 14px; color: var(--ink); }
+  .lead { font-size: 18px; color: var(--ink-soft); margin: 20px 0 24px; line-height: 1.55; font-weight: 400; }
+  .small { font-size: 14px; color: var(--ink-soft); }
+  em.term { font-style: normal; color: var(--accent); font-weight: 600; }
+
+  .ornament { text-align: center; color: var(--ink-faint); letter-spacing: 8px; margin: 24px 0; user-select: none; }
+
+  .block { margin: 20px 0; padding: 16px 20px 12px; border-left: 3px solid var(--lem-border); background: var(--lem-bg); border-radius: 0 6px 6px 0; }
+  .block-label { display: inline-block; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; color: var(--lem-border); margin-bottom: 8px; }
+  .block-title { color: var(--ink-soft); margin-bottom: 6px; font-size: 16px; font-weight: 500; }
+  .block p:last-child { margin-bottom: 0; }
+  .theorem { border-left-color: var(--thm-border); background: var(--thm-bg); }
+  .theorem .block-label { color: var(--thm-border); }
+  .proposition { border-left-color: var(--prop-border); background: var(--prop-bg); }
+  .proposition .block-label { color: var(--prop-border); }
+  .lemma { border-left-color: var(--lem-border); background: var(--lem-bg); }
+  .definition { border-left-color: var(--def-border); background: var(--def-bg); }
+  .definition .block-label { color: var(--def-border); }
+  .remark { border-left-color: var(--rem-border); background: var(--rem-bg); }
+  .remark .block-label { color: var(--rem-border); }
+  .remark em { font-style: normal; color: var(--ink); }
+
+  details.proof { margin: 16px 0; padding: 0; background: var(--proof-bg); border-radius: 6px; border: 1px solid var(--rule); }
+  details.proof summary { cursor: pointer; padding: 10px 18px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--ink-soft); user-select: none; list-style: none; }
+  details.proof summary::-webkit-details-marker { display: none; }
+  details.proof summary::before { content: "▸ "; display: inline-block; transition: transform 200ms; margin-right: 4px; }
+  details.proof[open] summary::before { content: "▾ "; }
+  details.proof[open] { padding-bottom: 14px; }
+  details.proof > *:not(summary) { padding: 0 22px; }
+
+  .katex-display { margin: 16px 0 !important; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+  .katex-display > .katex { font-size: 1.04em; }
+
+  .toc-toggle { position: fixed; top: 16px; left: 16px; z-index: 50; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; cursor: pointer; color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 500; transition: all 140ms; }
+  .toc-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  .toc { position: fixed; top: 0; left: 0; bottom: 0; width: 320px; max-width: 80vw; background: var(--paper); border-right: 1px solid var(--rule); padding: 56px 28px 28px; transform: translateX(-100%); transition: transform 280ms cubic-bezier(.4, 0, .2, 1); z-index: 40; overflow-y: auto; box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04); }
+  .toc.open { transform: translateX(0); }
+  .toc h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin: 0 0 16px; font-weight: 700; }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: tocnum; }
+  .toc li { counter-increment: tocnum; border-bottom: 1px solid var(--rule); padding: 11px 0; cursor: pointer; font-size: 14px; color: var(--ink-soft); transition: color 120ms, padding-left 120ms; line-height: 1.35; }
+  .toc li::before { content: counter(tocnum, decimal-leading-zero); font-size: 11px; color: var(--ink-faint); margin-right: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .toc li:hover { color: var(--ink); padding-left: 4px; }
+  .toc li.current { color: var(--accent); font-weight: 600; }
+  .toc li.current::before { color: var(--accent); }
+
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: var(--paper); border-top: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; padding: 0 18px; z-index: 30; }
+  .nav-bar button { background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: 8px 18px; color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 140ms; min-width: 96px; }
+  .nav-bar button:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .nav-bar button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .page-info { font-size: 13px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .page-info strong { color: var(--ink); font-weight: 600; }
+
+  .cover { text-align: center; padding-top: 80px; }
+  .cover h1 { font-size: 42px; line-height: 1.1; margin-bottom: 18px; letter-spacing: -0.03em; }
+  .cover .subtitle { font-size: 19px; margin-bottom: 56px; }
+  .cover .meta { color: var(--ink-soft); font-size: 15px; margin: 8px 0; }
+  .cover .meta strong { color: var(--ink); font-weight: 600; }
+  .cover .audience { margin-top: 56px; padding: 18px 22px; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; color: var(--ink-soft); font-size: 14px; text-align: left; line-height: 1.5; }
+  .cover .audience strong { color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; font-weight: 700; display: block; margin-bottom: 6px; }
+  .start-btn { display: inline-block; margin-top: 40px; padding: 12px 28px; background: var(--accent); color: #ffffff; border: none; border-radius: 6px; font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; cursor: pointer; transition: all 160ms; }
+  .start-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(50, 138, 193, 0.25); }
+
+  .abstract { margin: 28px 0; padding: 18px 22px; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; color: var(--ink-soft); line-height: 1.55; text-align: left; }
+  .abstract::before { content: "Abstract"; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-size: 11px; display: block; margin-bottom: 6px; }
+
+  .refs { list-style: none; counter-reset: ref; padding: 0; margin: 24px 0; font-size: 15px; }
+  .refs li { counter-increment: ref; padding-left: 36px; position: relative; margin-bottom: 14px; color: var(--ink-soft); line-height: 1.5; }
+  .refs li::before { content: "[" counter(ref) "]"; position: absolute; left: 0; color: var(--accent); font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+  code, .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', 'Cascadia Code', monospace; font-size: 0.88em; background: var(--lem-bg); border: 1px solid var(--rule); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+  kbd { background: var(--paper); border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+
+  /* Tables */
+  table.results { width: 100%; border-collapse: collapse; margin: 18px 0 12px; font-size: 13.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  table.results caption { text-align: left; padding-bottom: 6px; color: var(--ink-soft); font-size: 13px; font-style: italic; }
+  table.results th, table.results td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--rule); }
+  table.results th.l, table.results td.l { text-align: left; }
+  table.results th.c, table.results td.c { text-align: center; }
+  table.results thead th { font-weight: 600; color: var(--ink-soft); border-bottom: 2px solid var(--ink); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; }
+  table.results thead th.group { text-align: center; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); background: var(--lem-bg); color: var(--ink); }
+  table.results td.gleft { border-left: 1px solid var(--rule); }
+  table.results td.gright { border-right: 1px solid var(--rule); }
+  table.results tbody tr:nth-child(odd) td { background: rgba(0,0,0,0.015); }
+  table.results tbody tr.mean td { border-top: 2px solid var(--ink); font-weight: 600; background: var(--accent-soft) !important; color: var(--ink); }
+  table.results .win { color: var(--accent); font-weight: 700; }
+  table.results .winbg { background: var(--win-bg) !important; font-weight: 600; }
+  table.results .lossbg { background: var(--loss-bg) !important; }
+  table.results .neg { color: #c4453a; }
+  table.results .pos { color: #1e7a3a; font-weight: 600; }
+  table.results .muted { color: var(--ink-faint); }
+
+  @media (max-width: 820px) {
+    html, body { font-size: 16px; }
+    .page { padding: 56px 6% 100px; }
+    h1 { font-size: 30px; } h2 { font-size: 24px; } h3 { font-size: 18px; }
+    .cover h1 { font-size: 32px; }
+    .cover .subtitle { font-size: 17px; margin-bottom: 36px; }
+    .subtitle { font-size: 17px; } .lead { font-size: 17px; }
+    .nav-bar button { padding: 8px 14px; font-size: 13px; min-width: 76px; }
+    .nav-bar { padding: 0 10px; }
+    table.results { font-size: 12px; }
+    table.results th, table.results td { padding: 6px 6px; }
+  }
+  @media (max-width: 480px) {
+    html, body { font-size: 15px; }
+    .page { padding: 52px 5% 96px; }
+    .cover h1 { font-size: 26px; }
+    .cover .subtitle { font-size: 15px; }
+    .block { padding: 12px 14px 8px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .page { transition: opacity 200ms; } .progress-fill, .toc { transition: none; } }
+  ::selection { background: var(--accent); color: #ffffff; }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><div class="progress-fill"></div></div>
+<button class="toc-toggle" aria-label="Toggle table of contents">☰ Contents</button>
+
+<aside class="toc" aria-label="Table of contents">
+  <h3>Contents</h3>
+  <ol id="toc-list"></ol>
+  <p class="small" style="margin-top: 24px; color: var(--ink-faint);">
+    Use <kbd>←</kbd> <kbd>→</kbd> arrows, <kbd>Space</kbd>, or swipe.
+  </p>
+</aside>
+
+<main class="book" id="book">
+  <div class="pages" id="pages">
+
+    <!-- Page 0 — Cover -->
+    <article class="page" data-title="TL;DR" data-page="0">
+      <div class="page-inner">
+        <div class="chapter-label">Empirical Report · 2026-05-21</div>
+        <h1>K-Cache Quantization on Qwen3-8B</h1>
+        <p class="subtitle">TurboQuant · JointQK · QPCA — methods, calibration, results</p>
+
+        <h3>TL;DR</h3>
+
+        <p>
+          We compare three K-cache quantization bases on Qwen/Qwen3-8B at $b \in \{2, 3, 4\}$ bits/coord, with V-side
+          held fixed (Section 5):
+        </p>
+
+        <ul>
+          <li><strong>TurboQuant</strong> — random Hadamard rotation, no calibration.</li>
+          <li><strong>JointQK</strong> — the deployed production basis; eigenvectors of $\tfrac{1}{2}(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)$ with water-fill score $q\text{-diag}_i \cdot k\text{-diag}_i$.</li>
+          <li><strong>QPCA</strong> — the closed-form minimiser of all-pairs Q-weighted logit MSE; basis $\Sigma_Q^{1/2} V$ with water-fill score $\lambda_i$.</li>
+        </ul>
+
+        <p>
+          <strong>Result.</strong> QPCA wins decisively on the metric it was designed to minimise
+          (<code>logit_err</code>, −16 % to −36 % vs JointQK) but loses on downstream LongBench F1: at $b = 2$,
+          JointQK reaches 47.0 mean F1 to QPCA's 41.7 (−5.4 pp). At $b \in \{3, 4\}$, calibration-free TurboQuant
+          beats both calibrated methods on mean F1.
+        </p>
+
+        <p>
+          <strong>Why.</strong> Both calibrated methods (approximately) target the same Q-weighted logit MSE, an
+          <em>averaged</em> objective. The bench metric responds to softmax-distribution shift, which is a
+          <em>per-pair</em> threshold-flavoured quantity. The gap between these two is the entire phenomenon — see
+          §8 for the mechanism analysis and Proposition 8.4 for a sketch of a more accurate objective (softmax KL)
+          for the next-generation calibrated basis.
+        </p>
+
+        <button class="start-btn" id="start-btn" style="margin-top: 28px;">Begin →</button>
+      </div>
+    </article>
+
+    <!-- Page 1 — Attention and softmax -->
+    <article class="page" data-title="§1 Attention" data-page="1">
+      <div class="page-inner">
+        <div class="chapter-label">Section 1</div>
+        <h2>Attention</h2>
+
+        <p class="lead">
+          Self-attention scores each (query, key) pair with an inner product, normalises via softmax, and outputs a
+          probability-weighted sum of values. The K-cache stores these keys; quantizing them changes the scores and
+          therefore the output.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Definition 1.1 — Scaled dot-product attention</div>
+          <p>
+            For a query $q \in \mathbb{R}^d$ and a set of $S$ keys $\{k_s\}$ and values $\{v_s\}$ (one head):
+            $$\ell_s \;=\; \frac{q^\top k_s}{\sqrt{d}}, \qquad
+              \alpha_s \;=\; \mathrm{softmax}_s(\ell_s) \;=\; \frac{\exp(\ell_s)}{\sum_{s'} \exp(\ell_{s'})}, \qquad
+              \mathrm{Attn}(q) \;=\; \sum_s \alpha_s\, v_s.$$
+            We call $\ell_s$ the <em class="term">logit</em> of key $s$, and $\alpha_s$ the <em class="term">attention probability</em>.
+          </p>
+        </div>
+
+        <p>
+          Softmax exponentiates differences: $\alpha_{s_1}/\alpha_{s_2} = \exp(\ell_{s_1} - \ell_{s_2})$. A logit
+          margin of 5 makes the top-1 about $e^5 \approx 150\times$ more probable than the runner-up. In transformer
+          inference, attention distributions are typically peaky — one or a few keys dominate the output.
+        </p>
+
+        <p>
+          The K-cache holds $\{k_s\}_{s=1}^{S}$ per (layer, KV-head); at long context $S$ is the dominant memory cost.
+          Compressing the K-cache means storing each $k_s$ at fewer bits, replacing $k_s$ with a reconstruction
+          $\hat k_s$ in the score formula.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 1.2 — What quantization changes; how we measure the change</div>
+          <p>
+            Quantization replaces $k_s$ with $\hat k_s$, perturbing the logits $\ell_s \to \hat\ell_s$ and therefore the
+            softmax weights $\alpha_s \to \hat\alpha_s$. The attention output is the softmax-weighted sum
+            $\mathrm{Attn}(q) = \sum_s \alpha_s v_s$, so what we ultimately want preserved is the full softmax output
+            distribution $\hat\alpha \approx \alpha$.
+          </p>
+          <p>
+            That distributional question is hard to summarise in a single scalar. We measure two cheap
+            <strong>discrete proxies</strong> instead:
+          </p>
+          <ul>
+            <li><strong>top-1 retention</strong>: whether $\arg\max_s \hat\ell_s = \arg\max_s \ell_s$.</li>
+            <li><strong>top-5 retention</strong>: whether the original argmax remains in the top-5 of $\hat\ell$.</li>
+          </ul>
+          <p>
+            These proxies are neither necessary nor sufficient for output preservation. An argmax flip with similar
+            value vectors barely moves the output; an argmax preservation with shifted softmax weights still moves it.
+            We use them because (a) they are cheap (argmax comparisons over the sequence), and (b) prior empirical
+            work on this model [4] found top-1 retention is the cheap proxy that correlates most strongly with
+            downstream F1 — better than $k\_\text{mse}$ and other aggregate metrics. <strong>They are
+            empirically-validated proxies in our setting, not logical consequences of softmax mechanics.</strong>
+          </p>
+        </div>
+
+        <p>
+          We state the precise condition under which the top-1 proxy is satisfied; it will be useful in §8:
+        </p>
+
+        <div class="block theorem">
+          <div class="block-label">Theorem 1.3 — Condition for top-1 retention</div>
+          <p>
+            Let $t^* := \arg\max_s \ell_s$ and $\Delta\ell_s := q^\top (\hat k_s - k_s) / \sqrt{d}$ be the
+            per-key logit perturbation. Then $\arg\max_s \hat\ell_s = t^*$ iff for every $s \neq t^*$,
+            $$\Delta\ell_{t^*} - \Delta\ell_s \;>\; -(\ell_{t^*} - \ell_s) \;=\; -m_s.$$
+            That is, the per-key perturbation gap must stay below the per-key <em class="term">margin</em> $m_s$.
+            Top-1 retention is a threshold statistic on <em>per-key</em> margins, not a function of any aggregate
+            (e.g., MSE) over $s$.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 2 — Compression framework -->
+    <article class="page" data-title="§2 Framework" data-page="2">
+      <div class="page-inner">
+        <div class="chapter-label">Section 2</div>
+        <h2>Compression framework: linear transform + per-coordinate quantization</h2>
+
+        <p class="lead">
+          All three methods studied here share the same pipeline. They differ only in (i) the basis and (ii) how the
+          bit budget is split across coordinates.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Definition 2.1 — Quantization pipeline</div>
+          <p>
+            Fix an encoder matrix $F \in \mathbb{R}^{d \times d}$, decoder $G$ with $FG = I$, per-coord bit budgets
+            $B = (B_1, \ldots, B_d)$ with $\sum_i B_i = b \cdot d$, and per-coord Lloyd–Max codebooks
+            $\{\mathcal{C}_i\}_{i=1}^d$ matched to the marginal distribution of coordinate $i$ in code space.
+          </p>
+          <p>
+            <strong>Encode</strong> a key (as row vector): $r \;=\; k \cdot F \in \mathbb{R}^d$.<br>
+            <strong>Quantize</strong> each coordinate independently: $\hat r_i \;=\; \arg\min_{c \in \mathcal{C}_i} (r_i - c)^2$.<br>
+            <strong>Decode</strong>: $\hat k \;=\; \hat r \cdot G$.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Assumption 2.A — Codebooks are designed for Gaussian sources</div>
+          <p>
+            <em>The per-coord codebooks $\mathcal{C}_i$ used in this report are <strong>Lloyd–Max codebooks for the
+            unit-Gaussian distribution</strong>, scaled by the per-coord standard deviation $\sigma_i$. Concretely,
+            the implementation calls <code>unit_gaussian_centroids(B_i)</code> and multiplies by $\sigma_i$. This is the
+            standard high-resolution choice: it is optimal when $r_i \sim \mathcal{N}(0, \sigma_i^2)$ and remains close
+            to optimal for any smooth, single-mode source after the basis rotation makes per-coord marginals
+            approximately Gaussian (a consequence of central limit theorem mixing for $d \gg 1$). All
+            $D(B) \approx c \cdot \sigma^2 \cdot 2^{-2 B}$ formulas in this section presume this Gaussian-Lloyd–Max
+            codebook design; mismatch between the actual source and the Gaussian assumption shows up as a larger
+            constant $c$, not as a change in the $2^{-2B}$ slope.</em>
+          </p>
+        </div>
+
+        <p>
+          Lloyd–Max with per-coordinate standard deviation matched to the source minimises per-coord scalar MSE. The
+          per-coord bit budget $B_i$ controls codebook size $|\mathcal{C}_i| = 2^{B_i}$. We cap $B_i \le 8$ and
+          redistribute saved bits to the lowest-allocated coords.
+        </p>
+
+        <p>
+          Three design knobs distinguish methods:
+        </p>
+        <ol>
+          <li><strong>Basis</strong> — the matrix $F$.</li>
+          <li><strong>Bit allocation</strong> — how to choose $B$ given $b \cdot d$ total.</li>
+          <li><strong>Per-coord standard deviation</strong> — what scale to use for the Lloyd–Max codebooks.</li>
+        </ol>
+        <p>
+          The codebook (knob 3) follows automatically from the variance of $r_i$ once the basis is chosen, so the
+          interesting choices are (1) and (2).
+        </p>
+
+        <h3>What scalar quantizers leave behind</h3>
+
+        <p>
+          A $B$-bit scalar quantizer with $K = 2^B$ levels partitions the real line into $K$ cells and replaces every
+          source sample with its cell's centroid. The error is the deviation within a cell. We need to know how this
+          error scales with $B$ and with the source statistics — that scaling is what makes one bit allocation better
+          than another.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 2.2 — Bennett–Lloyd high-resolution formula</div>
+          <p>
+            For a scalar source with density $p(x)$ and finite second moment $\sigma^2$, an optimal $B$-bit scalar quantizer
+            (Lloyd–Max with centroids placed to minimise MSE) achieves mean squared error
+            $$D(B) \;\approx\; c \cdot \sigma^2 \cdot 2^{-2 B}, \qquad B \text{ large,}$$
+            where $c$ is a constant depending on $p$ (e.g., $c = \frac{\pi \sqrt{3}}{2} \approx 2.72$ for a Gaussian
+            source). The approximation is asymptotically exact as $B \to \infty$ and is accurate to within ~20 % for
+            Gaussian sources already at $B \ge 2$.
+          </p>
+        </div>
+
+        <p>
+          The 6 dB / bit slope $2^{-2B}$ is the universal high-resolution scaling: each additional bit of precision cuts
+          the per-coord MSE by a factor of 4. The proportionality constant absorbs source shape (Gaussian vs heavy-tailed)
+          and codebook design (Lloyd–Max vs uniform).
+        </p>
+
+        <div class="block remark">
+          <div class="block-label">Remark 2.3 — What "high-resolution" means</div>
+          <p>
+            <em>"High-resolution" is the asymptotic regime where the source density $p(x)$ is approximately constant
+            inside each quantization cell — i.e., the cells are small relative to the scale of $p$. Practically: $B \ge 2$
+            for Gaussian sources. Below this, the Bennett–Lloyd formula picks up higher-order corrections, but its
+            qualitative prediction (MSE $\propto \sigma^2 \cdot 2^{-2B}$) still holds. The K bit budgets we sweep
+            ($b \in \{2, 3, 4\}$) are in the regime where the formula is accurate enough to guide allocation.</em>
+          </p>
+        </div>
+
+        <h3>Why we minimise $\sum_i s_i \cdot 2^{-2 B_i}$</h3>
+
+        <p>
+          With one Lloyd–Max quantizer per coordinate, the total per-key MSE after compression decomposes as the sum
+          of per-coordinate MSEs:
+          $$\mathbb{E}\,\|r - \hat r\|^2 \;=\; \sum_{i=1}^{d} \mathbb{E}\,(r_i - \hat r_i)^2 \;\approx\; c \sum_{i=1}^{d} \sigma_i^2 \cdot 2^{-2 B_i},$$
+          using Proposition 2.2 per coord with $\sigma_i^2 = \mathrm{Var}(r_i)$. Different design objectives reweight the
+          coord contributions — e.g., a Q-weighted MSE may rescale by $\sigma_i^2 \to s_i$ where $s_i$ is the per-coord
+          loss-weight. The water-fill problem is then a single allocation rule over all such weighted-MSE objectives:
+        </p>
+
+        <div class="block lemma">
+          <div class="block-label">Lemma 2.4 — Water-fill bit allocation</div>
+          <p>
+            Given per-coord scores $s_i > 0$ and total budget $B_{\text{tot}} = b \cdot d$, the bit allocation that
+            minimises $\sum_i s_i \cdot 2^{-2 B_i}$ subject to $\sum_i B_i = B_{\text{tot}}$ is
+            $$B_i^* \;=\; \tfrac{1}{2} \log_2 s_i \;+\; \tfrac{B_{\text{tot}}}{d} \;-\; \tfrac{1}{2 d} \sum_j \log_2 s_j$$
+            (after clamping $B_i^* \ge 0$ and re-solving). This is the classical <em class="term">reverse water-filling</em>
+            allocation. Coordinates with larger score get more bits, on a $\frac{1}{2} \log_2$ scale.
+          </p>
+          <p>
+            <strong>Equalisation property.</strong> At the optimum, the per-coord contribution to the loss is
+            <em>constant across all active coordinates</em>:
+            $$s_i \cdot 2^{-2 B_i^*} \;=\; C \qquad \text{for all } i \text{ with } B_i^* > 0,$$
+            for some constant $C$ (the "water level"). Geometrically: think of the score $s_i$ as the floor height
+            $\frac{1}{2}\log_2 s_i$ of a bucket, and the bit allocation $B_i^*$ as the depth of water poured into
+            that bucket. Water-fill keeps the <em>water surface</em> flat across all buckets.
+            <strong>What this means in practice depends on what the score $s_i$ represents</strong> — see Proposition 8.2.
+          </p>
+        </div>
+
+        <p>
+          Each method below defines a basis $F$ <em>and</em> a per-coord score $s_i$. The score equals the per-coord
+          variance $\lambda_i$ for objectives that minimise code-space MSE (QPCA's choice), or a product of per-coord
+          variance and per-coord query weight for objectives that approximate logit variance (JointQK's choice).
+          Bit allocation then follows from Lemma 2.4.
+        </p>
+      </div>
+    </article>
+
+    <!-- Page 3 — The three methods -->
+    <article class="page" data-title="§3 Three methods" data-page="3">
+      <div class="page-inner">
+        <div class="chapter-label">Section 3</div>
+        <h2>TurboQuant, JointQK, QPCA</h2>
+
+        <p class="lead">
+          The three methods span the calibration-dependence spectrum: TurboQuant uses no calibration data, JointQK and
+          QPCA both use the same calibration second moments, differing in how they use them.
+        </p>
+
+        <h3>TurboQuant (V3)</h3>
+        <p>
+          <strong>Name origin.</strong> Published as "TurboQuant" [3]; the "Turbo" refers to the fast Walsh-Hadamard
+          transform implementation. Internally we label it <em>V3</em> (the third K-side variant tested in early
+          ablations).
+        </p>
+        <div class="block definition">
+          <div class="block-label">Method 3.1 — TurboQuant</div>
+          <p>
+            <strong>Basis</strong>: $F = H$, a fixed random Hadamard matrix (orthogonal, seeded for reproducibility);
+            $G = H^\top$.<br>
+            <strong>Score</strong>: uniform $s_i = 1$ → uniform allocation $B_i = b$ for all $i$.<br>
+            <strong>Calibration</strong>: none.<br>
+            <strong>Rationale</strong>: random rotations approximately equalise the per-coord variance of any input
+            distribution, so uniform allocation is near-optimal without knowing $S_k$.
+          </p>
+        </div>
+
+        <h3>JointQK</h3>
+        <p>
+          <strong>Name origin.</strong> "Joint" because the basis is built from <em>both</em> $\Sigma_Q$ and $\Sigma_K$
+          (vs. PCA-on-K which uses $\Sigma_K$ alone). The "QK" emphasises the symmetric use of query and key statistics.
+        </p>
+        <div class="block definition">
+          <div class="block-label">Method 3.2 — JointQK</div>
+          <p>
+            <strong>Basis</strong>: $F = R$ where $R$ is the orthonormal eigenvectors of the symmetrised product
+            $$\tfrac{1}{2}(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q), \qquad R \text{ sorted by descending eigenvalue;}$$
+            $G = R^\top$.<br>
+            <strong>Score</strong>: per-coord product
+            $$s_i^{\text{JointQK}} \;=\; (R^\top \Sigma_Q R)_{ii} \cdot (R^\top \Sigma_K R)_{ii} \;=\; q\text{-diag}_i \cdot k\text{-diag}_i.$$<br>
+            <strong>Calibration</strong>: uses $\Sigma_Q$, $\Sigma_K$ (Definition 4.1).<br>
+            <strong>Status</strong>: deployed production basis for Qwen3-8B.
+          </p>
+        </div>
+
+        <h3>QPCA</h3>
+        <p>
+          <strong>Name origin.</strong> "Q-weighted PCA" — like ordinary PCA on keys, but the inner product is
+          $\Sigma_Q$-weighted (Mahalanobis) instead of Euclidean. When $\Sigma_Q = I$ the construction reduces to plain
+          PCA. Closed-form derivation in <a href="../background/qpca_derivation_companion.html">qpca_derivation_companion.html</a>.
+        </p>
+        <div class="block definition">
+          <div class="block-label">Method 3.3 — QPCA</div>
+          <p>
+            Let $A := \Sigma_Q^{1/2} \Sigma_K \Sigma_Q^{1/2} = V \Lambda V^\top$ with $V$ orthonormal and
+            $\Lambda = \mathrm{diag}(\lambda_1 \ge \cdots \ge \lambda_d)$.<br>
+            <strong>Basis</strong>: $F = \Sigma_Q^{1/2} V$ (non-orthogonal in Euclidean sense; $\Sigma_Q$-orthonormal);
+            $G = V^\top \Sigma_Q^{-1/2}$.<br>
+            <strong>Score</strong>: per-coord variance in code space, $s_i^{\text{QPCA}} = \lambda_i$.<br>
+            <strong>Calibration</strong>: uses $\Sigma_Q$, $\Sigma_K$.<br>
+            <strong>Property</strong>: QPCA is the closed-form minimiser of the all-pairs logit MSE
+            $\sum_{i,j} (q_i^\top k_j - q_i^\top G^\top \! F^\top k_j)^2$ over linear codecs (companion derivation Theorem 6.1).
+            Linder–Zamir–Zeger [1] additionally prove QPCA is optimal for high-resolution source coding under any
+            smooth quadratic distortion measure.
+          </p>
+        </div>
+
+        <h3>Summary</h3>
+
+        <table class="results">
+          <thead>
+            <tr><th class="l">Method</th><th class="l">$F$</th><th class="l">$G$</th><th class="l">Score $s_i$</th><th class="l">Calibrated?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">TurboQuant</td><td class="l">$H$ (random Hadamard)</td><td class="l">$H^\top$</td><td class="l">uniform</td><td class="l">no</td></tr>
+            <tr><td class="l">JointQK</td><td class="l">$R$ (eigvec of $\tfrac{1}{2}(\Sigma_Q\Sigma_K + \Sigma_K\Sigma_Q)$)</td><td class="l">$R^\top$</td><td class="l">$q\text{-diag}_i \cdot k\text{-diag}_i$</td><td class="l">yes</td></tr>
+            <tr><td class="l">QPCA</td><td class="l">$\Sigma_Q^{1/2} V$ (eigvec of $\Sigma_Q^{1/2} \Sigma_K \Sigma_Q^{1/2}$)</td><td class="l">$V^\top \Sigma_Q^{-1/2}$</td><td class="l">$\lambda_i$</td><td class="l">yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <!-- Page 4 — Calibration -->
+    <article class="page" data-title="§4 Calibration" data-page="4">
+      <div class="page-inner">
+        <div class="chapter-label">Section 4</div>
+        <h2>Calibration</h2>
+
+        <p class="lead">
+          Both calibrated methods (JointQK, QPCA) read the same two second-moment matrices. They are computed offline,
+          once per (layer, KV-head), from a held-out prompt corpus.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Definition 4.1 — Calibration second moments</div>
+          <p>
+            Given a calibration corpus producing $N$ prefill tokens with per-(layer, KV-head) queries $\{q_n\}$ and keys
+            $\{k_n\}$ (queries group-pooled across the Q-heads sharing each KV-head under grouped-query attention):
+            $$\Sigma_Q \;:=\; \frac{1}{N}\sum_{n=1}^{N} q_n q_n^\top, \qquad
+              \Sigma_K \;:=\; \frac{1}{N}\sum_{n=1}^{N} k_n k_n^\top, \qquad \Sigma_Q, \Sigma_K \in \mathbb{R}^{d \times d}.$$
+            These are <em class="term">uncentered</em> second moments — the calibration uses them as estimators of the
+            corresponding population moments under the calibration prompt distribution.
+          </p>
+        </div>
+
+        <h3>This run's corpus: <code>compact8</code></h3>
+
+        <p>
+          400 LongBench train prompts (50 per task × 8 tasks: <code>qasper, hotpotqa, musique, qmsum, multi_news,
+          triviaqa, passage_retrieval_en, repobench-p</code>), tokenised with the Qwen3 tokenizer; total ≈ 4.5 M prefill
+          tokens after RoPE. Frozen seed (<code>20260504</code>), token-length filter [2 k, 32 k]. The same corpus and
+          the same $(\Sigma_Q, \Sigma_K)$ tensors feed both JointQK and QPCA.
+        </p>
+
+        <p>
+          Layer 0 keys exhibit anomalous attention-sink behaviour (a small set of position-0 tokens with extreme
+          norms). For the headline metrics we exclude layer 0; for inference we keep layer 0 at full precision.
+        </p>
+
+        <div class="block remark">
+          <div class="block-label">Remark 4.2 — Calibration drift</div>
+          <p>
+            <em>The basis quality depends on how well the calibration $\Sigma_Q, \Sigma_K$ estimate the evaluation-time
+            distribution. With 4.5 M tokens across 8 tasks the estimates are stable across re-runs; the principal risk
+            is task-distribution mismatch when the eval corpus includes tasks not in the calibration mix (we evaluate on
+            12 LongBench tasks including 4 multi-doc QA tasks absent from calibration — they remain in-distribution at the per-(L,h) second-moment level).</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 5 — Experiments -->
+    <article class="page" data-title="§5 Experiments" data-page="5">
+      <div class="page-inner">
+        <div class="chapter-label">Section 5</div>
+        <h2>Experimental setup</h2>
+
+        <p class="lead">
+          To isolate the effect of the K-side basis, we fix V-side quantization across all comparisons. Three
+          experiments at increasing fidelity to the production goal: K-fidelity proxies (pooled, then per-task) and
+          downstream F1.
+        </p>
+
+        <h3>Why we fix V quantization at this stage</h3>
+
+        <p>
+          K-cache and V-cache quantization interact: errors on the V-side change the output value $\hat v_s$ linearly,
+          weighted by the attention probability $\alpha_{t,s}$; errors on the K-side change $\alpha_{t,s}$ itself
+          (through the softmax). The two effects compound. If we varied both K and V together, the F1 deltas would
+          conflate K-basis choice with V-basis choice.
+        </p>
+
+        <p>
+          We therefore hold V to the deployed-production V configuration in every cell of the comparison: random
+          Hadamard rotation (calibration-free), uniform $B_i = 3$ bits/coord, layer 0 full precision. This is the
+          V-side V_TURBOQUANT @ V=3 setting locked in <code>artifacts/v_bases/v_lock.txt</code> after the
+          JointQK F1-inversion investigation [4].
+        </p>
+
+        <h3>Model and eval</h3>
+
+        <ul>
+          <li><strong>Model</strong>: Qwen/Qwen3-8B (36 layers, 32 Q-heads, 8 KV-heads, head_dim 128, GQA group 4). fp16 inference. Prefill-only K compression (decode keeps fp16).</li>
+          <li><strong>Calibration</strong>: <code>compact8</code> (Section 4), 400 train prompts.</li>
+          <li><strong>Evaluation</strong>: 12 LongBench tasks at <code>fraction=1.0</code>; calibration train rows excluded from eval where they overlap (7 tasks).</li>
+          <li><strong>Bit budgets</strong>: $b \in \{2, 3, 4\}$ K bits/coord. V at 3 bits/coord throughout.</li>
+        </ul>
+
+        <h3>Three experiments</h3>
+
+        <table class="results">
+          <thead>
+            <tr><th class="l">Exp.</th><th class="l">Measures</th><th class="l">Sample size</th><th class="l">Compute</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td class="l">Pooled K-fidelity: top-1, top-5, k_mse, logit_err</td><td class="l">90 test prompts (pooled)</td><td class="l">20 min · 4 GPUs</td></tr>
+            <tr><td>2</td><td class="l">Per-task K-fidelity (same metrics)</td><td class="l">10 prompts × 9 tasks</td><td class="l">26 min · 6 GPUs</td></tr>
+            <tr><td>3</td><td class="l">Downstream LongBench F1</td><td class="l">~150 prompts × 12 tasks</td><td class="l">118 min · 6 GPUs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <!-- Page 6 — Metrics -->
+    <article class="page" data-title="§6 Metrics" data-page="6">
+      <div class="page-inner">
+        <div class="chapter-label">Section 6</div>
+        <h2>Metrics</h2>
+
+        <p class="lead">
+          Two layers: K-fidelity proxies (cheap, computed from quantization noise alone) and downstream task F1
+          (expensive, requires full model inference and LongBench grading).
+        </p>
+
+        <h3>K-fidelity proxies</h3>
+
+        <div class="block definition">
+          <div class="block-label">Definition 6.1 — Per-row metrics on a single (layer, KV-head)</div>
+          <p>
+            Given a held-out prompt with $T$ tokens, true keys $K = [k_1, \ldots, k_T]$ and reconstructions
+            $\hat K$:
+          </p>
+          <ul>
+            <li><strong>top-1 retention</strong>: $\frac{1}{T} \sum_{t=1}^{T} \mathbb{1}\bigl[\arg\max_s (q_t^\top k_s) = \arg\max_s (q_t^\top \hat k_s)\bigr]$. Probability that the original top-1 attention argmax survives.</li>
+            <li><strong>top-5 retention</strong>: same but checking the original argmax appears in the top-5 of the reconstructed scores.</li>
+            <li><strong>k_mse</strong>: $\frac{1}{T \cdot d} \|K - \hat K\|_F^2$, unweighted reconstruction error.</li>
+            <li><strong>logit_err</strong>: $\frac{1}{T^2} \sum_{t,s} (q_t^\top (k_s - \hat k_s))^2 = \frac{1}{T^2} \sum_s (k_s - \hat k_s)^\top \Sigma_Q^{(T)} (k_s - \hat k_s)$, the Q-weighted reconstruction error using the per-prompt query second moment $\Sigma_Q^{(T)} = \frac{1}{T} \sum_t q_t q_t^\top$. This is the empirical estimator of the QPCA objective.</li>
+          </ul>
+          <p>
+            Headline numbers are means over (layers ≥ 1) × (KV-heads) × (test prompts), with layer 0 excluded.
+          </p>
+        </div>
+
+        <h3>What the proxies actually proxy</h3>
+
+        <p>
+          The K quantization output enters the model through the softmax: $\hat\alpha_s = \mathrm{softmax}_s(q^\top \hat k_s / \sqrt{d})$.
+          What we ultimately want preserved is $\hat\alpha \approx \alpha$, since the attention output is the
+          $\hat\alpha$-weighted sum of values. <strong>top-1 / top-5 retention</strong> are discrete proxies for that
+          distributional question (Proposition 1.2); they are accurate when softmax is peaky and looser when softmax
+          is flat. <strong>k_mse</strong> and <strong>logit_err</strong> are aggregate (summed) proxies — they
+          characterise how much the logits move on average, but say nothing about whether the largest logits' relative
+          order is preserved.
+        </p>
+
+        <h3>Downstream F1</h3>
+
+        <p>
+          Standard LongBench task-specific scoring [5]: token-level F1 against gold answers for QA tasks; ROUGE-based
+          F1 for summarisation; exact-match accuracy for classification (<code>trec</code>, <code>samsum</code>).
+          Reported on each task at fraction=1.0 with calibration train rows excluded from eval where applicable.
+        </p>
+
+        <p>
+          The downstream F1 is the metric production cares about. The K-fidelity proxies are useful because each cell
+          is ~10× cheaper than the full F1 sweep — they let us rank candidate K-side bases before committing GPU
+          time. Whether the ranking transfers is itself an empirical question, and is addressed in §7.
+        </p>
+      </div>
+    </article>
+
+    <!-- Page 7 — Results -->
+    <article class="page" data-title="§7 Results" data-page="7">
+      <div class="page-inner">
+        <div class="chapter-label">Section 7</div>
+        <h2>Results</h2>
+
+        <h3>Experiment 1 — Pooled K-fidelity</h3>
+
+        <p>
+          90 test prompts pooled across 9 calibration-corpus tasks. Layer-0 excluded. Bold = best across calibrated
+          methods (JointQK, QPCA) per (bit, metric).
+        </p>
+
+        <table class="results">
+          <caption>Table 7.1 — Pooled N=90 K-fidelity proxies.</caption>
+          <thead>
+            <tr><th class="l">Method</th><th class="c">b</th><th>top-1</th><th>top-5</th><th>k_mse</th><th>logit_err</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">TurboQuant</td><td class="c">2</td><td>0.399</td><td>0.659</td><td>6.05×10⁻¹</td><td>2.46×10²</td></tr>
+            <tr><td class="l">TurboQuant</td><td class="c">3</td><td>0.575</td><td>0.851</td><td>1.77×10⁻¹</td><td>6.46×10¹</td></tr>
+            <tr><td class="l">TurboQuant</td><td class="c">4</td><td>0.732</td><td>0.957</td><td>4.86×10⁻²</td><td>1.72×10¹</td></tr>
+            <tr><td class="l">JointQK</td><td class="c">2</td><td class="winbg">0.657</td><td class="winbg">0.922</td><td>2.27×10⁻¹</td><td>2.99×10¹</td></tr>
+            <tr><td class="l">JointQK</td><td class="c">3</td><td class="winbg">0.783</td><td class="winbg">0.980</td><td>7.13×10⁻²</td><td>9.85</td></tr>
+            <tr><td class="l">JointQK</td><td class="c">4</td><td class="winbg">0.859</td><td class="winbg">0.994</td><td>2.07×10⁻²</td><td>3.72</td></tr>
+            <tr><td class="l">QPCA</td><td class="c">2</td><td>0.612</td><td>0.894</td><td class="winbg">2.22×10⁻¹</td><td class="winbg">2.52×10¹</td></tr>
+            <tr><td class="l">QPCA</td><td class="c">3</td><td>0.746</td><td>0.959</td><td class="winbg">7.04×10⁻²</td><td class="winbg">7.72</td></tr>
+            <tr><td class="l">QPCA</td><td class="c">4</td><td>0.830</td><td>0.978</td><td>2.07×10⁻²</td><td class="winbg">2.39</td></tr>
+          </tbody>
+        </table>
+
+        <p>QPCA wins <code>logit_err</code> (its design objective) by 16–36 %; QPCA loses <code>top-1</code> by 3–5 pp.</p>
+
+        <h3>Experiment 2 — Per-task K-fidelity</h3>
+
+        <p>10 prompts × 9 tasks. Δ = QPCA − JointQK; all 27 (task × bit) cells negative for top-1.</p>
+
+        <table class="results">
+          <caption>Table 7.2 — Per-task top-1 delta (QPCA − JointQK).</caption>
+          <thead>
+            <tr><th class="l">Task</th><th>Δ b=2</th><th>Δ b=3</th><th>Δ b=4</th><th>QPCA logit_err win, b=4</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">qasper</td><td class="neg">−0.045</td><td class="neg">−0.036</td><td class="neg">−0.028</td><td class="pos">−39 %</td></tr>
+            <tr><td class="l">hotpotqa</td><td class="neg">−0.041</td><td class="neg">−0.035</td><td class="neg">−0.028</td><td class="pos">−39 %</td></tr>
+            <tr><td class="l">musique</td><td class="neg">−0.045</td><td class="neg">−0.037</td><td class="neg">−0.029</td><td class="pos">−39 %</td></tr>
+            <tr><td class="l">qmsum</td><td class="neg">−0.043</td><td class="neg">−0.034</td><td class="neg">−0.026</td><td class="pos">−38 %</td></tr>
+            <tr><td class="l">multi_news</td><td class="neg">−0.047</td><td class="neg">−0.037</td><td class="neg">−0.029</td><td class="pos">−38 %</td></tr>
+            <tr><td class="l">triviaqa</td><td class="neg">−0.055</td><td class="neg">−0.046</td><td class="neg">−0.036</td><td class="pos">−31 %</td></tr>
+            <tr><td class="l">passage_retrieval_en</td><td class="neg">−0.039</td><td class="neg">−0.031</td><td class="neg">−0.024</td><td class="pos">−40 %</td></tr>
+            <tr><td class="l">repobench-p</td><td class="neg">−0.049</td><td class="neg">−0.042</td><td class="neg">−0.034</td><td class="pos">−31 %</td></tr>
+            <tr><td class="l">lcc</td><td class="neg">−0.043</td><td class="neg">−0.035</td><td class="neg">−0.027</td><td class="pos">−36 %</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Experiment 3 — Downstream F1</h3>
+
+        <p>Full 12-task LongBench, fraction=1.0. V fixed (Section 5). Bold = best across {TurboQuant, JointQK, QPCA} per (task, bit).</p>
+
+        <table class="results">
+          <caption>Table 7.3 — LongBench F1.</caption>
+          <thead>
+            <tr>
+              <th class="l" rowspan="2">Task</th>
+              <th rowspan="2">Oracle</th>
+              <th class="group" colspan="3">b = 2</th>
+              <th class="group" colspan="3">b = 3</th>
+              <th class="group" colspan="3">b = 4</th>
+            </tr>
+            <tr>
+              <th class="gleft">TQ</th><th>JQ</th><th class="gright">QP</th>
+              <th class="gleft">TQ</th><th>JQ</th><th class="gright">QP</th>
+              <th class="gleft">TQ</th><th>JQ</th><th class="gright">QP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">qasper</td><td>43.06</td>
+              <td class="gleft">39.29</td><td class="winbg">42.27</td><td class="gright">36.55</td>
+              <td class="gleft winbg">42.60</td><td>41.34</td><td class="gright">41.09</td>
+              <td class="gleft winbg">43.42</td><td>42.02</td><td class="gright">41.37</td></tr>
+            <tr><td class="l">qmsum</td><td>24.37</td>
+              <td class="gleft">22.49</td><td class="winbg">24.24</td><td class="gright">22.72</td>
+              <td class="gleft">23.54</td><td class="winbg">24.40</td><td class="gright">23.98</td>
+              <td class="gleft">24.02</td><td class="winbg">24.47</td><td class="gright">23.78</td></tr>
+            <tr><td class="l">multi_news</td><td>25.30</td>
+              <td class="gleft">24.59</td><td class="winbg">25.24</td><td class="gright">24.63</td>
+              <td class="gleft">24.60</td><td>24.96</td><td class="gright winbg">25.35</td>
+              <td class="gleft">25.23</td><td class="winbg">25.24</td><td class="gright">24.88</td></tr>
+            <tr><td class="l muted">trec¹</td><td>41.50</td>
+              <td class="gleft">60.50</td><td class="winbg">69.00</td><td class="gright">64.50</td>
+              <td class="gleft winbg">44.00</td><td>32.00</td><td class="gright">35.50</td>
+              <td class="gleft winbg">50.50</td><td>38.50</td><td class="gright">45.50</td></tr>
+            <tr><td class="l">triviaqa</td><td>90.71</td>
+              <td class="gleft">83.70</td><td class="winbg">88.40</td><td class="gright">88.12</td>
+              <td class="gleft">89.38</td><td>87.95</td><td class="gright winbg">89.36</td>
+              <td class="gleft">90.29</td><td class="winbg">90.90</td><td class="gright">89.64</td></tr>
+            <tr><td class="l">samsum</td><td>39.98</td>
+              <td class="gleft">39.08</td><td class="winbg">39.28</td><td class="gright">37.80</td>
+              <td class="gleft winbg">41.24</td><td>39.68</td><td class="gright">39.57</td>
+              <td class="gleft">40.19</td><td>39.65</td><td class="gright winbg">40.42</td></tr>
+            <tr><td class="l">lcc</td><td>64.81</td>
+              <td class="gleft winbg">51.56</td><td>55.86</td><td class="gright">43.39</td>
+              <td class="gleft winbg">61.55</td><td>60.78</td><td class="gright">55.49</td>
+              <td class="gleft winbg">63.80</td><td>62.72</td><td class="gright">59.74</td></tr>
+            <tr><td class="l">repobench-p</td><td>60.68</td>
+              <td class="gleft">52.20</td><td class="winbg">58.25</td><td class="gright">49.47</td>
+              <td class="gleft winbg">59.54</td><td>56.36</td><td class="gright">53.87</td>
+              <td class="gleft winbg">59.87</td><td>56.91</td><td class="gright">56.21</td></tr>
+            <tr><td class="l">hotpotqa</td><td>63.75</td>
+              <td class="gleft">55.88</td><td class="winbg">62.14</td><td class="gright">50.40</td>
+              <td class="gleft winbg">64.54</td><td>61.38</td><td class="gright">57.02</td>
+              <td class="gleft">63.58</td><td class="winbg">63.72</td><td class="gright">59.39</td></tr>
+            <tr><td class="l">musique</td><td>33.47</td>
+              <td class="gleft">28.92</td><td>28.91</td><td class="gright">23.25</td>
+              <td class="gleft winbg">33.56</td><td>31.69</td><td class="gright">28.79</td>
+              <td class="gleft winbg">32.30</td><td>32.08</td><td class="gright">29.13</td></tr>
+            <tr><td class="l">2wikimqa</td><td>48.43</td>
+              <td class="gleft">42.66</td><td class="winbg">44.50</td><td class="gright">39.62</td>
+              <td class="gleft">48.13</td><td class="winbg">48.46</td><td class="gright">47.68</td>
+              <td class="gleft">46.68</td><td class="winbg">49.24</td><td class="gright">48.66</td></tr>
+            <tr><td class="l">narrativeqa</td><td>28.89</td>
+              <td class="gleft">25.63</td><td class="winbg">26.14</td><td class="gright">19.41</td>
+              <td class="gleft">26.98</td><td class="winbg">27.71</td><td class="gright">24.07</td>
+              <td class="gleft">28.84</td><td class="winbg">28.89</td><td class="gright">25.81</td></tr>
+            <tr class="mean">
+              <td class="l">MEAN</td><td>47.08</td>
+              <td class="gleft">43.88</td><td class="winbg">47.02</td><td class="gright">41.66</td>
+              <td class="gleft winbg">46.64</td><td>44.73</td><td class="gright">43.48</td>
+              <td class="gleft winbg">47.39</td><td>46.20</td><td class="gright">45.38</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="small"><strong>¹ trec</strong>: exact-match classification on 200 rows; per-row noise is large and the row swings ±20 pp across bit widths even for JointQK. Treat as outlier.</p>
+
+        <p>
+          <strong>Mean F1 ranking</strong>:
+          at <strong>b=2</strong> — JointQK (47.02) &gt; TurboQuant (43.88) &gt; QPCA (41.66);
+          at <strong>b=3</strong> — TurboQuant (46.64) &gt; JointQK (44.73) &gt; QPCA (43.48);
+          at <strong>b=4</strong> — TurboQuant (47.39) &gt; JointQK (46.20) &gt; QPCA (45.38), matching the fp16 oracle (47.08) within sampling noise.
+        </p>
+      </div>
+    </article>
+
+    <!-- Page 8 — Discussion -->
+    <article class="page" data-title="§8 Discussion" data-page="8">
+      <div class="page-inner">
+        <div class="chapter-label">Section 8</div>
+        <h2>Discussion: why QPCA is not the best choice</h2>
+
+        <p class="lead">
+          QPCA wins the metric it minimises (<code>logit_err</code>) and loses the metric production cares about
+          (downstream F1). The math explains the gap; we summarise the mechanism.
+        </p>
+
+        <h3>QPCA targets the wrong loss</h3>
+
+        <p>
+          QPCA is the closed-form minimiser of $\sum_{i,j} (q_i^\top k_j - q_i^\top G^\top F^\top k_j)^2$, the
+          all-pairs squared logit error. Aggregated across all (query, key) pairs, this is the empirical estimator of
+          <code>logit_err</code> — exactly the metric on which QPCA wins by 16–36 % in Table 7.1.
+        </p>
+
+        <p>
+          But the bench metric is not logit MSE. It is downstream F1, which is mediated by the
+          <em class="term">softmax-weighted attention output</em> $\sum_s \hat\alpha_s v_s$. F1 changes when the
+          softmax distribution $\hat\alpha$ shifts meaningfully, and that distribution depends on <em>where</em> the
+          logit perturbations land — not just on their aggregate magnitude.
+        </p>
+
+        <p>
+          We don't measure softmax-distribution shift directly. We measure two discrete proxies: top-1 and top-5
+          retention. These are not logical consequences of softmax mechanics — they are empirical proxies, validated
+          on this model by [4] as the cheap summaries that correlate most strongly with F1 across calibrated and
+          uncalibrated K bases. Theorem 1.3 says top-1 retention is a threshold statistic on per-key margins;
+          aggregate MSE is blind to that structure. Two K reconstructions with identical $k\_\text{mse}$ or
+          $\text{logit\_err}$ can have very different top-1 retentions if their per-key noise concentrates differently
+          relative to the per-key margins.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Principle 8.1 — Per-key margins matter; aggregate noise does not</div>
+          <p>
+            The top-1 retention proxy (Theorem 1.3) is determined by per-key margin-to-noise comparisons: each
+            runner-up $s$ survives quantization unflipped iff its perturbation gap stays below its margin $m_s$.
+            Aggregate metrics like $k\_\text{mse}$ and $\text{logit\_err}$ sum noise across all $s$ without
+            distinguishing close races (small $m_s$) from blowouts (large $m_s$). A method that puts its precision
+            budget on the directions that drive small-margin logits will preserve more argmaxes than a method with the
+            same total noise that spreads the budget without regard to margin structure.
+          </p>
+          <p>
+            Concretely: noise on a key $s$ with $m_s = 5$ rarely flips its order (a 5-unit perturbation is needed).
+            Noise on a key $s$ with $m_s = 0.3$ flips its order easily. The two methods we compare have the same total
+            quantization budget but differ in <em>which</em> coordinates they protect — and therefore in how much of
+            their noise lands on small-margin vs large-margin keys.
+          </p>
+        </div>
+
+        <h3>Two parameterizations of the same objective</h3>
+
+        <p>
+          Both methods target the same Q-weighted total logit MSE
+          $$L \;=\; \mathbb{E}_{q,k}\bigl[(q^\top(k - \hat k))^2\bigr] \;=\; \mathbb{E}_k\bigl[(k - \hat k)^\top \Sigma_Q (k - \hat k)\bigr].$$
+          They differ in how they parameterise the minimisation.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 8.2 — QPCA is plain PCA in the $\Sigma_Q$-rescaled space</div>
+          <p>
+            Define $\tilde k := \Sigma_Q^{1/2} k$ and $\tilde q := \Sigma_Q^{-1/2} q$. The logit is unchanged:
+            $\tilde q^\top \tilde k = q^\top k$. In the rescaled space:
+          </p>
+          <ul>
+            <li>$\mathrm{Cov}(\tilde k) \;=\; \Sigma_Q^{1/2} \Sigma_K \Sigma_Q^{1/2} \;=:\; A$;</li>
+            <li>$\mathrm{Cov}(\tilde q) \;=\; \Sigma_Q^{-1/2} \Sigma_Q \Sigma_Q^{-1/2} \;=\; I$;</li>
+            <li>$L \;=\; \mathbb{E}_{\tilde k}[\|\tilde k - \hat{\tilde k}\|^2]$ &mdash; the Q-weighted key MSE becomes plain Euclidean MSE on rescaled keys.</li>
+          </ul>
+          <p>
+            QPCA's encoder $r = V^\top \tilde k$ with $V$ = eigenvectors of $A$ is therefore <em>plain PCA on
+            $\tilde k$</em>, and its score $s_i = \lambda_i$ is the variance of $\tilde k$ along eigenvector $i$.
+            <strong>Note that $\lambda_i$ is not query-blind</strong> — the rescaling $\Sigma_Q^{1/2}$ folded the query
+            covariance into the keys, so $\lambda_i$ encodes both $\Sigma_K$ and $\Sigma_Q$. QPCA uses query
+            information through this fold-in; it is just packaged inside $A$ rather than appearing as a separate
+            factor in the score.
+          </p>
+        </div>
+
+        <p>
+          JointQK parameterises the same objective differently. In its orthogonal basis $R$ (eigenvectors of
+          $\tfrac{1}{2}(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)$ in the original Euclidean space),
+          $$L \;\approx\; \sum_i \underbrace{(R^\top \Sigma_Q R)_{ii}}_{q\text{-diag}_i} \cdot \underbrace{(R^\top \Sigma_K R)_{ii}}_{k\text{-diag}_i} \cdot 2^{-2 B_i} \cdot c,$$
+          under an additional independence approximation (the per-coord errors in $R$'s basis are uncorrelated with
+          the per-coord query coefficients). JointQK water-fills against this <em>separable</em> score
+          $s_i = q\text{-diag}_i \cdot k\text{-diag}_i$. This is an approximation to $L$, not its exact value.
+        </p>
+
+        <table class="results">
+          <caption>Table 8.3 — Two ways to express the same Q-weighted logit MSE objective.</caption>
+          <thead>
+            <tr><th class="l">Method</th><th class="l">Basis</th><th class="l">Allocation score $s_i$</th><th class="l">Achieves $L$</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">Plain PCA on K</td><td class="l">eigvec of $\Sigma_K$</td><td class="l">$(\Sigma_K)_{\text{diag}}$ in eigvec basis</td><td class="l">no &mdash; ignores $\Sigma_Q$</td></tr>
+            <tr><td class="l">QPCA</td><td class="l">$\Sigma_Q^{1/2} V$, $V$ = eigvec of $A$</td><td class="l">$\lambda_i$ (non-separable)</td><td class="l">exactly</td></tr>
+            <tr><td class="l">JointQK</td><td class="l">eigvec of $\tfrac{1}{2}(\Sigma_Q\Sigma_K + \Sigma_K\Sigma_Q)$</td><td class="l">$q\text{-diag}_i \cdot k\text{-diag}_i$ (separable)</td><td class="l">approximately</td></tr>
+          </tbody>
+        </table>
+
+        <p>
+          So QPCA wins on the proxy that estimates $L$ directly (<code>logit_err</code>) by 16–36 % — confirming the
+          math: QPCA's parameterisation is exact, JointQK's is a separable approximation.
+        </p>
+
+        <p>
+          <strong>The unresolved bit.</strong> The bench metric is F1, not $L$. $L$ averages the logit error over the
+          calibration query distribution $\Sigma_Q$; argmax retention depends on specific per-$(q, s)$ margins
+          (Theorem 1.3) and per-pair noise structure, which $L$ marginalises out. The fact that JointQK's approximation
+          wins on F1 while losing on $L$ means JointQK's approximation error is in a direction more favourable to
+          per-pair argmax preservation than QPCA's exact answer is. We do not have a clean mechanistic explanation of
+          why this happens on this model — it is an empirical observation about the gap between an averaged objective
+          ($L$) and a per-pair threshold metric (argmax). A clean follow-up experiment would swap allocations across
+          bases (JointQK basis with QPCA's $\lambda_i$ score; QPCA basis with JointQK's separable score) to isolate
+          which choice carries the F1 effect.
+        </p>
+
+        <h3>The k_mse–logit_err split confirms the mechanism</h3>
+
+        <p>
+          In Table 7.1 both methods are essentially tied on <code>k_mse</code> (unweighted reconstruction error,
+          which neither targets), while QPCA wins <code>logit_err</code> by 16–36 % (which QPCA minimises by
+          construction). This is the signature of the design objective being correctly minimised. QPCA does exactly
+          what its theory predicts; the loss it minimises is the wrong loss for the downstream metric.
+        </p>
+
+        <p>
+          The Linder–Zamir–Zeger result [1] establishes QPCA as optimal for high-resolution source coding under any
+          smooth quadratic distortion. Argmax preservation is not a quadratic distortion — it is a 0/1 threshold —
+          and the LZZ theorem does not extend to it. Even at $b = 4$, where MSE drops by ~30× relative to $b = 2$,
+          ~14 % of attention argmaxes still flip. The threshold metric does not smooth out with bits.
+        </p>
+
+        <h3>A more accurate objective: softmax KL</h3>
+
+        <p>
+          Both QPCA and JointQK approximately target Q-weighted logit MSE, which weights per-key squared errors
+          <em>uniformly</em> across the sequence. A loss that more closely tracks output preservation should
+          up-weight the keys that actually carry attention mass and down-weight the rest. The natural such loss is
+          the KL divergence between the original and compressed softmax attention distributions.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Proposition 8.4 — Softmax KL is attention-weighted logit variance (high-resolution)</div>
+          <p>
+            For a query $q$ with original logits $\ell$ and perturbed logits $\hat\ell = \ell + \Delta\ell$, let
+            $\alpha_s = \mathrm{softmax}_s(\ell)$ and $\hat\alpha_s = \mathrm{softmax}_s(\hat\ell)$. Then
+            $$D_{\mathrm{KL}}(\alpha \,\Vert\, \hat\alpha) \;=\; \sum_s \alpha_s \log\frac{\alpha_s}{\hat\alpha_s}.$$
+            Expanding to second order in $\Delta\ell$,
+            $$D_{\mathrm{KL}}(\alpha \,\Vert\, \hat\alpha) \;\approx\; \tfrac{1}{2}\,\mathrm{Var}_\alpha(\Delta\ell) \;=\; \tfrac{1}{2}\!\left[\sum_s \alpha_s (\Delta\ell_s)^2 \;-\; \Bigl(\sum_s \alpha_s \Delta\ell_s\Bigr)^{\!\!2}\right].$$
+          </p>
+          <details class="proof">
+            <summary>Proof</summary>
+            <p>
+              $D_{\mathrm{KL}}(\alpha \,\Vert\, \hat\alpha) = -\langle \Delta\ell \rangle_\alpha + \log(\hat Z / Z)$ where
+              $Z = \sum_s e^{\ell_s}$ and $\hat Z / Z = \sum_s \alpha_s e^{\Delta\ell_s}$.
+              Expanding $e^{\Delta\ell_s} \approx 1 + \Delta\ell_s + \tfrac{1}{2}(\Delta\ell_s)^2$ and
+              $\log(1 + x) \approx x - \tfrac{1}{2} x^2$:
+              $\log(\hat Z / Z) \approx \langle \Delta\ell \rangle_\alpha + \tfrac{1}{2}[\langle \Delta\ell^2 \rangle_\alpha - \langle \Delta\ell \rangle_\alpha^2]$.
+              Substitute: the $\langle \Delta\ell \rangle_\alpha$ terms cancel. $\square$
+            </p>
+          </details>
+        </div>
+
+        <p>
+          Compare with the QPCA / JointQK objective $L = \mathbb{E}_q\!\sum_s (\Delta\ell_s)^2$. Two structural differences:
+        </p>
+
+        <ul>
+          <li><strong>Per-key attention weighting.</strong> Softmax KL weights the per-key error by $\alpha_s$:
+            high-$\alpha$ keys (the output drivers) are protected; near-zero-$\alpha$ keys are effectively
+            ignored. $L$ weights every key uniformly.</li>
+          <li><strong>Logit-shift invariance.</strong> Softmax KL subtracts the mean perturbation $\langle \Delta\ell \rangle_\alpha$
+            before squaring — a constant shift in all logits does not change the softmax, so the KL ignores it.
+            $L$ does not.</li>
+        </ul>
+
+        <p>
+          Softmax KL is what F1 actually responds to (up to the per-task scoring on the model's downstream output). It
+          is the right objective for an argmax-aware K-cache basis. The cost is that $\alpha_s$ depends on the specific
+          query $q$ and on the original logits $\ell$ — so no closed-form basis-and-allocation solution exists in the
+          QPCA style. A method targeting softmax KL would need either iterative optimisation, or a tractable
+          approximation (e.g. estimating $\langle \alpha_s \rangle$ from calibration data and using a fixed
+          attention-prior weighting in place of the per-query $\alpha_s$). This is the direction we believe the
+          next-generation calibrated K bases should explore.
+        </p>
+
+
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<nav class="nav-bar" aria-label="Page navigation">
+  <button id="prev-btn" aria-label="Previous page">‹ Previous</button>
+  <span class="page-info">Page <strong id="cur-num">1</strong> of <strong id="tot-num">9</strong></span>
+  <button id="next-btn" aria-label="Next page">Next ›</button>
+</nav>
+
+<script>
+  let current = 0;
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const total = pages.length;
+  document.getElementById('tot-num').textContent = total;
+
+  const tocList = document.getElementById('toc-list');
+  pages.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.textContent = p.dataset.title;
+    li.dataset.idx = i;
+    li.addEventListener('click', () => { go(parseInt(li.dataset.idx, 10)); toggleToc(false); });
+    tocList.appendChild(li);
+  });
+
+  const tocEl = document.querySelector('.toc');
+  const tocToggleBtn = document.querySelector('.toc-toggle');
+  function toggleToc(forceState) {
+    const open = forceState != null ? forceState : !tocEl.classList.contains('open');
+    tocEl.classList.toggle('open', open);
+  }
+  tocToggleBtn.addEventListener('click', () => toggleToc());
+
+  function applyClasses() {
+    pages.forEach((p, i) => {
+      p.classList.remove('active', 'prev', 'next');
+      if (i === current) p.classList.add('active');
+      else if (i < current) p.classList.add('prev');
+      else p.classList.add('next');
+    });
+    document.getElementById('cur-num').textContent = current + 1;
+    document.getElementById('prev-btn').disabled = (current === 0);
+    document.getElementById('next-btn').disabled = (current === total - 1);
+    const pct = (current / (total - 1)) * 100;
+    document.querySelector('.progress-fill').style.width = pct + '%';
+    document.querySelectorAll('#toc-list li').forEach((li, i) => {
+      li.classList.toggle('current', i === current);
+    });
+    const activeEl = pages[current];
+    if (activeEl) activeEl.scrollTop = 0;
+    if (history && history.replaceState) {
+      history.replaceState(null, '', '#p' + current);
+    }
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= total) return;
+    current = idx;
+    applyClasses();
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => go(current - 1));
+  document.getElementById('next-btn').addEventListener('click', () => go(current + 1));
+  document.getElementById('start-btn').addEventListener('click', () => go(1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || (e.key === ' ' && !e.shiftKey)) { e.preventDefault(); go(current + 1); }
+    else if (e.key === 'ArrowLeft' || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); go(current - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(total - 1); }
+    else if (e.key === 'Escape') { toggleToc(false); }
+  });
+
+  let touchStartX = null, touchStartY = null, touchStartTime = 0;
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX; touchStartY = t.clientY; touchStartTime = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchStartX == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    touchStartX = touchStartY = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4 || dt > 600) return;
+    if (dx < 0) go(current + 1);
+    else go(current - 1);
+  }, { passive: true });
+
+  if (window.location.hash) {
+    const m = window.location.hash.match(/p(\d+)/);
+    if (m) {
+      const idx = parseInt(m[1], 10);
+      if (idx >= 0 && idx < total) current = idx;
+    }
+  }
+  applyClasses();
+
+  function renderAllMath() {
+    if (typeof renderMathInElement === 'undefined') return;
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      throwOnError: false, strict: 'ignore', trust: true,
+      macros: {
+        '\\doteq': '\\;\\stackrel{\\scriptscriptstyle\\Delta}{=}\\;',
+      },
+    });
+  }
+</script>
+
+</body>
+</html>
