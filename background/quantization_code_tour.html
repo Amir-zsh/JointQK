@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0" />
+<title>Quantization Code Tour — TurboQuant, JointQK, QPCA</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderAllMath();"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --paper: #ffffff;
+    --ink: #355265;
+    --ink-soft: #476d86;
+    --ink-faint: #8fa1ad;
+    --rule: #dddddd;
+    --accent: #328ac1;
+    --accent-hover: #4b9dd0;
+    --accent-soft: #eaf4fa;
+    --panel-fg: #f7f7f7;
+    --panel-fg2: #ebebeb;
+    --thm-border: #328ac1;
+    --thm-bg: #eaf4fa;
+    --prop-border: #4b9dd0;
+    --prop-bg: #f0f7fb;
+    --lem-border: #999999;
+    --lem-bg: #f7f7f7;
+    --def-border: #6b8a6b;
+    --def-bg: #eef3ee;
+    --rem-border: #8a7a3a;
+    --rem-bg: #f4efde;
+    --proof-bg: #f7f7f7;
+    --code-bg: #f6f8fa;
+    --code-border: #dfe3ea;
+    --code-key: #c25c00;
+    --code-str: #2d6b35;
+    --code-num: #6b5cb8;
+    --code-com: #8fa1ad;
+    --filepath-fg: #5a7080;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'tnum';
+  }
+  body { min-height: 100vh; overflow: hidden; }
+
+  /* Progress bar */
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--rule); z-index: 100;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent); width: 0;
+    transition: width 320ms cubic-bezier(.4, 0, .2, 1);
+  }
+
+  /* Book / page-turning */
+  .book { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+  .pages { position: relative; width: 100%; height: 100%; }
+  .page {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 64px 7% 120px; background: var(--paper);
+    transition: transform 520ms cubic-bezier(.6, 0, .25, 1), opacity 320ms;
+    opacity: 0; pointer-events: none; transform: translateX(100%);
+  }
+  .page.active { opacity: 1; pointer-events: auto; transform: translateX(0); z-index: 2; }
+  .page.prev   { opacity: 0; transform: translateX(-100%); }
+  .page.next   { opacity: 0; transform: translateX(100%); }
+  .page-inner { max-width: 840px; margin: 0 auto; }
+
+  .chapter-label {
+    text-transform: uppercase; letter-spacing: 0.22em; font-size: 12px;
+    color: var(--accent); font-weight: 600; margin-bottom: 18px;
+  }
+
+  h1, h2, h3, h4 { color: var(--ink); font-weight: 600; line-height: 1.2; }
+  h1 { font-size: 40px; margin: 0 0 18px; letter-spacing: -0.01em; }
+  h2 { font-size: 28px; margin: 0 0 22px; letter-spacing: -0.005em; }
+  h3 { font-size: 21px; margin: 36px 0 12px; }
+  h4 { font-size: 17px; margin: 22px 0 6px; font-style: italic; }
+  .subtitle { font-size: 21px; color: var(--ink-soft); font-style: italic; margin-bottom: 32px; }
+  p { margin: 0 0 14px; color: var(--ink); }
+  .lead { font-size: 20px; color: var(--ink-soft); margin: 22px 0 28px; line-height: 1.55; }
+  .small { font-size: 14px; color: var(--ink-soft); }
+  em.term { font-style: italic; color: var(--accent); font-weight: 500; }
+  .ornament { text-align: center; color: var(--ink-faint); letter-spacing: 8px; margin: 24px 0; user-select: none; }
+
+  /* Result blocks */
+  .block {
+    margin: 22px 0; padding: 16px 20px 12px;
+    border-left: 4px solid var(--lem-border);
+    background: var(--lem-bg);
+    border-radius: 2px 6px 6px 2px;
+  }
+  .block-label {
+    display: inline-block;
+    font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; font-size: 11px;
+    color: var(--lem-border); margin-bottom: 6px;
+  }
+  .block p:last-child { margin-bottom: 0; }
+  .theorem     { border-left-color: var(--thm-border);  background: var(--thm-bg); }
+  .theorem .block-label  { color: var(--thm-border); }
+  .theorem .block-label::before { content: "⋄ "; }
+  .proposition { border-left-color: var(--prop-border); background: var(--prop-bg); }
+  .proposition .block-label { color: var(--prop-border); }
+  .definition  { border-left-color: var(--def-border); background: var(--def-bg); }
+  .definition .block-label  { color: var(--def-border); }
+  .remark      { border-left-color: var(--rem-border); background: var(--rem-bg); font-style: italic; }
+  .remark .block-label { color: var(--rem-border); font-style: normal; }
+  .remark em { font-style: normal; }
+
+  /* Code blocks */
+  .code-wrap { margin: 18px 0 22px; }
+  .code-path {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--filepath-fg);
+    background: var(--panel-fg2);
+    padding: 2px 9px;
+    border-radius: 3px 3px 0 0;
+    border: 1px solid var(--code-border);
+    border-bottom: none;
+    letter-spacing: 0.02em;
+  }
+  pre.code {
+    margin: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 0 4px 4px 4px;
+    padding: 14px 18px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.55;
+    font-family: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', ui-monospace, monospace;
+    color: #2c3540;
+  }
+  pre.code .k  { color: var(--code-key);  font-weight: 600; }      /* keyword */
+  pre.code .s  { color: var(--code-str); }                          /* string */
+  pre.code .n  { color: var(--code-num); }                          /* number */
+  pre.code .c  { color: var(--code-com); font-style: italic; }      /* comment */
+  pre.code .fn { color: #2c6b8a; }                                  /* function */
+  pre.code .v  { color: #1c5d2c; }                                  /* var/name */
+
+  /* Equations */
+  .katex-display { margin: 16px 0 !important; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+  .katex-display > .katex { font-size: 1.02em; }
+
+  /* TOC */
+  .toc-toggle {
+    position: fixed; top: 16px; left: 16px; z-index: 50;
+    background: var(--paper); border: 1px solid var(--rule);
+    border-radius: 4px; padding: 8px 10px; cursor: pointer;
+    color: var(--ink-soft); font-size: 13px;
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: 320px; max-width: 80vw; background: var(--paper);
+    border-right: 1px solid var(--rule);
+    padding: 56px 28px 28px; transform: translateX(-100%);
+    transition: transform 320ms cubic-bezier(.4, 0, .2, 1);
+    z-index: 40; overflow-y: auto; box-shadow: 4px 0 24px rgba(0,0,0,0.05);
+  }
+  .toc.open { transform: translateX(0); }
+  .toc h3 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--accent); margin: 0 0 16px; font-weight: 700;
+  }
+  .toc ol { list-style: none; padding: 0; margin: 0; counter-reset: tocnum; }
+  .toc li {
+    counter-increment: tocnum;
+    border-bottom: 1px dotted var(--rule);
+    padding: 10px 0; cursor: pointer; font-size: 15px;
+    color: var(--ink-soft); transition: color 120ms, padding-left 120ms;
+    line-height: 1.35;
+  }
+  .toc li::before {
+    content: counter(tocnum, decimal-leading-zero) " ";
+    font-size: 11px; color: var(--accent); margin-right: 10px; font-weight: 600;
+  }
+  .toc li:hover { color: var(--ink); padding-left: 4px; }
+  .toc li.current { color: var(--accent); font-weight: 600; }
+
+  /* Nav bar */
+  .nav-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 64px; background: var(--paper); border-top: 1px solid var(--rule);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px; z-index: 30;
+  }
+  .nav-bar button {
+    background: transparent; border: 1px solid var(--rule);
+    border-radius: 4px; padding: 9px 18px; color: var(--ink-soft);
+    font-family: inherit; font-size: 14px; cursor: pointer;
+    transition: all 160ms; min-width: 96px;
+  }
+  .nav-bar button:hover:not(:disabled) {
+    background: var(--accent-soft); color: var(--accent); border-color: var(--accent);
+  }
+  .nav-bar button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .page-info { font-size: 13px; color: var(--ink-soft); letter-spacing: 0.08em; }
+  .page-info strong { color: var(--ink); }
+
+  /* Cover */
+  .cover { text-align: center; padding-top: 56px; }
+  .cover h1 { font-size: 46px; line-height: 1.1; margin-bottom: 22px; }
+  .cover .subtitle { font-size: 23px; margin-bottom: 48px; }
+  .cover .meta { color: var(--ink-soft); font-size: 16px; margin: 10px 0; }
+  .cover .meta strong { color: var(--ink); font-weight: 600; }
+  .cover .audience {
+    margin-top: 64px; padding: 22px 24px;
+    background: var(--accent-soft); border-radius: 6px;
+    color: var(--ink-soft); font-size: 15px; text-align: left;
+  }
+  .cover .audience strong {
+    color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
+    font-size: 12px; font-weight: 700; display: block; margin-bottom: 6px;
+  }
+  .start-btn {
+    display: inline-block; margin-top: 32px; padding: 14px 32px;
+    background: var(--accent); color: var(--paper); border: none; border-radius: 6px;
+    font-size: 15px; font-weight: 600; letter-spacing: 0.04em; cursor: pointer;
+    transition: all 200ms;
+  }
+  .start-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(50,138,193,0.3); }
+
+  /* Method-comparison table */
+  table.methods {
+    width: 100%; border-collapse: collapse; margin: 22px 0;
+    font-size: 14px; color: var(--ink);
+  }
+  table.methods th, table.methods td {
+    padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  table.methods thead th {
+    font-weight: 600; color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+    text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px;
+  }
+  table.methods .method-name { font-weight: 600; color: var(--accent); }
+
+  /* Inline code */
+  code, .mono {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Roboto Mono', monospace;
+    font-size: 0.86em;
+    background: var(--panel-fg2);
+    padding: 1px 5px; border-radius: 3px;
+    color: var(--ink);
+  }
+  /* but NOT inside pre.code blocks */
+  pre.code code { background: transparent; padding: 0; }
+
+  kbd {
+    background: var(--paper); border: 1px solid var(--rule);
+    border-bottom-width: 2px; border-radius: 4px;
+    padding: 1px 6px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-soft);
+  }
+
+  /* Responsive */
+  @media (max-width: 820px) {
+    html, body { font-size: 16px; }
+    .page { padding: 56px 6% 100px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 19px; }
+    .cover h1 { font-size: 32px; }
+    .cover .subtitle { font-size: 19px; margin-bottom: 32px; }
+    pre.code { font-size: 12px; padding: 12px 14px; }
+    .nav-bar button { padding: 8px 14px; font-size: 13px; min-width: 76px; }
+    .nav-bar { padding: 0 10px; }
+  }
+  @media (max-width: 480px) {
+    html, body { font-size: 15px; }
+    .page { padding: 52px 5% 96px; }
+    .cover h1 { font-size: 26px; }
+    .cover .subtitle { font-size: 16px; }
+    .block { padding: 13px 14px 9px; }
+    pre.code { font-size: 11.5px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page { transition: opacity 200ms; }
+    .progress-fill, .toc { transition: none; }
+  }
+
+  ::selection { background: var(--accent); color: var(--paper); }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><div class="progress-fill"></div></div>
+
+<button class="toc-toggle" aria-label="Toggle table of contents">☰ Contents</button>
+
+<aside class="toc" aria-label="Table of contents">
+  <h3>Contents</h3>
+  <ol id="toc-list"></ol>
+  <p class="small" style="margin-top: 24px; color: var(--ink-faint);">
+    Use <kbd>←</kbd> <kbd>→</kbd> arrows, <kbd>Space</kbd>, or swipe to navigate.
+  </p>
+</aside>
+
+<main class="book" id="book">
+  <div class="pages" id="pages">
+
+    <!-- Page 0: Cover -->
+    <article class="page" data-title="Cover" data-page="0">
+      <div class="page-inner cover">
+        <div class="chapter-label">A code-level walkthrough</div>
+        <h1>Quantization Code Tour</h1>
+        <p class="subtitle">TurboQuant · JointQK · QPCA — what the code actually does</p>
+
+        <div class="ornament">⁂</div>
+
+        <p class="meta"><strong>Companion to</strong> · <code>notebooks/quantization_methods_comparison.ipynb</code></p>
+        <p class="meta"><strong>Math reference</strong> · <code>background/qpca_derivation_companion.html</code></p>
+        <p class="meta"><strong>Code roots</strong> · <code>kvq/compression/per_coord.py</code>, <code>pipelines/calibration/analyze_bases.py</code></p>
+
+        <div class="audience">
+          <strong>Intended audience</strong>
+          PhD / engineer reader who wants to understand, line-by-line, what the three K-cache quantization methods actually do — basis construction, bit allocation, the round-trip, and how the four metrics are computed. We assume the math from the QPCA derivation companion as background; this tour is the implementation side of it.
+        </div>
+
+        <table class="methods">
+          <thead>
+            <tr><th>method</th><th>basis</th><th>forward → inverse</th><th>water-fill score</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="method-name">TurboQuant</td>
+                <td>random orthogonal $R_\text{rand}$</td>
+                <td>$R_\text{rand} \to R_\text{rand}^\top$ (orthogonal)</td>
+                <td>uniform (all-ones)</td></tr>
+            <tr><td class="method-name">JointQK</td>
+                <td>eigvecs of $(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)/2$</td>
+                <td>$R \to R^\top$ (orthogonal)</td>
+                <td>$q\_\text{diag}_i \cdot k\_\text{diag}_i$</td></tr>
+            <tr><td class="method-name">QPCA</td>
+                <td>derived from $A = M_q^{1/2} \Sigma_K M_q^{1/2}$</td>
+                <td>$M_q^{1/2} V \to V^\top M_q^{-1/2}$ (non-orthogonal)</td>
+                <td>$\lambda_i$ (eigvals of $A$)</td></tr>
+          </tbody>
+        </table>
+
+        <button class="start-btn" id="start-btn">Begin tour →</button>
+      </div>
+    </article>
+
+    <!-- Page 1: §1 Pipeline overview -->
+    <article class="page" data-title="§1 Pipeline overview" data-page="1">
+      <div class="page-inner">
+        <div class="chapter-label">Section 1 · Bird's-eye view</div>
+        <h2>The pipeline — five stages, two parameters</h2>
+
+        <p class="lead">
+          Before diving into individual functions, the whole compression pipeline. Every method in this tour — TurboQuant, JointQK, QPCA, and any reasonable extension — factors the compression of a key vector $k \in \mathbb{R}^d$ into the <em>same</em> five-stage pipeline. The methods differ in only two of those stages.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">The five stages</div>
+          <ol style="margin: 8px 0 4px 1.2em; line-height: 1.75;">
+            <li><strong>Build the basis</strong> <em class="small">(offline, per-method)</em> — from $\Sigma_Q$ and $\Sigma_K$ (or just a seed, for TurboQuant), produce a pair of linear maps $F, G \in \mathbb{R}^{d \times d}$ satisfying $F G = I$. Forward $F$ rotates keys into a quantize-friendly basis; inverse $G$ undoes the rotation. Note $F^\top \neq G$ in general — only when $F$ is orthogonal.</li>
+            <li><strong>Compute the per-coord score</strong> <em class="small">(offline, per-method)</em> — assign every coordinate $j$ a non-negative weight $\mathrm{score}_j$ encoding "how much does this coordinate matter to the downstream attention?"</li>
+            <li><strong>Water-fill the bit budget</strong> <em class="small">(offline, shared)</em> — distribute the total $b_\text{avg} \cdot d$ bits across coordinates in log-domain proportion to the score: $B_j \propto \tfrac{1}{2} \log_2 \mathrm{score}_j + \text{const}$, clamped at $B_j \le 8$ and rounded to integers preserving the sum.</li>
+            <li><strong>Build per-coord Lloyd–Max codebooks</strong> <em class="small">(offline, shared)</em> — for each coord, store $2^{B_j}$ centroids of a unit-Gaussian source, scaled by per-coord standard deviation $\sigma_j$. Pad the variable-length codebooks into a single tensor for vectorised lookup.</li>
+            <li><strong>Round-trip a key</strong> <em class="small">(online, shared)</em> — at inference time, for each key vector: $c = k F$, snap each $c_j$ to its codebook's nearest centroid, then $\hat k = c_\text{quant}\, G$.</li>
+          </ol>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Observation 1.1 — Three of five stages are shared</div>
+          <p>Stages 3, 4, 5 are <em>identical</em> across all methods. All three route through the same water-fill allocator, the same per-coord Lloyd–Max codebook construction, and the same <code>PerCoordCompressor.roundtrip()</code>. The methods differ <em>only</em> in stages 1 (basis) and 2 (score).</p>
+        </div>
+
+        <h3>What each method customises</h3>
+
+        <table class="methods">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="method-name">TurboQuant</th>
+              <th class="method-name">JointQK</th>
+              <th class="method-name">QPCA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stage 1 — basis $F$</strong></td>
+              <td>Haar-random orthogonal</td>
+              <td>$\mathrm{eigvecs}\!\bigl(\tfrac{1}{2}(\Sigma_Q\Sigma_K + \Sigma_K\Sigma_Q)\bigr)$</td>
+              <td>$M_q^{1/2} V$, $V$ eigvecs of $A = M_q^{1/2}\Sigma_K M_q^{1/2}$</td>
+            </tr>
+            <tr>
+              <td><strong>Stage 1 — inverse $G$</strong></td>
+              <td>$F^\top$ (orthogonal)</td>
+              <td>$F^\top$ (orthogonal)</td>
+              <td>$V^\top M_q^{-1/2}$ (non-orthogonal)</td>
+            </tr>
+            <tr>
+              <td><strong>Stage 2 — score</strong></td>
+              <td>uniform (all-ones)</td>
+              <td>$q\_\text{diag}_i \cdot k\_\text{diag}_i$</td>
+              <td>$\lambda_i$ (eigvals of $A$)</td>
+            </tr>
+            <tr>
+              <td><strong>Stages 3–5</strong></td>
+              <td colspan="3" style="text-align: center; color: var(--ink-soft); font-style: italic;">— same code path —</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>The data flow</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">conceptual flow — same for every method</span>
+<pre class="code"><span class="c"># =============== OFFLINE (per (layer, kv-head)) ===============</span>
+
+  Σ_Q, Σ_K  ─────────►  <span class="fn">build_&lt;method&gt;_basis</span>  ─────►  F, G, score, std    <span class="c"># (1, 2)</span>
+                                                          │
+            ┌─────────────────────────────────────────────┘
+            ▼
+        score, b_avg  ─►  <span class="fn">allocate_bits</span>  ─►  B[d]                          <span class="c"># (3)</span>
+                                                          │
+            ┌─────────────────────────────────────────────┘
+            ▼
+        B[d], std[d], F, G  ─►  <span class="fn">PerCoordCompressor.__init__</span>             <span class="c"># (4)</span>
+                                                          │
+                                                          ▼
+                                                      <span class="v">comp</span> (one per (L, h))
+
+<span class="c"># =============== ONLINE (per inference query) =================</span>
+
+  k  ────►  comp.<span class="fn">roundtrip</span>(k)  ─────►  k_hat                                 <span class="c"># (5)</span>
+                  │
+                  └── c = k @ F  →  snap per coord  →  c_quant @ G</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Why this factoring is useful</div>
+          <p>
+            <em>The shared-vs-per-method split isn't a stylistic choice; it is structural. Adding a new method — say, a margin-aware basis with an attention-KL-driven score (companion §9 open question) — means writing <em>one</em> new <code>build_X_basis</code> function. Nothing else changes. The <code>PerCoordCompressor</code>, the water-fill, and the evaluation kernel all stay as-is.</em>
+          </p>
+          <p>
+            <em>It also makes the comparison fair: when QPCA wins <code>logit_err</code> and loses <code>top-1</code> in the experimental table, we know the difference comes from the basis and the score — not from a subtly different quantizer, codebook, or scoring kernel.</em>
+          </p>
+        </div>
+
+        <p class="small" style="margin-top: 32px; color: var(--ink-soft);">
+          The tour now walks the shared pipeline first (§2 the quantizer, §3 the bit allocator), then each method's basis + score in turn (§4 TurboQuant, §5 JointQK, §6 QPCA), then the shared evaluation kernel (§7), and finally the recap matrix (§8).
+        </p>
+      </div>
+    </article>
+
+    <!-- Page 2: §2 PerCoordCompressor -->
+    <article class="page" data-title="§2 PerCoordCompressor" data-page="2">
+      <div class="page-inner">
+        <div class="chapter-label">Section 2 · The shared quantizer</div>
+        <h2>The common abstraction: <code>PerCoordCompressor</code></h2>
+
+        <p class="lead">
+          All three methods plug into the <em>same</em> scalar quantization machinery. They differ only in <em>what they hand to it</em> — a forward map, an inverse map, a per-coordinate standard deviation, and a per-coordinate bit budget.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Construction signature</div>
+          <p>From <code>kvq/compression/per_coord.py:43</code>. The constructor pre-builds a Lloyd–Max codebook of size $2^{B_j}$ for each coordinate $j$, scaled by <code>std_per_coord[j]</code> (unit-Gaussian centroids × per-coord std).</p>
+        </div>
+
+        <div class="code-wrap">
+          <span class="code-path">kvq/compression/per_coord.py</span>
+<pre class="code"><span class="k">class</span> <span class="fn">PerCoordCompressor</span>:
+    <span class="k">def</span> <span class="fn">__init__</span>(
+        self,
+        bits_per_coord: Tensor,   <span class="c"># (d,) int   — bits coord j gets</span>
+        std_per_coord:  Tensor,   <span class="c"># (d,) float — per-coord std for codebook</span>
+        forward_map:    Tensor,   <span class="c"># (d, d)     — k @ F rotates into quantize-friendly basis</span>
+        inverse_map:    Tensor,   <span class="c"># (d, d)     — codes @ G rotates back to k-space</span>
+    ):
+        <span class="c"># Pre-build per-coord codebook (padded with +inf for unused slots, so argmin skips them)</span>
+        ...</pre>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">The round-trip kernel — where quantization actually happens</div>
+          <p>The <code>roundtrip(k)</code> method is the one place every method funnels through.</p>
+        </div>
+
+        <div class="code-wrap">
+          <span class="code-path">kvq/compression/per_coord.py:124</span>
+<pre class="code"><span class="k">def</span> <span class="fn">roundtrip</span>(self, k: Tensor) -&gt; Tensor:
+    flat = k.reshape(-<span class="n">1</span>, self.d).float()
+
+    <span class="c"># 1. Rotate into the quantize basis</span>
+    transformed = flat @ self.forward_map           <span class="c"># shape (N, d)</span>
+
+    <span class="c"># 2. Nearest-centroid lookup along the coord axis (chunked to bound memory)</span>
+    <span class="c">#    codebooks_padded[j, k] = +inf for k &gt;= 2^B_j, so argmin skips invalid slots</span>
+    out = ...                                       <span class="c"># shape (N, d), each coord snapped to its codebook</span>
+
+    <span class="c"># 3. Rotate back</span>
+    recon = out @ self.inverse_map                  <span class="c"># shape (N, d)</span>
+    <span class="k">return</span> recon.reshape(k.shape)</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Why this matters for the rest of the tour</div>
+          <p>
+            <em>The three methods are <em>identical</em> downstream of this point. They each construct one <code>PerCoordCompressor</code> per (layer, kv-head, bit-width); from there, every scoring metric runs through the same <code>roundtrip()</code>. The interesting differences are entirely in the four tensors the methods feed in.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 3: §3 Bit allocator -->
+    <article class="page" data-title="§3 Bit allocator" data-page="3">
+      <div class="page-inner">
+        <div class="chapter-label">Section 3 · The shared bit allocator</div>
+        <h2>The water-fill rule</h2>
+
+        <p class="lead">
+          Each method supplies a per-coordinate <em>score</em>. The shared <code>allocate_bits</code> helper turns that score into an integer per-coordinate budget summing to $d \cdot b_\text{avg}$.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">The water-fill formula</div>
+          <p>For per-coord variances $\sigma_i^2$ and per-coord bits $B_i$, the high-rate scalar-quantization distortion is $\propto \sigma_i^2 \cdot 2^{-2 B_i}$. Minimising $\sum_i \sigma_i^2 \cdot 2^{-2 B_i}$ subject to $\sum_i B_i = B_\text{tot}$ gives</p>
+          <p>$$B_j \;\propto\; \tfrac{1}{2} \log_2 \mathrm{score}_j \;+\; \text{const},$$</p>
+          <p>i.e., bits are spent in log-domain proportion to the per-coord score. The <em>score</em> is the only thing each method customises — it encodes "which coordinates does this method think deserve more bits."</p>
+        </div>
+
+        <div class="code-wrap">
+          <span class="code-path">pipelines/calibration/analyze_bases.py:145</span>
+<pre class="code"><span class="k">def</span> <span class="fn">allocate_bits</span>(score: Tensor, b_avg: <span class="k">int</span>, max_coord_bits: <span class="k">int</span> = <span class="n">8</span>) -&gt; Tensor:
+    total_bits = b_avg * d
+
+    <span class="c"># 1. Continuous log-domain water-fill on the score</span>
+    bits_continuous = water_fill(score, total_bits)            <span class="c"># (..., d), real-valued</span>
+
+    <span class="c"># 2. Largest-remainder rounding that preserves the sum</span>
+    bits_int = round_bits_to_integer(bits_continuous, total_bits)
+
+    <span class="c"># 3. Clamp at 8 bits (2^8 = 256 centroids is already near-continuous</span>
+    <span class="c">#    for scalar Lloyd–Max on a Gaussian source), redistribute excess</span>
+    <span class="c">#    to coords with the lowest current allocation.</span>
+    bits_int = clamp_at_max_and_redistribute(bits_int, max_coord_bits)
+    <span class="k">return</span> bits_int</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">The 8-bit cap</div>
+          <p>
+            <em>The cap exists because Lloyd–Max at 8 bits has 256 centroids per coord — already within 0.1% of the continuous-rate limit for a Gaussian source. Past that, extra bits buy nothing for the scalar quantizer. The "redistribute to lowest-bit coords" step preserves the total budget when some coord wants to be allocated 10 bits but is capped at 8.</em>
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Preview — what each method will pass as score</div>
+        </div>
+
+        <div class="code-wrap">
+          <span class="code-path">summary</span>
+<pre class="code"><span class="c"># TurboQuant: uniform (no anisotropy after a random rotation)</span>
+score_turbo   = torch.ones_like(k_diag_rotated)
+
+<span class="c"># JointQK: per-coord logit variance proxy (independence approximation)</span>
+score_jointqk = q_diag * k_diag           <span class="c"># diag(R^T Σ_Q R) * diag(R^T Σ_K R)</span>
+
+<span class="c"># QPCA: per-coord code variance (Q-weight already absorbed into the basis)</span>
+score_qpca    = lam                       <span class="c"># eigenvalues of A = M_q^{1/2} Σ_K M_q^{1/2}</span></pre>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 4: §4 TurboQuant -->
+    <article class="page" data-title="§4 TurboQuant" data-page="4">
+      <div class="page-inner">
+        <div class="chapter-label">Section 4 · Method 1</div>
+        <h2>TurboQuant — random orthogonal basis, uniform bits</h2>
+
+        <p class="lead">
+          TurboQuant (called <code>v3</code> internally for historical reasons) is the <em>calibration-free</em> baseline. The basis is a random Haar-uniform orthogonal matrix; bits are spent uniformly. Justified by concentration of measure: in a random basis, every coord is near-Gaussian with variance $\mathrm{tr}(\Sigma_K)/d$, where scalar Lloyd–Max is near-optimal.
+        </p>
+
+        <h3>Step 1 — Build the basis</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 7 · <code>build_turbo_basis</code></span>
+<pre class="code">G = torch.randn((L, H, d, d), generator=gen)            <span class="c"># i.i.d. Gaussian</span>
+Q_orth, R = torch.linalg.qr(G)                          <span class="c"># QR factorisation</span>
+
+<span class="c"># Sign-fix the columns so the QR convention is platform-deterministic.</span>
+<span class="c"># (Without this, the basis flips sign with platform / seed.)</span>
+signs = torch.sign(torch.diagonal(R, -<span class="n">2</span>, -<span class="n">1</span>)).clamp_min(<span class="n">0</span>) * <span class="n">2</span> - <span class="n">1</span>
+forward = Q_orth * signs.unsqueeze(-<span class="n">2</span>)                    <span class="c"># (L, H, d, d) orthogonal</span>
+inverse = forward.transpose(-<span class="n">1</span>, -<span class="n">2</span>)                      <span class="c"># orthogonal: inv = R^T</span></pre>
+        </div>
+
+        <h3>Step 2 — Per-coord std and uniform score</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code">rotated     = inverse @ sigma_k @ forward               <span class="c"># Σ_K in the random basis</span>
+k_diag_rot  = rotated.diagonal(-<span class="n">2</span>, -<span class="n">1</span>).clamp_min(<span class="n">1e-30</span>)
+score       = torch.ones_like(k_diag_rot)               <span class="c"># UNIFORM allocation</span>
+std         = k_diag_rot.sqrt()                         <span class="c"># for Lloyd–Max codebook</span></pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Why uniform bits, and where Σ_K enters</div>
+          <p>
+            <em>Under concentration of measure, a random orthogonal rotation makes every coord of $R^\top \Sigma_K R$ have variance roughly $\mathrm{tr}(\Sigma_K)/d$. There's no anisotropy to exploit, so uniform allocation is the right call. Σ_K is used only to <em>scale</em> the Lloyd–Max codebook (<code>std_per_coord</code>) — the basis itself is data-independent. That's why TurboQuant ships without calibration files.</em>
+          </p>
+        </div>
+
+        <h3>Step 3 — Quantization</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">PerCoordCompressor.roundtrip on TurboQuant maps</span>
+<pre class="code"><span class="c"># c = k @ R_rand                  (random rotation)</span>
+<span class="c"># c_quant[:, j] = nearest centroid in 3-bit codebook scaled by std[j]</span>
+<span class="c"># k_hat = c_quant @ R_rand^T      (undo)</span></pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Bit-allocation histogram</div>
+          <p>
+            <em>At $b_\text{avg} = 3$ the notebook printed: 128 coords at exactly 3 bits — uniform, as designed. No spread.</em>
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Page 5: §5 JointQK -->
+    <article class="page" data-title="§5 JointQK" data-page="5">
+      <div class="page-inner">
+        <div class="chapter-label">Section 5 · Method 2</div>
+        <h2>JointQK — symmetrised Q–K eigenbasis, logit-variance bits</h2>
+
+        <p class="lead">
+          JointQK builds an orthogonal basis from the symmetrised cross-product $(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)/2$, then water-fills bits using a per-coord <em>logit-variance proxy</em>. This is the current production K-side basis.
+        </p>
+
+        <h3>Step 1 — Build the basis</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">pipelines/calibration/analyze_bases.py:127</span>
+<pre class="code"><span class="k">def</span> <span class="fn">jointqk_basis</span>(sigma_q, sigma_k, eps):
+    sq = regularize_batch(sigma_q, eps)              <span class="c"># add ε·(tr/d)·I  for PSD insurance</span>
+    sk = regularize_batch(sigma_k, eps)
+    sym = <span class="n">0.5</span> * (sq @ sk + (sq @ sk).transpose(-<span class="n">1</span>, -<span class="n">2</span>))   <span class="c"># symmetrise Σ_Q Σ_K</span>
+    vals, vecs = torch.linalg.eigh(sym)              <span class="c"># real eigenpairs</span>
+    <span class="k">return</span> vecs_sorted_by_descending_eigvalue              <span class="c"># (L, H, d, d) orthogonal</span></pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Three subtleties</div>
+          <p>
+            <em><strong>(1) Regularize.</strong> Empirical covariances from small bundles can be near-singular. <code>regularize_batch</code> adds $\varepsilon \cdot \mathrm{tr}(\cdot)/d \cdot I$ — shifts the spectrum up by a few percent of the average eigenvalue. Enough to make <code>eigh</code> stable; tiny enough to not perturb the result.</em>
+          </p>
+          <p>
+            <em><strong>(2) Symmetrise.</strong> A product of two symmetric matrices is generally <em>not</em> symmetric (it would be only if they commute). The symmetrised average $(\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)/2$ has real eigenvalues and orthogonal eigenvectors — required for the orthogonal-basis story.</em>
+          </p>
+          <p>
+            <em><strong>(3) Sort descending.</strong> By convention, the "top" coordinates correspond to the largest eigenvalues — the directions where the Q–K product is largest. The water-fill will hand them more bits.</em>
+          </p>
+        </div>
+
+        <h3>Step 2 — Per-coord score and std</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 9 · <code>build_jointqk_basis</code></span>
+<pre class="code">R = jointqk_basis(sigma_q, sigma_k, eps)
+forward = R
+inverse = R.transpose(-<span class="n">1</span>, -<span class="n">2</span>)                            <span class="c"># orthogonal → inv = R^T</span>
+
+<span class="c"># Q variance per coord IN R-basis</span>
+q_diag = (inverse @ regularize_batch(sigma_q, eps) @ forward).diagonal(-<span class="n">2</span>, -<span class="n">1</span>)
+<span class="c"># K variance per coord IN R-basis</span>
+k_diag = (inverse @ regularize_batch(sigma_k, eps) @ forward).diagonal(-<span class="n">2</span>, -<span class="n">1</span>)
+
+score = q_diag * k_diag                                  <span class="c"># logit-variance proxy</span>
+std   = k_diag.sqrt()                                    <span class="c"># for Lloyd–Max</span></pre>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Why score = $q\_\text{diag}_i \cdot k\_\text{diag}_i$</div>
+          <p>In the orthogonal $R$-basis, write $q_R := R^\top q$ and $k_R := R^\top k$. Under a queries–keys independence approximation, the per-coord contribution to logit variance factorises:</p>
+          <p>$$\mathrm{Var}\!\bigl( q_R^{(i)} \cdot k_R^{(i)} \bigr) \;=\; \underbrace{(R^\top \Sigma_Q R)_{ii}}_{q\_\text{diag}_i} \;\cdot\; \underbrace{(R^\top \Sigma_K R)_{ii}}_{k\_\text{diag}_i}.$$</p>
+          <p>So water-fill on this product allocates more bits to coordinates that carry more of the logit's variability — coords that decide which key wins the argmax.</p>
+        </div>
+
+        <h3>Step 3 — Bit-allocation spread (b_avg = 3)</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 13 · histogram printed</span>
+<pre class="code">JointQK allocation at (L=1, H=0), b_avg=3:
+  <span class="n">2</span> bits:  <span class="n">51</span> coords  <span class="c">█████████████████████████████████████████████████</span>
+  <span class="n">3</span> bits:  <span class="n">45</span> coords  <span class="c">█████████████████████████████████████████</span>
+  <span class="n">4</span> bits:  <span class="n">22</span> coords  <span class="c">██████████████████████</span>
+  <span class="n">5</span> bits:   <span class="n">6</span> coords  <span class="c">██████</span>
+  <span class="n">6</span>–<span class="n">8</span> bits: <span class="n">4</span> coords  <span class="c">██</span></pre>
+        </div>
+        <p>The water-fill concentrates bits on the high-$q\_\text{diag} \cdot k\_\text{diag}$ tail (a handful of coords get 5–8 bits) at the cost of starving low-leverage coords (51 coords get only 2 bits).</p>
+      </div>
+    </article>
+
+    <!-- Page 6: §6 QPCA -->
+    <article class="page" data-title="§6 QPCA" data-page="6">
+      <div class="page-inner">
+        <div class="chapter-label">Section 6 · Method 3</div>
+        <h2>QPCA — non-orthogonal basis, eigenvalue-water-fill</h2>
+
+        <p class="lead">
+          QPCA is the closed-form optimum of the all-pairs MSE objective (companion §1–§6). Its forward map is <em>non-orthogonal</em> in the Euclidean sense — it's <em>$M_q$-orthonormal</em>. The bit-allocation score is the eigenvalues $\Lambda$ alone, because the Q-weighting is already absorbed into the basis (companion Remark 6.4).
+        </p>
+
+        <h3>Step 1 — Cast to fp64</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 11 · <code>build_qpca_basis</code></span>
+<pre class="code">sq = regularize_batch(sigma_q, eps).to(torch.float64)
+sk = regularize_batch(sigma_k, eps).to(torch.float64)</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Why fp64</div>
+          <p>
+            <em>$M_q^{-1/2}$ amplifies condition number. fp32 loses too many digits, especially in layer 0 where attention sinks make $\Sigma_Q$ near rank-deficient. Compute in fp64, cast back at the end.</em>
+          </p>
+        </div>
+
+        <h3>Step 2 — Spectral square roots of $M_q$</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code">q_vals, q_vecs = torch.linalg.eigh(sq)               <span class="c"># M_q = U·diag(σ_i)·U^T</span>
+q_vals = q_vals.clamp_min(eps)                       <span class="c"># numerical safety</span>
+
+Mq_half     = _sym(q_vecs @ torch.diag_embed(q_vals.sqrt())  @ q_vecs.transpose(-<span class="n">1</span>, -<span class="n">2</span>))
+Mq_neg_half = _sym(q_vecs @ torch.diag_embed(q_vals.rsqrt()) @ q_vecs.transpose(-<span class="n">1</span>, -<span class="n">2</span>))</pre>
+        </div>
+
+        <p>Spectral construction: $M_q^{1/2} := U \operatorname{diag}(\sqrt{\sigma_i}) U^\top$ from the eigendecomposition $M_q = U \operatorname{diag}(\sigma_i) U^\top$. Same trick for $M_q^{-1/2}$ with <code>rsqrt</code>. <code>_sym</code> kills tiny asymmetric numerical noise.</p>
+
+        <h3>Step 3 — Form $A$ and eigendecompose</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code">A = _sym(Mq_half @ sk @ Mq_half)                     <span class="c"># A = M_q^{1/2} Σ_K M_q^{1/2}</span>
+lam, V = torch.linalg.eigh(A)                        <span class="c"># A = V·Λ·V^T,  V orthogonal</span>
+order  = torch.argsort(lam, descending=<span class="k">True</span>)
+lam = lam[order];  V = V[..., order]                 <span class="c"># sort descending</span></pre>
+        </div>
+
+        <p>$A$ is the central matrix of the QPCA derivation — the <em>congruence transform</em> of $\Sigma_K$ by $M_q^{1/2}$, i.e., "$\Sigma_K$ viewed in the Q-weighted metric." Its eigenvalues $\Lambda$ are the per-coord code variances.</p>
+
+        <h3>Step 4 — Forward and inverse (the non-orthogonal part)</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code">forward = (Mq_half @ V).float()                      <span class="c"># applied as: k @ F</span>
+inverse = (V.transpose(-<span class="n">1</span>, -<span class="n">2</span>) @ Mq_neg_half).float()    <span class="c"># applied as: r @ G</span></pre>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">F and G are inverses, but F is not orthogonal</div>
+          <p>The two maps compose to the identity:</p>
+          <p>$$F\,G \;=\; M_q^{1/2} V \cdot V^\top M_q^{-1/2} \;=\; M_q^{1/2} M_q^{-1/2} \;=\; I.$$</p>
+          <p>But $F$ is <em>not</em> orthogonal in the Euclidean sense: $F^\top F = V^\top M_q V \neq I$ in general. Instead, the column-vector decoder $U^* := M_q^{-1/2} V$ is <em>$M_q$-orthonormal</em>:</p>
+          <p>$$U^{*\top} M_q U^* \;=\; V^\top M_q^{-1/2} M_q M_q^{-1/2} V \;=\; V^\top V \;=\; I.$$</p>
+          <p>The notebook's sanity prints confirm this:</p>
+        </div>
+
+        <div class="code-wrap">
+          <span class="code-path">printed by notebook cell 11</span>
+<pre class="code">QPCA   ||F @ G - I||_F  ≈ 1.9e-6     <span class="c"># inverses, OK</span>
+       ||F^T F - I||_F  ≈ 4e+0       <span class="c"># non-orthogonal — confirms the math</span></pre>
+        </div>
+
+        <h3>Step 5 — Score and std</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code">score = lam                                          <span class="c"># Λ alone — Q-weight is already in F</span>
+std   = lam.sqrt()                                   <span class="c"># for Lloyd–Max</span></pre>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Why the score is $\Lambda$ alone</div>
+          <p>By the clean property (companion Remark 6.4), in the QPCA basis the Q-weighted key MSE equals the plain Euclidean code MSE:</p>
+          <p>$$(\hat k - k)^\top M_q (\hat k - k) \;=\; \|\eta\|_2^2 \;=\; \sum_i \mathrm{Var}(\eta_i).$$</p>
+          <p>Each code coord contributes equally to the loss. With per-coord noise $\propto \lambda_i \cdot 2^{-2 B_i}$, the optimal allocation is water-fill on $\lambda_i$ alone — no further Q-weighting needed.</p>
+        </div>
+
+        <h3>Step 6 — Quantization</h3>
+
+        <p>The same <code>PerCoordCompressor.roundtrip</code> as before, with the (non-orthogonal) QPCA maps:</p>
+
+        <div class="code-wrap">
+          <span class="code-path">conceptual</span>
+<pre class="code"><span class="c"># c = k @ (M_q^{1/2} V)            forward — rotate by V *then* scale by M_q^{1/2}</span>
+<span class="c"># c_quant[:, j] = nearest in Lloyd–Max codebook scaled by std[j] = sqrt(λ_j)</span>
+<span class="c"># k_hat = c_quant @ (V^T M_q^{-1/2})   inverse — scale by M_q^{-1/2} then de-rotate</span></pre>
+        </div>
+
+        <p>The round-trip is an <em>oblique projection</em> (companion §4): $\hat k = M_q^{-1/2} V V^\top M_q^{1/2} k = k$ in the no-quantization limit, but along an oblique axis when quantization noise is present.</p>
+      </div>
+    </article>
+
+    <!-- Page 7: §7 Evaluation kernel -->
+    <article class="page" data-title="§7 Evaluation" data-page="7">
+      <div class="page-inner">
+        <div class="chapter-label">Section 7 · Shared evaluation kernel</div>
+        <h2>How the four metrics are computed</h2>
+
+        <p class="lead">
+          The kernel is identical across all three methods. For each example and each (layer, kv-head) we compute $k\_\text{mse}$, $\mathrm{logit\_err}$, top-1, and top-5 retention against the original keys. Four implementation tricks make this fast.
+        </p>
+
+        <h3>Setup per (l, h) — done once</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 15 · <code>score_example</code></span>
+<pre class="code">k = k_all[l, h, :T, :].float()                              <span class="c"># (T, d) — original keys</span>
+q = q_all[l, h*group_size:(h+<span class="n">1</span>)*group_size, :T, :].float() \
+        .reshape(-<span class="n">1</span>, d)                                    <span class="c"># (4T, d) — GQA-pooled queries</span>
+qq          = q.transpose(<span class="n">0</span>, <span class="n">1</span>) @ q                          <span class="c"># (d, d) — query Gram</span>
+k_t         = k.transpose(<span class="n">0</span>, <span class="n">1</span>)                              <span class="c"># (d, T)</span>
+
+<span class="c"># Hoisted out of the (method, bits) inner loop — identical for all 9 combinations.</span>
+real_logits = q @ k_t                                       <span class="c"># (4T, T)</span>
+real_top    = real_logits.argmax(dim=-<span class="n">1</span>)                    <span class="c"># (4T,)</span>
+n_q         = <span class="k">int</span>(real_top.numel())</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Trick 1 — Hoist what doesn't depend on (method, bits)</div>
+          <p>
+            <em>The original code recomputed <code>real_logits</code> and <code>real_top</code> inside the inner loop — 9 times per (l, h) per example. Pulling them out cut per-example time by ~3×, the difference between hitting the 600 s nbconvert timeout and finishing in 8 minutes.</em>
+          </p>
+        </div>
+
+        <h3>Inner loop — per (method, bits)</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">same cell</span>
+<pre class="code"><span class="k">for</span> method, comps_bits <span class="k">in</span> comps_by_method.items():
+    <span class="k">for</span> bits <span class="k">in</span> k_bits_list:
+        comp = comps_bits[bits][(l, h)]
+        k_hat = comp.roundtrip(k).float()                   <span class="c"># ←── QUANTIZE HERE</span>
+        err = k - k_hat
+        acc = accums[method][bits][l]
+
+        <span class="c"># (1) k_mse — unweighted reconstruction error</span>
+        acc[<span class="s">'mse_num'</span>] += <span class="k">float</span>(err.square().sum().item())
+        acc[<span class="s">'mse_den'</span>] += <span class="k">int</span>(err.numel())
+
+        <span class="c"># (2) logit_err — Q-weighted key MSE via trace identity</span>
+        ee = err.transpose(<span class="n">0</span>, <span class="n">1</span>) @ err                       <span class="c"># (d, d)</span>
+        acc[<span class="s">'logit_num'</span>] += <span class="k">float</span>((qq * ee).sum().item())     <span class="c"># elem-mul + sum = trace</span>
+        acc[<span class="s">'logit_den'</span>] += <span class="k">int</span>(q.shape[<span class="n">0</span>] * T * T)
+
+        <span class="c"># (3,4) top-1 / top-5 retention</span>
+        approx_logits = q @ k_hat.transpose(<span class="n">0</span>, <span class="n">1</span>)             <span class="c"># (4T, T)</span>
+        approx_top    = approx_logits.argmax(dim=-<span class="n">1</span>)
+        top1 = <span class="k">int</span>((real_top == approx_top).sum().item())
+        approx_top5 = approx_logits.topk(<span class="n">5</span>, dim=-<span class="n">1</span>).indices
+        top5 = <span class="k">int</span>((approx_top5 == real_top.unsqueeze(-<span class="n">1</span>)).any(-<span class="n">1</span>).sum().item())
+
+        acc[<span class="s">'top1_num'</span>] += top1;  acc[<span class="s">'top1_den'</span>] += n_q
+        acc[<span class="s">'top5_num'</span>] += top5;  acc[<span class="s">'top5_den'</span>] += n_q</pre>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Trick 2 — The trace identity for logit_err</div>
+          <p>By definition, $\mathrm{logit\_err} = \sum_{i, j} (q_i^\top \delta_j)^2$ where $\delta_j = k_j - \hat k_j$. Rearrange the sum:</p>
+          <p>$$\sum_{i, j} (q_i^\top \delta_j)^2 \;=\; \sum_j \delta_j^\top \!\left(\sum_i q_i q_i^\top\right)\! \delta_j \;=\; \mathrm{tr}\!\bigl(qq \cdot \mathrm{ee}\bigr),$$</p>
+          <p>where $\mathrm{ee} := \sum_j \delta_j \delta_j^\top = \mathrm{err}^\top \mathrm{err}$. The trace of a product of two matrices equals the Frobenius inner product, which is element-wise multiplication plus sum: <code>(qq * ee).sum()</code>. This avoids forming an explicit $(T, d, d)$ intermediate.</p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Trick 3 — GQA pooling</div>
+          <p>
+            <em>Qwen3-8B has 32 Q-heads sharing 8 KV-heads (group size 4). For each kv-head $h$, four Q-heads see the same compressed K. The notebook reshapes the four Q-heads into a single $(4T, d)$ query block, so a single matmul produces all four heads' logits at once.</em>
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Trick 4 — <code>int()</code> instead of <code>float()</code> for counts</div>
+          <p>
+            <em>Top-1 / top-5 counts are integers; using <code>(real_top == approx_top).sum().item()</code> with an int cast avoids an extra float conversion and reduces host-device sync overhead in the inner loop. Minor but compounds over 3 examples × 36 layers × 8 heads × 9 (method, bits).</em>
+          </p>
+        </div>
+
+        <h3>Finalization — pool across layers, divide</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">notebook cell 15 · <code>finalize</code></span>
+<pre class="code"><span class="k">for</span> bits <span class="k">in</span> by_bits:
+    layers = [l <span class="k">for</span> l <span class="k">in</span> by_layer <span class="k">if not</span> (exclude_layer_0 <span class="k">and</span> l == <span class="n">0</span>)]
+    out[method][bits] = {
+        <span class="s">'k_mse'</span>:     <span class="k">sum</span>(mse_num for l)   / <span class="k">sum</span>(mse_den for l),
+        <span class="s">'logit_err'</span>: <span class="k">sum</span>(logit_num for l) / <span class="k">sum</span>(logit_den for l),
+        <span class="s">'top1'</span>:      <span class="k">sum</span>(top1_num for l)  / <span class="k">sum</span>(top1_den for l),
+        <span class="s">'top5'</span>:      <span class="k">sum</span>(top5_num for l)  / <span class="k">sum</span>(top5_den for l),
+    }</pre>
+        </div>
+
+        <p>Layer 0 is excluded because of its anomalous attention-sink behaviour at the position-0 token (a project-wide convention; see <code>CLAUDE.md</code>).</p>
+      </div>
+    </article>
+
+    <!-- Page 8: §8 Recap -->
+    <article class="page" data-title="§8 Recap" data-page="8">
+      <div class="page-inner">
+        <div class="chapter-label">Section 8 · Recap</div>
+        <h2>The three-method matrix</h2>
+
+        <p class="lead">
+          Every method routes through the same <code>PerCoordCompressor.roundtrip</code>; every metric is computed by the same kernel. The differences are upstream — how the forward map is built, and what score is fed to the water-fill bit allocator.
+        </p>
+
+        <table class="methods">
+          <thead>
+            <tr><th>aspect</th><th class="method-name">TurboQuant</th><th class="method-name">JointQK</th><th class="method-name">QPCA</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>basis source</strong></td>
+              <td>random Haar-orthogonal $R_\text{rand}$</td>
+              <td>$\mathrm{eigvecs}\bigl((\Sigma_Q \Sigma_K + \Sigma_K \Sigma_Q)/2\bigr)$</td>
+              <td>derived from $A = M_q^{1/2}\Sigma_K M_q^{1/2}$</td>
+            </tr>
+            <tr>
+              <td><strong>forward $F$</strong></td>
+              <td>$R_\text{rand}$ (orthogonal)</td>
+              <td>$R$ (orthogonal)</td>
+              <td>$M_q^{1/2} V$ (non-orthogonal)</td>
+            </tr>
+            <tr>
+              <td><strong>inverse $G$</strong></td>
+              <td>$R_\text{rand}^\top$</td>
+              <td>$R^\top$</td>
+              <td>$V^\top M_q^{-1/2}$</td>
+            </tr>
+            <tr>
+              <td><strong>$F^\top F$</strong></td>
+              <td>$I$</td>
+              <td>$I$</td>
+              <td>$V^\top M_q V \ne I$</td>
+            </tr>
+            <tr>
+              <td><strong>$F G$</strong></td>
+              <td>$I$</td>
+              <td>$I$</td>
+              <td>$I$</td>
+            </tr>
+            <tr>
+              <td><strong>water-fill score</strong></td>
+              <td>uniform (all-ones)</td>
+              <td>$q\_\text{diag}_i \cdot k\_\text{diag}_i$</td>
+              <td>$\lambda_i$ (eigvals of $A$)</td>
+            </tr>
+            <tr>
+              <td><strong>per-coord std</strong></td>
+              <td>$\sqrt{\mathrm{diag}(R^\top \Sigma_K R)}$</td>
+              <td>$\sqrt{\mathrm{diag}(R^\top \Sigma_K R)}$</td>
+              <td>$\sqrt{\lambda_i}$</td>
+            </tr>
+            <tr>
+              <td><strong>needs $\Sigma_Q$?</strong></td>
+              <td>no — calibration-free</td>
+              <td>yes</td>
+              <td>yes (also $M_q^{-1/2}$)</td>
+            </tr>
+            <tr>
+              <td><strong>basis-build cost</strong></td>
+              <td>one QR per (L, h)</td>
+              <td>one $\mathtt{eigh}$ per (L, h)</td>
+              <td>three $\mathtt{eigh}$ per (L, h) (fp64)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>The downstream pipeline is identical</h3>
+
+        <div class="code-wrap">
+          <span class="code-path">common code path for all three methods</span>
+<pre class="code"><span class="c"># 1. Build per-(layer, kv-head) basis & score</span>
+basis = build_<span class="v">{method}</span>_basis(sigma_q, sigma_k)        <span class="c"># dict: forward, inverse, score, std</span>
+
+<span class="c"># 2. Water-fill bits at target budget</span>
+bit_allocs = allocate_bits(basis[<span class="s">'score'</span>], b_avg, max_coord_bits=<span class="n">8</span>)
+
+<span class="c"># 3. Build per-(layer, kv-head) compressor</span>
+comp = PerCoordCompressor(
+    bits_per_coord = bit_allocs[l, h],
+    std_per_coord  = basis[<span class="s">'std'</span>][l, h],
+    forward_map    = basis[<span class="s">'forward'</span>][l, h],
+    inverse_map    = basis[<span class="s">'inverse'</span>][l, h],
+)
+
+<span class="c"># 4. Round-trip the keys</span>
+k_hat = comp.roundtrip(k)                              <span class="c"># the actual quantization</span>
+
+<span class="c"># 5. Score k_mse / logit_err / top-1 / top-5</span>
+metrics = score_example(...)</pre>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Where the math becomes code</div>
+          <p>
+            <em>Each method's mathematical character — what it considers "the right basis" and "the right bits-per-coord weighting" — lives entirely in the four fields of the basis dict. From <code>allocate_bits</code> onward, the three methods are indistinguishable to the compressor.</em>
+          </p>
+          <p>
+            <em>That separation is why adding a new method (margin-aware bases; attention-KL-driven allocation; etc., per companion §9's open questions) is a single new <code>build_X_basis</code> function and a single line in the method registry — no changes to the compressor or the scoring kernel.</em>
+          </p>
+        </div>
+
+        <div class="ornament">⁂</div>
+
+        <p class="small" style="text-align: center; color: var(--ink-faint); margin-top: 28px;">
+          End of tour. For the math behind each method, see <code>background/qpca_derivation_companion.html</code>.
+          Headline empirical results: notebook <code>notebooks/quantization_methods_comparison.ipynb</code> · cell 19.
+        </p>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<nav class="nav-bar" aria-label="Page navigation">
+  <button id="prev-btn" aria-label="Previous page">‹ Previous</button>
+  <span class="page-info">Page <strong id="cur-num">1</strong> of <strong id="tot-num">9</strong></span>
+  <button id="next-btn" aria-label="Next page">Next ›</button>
+</nav>
+
+<script>
+  let current = 0;
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const total = pages.length;
+  document.getElementById('tot-num').textContent = total;
+
+  const tocList = document.getElementById('toc-list');
+  pages.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.textContent = p.dataset.title;
+    li.dataset.idx = i;
+    li.addEventListener('click', () => { go(parseInt(li.dataset.idx, 10)); toggleToc(false); });
+    tocList.appendChild(li);
+  });
+
+  const tocEl = document.querySelector('.toc');
+  document.querySelector('.toc-toggle').addEventListener('click', () => toggleToc());
+  function toggleToc(forceState) {
+    const open = forceState != null ? forceState : !tocEl.classList.contains('open');
+    tocEl.classList.toggle('open', open);
+  }
+
+  function applyClasses() {
+    pages.forEach((p, i) => {
+      p.classList.remove('active', 'prev', 'next');
+      if (i === current) p.classList.add('active');
+      else if (i < current) p.classList.add('prev');
+      else p.classList.add('next');
+    });
+    document.getElementById('cur-num').textContent = current + 1;
+    document.getElementById('prev-btn').disabled = (current === 0);
+    document.getElementById('next-btn').disabled = (current === total - 1);
+    const pct = (current / (total - 1)) * 100;
+    document.querySelector('.progress-fill').style.width = pct + '%';
+    document.querySelectorAll('#toc-list li').forEach((li, i) => {
+      li.classList.toggle('current', i === current);
+    });
+    const activeEl = pages[current];
+    if (activeEl) activeEl.scrollTop = 0;
+    if (history && history.replaceState) history.replaceState(null, '', '#p' + current);
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= total) return;
+    current = idx;
+    applyClasses();
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => go(current - 1));
+  document.getElementById('next-btn').addEventListener('click', () => go(current + 1));
+  document.getElementById('start-btn').addEventListener('click', () => go(1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || (e.key === ' ' && !e.shiftKey)) { e.preventDefault(); go(current + 1); }
+    else if (e.key === 'ArrowLeft' || (e.key === ' ' && e.shiftKey)) { e.preventDefault(); go(current - 1); }
+    else if (e.key === 'Home') { e.preventDefault(); go(0); }
+    else if (e.key === 'End') { e.preventDefault(); go(total - 1); }
+    else if (e.key === 'Escape') { toggleToc(false); }
+  });
+
+  let tx = null, ty = null, tt = 0;
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    tx = t.clientX; ty = t.clientY; tt = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (tx == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - tx, dy = t.clientY - ty, dt = Date.now() - tt;
+    tx = ty = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4 || dt > 600) return;
+    if (dx < 0) go(current + 1); else go(current - 1);
+  }, { passive: true });
+
+  if (window.location.hash) {
+    const m = window.location.hash.match(/p(\d+)/);
+    if (m) {
+      const idx = parseInt(m[1], 10);
+      if (idx >= 0 && idx < total) current = idx;
+    }
+  }
+  applyClasses();
+
+  function renderAllMath() {
+    if (typeof renderMathInElement === 'undefined') return;
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      ignoredTags: ['pre', 'code'],
+      throwOnError: false,
+      strict: 'ignore',
+      trust: true,
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0" />
+<title>Softmax-Aware QPCA for Attention-Preserving KV Compression</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderAllMath();"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #ffffff;
+    --paper: #ffffff;
+    --ink: #355265;
+    --ink-soft: #476d86;
+    --ink-faint: #8fa1ad;
+    --rule: #dddddd;
+    --accent: #328ac1;
+    --accent-hover: #4b9dd0;
+    --accent-soft: #eaf4fa;
+    --thm-border: #328ac1;
+    --thm-bg: #eaf4fa;
+    --prop-border: #4b9dd0;
+    --prop-bg: #f0f7fb;
+    --lem-border: #999999;
+    --lem-bg: #f7f7f7;
+    --def-border: #6b8a6b;
+    --def-bg: #eef3ee;
+    --rem-border: #8a7a3a;
+    --rem-bg: #f4efde;
+    --proof-bg: #f7f7f7;
+    --warn-border: #b85c38;
+    --warn-bg: #fbefe9;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv11', 'ss01', 'tnum';
+  }
+  body {
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--rule);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0;
+    transition: width 320ms cubic-bezier(.4, 0, .2, 1);
+  }
+  .book {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .pages {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 64px 7% 120px;
+    background: var(--paper);
+    transition: transform 520ms cubic-bezier(.6, 0, .25, 1), opacity 320ms;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(100%);
+  }
+  .page.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+    z-index: 2;
+  }
+  .page.prev {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  .page.next {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  .page-inner {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .chapter-label {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  h1, h2, h3, h4 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, 'Helvetica Neue', sans-serif;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  h1 {
+    font-size: 40px;
+    margin: 0 0 18px;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 27px;
+    margin: 0 0 22px;
+    letter-spacing: -0.02em;
+  }
+  h3 {
+    font-size: 20px;
+    margin: 36px 0 12px;
+  }
+  p {
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  .lead {
+    font-size: 19px;
+    color: var(--ink-soft);
+    margin: 24px 0 32px;
+    line-height: 1.55;
+  }
+  .small {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    color: var(--ink);
+    background: #f5f7f8;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  em.term {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .ornament {
+    text-align: center;
+    color: var(--ink-faint);
+    letter-spacing: 8px;
+    margin: 24px 0;
+    user-select: none;
+  }
+
+  .block {
+    margin: 24px 0;
+    padding: 18px 22px 14px;
+    border-left: 3px solid var(--lem-border);
+    background: var(--lem-bg);
+    border-radius: 0 6px 6px 0;
+  }
+  .block-label {
+    display: inline-block;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: var(--lem-border);
+    margin-bottom: 8px;
+  }
+  .block-title {
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .block p:last-child { margin-bottom: 0; }
+  .theorem {
+    border-left-color: var(--thm-border);
+    background: var(--thm-bg);
+  }
+  .theorem .block-label { color: var(--thm-border); }
+  .proposition {
+    border-left-color: var(--prop-border);
+    background: var(--prop-bg);
+  }
+  .proposition .block-label { color: var(--prop-border); }
+  .definition {
+    border-left-color: var(--def-border);
+    background: var(--def-bg);
+  }
+  .definition .block-label { color: var(--def-border); }
+  .remark {
+    border-left-color: var(--rem-border);
+    background: var(--rem-bg);
+  }
+  .remark .block-label { color: var(--rem-border); }
+  .warning {
+    border-left-color: var(--warn-border);
+    background: var(--warn-bg);
+  }
+  .warning .block-label { color: var(--warn-border); }
+  details.proof {
+    margin: 18px 0;
+    padding: 0;
+    background: var(--proof-bg);
+    border-radius: 6px;
+    border: 1px solid var(--rule);
+  }
+  details.proof summary {
+    cursor: pointer;
+    padding: 10px 18px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: var(--ink-soft);
+    user-select: none;
+    list-style: none;
+  }
+  details.proof summary::-webkit-details-marker { display: none; }
+  details.proof summary::before {
+    content: "> ";
+    display: inline-block;
+    transition: transform 200ms;
+    margin-right: 4px;
+  }
+  details.proof[open] {
+    padding-bottom: 14px;
+  }
+  details.proof[open] summary::before {
+    content: "v ";
+  }
+  details.proof > *:not(summary) {
+    padding: 0 22px;
+  }
+  .katex-display {
+    margin: 18px 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 0;
+  }
+  .katex-display > .katex { font-size: 1.05em; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--rule);
+    padding: 10px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    color: var(--ink-soft);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .formula-list {
+    margin: 18px 0;
+    padding-left: 22px;
+  }
+  .formula-list li {
+    margin: 10px 0;
+  }
+  .toc-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 50;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 140ms;
+  }
+  .toc-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 80vw;
+    background: var(--paper);
+    border-right: 1px solid var(--rule);
+    padding: 56px 28px 28px;
+    transform: translateX(-100%);
+    transition: transform 280ms cubic-bezier(.4, 0, .2, 1);
+    z-index: 40;
+    overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+  }
+  .toc.open { transform: translateX(0); }
+  .toc h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin: 0 0 16px;
+  }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: tocnum;
+  }
+  .toc li {
+    counter-increment: tocnum;
+    border-bottom: 1px solid var(--rule);
+    padding: 11px 0;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--ink-soft);
+    transition: color 120ms, padding-left 120ms;
+    line-height: 1.35;
+  }
+  .toc li::before {
+    content: counter(tocnum, decimal-leading-zero);
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-right: 12px;
+    font-weight: 600;
+  }
+  .toc li:hover {
+    color: var(--ink);
+    padding-left: 4px;
+  }
+  .toc li.current {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    z-index: 30;
+  }
+  .nav-bar button {
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 8px 18px;
+    color: var(--ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 140ms;
+    min-width: 96px;
+  }
+  .nav-bar button:hover:not(:disabled) {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .nav-bar button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .page-info {
+    font-size: 13px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .cover {
+    text-align: center;
+    padding-top: 64px;
+  }
+  .cover h1 {
+    font-size: 44px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -0.03em;
+  }
+  .subtitle {
+    font-size: 20px;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+  }
+  .cover .meta {
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin: 10px 0;
+  }
+  .cover .meta strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .abstract {
+    margin: 36px 0;
+    padding: 20px 24px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-align: left;
+  }
+  .abstract::before {
+    content: "Abstract";
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .start-btn {
+    display: inline-block;
+    margin-top: 32px;
+    padding: 12px 28px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 160ms;
+  }
+  .start-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(50, 138, 193, 0.25);
+  }
+  @media (max-width: 720px) {
+    html, body { font-size: 16px; }
+    .page { padding: 56px 24px 110px; }
+    .cover h1 { font-size: 34px; }
+    h2 { font-size: 24px; }
+    .nav-bar { height: 58px; padding: 0 12px; }
+    .nav-bar button { min-width: 82px; padding: 8px 10px; }
+    .page-info { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"><div class="progress-fill"></div></div>
+<button class="toc-toggle" aria-label="Toggle table of contents">Contents</button>
+
+<aside class="toc" aria-label="Table of contents">
+  <h3>Contents</h3>
+  <ol id="toc-list"></ol>
+  <p class="small" style="margin-top: 24px; color: var(--ink-faint);">
+    Use arrow keys, buttons, or swipe to move through the derivation.
+  </p>
+</aside>
+
+<main class="book" id="book">
+  <div class="pages" id="pages">
+
+    <article class="page" data-title="Cover" data-page="0">
+      <div class="page-inner cover">
+        <div class="chapter-label">An Interactive Companion</div>
+        <h1>Softmax-Aware QPCA for Attention-Preserving KV Compression</h1>
+        <p class="subtitle">A local Fisher surrogate for moving beyond average logit MSE</p>
+
+        <div class="ornament">***</div>
+
+        <p class="meta"><strong>Topic</strong> · KV-cache compression · attention geometry · source coding</p>
+        <p class="meta"><strong>Goal</strong> · Improve the QPCA objective so it accounts for softmax attention</p>
+        <p class="meta"><strong>Output</strong> · A closed-form surrogate, not an exact global optimum</p>
+
+        <div class="abstract">
+          Plain QPCA minimizes the all-pairs squared logit reconstruction error
+          $\sum_{i,j}(q_i^\top k_j - q_i^\top \hat{k}_j)^2$. That objective has a clean
+          closed form, but it treats every query-key pair equally. Attention does not:
+          softmax makes errors near the active competition set matter more than errors on
+          already-irrelevant keys. This companion derives a softmax-local replacement based
+          on the Fisher geometry of the categorical distribution. The result keeps the
+          QPCA-style eigendecomposition while weighting the query and key statistics by
+          attention sensitivity.
+        </div>
+
+        <button class="start-btn" id="start-btn">Begin reading</button>
+      </div>
+    </article>
+
+    <article class="page" data-title="§1 Motivation" data-page="1">
+      <div class="page-inner">
+        <div class="chapter-label">Section 1</div>
+        <h2>Why logit MSE is not enough</h2>
+
+        <p class="lead">
+          QPCA optimizes the right object only if every attention logit matters equally.
+          A transformer layer uses the logits through softmax, where the local geometry
+          depends on the current attention distribution.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Plain QPCA objective</div>
+          <p>
+            For queries $q_i$ and keys $k_j$, QPCA minimizes
+            $$
+            L_{\mathrm{logit}}(U, r)
+              = \sum_{i,j} \left(q_i^\top k_j - q_i^\top U r_j\right)^2 .
+            $$
+            The query distribution enters only through
+            $M_q = \sum_i q_i q_i^\top$, which gives the closed-form basis from
+            $M_q^{1/2} S_k M_q^{1/2}$.
+          </p>
+        </div>
+
+        <div class="block warning">
+          <div class="block-label">Problem</div>
+          <p>
+            Softmax is invariant to adding the same constant to every logit and is highly
+            sensitive to changes near the top few competing keys. Average squared logit error
+            penalizes harmless tail errors and important margin errors in the same quadratic
+            way.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Design target</div>
+          <p>
+            We want an objective that sees the complete attention score computation:
+            scaling by $1/\sqrt{d}$, softmax normalization, and competition among cached
+            keys. We also want to preserve enough structure to produce a calibrated basis,
+            not a slow per-prompt optimization.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§2 Exact objective" data-page="2">
+      <div class="page-inner">
+        <div class="chapter-label">Section 2</div>
+        <h2>The exact softmax objective</h2>
+
+        <p class="lead">
+          The natural loss is attention-distribution divergence. It is faithful to the
+          layer's computation, but it does not preserve QPCA's exact closed form.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Attention distributions</div>
+          <p>
+            For a query $q_i$, define full and reconstructed logits
+            $$
+            s_i(j) = \frac{q_i^\top k_j}{\sqrt{d}}, \qquad
+            \hat{s}_i(j) = \frac{q_i^\top \hat{k}_j}{\sqrt{d}} ,
+            $$
+            and attention distributions
+            $$
+            p_i = \operatorname{softmax}(s_i), \qquad
+            \hat{p}_i = \operatorname{softmax}(\hat{s}_i).
+            $$
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Faithful loss</div>
+          <p>
+            A direct K-side objective is
+            $$
+            L_{\mathrm{attn}}(U,r)
+              = \sum_i \operatorname{KL}\left(
+                  \operatorname{softmax}(s_i)
+                  \;\|\;
+                  \operatorname{softmax}(\hat{s}_i)
+                \right).
+            $$
+            This objective measures the actual attention probability distortion induced by
+            compressing keys.
+          </p>
+        </div>
+
+        <div class="block warning">
+          <div class="block-label">No global QPCA-style closed form</div>
+          <p>
+            Exact $L_{\mathrm{attn}}$ couples all keys for each query through the softmax
+            normalizer. Changing one reconstructed key changes the probability assigned to
+            every other key. That coupling prevents the clean reduction to a single
+            key second-moment matrix.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§3 Local geometry" data-page="3">
+      <div class="page-inner">
+        <div class="chapter-label">Section 3</div>
+        <h2>Softmax KL has a Fisher quadratic</h2>
+
+        <p class="lead">
+          Around the uncompressed logits, KL has a second-order approximation governed
+          by the Fisher information matrix of the categorical distribution.
+        </p>
+
+        <div class="block theorem">
+          <div class="block-label">Local KL expansion</div>
+          <p>
+            Let $p = \operatorname{softmax}(s)$ and perturb the logits by $\delta$.
+            Then
+            $$
+            \operatorname{KL}\left(\operatorname{softmax}(s)
+            \;\|\; \operatorname{softmax}(s+\delta)\right)
+              =
+              \frac{1}{2}\delta^\top
+              \left(\operatorname{Diag}(p) - p p^\top\right)
+              \delta
+              + O(\|\delta\|^3).
+            $$
+          </p>
+          <details class="proof">
+            <summary>Proof sketch</summary>
+            <p>
+              The gradient of the cross-entropy in logits is $\hat{p} - p$, which is zero
+              at $\hat{p}=p$. The Hessian of log-sum-exp at $s$ is
+              $\operatorname{Diag}(p) - p p^\top$. Taylor expansion at $s$ gives the result.
+            </p>
+          </details>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Interpretation</div>
+          <p>
+            The matrix $H(p)=\operatorname{Diag}(p)-p p^\top$ removes common-mode logit
+            shifts and emphasizes keys with nontrivial attention probability. A tail key
+            with $p_j \approx 0$ contributes little; a deterministic winner with
+            $p_j \approx 1$ also contributes little because the distribution is locally
+            saturated. The strongest signal occurs in the competition set.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§4 From KL to keys" data-page="4">
+      <div class="page-inner">
+        <div class="chapter-label">Section 4</div>
+        <h2>Applying the Fisher geometry to key errors</h2>
+
+        <p class="lead">
+          Key reconstruction errors enter the softmax through logit errors. Substituting
+          those logit errors into the local KL gives a softmax-aware K-side distortion.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Logit perturbation from key error</div>
+          <p>
+            Write $e_j = \hat{k}_j-k_j$. For query $q_i$,
+            $$
+            \delta_i(j) = \frac{q_i^\top e_j}{\sqrt{d}} .
+            $$
+            The local attention loss is therefore
+            $$
+            L_{\mathrm{Fisher}}
+            =
+            \frac{1}{2}
+            \sum_i
+            \delta_i^\top H(p_i)\delta_i .
+            $$
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Expanded form</div>
+          <p>
+            Expanding the Fisher quadratic gives
+            $$
+            L_{\mathrm{Fisher}}
+            =
+            \frac{1}{2d}
+            \sum_i
+            \left[
+              \sum_j p_{ij}(q_i^\top e_j)^2
+              -
+              \left(\sum_j p_{ij}q_i^\top e_j\right)^2
+            \right].
+            $$
+            The first term is diagonal over keys. The second term is a covariance correction
+            that couples errors across keys.
+          </p>
+        </div>
+
+        <div class="block warning">
+          <div class="block-label">The coupling term</div>
+          <p>
+            The covariance correction is exactly what makes the full Fisher objective
+            non-separable across cached keys. A closed-form QPCA-like basis requires either
+            modeling cross-key correlated quantization noise or dropping/approximating this
+            term.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§5 Separable surrogate" data-page="5">
+      <div class="page-inner">
+        <div class="chapter-label">Section 5</div>
+        <h2>A separable Fisher-QPCA surrogate</h2>
+
+        <p class="lead">
+          To recover a practical closed-form basis, approximate the Fisher quadratic by
+          keeping per-key sensitivity and discarding cross-key error covariance.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Softmax sensitivity weights</div>
+          <p>
+            Define
+            $$
+            \beta_{ij} = p_{ij}(1-p_{ij}), \qquad
+            \alpha_j = \sum_i \beta_{ij}.
+            $$
+            The scalar $\beta_{ij}$ is the diagonal Fisher sensitivity for key $j$ under
+            query $i$.
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Separable approximation</div>
+          <p>
+            The diagonal-Fisher surrogate is
+            $$
+            \tilde{L}_{\mathrm{Fisher}}
+            =
+            \frac{1}{2d}
+            \sum_{i,j}
+            \beta_{ij}(q_i^\top e_j)^2 .
+            $$
+            This keeps the softmax competition weighting while making the loss additive over
+            individual key errors.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Why this is reasonable for quantization</div>
+          <p>
+            Scalar quantization errors are mostly local and per-token. If errors for
+            different cached keys are treated as weakly correlated, the omitted cross-key
+            covariance term is smaller than the diagonal sensitivity term. This is an
+            approximation, but it is targeted at the part of the softmax geometry that
+            plain logit MSE entirely misses.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§6 Closed form" data-page="6">
+      <div class="page-inner">
+        <div class="chapter-label">Section 6</div>
+        <h2>QPCA-style closed form under the surrogate</h2>
+
+        <p class="lead">
+          The separable objective becomes QPCA again, but with attention-sensitive moments
+          instead of uniform all-pairs moments.
+        </p>
+
+        <div class="block definition">
+          <div class="block-label">Fisher-weighted moments</div>
+          <p>
+            A direct per-key form uses
+            $$
+            M_j = \frac{1}{d}\sum_i \beta_{ij} q_i q_i^\top .
+            $$
+            For a single global basis per layer/head, use the pooled approximation
+            $$
+            M_F = \frac{1}{d}\sum_{i,j}\beta_{ij} q_i q_i^\top,
+            \qquad
+            S_F = \sum_j \alpha_j k_j k_j^\top .
+            $$
+          </p>
+        </div>
+
+        <div class="block theorem">
+          <div class="block-label">Fisher-QPCA surrogate codec</div>
+          <p>
+            Let
+            $$
+            A_F = M_F^{1/2} S_F M_F^{1/2}
+                = V\Lambda V^\top ,
+            $$
+            with eigenvalues in descending order. The QPCA-style full-rank row-vector maps are
+            $$
+            F_{\mathrm{soft}} = M_F^{1/2}V,
+            \qquad
+            G_{\mathrm{soft}} = V^\top M_F^{-1/2}.
+            $$
+            Keys are encoded as $r = kF_{\mathrm{soft}}$ and reconstructed as
+            $\hat{k}=rG_{\mathrm{soft}}$.
+          </p>
+        </div>
+
+        <div class="block proposition">
+          <div class="block-label">Bit allocation</div>
+          <p>
+            As in QPCA, the weighted key error becomes approximately plain code-space error:
+            $$
+            (k-\hat{k})^\top M_F(k-\hat{k})
+              \approx
+            \|r-\hat{r}\|_2^2 .
+            $$
+            The code-space per-coordinate variance is $\Lambda$, so the first allocation to
+            test is water-fill on $\Lambda$ alone.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§7 Implementation" data-page="7">
+      <div class="page-inner">
+        <div class="chapter-label">Section 7</div>
+        <h2>Calibration procedure</h2>
+
+        <p class="lead">
+          The procedure is close to the current QPCA implementation, with one extra pass
+          that computes softmax probabilities on calibration raw Q/K tensors.
+        </p>
+
+        <div class="block proposition">
+          <div class="block-label">Procedure</div>
+          <ol class="formula-list">
+            <li>For each layer and KV head, gather grouped queries $q_i$ and keys $k_j$.</li>
+            <li>Compute logits $s_i(j)=q_i^\top k_j/\sqrt{d}$ in chunks.</li>
+            <li>Compute $p_{ij}=\operatorname{softmax}(s_i)_j$ and $\beta_{ij}=p_{ij}(1-p_{ij})$.</li>
+            <li>Accumulate $M_F=\frac{1}{d}\sum_{i,j}\beta_{ij}q_iq_i^\top$.</li>
+            <li>Accumulate $S_F=\sum_j\alpha_jk_jk_j^\top$, where $\alpha_j=\sum_i\beta_{ij}$.</li>
+            <li>Regularize $M_F$, eigendecompose $M_F^{1/2}S_FM_F^{1/2}$, and store forward, inverse, and eigenvalues.</li>
+          </ol>
+        </div>
+
+        <div class="block warning">
+          <div class="block-label">Numerical points</div>
+          <p>
+            The softmax pass should be chunked over queries to control memory. Very sharp
+            attention can make $\beta$ small for most positions; use token-count and trace
+            diagnostics so the effective sample size is visible. As with QPCA, compute
+            square roots and inverse square roots in fp64, then cast stored maps to fp32.
+          </p>
+        </div>
+
+        <div class="block remark">
+          <div class="block-label">Decode queries</div>
+          <p>
+            If decode-time query captures are available, build a second basis or blend
+            prefill and decode statistics. The softmax weights are only as relevant as the
+            query distribution used to compute them.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="§8 What to measure" data-page="8">
+      <div class="page-inner">
+        <div class="chapter-label">Section 8</div>
+        <h2>Expected tests and failure modes</h2>
+
+        <p class="lead">
+          Fisher-QPCA is an attention-aware surrogate. It should be judged by attention
+          metrics first, not by raw K MSE.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Softmax KL</td>
+              <td>Directly measures the local objective the basis was designed to reduce.</td>
+            </tr>
+            <tr>
+              <td>Top-1 / top-5 retention</td>
+              <td>Checks whether lower softmax distortion preserves attention competition.</td>
+            </tr>
+            <tr>
+              <td>Logit error</td>
+              <td>Verifies whether attention weighting trades away average logit MSE.</td>
+            </tr>
+            <tr>
+              <td>Downstream F1</td>
+              <td>Final arbiter before replacing JointQK in production sweeps.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="block warning">
+          <div class="block-label">Failure modes</div>
+          <p>
+            The diagonal Fisher surrogate can overweight ambiguous mid-probability keys and
+            underweight deterministic high-confidence winners. It can also become noisy if
+            computed from too few calibration prompts. If top-1 falls while KL improves,
+            the next variant should add margin-aware weights around the original argmax.
+          </p>
+        </div>
+
+        <div class="block theorem">
+          <div class="block-label">Practical conclusion</div>
+          <p>
+            The exact softmax objective is the right target but not the right closed-form
+            computation. The Fisher-QPCA surrogate is the conservative next step: it keeps
+            a single eigendecomposition per layer/head while using the attention distribution
+            to decide which query-key errors matter.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="page" data-title="References" data-page="9">
+      <div class="page-inner">
+        <div class="chapter-label">Closing</div>
+        <h2>References and closing notes</h2>
+
+        <p class="lead">
+          This companion should be read as a proposal for the next calibrated basis family,
+          not as a replacement for empirical validation.
+        </p>
+
+        <div class="block remark">
+          <div class="block-label">Relationship to QPCA</div>
+          <p>
+            Plain QPCA is recovered when every query-key pair receives equal weight. Fisher-QPCA
+            replaces equal all-pairs weighting with local softmax sensitivity. It is therefore
+            a minimal extension: same map convention, same source-coding tail, different
+            calibration moments.
+          </p>
+        </div>
+
+        <h3>References</h3>
+        <ol class="formula-list">
+          <li>Cover and Thomas, <em>Elements of Information Theory</em>, for Fisher geometry of categorical distributions.</li>
+          <li>Fan (1949), for the trace maximization theorem underlying the PCA reduction.</li>
+          <li>Linder, Zamir, and Zeger (1999), for transform coding and source-coding perspective.</li>
+          <li>The companion file <code>background/qpca_derivation_companion.html</code>, for the original all-pairs logit-MSE QPCA derivation.</li>
+        </ol>
+
+        <div class="block theorem">
+          <div class="block-label">Final summary</div>
+          <p>
+            Exact attention preservation is nonlinear and globally coupled. A useful closed-form
+            approximation comes from the second-order KL geometry of softmax:
+            compute attention-sensitive moments, eigendecompose
+            $M_F^{1/2}S_FM_F^{1/2}$, and evaluate the result on softmax KL, top-k
+            retention, and downstream F1.
+          </p>
+        </div>
+
+        <div class="ornament">***</div>
+        <p class="small" style="text-align: center; color: var(--ink-faint);">
+          End of companion.
+        </p>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<nav class="nav-bar" aria-label="Page navigation">
+  <button id="prev-btn" aria-label="Previous page">Previous</button>
+  <span class="page-info">Page <strong id="cur-num">1</strong> of <strong id="tot-num">9</strong></span>
+  <button id="next-btn" aria-label="Next page">Next</button>
+</nav>
+
+<script>
+  let current = 0;
+  const pages = Array.from(document.querySelectorAll('.page'));
+  const total = pages.length;
+  document.getElementById('tot-num').textContent = total;
+
+  const tocList = document.getElementById('toc-list');
+  pages.forEach((p, i) => {
+    const li = document.createElement('li');
+    li.textContent = p.dataset.title;
+    li.dataset.idx = i;
+    li.addEventListener('click', () => {
+      go(parseInt(li.dataset.idx, 10));
+      toggleToc(false);
+    });
+    tocList.appendChild(li);
+  });
+
+  const tocEl = document.querySelector('.toc');
+  const tocToggleBtn = document.querySelector('.toc-toggle');
+  function toggleToc(forceState) {
+    const open = forceState != null ? forceState : !tocEl.classList.contains('open');
+    tocEl.classList.toggle('open', open);
+  }
+  tocToggleBtn.addEventListener('click', () => toggleToc());
+
+  function applyClasses() {
+    pages.forEach((p, i) => {
+      p.classList.remove('active', 'prev', 'next');
+      if (i === current) p.classList.add('active');
+      else if (i < current) p.classList.add('prev');
+      else p.classList.add('next');
+    });
+    document.getElementById('cur-num').textContent = current + 1;
+    document.getElementById('prev-btn').disabled = (current === 0);
+    document.getElementById('next-btn').disabled = (current === total - 1);
+    const pct = total > 1 ? (current / (total - 1)) * 100 : 100;
+    document.querySelector('.progress-fill').style.width = pct + '%';
+    document.querySelectorAll('#toc-list li').forEach((li, i) => {
+      li.classList.toggle('current', i === current);
+    });
+    const activeEl = pages[current];
+    if (activeEl) activeEl.scrollTop = 0;
+    if (history && history.replaceState) {
+      history.replaceState(null, '', '#p' + current);
+    }
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= total) return;
+    current = idx;
+    applyClasses();
+  }
+
+  document.getElementById('prev-btn').addEventListener('click', () => go(current - 1));
+  document.getElementById('next-btn').addEventListener('click', () => go(current + 1));
+  document.getElementById('start-btn').addEventListener('click', () => go(1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowRight' || (e.key === ' ' && !e.shiftKey)) {
+      e.preventDefault();
+      go(current + 1);
+    } else if (e.key === 'ArrowLeft' || (e.key === ' ' && e.shiftKey)) {
+      e.preventDefault();
+      go(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      go(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      go(total - 1);
+    } else if (e.key === 'Escape') {
+      toggleToc(false);
+    }
+  });
+
+  let touchStartX = null;
+  let touchStartY = null;
+  let touchStartTime = 0;
+  document.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchStartX == null) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+    touchStartX = null;
+    touchStartY = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.4 || dt > 600) return;
+    if (dx < 0) go(current + 1);
+    else go(current - 1);
+  }, { passive: true });
+
+  if (window.location.hash) {
+    const m = window.location.hash.match(/p(\d+)/);
+    if (m) {
+      const idx = parseInt(m[1], 10);
+      if (idx >= 0 && idx < total) current = idx;
+    }
+  }
+  applyClasses();
+
+  function renderAllMath() {
+    if (typeof renderMathInElement === 'undefined') return;
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false },
+      ],
+      throwOnError: false,
+      strict: 'ignore',
+      trust: true,
+    });
+  }
+</script>
+
+</body>
+</html>
