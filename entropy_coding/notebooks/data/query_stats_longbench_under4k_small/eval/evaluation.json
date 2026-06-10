@@ -1,0 +1,61 @@
+{
+  "dataset": "longbench-e",
+  "per_config": {
+    "hotpotqa_e": {
+      "0-4k": 100.0,
+      "4-8k": NaN,
+      "8k+": NaN
+    },
+    "passage_retrieval_en_e": {
+      "0-4k": 100.0,
+      "4-8k": NaN,
+      "8k+": NaN
+    },
+    "qasper_e": {
+      "0-4k": 100.0,
+      "4-8k": NaN,
+      "8k+": NaN
+    }
+  },
+  "per_config_count": {
+    "hotpotqa_e": 1,
+    "passage_retrieval_en_e": 1,
+    "qasper_e": 1
+  },
+  "per_example": [
+    {
+      "answer": null,
+      "answers": [
+        "words embeddings, style, and morality features",
+        "words embeddings, style, and morality features"
+      ],
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "prediction": "words embeddings, style, and morality features",
+      "row_index": 40,
+      "task": "qasper"
+    },
+    {
+      "answer": null,
+      "answers": [
+        "Washington, D.C."
+      ],
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "prediction": "Washington, D.C.",
+      "row_index": 42,
+      "task": "hotpotqa"
+    },
+    {
+      "answer": null,
+      "answers": [
+        "Paragraph 10"
+      ],
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "prediction": "The answer is: Paragraph 10",
+      "row_index": 99,
+      "task": "passage_retrieval_en"
+    }
+  ]
+}

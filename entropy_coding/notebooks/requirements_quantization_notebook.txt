@@ -1,0 +1,30 @@
+# Minimal dependencies for notebooks/quantization_methods_comparison.ipynb.
+# Tested against a fresh uv-managed Python 3.12 venv on Linux + CUDA 12.8 driver.
+#
+# Usage:
+#   uv pip install -r notebooks/requirements_quantization_notebook.txt
+#
+# Why the extra index URL: PyPI's default torch wheels now ship +cu130 (CUDA 13),
+# which requires NVIDIA driver >= 580. Many clusters still run driver 570 / CUDA
+# 12.8, so we explicitly pull the cu128 wheels from PyTorch's index. If your
+# driver is >= 580, you can delete the --extra-index-url line and let pip pick
+# whatever it wants.
+
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+# Core scientific stack.
+torch==2.11.0+cu128
+numpy>=1.26,<3
+scipy>=1.11,<2
+einops>=0.8,<1
+
+# Dataset download from Hugging Face Hub.
+huggingface_hub>=0.24,<1
+tqdm>=4.65,<5
+
+# Plotting.
+matplotlib>=3.7,<4
+
+# Jupyter — ipykernel is the bare minimum; jupyter pulls in jupyter-lab/notebook.
+ipykernel>=6.29,<7
+jupyter>=1.1,<2

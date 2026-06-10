@@ -1,0 +1,88 @@
+{
+  "config": {
+    "configs": "qasper,hotpotqa,passage_retrieval_en",
+    "dataset": "longbench-e",
+    "device_map": "auto",
+    "dtype": "float16",
+    "max_new_tokens": null,
+    "max_tokens": 4000,
+    "min_tokens": 0,
+    "model": "Qwen/Qwen3-8B",
+    "num_examples_per_config": 1,
+    "output_dir": "artifacts/stage1/query_stats_longbench_under4k_smoke",
+    "seed": 42
+  },
+  "configs": [
+    "qasper",
+    "hotpotqa",
+    "passage_retrieval_en"
+  ],
+  "dataset": "longbench-e",
+  "examples": [
+    {
+      "captured_length": 3054,
+      "config": "qasper_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_000.pt",
+      "generated_text": "words embeddings, style, and morality features",
+      "max_new_tokens_used": 148,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "words embeddings, style, and morality features",
+          "words embeddings, style, and morality features"
+        ],
+        "length": 2091,
+        "max_new_tokens": 148,
+        "task": "qasper"
+      },
+      "n_generated": 9,
+      "prompt_length": 3046,
+      "row_index": 40,
+      "total_length": 3055
+    },
+    {
+      "captured_length": 3239,
+      "config": "hotpotqa_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_001.pt",
+      "generated_text": "Washington, D.C.",
+      "max_new_tokens_used": 52,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Washington, D.C."
+        ],
+        "length": 2133,
+        "max_new_tokens": 52,
+        "task": "hotpotqa"
+      },
+      "n_generated": 6,
+      "prompt_length": 3234,
+      "row_index": 42,
+      "total_length": 3240
+    },
+    {
+      "captured_length": 3856,
+      "config": "passage_retrieval_en_e",
+      "dataset": "longbench-e",
+      "file": "examples/ex_002.pt",
+      "generated_text": "The answer is: Paragraph 10",
+      "max_new_tokens_used": 52,
+      "metadata": {
+        "all_classes": null,
+        "answers": [
+          "Paragraph 10"
+        ],
+        "length": 2801,
+        "max_new_tokens": 52,
+        "task": "passage_retrieval_en"
+      },
+      "n_generated": 9,
+      "prompt_length": 3848,
+      "row_index": 99,
+      "total_length": 3857
+    }
+  ],
+  "num_examples": 3
+}

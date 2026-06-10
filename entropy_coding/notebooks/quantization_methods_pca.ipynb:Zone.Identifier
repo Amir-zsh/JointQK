@@ -1,0 +1,4 @@
+[ZoneTransfer]
+ZoneId=3
+ReferrerUrl=https://claude.ai/chat/5dbc1cae-6f59-4985-b13b-93b266b93576
+HostUrl=https://claude.ai/api/organizations/2cd2a73e-9690-4540-92a1-1cdcfde92861/conversations/5dbc1cae-6f59-4985-b13b-93b266b93576/wiggle/download-file?path=%2Fmnt%2Fuser-data%2Foutputs%2Fquantization_methods_comparison.ipynb
