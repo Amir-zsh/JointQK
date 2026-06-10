@@ -20,4 +20,12 @@ Self-contained slice of the paged KV-cache codec, fused down to three files.
 python test_codec_on_data.py \
     --calib-idx 0 1 2 --eval-idx 4 --bits 2 --ptok 16 --dz 0.375 --lanes 1
 ```
+--calib-idx: which sets of examples are used for calibration
+--eval-idx: which sets of examples are used for evaluation
+--bits: which number of bits we target. 
+--ptok: page size
+--dz: deadzone in the deadzone quantizer. This kills low-magnitude counts that wouldn't contribute much to the softmax. Small jump for bits=2 and bits=3, but not super significant.
+--lanes: number of rANS lanes used in entropy coding. Increasing makes it faster but reduces coding efficiency
+
+
 Default path = GPU encode (`BatchRANSEncoder`) + GPU decode (`BatchRANSDecoder`), needs CUDA.
