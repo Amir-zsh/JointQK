@@ -18,7 +18,7 @@ Self-contained slice of the paged KV-cache codec, fused down to three files.
 ## Run
 ```
 python test_codec_on_data.py \
-    --calib-idx 0 1 2 --eval-idx 4 --bits 2 --ptok 16 --dz 0.375 --lanes 1
+    --calib-idx 0 1 2 --eval-idx 4 --bits 3 --ptok 16 --dz 0.375 --lanes 1
 ```
 --calib-idx: which sets of examples are used for calibration
 --eval-idx: which sets of examples are used for evaluation
