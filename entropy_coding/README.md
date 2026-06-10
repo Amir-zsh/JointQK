@@ -11,7 +11,7 @@ Self-contained slice of the paged KV-cache codec, fused down to three files.
 - `run_pca_ec_deadzone.py` — calibration moments, QPCA/JointQK/TurboQuant bases, QPCA-EC delta + frozen coder model, scoring helpers.
 - `test_codec_on_data.py` — the harness.
 
-## Drop in before running (not included — your files / repo / data)
+## Ensure they are present before running (not included — your files / repo / data)
 - repo: `_bootstrap`, `kvq.compression.{lloyd_max,per_coord}`, `pipelines.calibration.analyze_bases`.
 - the dataset at the path `run_pca_ec_deadzone.data_root()` resolves.
 
