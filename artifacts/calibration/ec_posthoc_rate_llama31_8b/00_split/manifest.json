@@ -1,0 +1,213 @@
+{
+ "config": {
+  "dataset": "longbench",
+  "max_tokens": 32000,
+  "min_tokens": 2000,
+  "model": "Qwen/Qwen3-8B",
+  "samples_per_task": 60,
+  "seed": 20260504,
+  "tasks": [
+   "lcc",
+   "musique",
+   "2wikimqa"
+  ],
+  "test_per_task": 10,
+  "train_per_task": 50,
+  "purpose": "ec_posthoc_rate"
+ },
+ "num_rows": 12,
+ "num_test_rows": 12,
+ "num_train_rows": 0,
+ "purpose": "EC post-hoc held-out rate measurement on bench tasks (eval-side rows)",
+ "rows": [
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Clatskanie",
+     "Clatskanie, Oregon"
+    ],
+    "length": 11417,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16596,
+   "prompt_sha256": "7a9811847f06bcd1f9cc1120e62a38c3968c7f73e9917cc52aad18e2972d416e",
+   "row_index": 79,
+   "split": "test",
+   "split_index": 0,
+   "task": "musique",
+   "messages_sha256": "019775dee8fbba0e3dd60514ea9cc7452caca31f604b3862453db1e6985c1c53"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Benny Beaver"
+    ],
+    "length": 11698,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16921,
+   "prompt_sha256": "5ac1955b151fdf8b698590b65be2b7d1c46a6749869910826f981db4ca9acf0d",
+   "row_index": 101,
+   "split": "test",
+   "split_index": 1,
+   "task": "musique",
+   "messages_sha256": "09c344d784a459ff24f7ed0b5531f00bb81e722a0c5dffcf614cc8f93e1ec7e1"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Amy Poehler"
+    ],
+    "length": 11392,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 15861,
+   "prompt_sha256": "7a1b4c6d2250c402bdf2356f9481ddb77414c0dac5ed092162ae974d2f15720d",
+   "row_index": 90,
+   "split": "test",
+   "split_index": 2,
+   "task": "musique",
+   "messages_sha256": "eea9d925b9e84b1cdb76e23285ccf2a26975f3749e1b82d4bc53bad5e21822d1"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Yaroslavl Oblast"
+    ],
+    "length": 10431,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16390,
+   "prompt_sha256": "162243fc0676376fddaae16f7fa8ecf6bbaaa39832ec8626a783861d8856202d",
+   "row_index": 195,
+   "split": "test",
+   "split_index": 3,
+   "task": "musique",
+   "messages_sha256": "549e8ebc340c7eaa0d633abaf808fb31d2a19d3d62141441fe1aa92b9db9127a"
+  },
+  {
+   "config": "lcc",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "        var = (float(var), float(var))"
+    ],
+    "length": 3675,
+    "max_new_tokens": 84,
+    "task": "lcc"
+   },
+   "prompt_length": 7890,
+   "prompt_sha256": "63f417cdbe22622289fa78c1f901d2d7a1552761bbb67ec2e2057e839e2ac235",
+   "row_index": 490,
+   "split": "test",
+   "split_index": 1,
+   "task": "lcc"
+  },
+  {
+   "config": "lcc",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "    field_names = ['name', 'summary', 'branch', 'releasefileglob']"
+    ],
+    "length": 4413,
+    "max_new_tokens": 84,
+    "task": "lcc"
+   },
+   "prompt_length": 11139,
+   "prompt_sha256": "51fae54aee77ca13d5319473f8f6288441580f11c8fd523f88e45ee855519cbd",
+   "row_index": 95,
+   "split": "test",
+   "split_index": 2,
+   "task": "lcc"
+  },
+  {
+   "config": "lcc",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "                    interact(self._plot_line, x_name=widget_x, y_name=widget_y)"
+    ],
+    "length": 1433,
+    "max_new_tokens": 84,
+    "task": "lcc"
+   },
+   "prompt_length": 4407,
+   "prompt_sha256": "ff40be5b64038532f9e3649d0262d62a345b84e4b84d79d94471828cc5d94953",
+   "row_index": 43,
+   "split": "test",
+   "split_index": 7,
+   "task": "lcc"
+  },
+  {
+   "config": "lcc",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "                        Mobile m = mobiles[i];"
+    ],
+    "length": 864,
+    "max_new_tokens": 84,
+    "task": "lcc"
+   },
+   "prompt_length": 2105,
+   "prompt_sha256": "90e047a79a8ed5d1501757409562d105a44eaf182bf7123b78a9c8e05a59c411",
+   "row_index": 438,
+   "split": "test",
+   "split_index": 0,
+   "task": "lcc"
+  },
+  {
+   "dataset": "longbench",
+   "config": "2wikimqa",
+   "task": "2wikimqa",
+   "split": "test",
+   "row_index": 0,
+   "prompt_length": 8000
+  },
+  {
+   "dataset": "longbench",
+   "config": "2wikimqa",
+   "task": "2wikimqa",
+   "split": "test",
+   "row_index": 1,
+   "prompt_length": 8000
+  },
+  {
+   "dataset": "longbench",
+   "config": "2wikimqa",
+   "task": "2wikimqa",
+   "split": "test",
+   "row_index": 2,
+   "prompt_length": 8000
+  },
+  {
+   "dataset": "longbench",
+   "config": "2wikimqa",
+   "task": "2wikimqa",
+   "split": "test",
+   "row_index": 3,
+   "prompt_length": 8000
+  }
+ ]
+}

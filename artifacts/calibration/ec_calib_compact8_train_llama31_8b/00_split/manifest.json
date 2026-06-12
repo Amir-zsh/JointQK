@@ -1,0 +1,595 @@
+{
+ "config": {
+  "dataset": "longbench",
+  "max_tokens": 32000,
+  "min_tokens": 2000,
+  "model": "Qwen/Qwen3-8B",
+  "samples_per_task": 60,
+  "seed": 20260504,
+  "tasks": [
+   "qasper",
+   "hotpotqa",
+   "musique",
+   "qmsum",
+   "multi_news",
+   "triviaqa",
+   "passage_retrieval_en",
+   "repobench-p"
+  ],
+  "test_per_task": 10,
+  "train_per_task": 50,
+  "purpose": "ec_calibration_train_capture"
+ },
+ "num_rows": 26,
+ "num_train_rows": 26,
+ "num_test_rows": 0,
+ "purpose": "EC coder-model calibration: compact8 TRAIN rows only (no eval leakage)",
+ "source_manifest": "artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/manifest.json",
+ "rows": [
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 28"
+    ],
+    "length": 10118,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 13884,
+   "prompt_sha256": "2623b5c332d2a2c2ddd9af456aacc65ee72b16ae984e76f575de5ac65680f8e1",
+   "row_index": 36,
+   "split": "train",
+   "split_index": 1,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "29f771d6fd162a98625c76f834e1c34087bb2ca94fdb2eb8ba34350b5f13c5b5"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 7"
+    ],
+    "length": 8642,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 11954,
+   "prompt_sha256": "97963c203bf6249ec4275c340f6171ead28da61fc53fe35220dd762366417795",
+   "row_index": 80,
+   "split": "train",
+   "split_index": 0,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "96afec5fcb34c53ace37c4b941b1439f301eb7fa3231bad09e0a3d3f7459fbf7"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Green Bay"
+    ],
+    "length": 6593,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 11655,
+   "prompt_sha256": "35c5dd45f7a4d03fe5543a346bd5b98c262c5c6f68bfd715adaa3880294e6780",
+   "row_index": 60,
+   "split": "train",
+   "split_index": 2,
+   "task": "musique",
+   "messages_sha256": "96a016cb87b85ccebf403d9013fffcbcf207ee96c63d51a6de976fd0019a59a8"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Bill Miner"
+    ],
+    "length": 7675,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 11569,
+   "prompt_sha256": "290e2142af6e0f05da966b73562c693acb2e8e46e6de1d44102dafeb3bde01ac",
+   "row_index": 162,
+   "split": "train",
+   "split_index": 5,
+   "task": "hotpotqa",
+   "messages_sha256": "a09edac0b84a46194649a9d694c93a1e2f707c4940ff43b9bb788e0a6fbf222a"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "PhD B focused on Italian and experimented with the number of states for different words. PhD B thought training for each case may improve performance by accounting for the difference in variance."
+    ],
+    "length": 8191,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 11272,
+   "prompt_sha256": "bd965b4f6add870c1b4f12bcd6a82361477c9d212c1d985d0f547938bd13245b",
+   "row_index": 154,
+   "split": "train",
+   "split_index": 1,
+   "task": "qmsum",
+   "messages_sha256": "3441ee04c9c876f976bddf34c9d14be17d4be58f4519e51d4ff8682990bc7c69"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 3"
+    ],
+    "length": 7534,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 10395,
+   "prompt_sha256": "6f693d82fa17cfbd0211fd76025a4347870198799d7942344a91e62e459a7a96",
+   "row_index": 29,
+   "split": "train",
+   "split_index": 7,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "e7c7381b89907fcdf125a93a29f60ca2c56a5acaec238f2334a3f445202351e1"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "                        fields={k[0]:k[1] for k in config.items() if k[0] in GLOBAL_CONFIG_KEY and k[1] is not None or ''},"
+    ],
+    "length": 2799,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 8665,
+   "prompt_sha256": "4f35cd3110680f64960393ffe94450709d88ec0d739f9349183d27d6d640426b",
+   "row_index": 230,
+   "split": "train",
+   "split_index": 3,
+   "task": "repobench-p",
+   "messages_sha256": "1b05b1cbb9c9eaa4349873779381172cdfbc3501c1230707d53e213544aeefe4"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Katheryn Perry",
+     "Kathryn Elizabeth Hudson",
+     "Katy Perry",
+     "Katheryn Elizabeth Hudson",
+     "Katy Perrie",
+     "KatyCat",
+     "Katy Hudson Perry",
+     "Katy Cats",
+     "Katty Perry",
+     "Hudson (singer)",
+     "David D. Hudson",
+     "Katy Cat",
+     "Katheryn Hudson",
+     "(A) Katy Perry",
+     "Katy pery",
+     "Katheryn E. Hudson",
+     "David Hudson (singer)",
+     "Katy perry",
+     "KatyCats",
+     "Kate Perry",
+     "David Daniel Hudson",
+     "Katy Hudson"
+    ],
+    "length": 5611,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 8617,
+   "prompt_sha256": "1ae9342039c7968fa3039407be52cfbbfe5581266cb738855191fde4f86b411d",
+   "row_index": 182,
+   "split": "train",
+   "split_index": 1,
+   "task": "triviaqa",
+   "messages_sha256": "6b1feb6b9a76653f39a32d531c8d8162f2814a34b9cc5bab7d83a1e7691cce92"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Various tree structured neural networks including variants of Tree-LSTM, Tree-based CNN, RNTN, and non-tree models including variants of LSTMs, CNNs, residual, and self-attention based networks",
+     "Sentence classification baselines: RNTN (Socher et al. 2013), AdaMC-RNTN (Dong et al. 2014), TE-RNTN (Qian et al. 2015), TBCNN (Mou et al. 2015), Tree-LSTM (Tai, Socher, and Manning 2015), AdaHT-LSTM-CM (Liu, Qiu, and Huang 2017), DC-TreeLSTM (Liu, Qiu, and Huang 2017), TE-LSTM (Huang, Qian, and Zhu 2017), BiConTree (Teng and Zhang 2017), Gumbel Tree-LSTM (Choi, Yoo, and Lee 2018), TreeNet (Cheng et al. 2018), CNN (Kim 2014), AdaSent (Zhao, Lu, and Poupart 2015), LSTM-CNN (Zhou et al. 2016), byte-mLSTM (Radford, Jozefowicz, and Sutskever 2017), BCN + Char + CoVe (McCann et al. 2017), BCN + Char + ELMo (Peters et al. 2018). \nStanford Natural Language Inference baselines: Latent Syntax Tree-LSTM (Yogatama et al. 2017), Tree-based CNN (Mou et al. 2016), Gumbel Tree-LSTM (Choi, Yoo, and Lee 2018), NSE (Munkhdalai and Yu 2017), Reinforced Self- Attention Network (Shen et al. 2018), Residual stacked encoders: (Nie and Bansal 2017), BiLSTM with generalized pooling (Chen, Ling, and Zhu 2018)."
+    ],
+    "length": 4781,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 8286,
+   "prompt_sha256": "98a9872e20067a31edebd8fba1694f8f60c74122d4a8593d9c72b39ed3f56cf9",
+   "row_index": 127,
+   "split": "train",
+   "split_index": 1,
+   "task": "qasper",
+   "messages_sha256": "fe33321035ef9707a0d91746c3858ea4131f1395f343b252f928c1803922b65e"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Kill Rock Stars"
+    ],
+    "length": 4238,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 8207,
+   "prompt_sha256": "d6349cb493c5099901f4aa2baf844752dcc39cf6b0cd685838395445a1489dc4",
+   "row_index": 191,
+   "split": "train",
+   "split_index": 26,
+   "task": "musique",
+   "messages_sha256": "285d934184a90e3b43c375a3832f125e9e171a8b4fcc405947ca1a9ab88b3dd1"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Attic Records",
+     "Attic"
+    ],
+    "length": 4109,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 7808,
+   "prompt_sha256": "52e613b46ffad951945b5b098946572d82001b79867349df0858eabf5ed7be3e",
+   "row_index": 135,
+   "split": "train",
+   "split_index": 29,
+   "task": "musique",
+   "messages_sha256": "7a27f38461ed5b42c4afdc83153632741da6c497c88a479f3706e27b3c6fd5cc"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Hartford.",
+     "Hartford CT",
+     "Hartford, Connecticut",
+     "City of Hartford, Connecticut",
+     "Hartford (Connecticut)",
+     "Hartford Connecticut",
+     "Hartford, Conn.",
+     "Hartford, Ct.",
+     "Hartford ct",
+     "Hartford, USA",
+     "Hartford, cn",
+     "Hartford",
+     "Hartford,CT",
+     "Hartford, CT",
+     "Capital of Connecticut",
+     "Hartford, ct",
+     "Hartford, Hartford County, Connecticut",
+     "Hartford, Ct",
+     "Hartford (CT)"
+    ],
+    "length": 5423,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 7705,
+   "prompt_sha256": "cbb5f01c27289ea461fa523ba8bcb8fb38174e4d89177628a10d82911be1ac91",
+   "row_index": 144,
+   "split": "train",
+   "split_index": 0,
+   "task": "triviaqa",
+   "messages_sha256": "8aa90e5276ea34b291703453b0841921bd8056d61357f3042635f4ceb647a898"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "A brief, planned ceasefire failed to materialize in Gaza today, as death continued to rain down on the strip. Israel had offered to hold its offensive to accommodate a visit from Egyptian Prime Minister Hesham Kandil, provided Hamas held its fire as well. But Hamas said it would keep firing, and one Israeli defense minister complained that 50 rockets had flown in from Gaza during Kandil's visit, CNN reports. A Hamas-run TV station reported that Israel had kept firing as well, but Israel says it took a break for at least two hours. In Palestine the death toll has risen to 21, including 13 civilians, Reuters reports. Among those civilians were seven children and a pregnant teenager. Israel's death toll held steady at 3, despite the hundreds of rockets fired into Israel. But Hamas did up the ante by firing rockets near Tel Aviv for the first time. Air-raid sirens sounded (the last time they did so was during the Gulf War) and civilians ran for cover, though the missiles exploded harmlessly, with one going into the sea. \"There will be a price for that escalation,\" Ehud Barak vowed, according to the New York Times. Israel has now hit 250 Gaza targets, while taking further steps toward a ground invasion, calling up 16,000 reservists, the Wall Street Journal reports. It's also steadily sending troops and armored vehicles to the border, notes CNN\u2014between 1,500 and 2,000 are already there, one official said. Israel claims the attacks have weakened Hamas' military capabilities and caused its attacks to lighten, but Hamas denied that, saying it had hit multiple Israeli targets today. Kandil emerged from his meeting with Hamas expressing solidarity, saying the new Egyptian regime would be more active in helping the Palestinians. \"The time has changed,\" he said. \"No longer the Israeli occupation will be able to carry out their attacks against the Palestinians without being held responsible. That time is far bygone.\" For its part, the Obama administration says it's seeking help from Arab countries in calling on Hamas to relent. \"The onus rests squarely on Hamas ... to stop its rocket attacks,\" says a State Department spokesman. UN Secretary-General Ban Ki-Moon is planning diplomatic visits to Jerusalem, Ramallah, and Cairo within days."
+    ],
+    "length": 5422,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 6935,
+   "prompt_sha256": "16d5ff709e659763305e90cb45248cc16d977d700a6499f54312a4441aa61609",
+   "row_index": 152,
+   "split": "train",
+   "split_index": 9,
+   "task": "multi_news",
+   "messages_sha256": "90fbe7b2fe9543c716c4364b6911f3d6042eec9ed5062b856b9f907acbc9621d"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "BBC Formula One"
+    ],
+    "length": 4556,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 6775,
+   "prompt_sha256": "9d4f86fc69c81dba133e77a157eaf547b0f5c8bee95d4ee194df8a1c57e178da",
+   "row_index": 136,
+   "split": "train",
+   "split_index": 16,
+   "task": "hotpotqa",
+   "messages_sha256": "4ea8d6ffe90357d307d130f1f217527f1dab3f4a50b9140401a1d6560ffe0e13"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "The color of the prototype was yellow and the material was half rubber and half plastic with a company logo. Moreover, it could be curved inside to cover the buttons which were big and blue except the power button. Besides, both the button and joystick could switch the device off and the joystick was especially designed to control the channel and volume to make the device more fashionable. The team agreed that it was overall a good design."
+    ],
+    "length": 4809,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 6633,
+   "prompt_sha256": "2f8de0aab8ad168599df13e8bca98caff06525e42dbd292f2b06363b66714870",
+   "row_index": 5,
+   "split": "train",
+   "split_index": 2,
+   "task": "qmsum",
+   "messages_sha256": "e50ba548355c1a5167a5a6565e7df617bb0c2957556534020bd9020a55e65526"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Marketing wrote down a few evaluation criteria, based on previous marketing strategy, on the latest trends, and on user preferences. There was a seven-point scale rating for each criterion. The team would give comments to each feature listed and agree on the final rating."
+    ],
+    "length": 4805,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 6629,
+   "prompt_sha256": "937badad06fb69d4a4b0bd6bc40c79b2adce17b86a636e5b6991255027df71d6",
+   "row_index": 177,
+   "split": "train",
+   "split_index": 7,
+   "task": "qmsum",
+   "messages_sha256": "d557d31b6d82258c2813faee4498635dd8112830842e8738f343d73c7b248c44"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "        self.assertEqual(hindi_placeholder_name(), replace_blank_name(name=None, language=\"Hindi\"))"
+    ],
+    "length": 1784,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 6604,
+   "prompt_sha256": "8220101a2bb6f4101ddc30e5b74f3a74c0e08f29fc20cb02cc77e31c31306b65",
+   "row_index": 448,
+   "split": "train",
+   "split_index": 4,
+   "task": "repobench-p",
+   "messages_sha256": "7acad676d1f0efdc637012a971a37db863b522d47f10bec29bfba5c5774285b7"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Drunter und Dr\u00fcber is a multiplayer board game invented by Klaus Teuber"
+    ],
+    "length": 4374,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 6342,
+   "prompt_sha256": "198e30f0d9fc07c800057fa88392a54e65f3f458d1e03c343c3ac38e63b0aa58",
+   "row_index": 154,
+   "split": "train",
+   "split_index": 0,
+   "task": "hotpotqa",
+   "messages_sha256": "d27579341f395a4695cda5f33ab1a5b7cccc7cf8ac74ab9ef46d8bb763146fea"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "  encoder = GPSL1L2BitEncoder(NormalRateConfig)"
+    ],
+    "length": 2343,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 6043,
+   "prompt_sha256": "d7a2e69a0ccb2791ce64ba994a9dccdbe6d24a99295812992f76ef62823535f2",
+   "row_index": 136,
+   "split": "train",
+   "split_index": 2,
+   "task": "repobench-p",
+   "messages_sha256": "28c659a71773b94e4fa973b5c29d47176fdfbae46092186d69da776eafddb4f5"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "57,505 sentences",
+     "57,505 sentences"
+    ],
+    "length": 4371,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 5916,
+   "prompt_sha256": "11fffb043311ff70da127646477538162edb45a53fba713eb0d280395d2fec5d",
+   "row_index": 32,
+   "split": "train",
+   "split_index": 2,
+   "task": "qasper",
+   "messages_sha256": "941dcb2af09690afb332794dc45a13f647d0530baf92d273ad56d30de374a450"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "    def last_record(self, fill=False):"
+    ],
+    "length": 2266,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 5563,
+   "prompt_sha256": "3eeeb4a58c1f37483bfc1c4c25b9befd7edb85f9fde90a7a7b637849b9f9cf95",
+   "row_index": 484,
+   "split": "train",
+   "split_index": 5,
+   "task": "repobench-p",
+   "messages_sha256": "615d2ed7575d03003274d7e25f4460511c94e5507467cbf9e6fc9d013cb01cac"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Dinosaurs may have been much more like modern birds than we knew\u2014and not just because some had feathers. A new study suggests that mighty dinosaurs of yore didn't roar, contrary to every dinosaur movie you've ever seen. Instead, they made a decidedly less scary sound called a \"closed-mouth vocalization.\" Think of a dove cooing or perhaps an ostrich doing this grunting thing. As the scientists explain in the journal Evolution, per UT News, the sound actually comes out of the neck area after air is pushed through an esophageal pouch. In fact, the animal's mouth is shut the whole time. Lots of birds do this today, and because birds descended from dinosaurs, scientists suspect they may have communicated in a similar way. The fossil record can't prove it, though the Washington Post notes that previous research meshes with the idea, including the belief that dinosaurs had air sacs instead of vocal chords. \u201cA cool thing about this work is the demonstration that closed-mouth behavior evolved many times,\u201d says the lead author. \u201cThat suggests it can emerge fairly easily and be incorporated into mating displays\" among different types of animals. A co-author says the study gives the impression of \"a very different Jurassic world. Not only were dinosaurs feathered, but they may have had bulging necks and made booming, closed-mouth sounds.\" But if so, the makers of Jurassic Park didn't get it all wrong: The hiss of the film's velociraptors came from a goose, per Vulture. (Scientists have grown chickens with dinosaur legs.)"
+    ],
+    "length": 3836,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 5047,
+   "prompt_sha256": "cebb54f94cda8c06ea6b0d8185d484fba78f5fb347a1864bcffb35e5c370204e",
+   "row_index": 163,
+   "split": "train",
+   "split_index": 2,
+   "task": "multi_news",
+   "messages_sha256": "f4664e422a41ad3327fad86d9919c43396668c5af7890f548a381745c4200adc"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Forget satellite images and aerial searches\u2014the best way to find Malaysia Airlines Flight MH370 may be with mathematical techniques dating back to the 18th century, the BBC reports. That's how Air France flight 447 was found in 2009, using \"Bayesian statistics\" to measure the probability of the plane being in one place or another. Named after Presbyterian minister and mathematician Thomas Bayes, the technique allowed experts to apply several factors to each point on a map: For example, what was the chance it crashed from mechanical failure? How far do planes tend to crash from their last known location? What was the chance that search teams missed debris in various locations? It's like picking a restaurant by balancing how full it is, what your favorite restaurant-review website says, and so on\u2014except that experts hunting for Airbus A330 did that for each point where plane may have crashed in the Atlantic, Five Thirty-Eight notes. It was so hard that the US team of statisticians invited by France gave up, until they de-emphasized one statistic: that a plane's black box emits a signal after a crash 90% of the time. They changed their findings, and presto, the plane was found. Bayesian techniques have helped people find World War II U-boats, men overboard, and sunken treasure, but there's no evidence that Malaysia is employing them now. \"I suspect that they just guess, like professional baseball managers used to do before Moneyball,\" says a biostatistician."
+    ],
+    "length": 3727,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 4640,
+   "prompt_sha256": "f85d3530ab6c52703c65f907d4a3e6ded45a56217640148ddf669a2c9c89618a",
+   "row_index": 180,
+   "split": "train",
+   "split_index": 4,
+   "task": "multi_news",
+   "messages_sha256": "8b156ad4ed790d48d89d12b96787ca112fd2c0f2c7993de6448b6e57b9c09e5c"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Jake La Motta",
+     "Jake LaMotta",
+     "Jake Lamotta"
+    ],
+    "length": 2641,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 4482,
+   "prompt_sha256": "c00a61177775288e92cdd606b2e48993fc28668beb742ba9c2d70e6f6c6bd6f5",
+   "row_index": 84,
+   "split": "train",
+   "split_index": 12,
+   "task": "triviaqa",
+   "messages_sha256": "5e92c36f6b42668aebd0fbb9cd25d20f9e7c8d3180f80b34e962e80eb005b9ce"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Precision, Recall, F-measure, accuracy",
+     "Precision, Recall and F-measure"
+    ],
+    "length": 3044,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 4350,
+   "prompt_sha256": "a2078812cc615f43809095c1f4a15e3cabea7917568a4131c2b6f5fe8db8bb5d",
+   "row_index": 43,
+   "split": "train",
+   "split_index": 0,
+   "task": "qasper",
+   "messages_sha256": "1f2fa732a792f26ab0fd70dc3dd72a86c37749852c52f6c59076a9f9e20ae9d1"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "all_platform_slugs.extend(WEBLATE_SLUGS)"
+    ],
+    "length": 1258,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 4084,
+   "prompt_sha256": "35032f1a3b5c0a1b5d156dd2fcf2f209797c24dfc9ee45db0c97ff03526b53ac",
+   "row_index": 220,
+   "split": "train",
+   "split_index": 0,
+   "task": "repobench-p",
+   "messages_sha256": "999b17744dabd1103cf5adbc7b903973ee5234ba3f26ea4f0da6405c5d3d3adb"
+  }
+ ]
+}

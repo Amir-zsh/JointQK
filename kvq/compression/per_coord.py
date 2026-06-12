@@ -291,6 +291,10 @@ def build_jointqk_compressor(
     """
     is_qpca = method.startswith("qpca_")
     is_rsym = method.startswith("r_sym_")
+    if method.startswith("ec_"):
+        raise ValueError(
+            f"'{method}' compressors are precomputed offline by pipelines/ec/fit_ec_bundle.py "
+            "and loaded via JointQKPress.ec_bundle_path — they cannot be built from per-head moments here.")
     if not (is_qpca or is_rsym):
         raise ValueError(f"build_jointqk_compressor supports r_sym_* and qpca_* methods, got '{method}'")
     total_bits = b_avg * head_dim

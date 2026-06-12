@@ -5,6 +5,7 @@ vendor/turboquant_pytorch
 vendor/kivi/
 *.pdf
 *.pyc
+__pycache__/
 *.pt
 *.pt.pre_f11
 *.pt.pre_newbases
@@ -27,6 +28,12 @@ paper/
 *.pre_v_turboquant_*
 texput.log
 *.partial.json
+
+# Pre-refactor (main-branch layout) artifacts kept locally for reference:
+# old studies + the Llama v7 bench grid under artifacts/stage1/downstream_v7/.
+# The payloads this branch needs were migrated to artifacts/{calibration,bases,v_bases}.
+artifacts/stage1/
+scratch/
 
 # Stage 1 final calibration: large raw + stats artifacts (~500 GB raw, ~38 GB stats)
 artifacts/calibration/*/01_raw/

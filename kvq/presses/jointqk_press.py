@@ -19,6 +19,7 @@ import torch
 from kvpress.presses.base_press import BasePress
 from kvpress.utils import extract_keys_and_values
 
+from kvq.compression.ec_roundtrip import load_ec_compressors_from_bundle
 from kvq.compression.per_coord import (
     PerCoordCompressor,
     batched_roundtrip,
@@ -34,6 +35,10 @@ class JointQKPress(BasePress):
     v_stats_path: str = ""
     v_method: str = "v_eigen_waterfill"
     k_method: str = "r_sym_waterfill"
+    # For k_method "ec_*" (entropy-coded K): path to a fit_ec_bundle.py bundle.
+    # Per-(layer, head) compressors are precomputed offline (deadzone delta +
+    # frozen coder model fit on calibration rows); the press only loads them.
+    ec_bundle_path: str = ""
     k_bits: int = 4
     v_bits: int = 2
     rank: int = 64
@@ -78,7 +83,7 @@ class JointQKPress(BasePress):
                  "qk" if self.quantize_k else "_",
                  "qv" if self.quantize_v else "_",
                  "l0fp" if self.layer0_full_precision else "_"]
-        for p in (self.cca_stats_path, self.v_stats_path):
+        for p in (self.cca_stats_path, self.v_stats_path, self.ec_bundle_path):
             if p and Path(p).exists():
                 parts.append(str(Path(p).resolve()))
                 parts.append(str(int(Path(p).stat().st_mtime)))
@@ -142,7 +147,19 @@ class JointQKPress(BasePress):
         if self._try_load_cache():
             return
 
-        if self.quantize_k:
+        if self.quantize_k and self.k_method.startswith("ec_"):
+            if not self.ec_bundle_path:
+                raise ValueError(f"k_method={self.k_method!r} requires ec_bundle_path")
+            self._k_compressors, ec_meta = load_ec_compressors_from_bundle(self.ec_bundle_path)
+            if f"ec_{ec_meta['basis']}" != self.k_method:
+                raise ValueError(
+                    f"k_method={self.k_method!r} but bundle {self.ec_bundle_path} "
+                    f"was fit with basis={ec_meta['basis']!r}")
+            if not self.layer0_full_precision:
+                raise ValueError("ec_* bundles are fit under layer0_full_precision=True")
+            self._n_layers = int(ec_meta["n_layers"])
+            self._n_kv_heads = int(ec_meta["n_kv_heads"])
+        elif self.quantize_k:
             if not self.cca_stats_path:
                 raise ValueError("quantize_k=True requires cca_stats_path")
             cca = torch.load(self.cca_stats_path, map_location="cpu", weights_only=False)
