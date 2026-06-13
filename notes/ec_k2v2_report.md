@@ -25,6 +25,9 @@ JointQK basis (`ec_r_sym`):
 | jointqk_k2_v2 | 37.23 | 27.08 | 49.25 | 37.85 | 2.0 grid |
 | kivi_int2 | 44.31 | 19.58 | 37.39 | 33.76 | 2.0 grid |
 | ec_hadamard_dz0.25 | **51.61** | 28.82 | 45.70 | 42.04 | 1.949 |
+| ec_qpca_dz0.25 | 45.00 | 28.31 | 47.43 | 40.25 | 1.958 |
+| ec_qpca_dz0.375 | 46.70 | 30.46 | 44.62 | 40.59 | 1.958 |
+| ec_qpca_dz0.5 | 46.41 | 29.36 | 48.11 | 41.29 | 1.958 |
 | ec_r_sym_dz0.25 | 50.28 | 31.37 | 49.43 | 43.69 | 1.947 |
 | **ec_r_sym_dz0.375** | 51.10 | 31.29 | **51.03** | **44.47** | 1.947 |
 | **ec_r_sym_dz0.5** | 50.86 | **31.75** | 49.32 | 43.98 | 1.948 |
@@ -122,6 +125,7 @@ bits buy a finer step elsewhere, making dz a pure RD knob at fixed rate.
 |---|---|---|---|---|---|
 | jq_k2 (plain) | **0.5596** | 0.9836 | 2.60e-1 | 2.07e-3 | 2.000 |
 | ec_r_sym_dz0.375 | 0.5158 | **0.9924** | 2.37e-1 | **1.60e-3** | 1.947 |
+| ec_qpca_dz0.375 | 0.4906 | 0.9845 | 4.28e-1 | 2.24e-3 | 1.958 |
 | ec_hadamard_dz0.25 | 0.4608 | 0.9644 | 3.10e-1 | 5.53e-3 | 1.949 |
 | tq_k2 | 0.4031 | 0.9212 | 5.57e-1 | 2.33e-2 | 2.125 |
 
@@ -140,6 +144,9 @@ measurement only, no feedback into fitting):
 | ec_r_sym_dz0.375 | 1.995 | 1.990 | 1.937 |
 | ec_r_sym_dz0.25 | 1.998 | 1.991 | 1.936 |
 | ec_hadamard_dz0.25 | 1.974 | 2.021 | 1.942 |
+| ec_qpca_dz0.5 | 1.989 | 2.037 | 1.948 |
+| ec_qpca_dz0.375 | 1.991 | 2.041 | 1.948 |
+| ec_qpca_dz0.25 | 1.993 | 2.045 | 1.948 |
 
 All r_sym rates ≤ 2.0 even on fully-OOD lcc (the snap-escape penalty shows up but stays
 small: +0.04 b/c over the in-domain selection rate). TurboQuant's comparison rate is
@@ -330,6 +337,39 @@ done; wait
 Wall-clock on GPUs 0–3: captures ~5 min, 9 fits ~2.5 h (constriction rate stage
 dominates), scoring ~6 min, bench 12 cells ~2 h (lcc's 500 rows is the long pole),
 post-hoc rates ~1.5 h CPU. End-to-end ≈ 6 h including the qpca-crash and OOM retries.
+
+## QPCA-EC control: the quantizer was most of the problem, but the basis still matters
+
+The closed-form Q-weighted-MSE-optimal basis (QPCA), run through the *identical*
+EC pipeline (same fit rows, same match-rate 1.95, same frozen-model protocol, all
+gates passed incl. G1 on its non-orthogonal inverse), loses to both TurboQuant and
+r_sym-EC downstream:
+
+| | lcc | musique | 2wikimqa | mean |
+|---|---|---|---|---|
+| ec_qpca (best per task across dz) | 46.70 | 30.46 | 48.11 | 41.29 (best mean, dz0.5) |
+| ec_r_sym_dz0.375 | 51.10 | 31.29 | 51.03 | 44.47 |
+| turboquant_k2_v2 | 48.37 | 31.55 | 44.64 | 41.52 |
+
+This cleanly decomposes the original lcc failure at K=2 (all with identical V):
+
+| K-side configuration | lcc |
+|---|---|
+| R_sym basis + integer Lloyd-Max codebooks (`jointqk_k2_v2`) | 37.23 |
+| QPCA basis + EC deadzone quantizer | 45.0–46.7 |
+| R_sym basis + EC deadzone quantizer | 50.3–51.1 |
+
+Switching the quantizer (codebooks → deadzone-EC, R_sym fixed) is worth **+13.7 pp**;
+switching the basis (QPCA → R_sym, EC fixed) is worth another **+4.4 pp**. So the
+2026-05 disconnect was *mostly* the K=2 integer-codebook allocation, but the basis
+choice is not neutral: the argmax-aware R_sym beats the MSE-optimal QPCA under the
+better quantizer too. Notably, QPCA's one on-paper advantage — minimal logit MSE —
+does not even survive the EC pipeline (Phase A: logit_err 2.24e-3 vs r_sym-EC's
+1.60e-3), because the entropy water-fill reshapes per-coord precision around
+`diag(F^T Σ_Q F)` in either basis. QPCA-EC's coder model also generalizes slightly
+worse OOD (musique post-hoc rate 2.04 vs r_sym's 1.99). The May-2026 verdict
+("JointQK remains the deployed basis; QPCA is the baseline to beat") stands under
+entropy coding — by a 3.2-pp mean-F1 margin at equal rate.
 
 ## Artifacts
 
