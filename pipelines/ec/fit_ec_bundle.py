@@ -171,12 +171,29 @@ def build_basis(basis: str, cca: dict, k_mean: torch.Tensor, k_cov: torch.Tensor
             F[layer] = Pi.T.unsqueeze(0).expand(Hkv, d, d)
         return F, F.transpose(-1, -2).contiguous()
     if basis == "qpca":
-        # Mirror the harness: centered QPCA (sigma_q x centered K covariance).
-        # Regularize Sigma_Q first — the n400 bundle has numerically non-PSD
-        # eigenvalues and build_qpca_basis takes rsqrt of them (NaN otherwise).
-        sq = regularize_batch(cca["sigma_q"], EPS)
-        q = ec.build_qpca_basis(sq, regularize_batch(k_cov, EPS))
-        return q["forward"].float(), q["inverse"].float().contiguous()
+        # Centered QPCA (sigma_q x centered K covariance), mirroring the harness.
+        # build_qpca_basis whitens via sqrt/rsqrt of Sigma_Q's eigenvalues. Sigma_Q
+        # is PSD by construction (a second moment E[qq^T]); over deployed layers
+        # (l>=1) its min eigenvalue is +8.4e-6, so QPCA is built on the RAW moments
+        # there (faithful, no regularization). The ONLY ill-conditioned block is
+        # layer 0 (the attention-sink layer): cond ~7e6, so eigh returns a tiny
+        # NEGATIVE eigenvalue (~-2e-5) from float roundoff -> sqrt(neg)=NaN -> the
+        # earlier crash. Layer 0 is excluded from every metric AND skipped by the
+        # bundle loader (range(1, L)), so its basis is never used; we overwrite it
+        # with identity purely so the entropy/rate fit loop (which iterates all L)
+        # stays finite. Deployed layers are bit-identical to unregularized QPCA.
+        #
+        # Layer 0 is sliced off BEFORE build_qpca_basis, not just overwritten
+        # after: feeding its indefinite matrix in produces sqrt(neg)=NaN, and the
+        # downstream eigh(A) on the NaN-laden matrix spins in LAPACK (minutes-long
+        # hang). Building only l>=1 keeps every intermediate finite and fast.
+        d = cca["sigma_q"].shape[-1]
+        q = ec.build_qpca_basis(cca["sigma_q"][1:], k_cov[1:])
+        fwd1, inv1 = q["forward"].float(), q["inverse"].float()
+        eye = torch.eye(d).expand(1, fwd1.shape[1], d, d)
+        fwd = torch.cat([eye, fwd1], dim=0).contiguous()
+        inv = torch.cat([eye, inv1], dim=0).contiguous()
+        return fwd, inv
     raise ValueError(f"unknown basis {basis!r}")
 
 

@@ -1,401 +1,401 @@
-predicted_answer,all_classes,max_new_tokens,_id,dataset,answer_prefix,answers,language,question,task,length,compression_ratio
- Ozalj,,52,41ac2a4beb0af8f58d01863a62b90692f7c7d74b5e3a58d9,2wikimqa,Answer:,['Ozalj'],en,"Question: Where was the wife of Francis I Rákóczi born?
-",2wikimqa,4696,1.0
- Elizabeth,,52,3924e4ac5039ce3fadda49604bfcb0f5238af81774616e53,2wikimqa,Answer:,['John the Baptist'],en,"Question: Who is Sobe (Sister Of Saint Anne)'s grandchild?
-",2wikimqa,4776,1.0
- The film Man At Bath is directed by Christophe Honoré.,,52,2c952e3e1ca394df975103b3135b3c38e0ee16e25d860258,2wikimqa,Answer:,['Cahiers du cinéma'],en,"Question: Where does the director of film Man At Bath work at?
-",2wikimqa,4274,1.0
- No,,52,aec83da1f2faf6ec8badfd53d632f525c9ef2090d99d1c6c,2wikimqa,Answer:,['no'],en,"Question: Do both Beauty And The Bad Man and Wild Child (Film) films have the directors from the same country?
-",2wikimqa,8125,1.0
- c. 1532,,52,4b28d517ce1c1e3cfec9282ca7b212c1cb87c254781d7c86,2wikimqa,Answer:,['1510'],en,"Question: What is the date of birth of William Paulet, 3Rd Marquess Of Winchester's father?
-",2wikimqa,4621,1.0
-" Lewis Watson, 1st Earl of Rockingham",,52,81cd47ec621f2228d8bb4ec351ffd6b23d23107e5b287ffb,2wikimqa,Answer:,['Edward Watson'],en,"Question: Who is Edward Watson, Viscount Sondes's paternal grandfather?
-",2wikimqa,4625,1.0
- 1373,,52,048e82b64b5651b74d452db7151c2110a718128dfd12a774,2wikimqa,Answer:,['16 September 1360'],en,"Question: What is the date of death of Humphrey De Bohun, 7Th Earl Of Hereford's father?
-",2wikimqa,5001,1.0
- Alboin,,52,c8fd8db4d295aef41a9434299a8eeffb9af5e2bbcde4f13a,2wikimqa,Answer:,['Cunimund'],en,"Question: Who is Helmichis's father-in-law?
-",2wikimqa,7639,1.0
-" St Patrick's College, Dublin",,52,4db5bcd1d49fce674507d9128850eb71b808b7dc4246e882,2wikimqa,Answer:,"[""St Patrick's College""]",en,"Question: Where did Helena Carroll's father study?
-",2wikimqa,3964,1.0
- Bob Jones University.,,52,be97290f663a83ba27007dd262ca2a6072c9156f775a24ad,2wikimqa,Answer:,['Bob Jones University'],en,"Question: Where does the director of film Wine Of Morning work at?
-",2wikimqa,5162,1.0
- The House Of The Seven Hawks,,52,538d0eac8ec082e93d6f273237fafd1f23fb405e35bad84e,2wikimqa,Answer:,['The House Of The Seven Hawks'],en,"Question: Which film has the director who was born earlier, The Secret Invasion or The House Of The Seven Hawks?
-",2wikimqa,10338,1.0
- Margaret of Artois,,52,37022dee1597491021c2aa7522276a600eb0dd316f12cbb6,2wikimqa,Answer:,['Marie of Hohenstaufen'],en,"Question: Who is the paternal grandmother of Marie Of Brabant, Queen Of France?
-",2wikimqa,3596,1.0
-" Renaud I, Count of Soissons",,52,90f7f51f0c27f041e730cf8893f79f3f40fcb0aab1820a4d,2wikimqa,Answer:,"['Guy II, Count of Soissons']",en,"Question: Who is Renaud Ii, Count Of Soissons's uncle?
-",2wikimqa,1280,1.0
- 1837,,52,ee29eb2556135405fa19a48b0abdff0aceddef7594169c33,2wikimqa,Answer:,['26 April 1872'],en,"Question: When did William Le Poer Trench's father die?
-",2wikimqa,3432,1.0
- Poland,,52,2a398d925d3607c94ffb2d0cf9fe2fe6da6e9970ce95578a,2wikimqa,Answer:,['America'],en,"Question: Which country the director of film Renegade Force is from?
-",2wikimqa,4442,1.0
- Barbara Hale,,52,8d3cf7916a2f8a2762de13a9520b6350e46464fbf7f63dd5,2wikimqa,Answer:,['Ona Munson'],en,"Question: Who is the spouse of the director of film Emergency Wedding?
-",2wikimqa,10444,1.0
- Indradhanura Chhai,,52,5844352bd3fe5898756970abec3099ec694be6ad15c498db,2wikimqa,Answer:,['The Death Of Black King'],en,"Question: Which film came out earlier, Indradhanura Chhai or The Death Of Black King?
-",2wikimqa,1696,1.0
- No,,52,4413705182b57f12dc553e0919b50fd3c3b111cb4d82d12f,2wikimqa,Answer:,['no'],en,"Question: Do both films The Reincarnation Of Golden Lotus and I'Ll Get By (Film) have the directors from the same country?
-",2wikimqa,5932,1.0
- No,,52,cc32d31bbeb3e0d8787e963cf0843ae6b22f33817eb5a587,2wikimqa,Answer:,['no'],en,"Question: Are both villages, Rhosgoch and Qaleh-Ye Sahar, located in the same country?
-",2wikimqa,535,1.0
- Mysore.,,52,b3845fcad97309850a76e3720cd829a45d2bb12ee29a9cfb,2wikimqa,Answer:,['Mysore'],en,"Question: Where was the director of film Kanneshwara Rama born?
-",2wikimqa,3532,1.0
- Not specified in the passages.,,52,236eb4a8c2ba63d96ed3b6aec9ff7b00fa5e4df1173dd01c,2wikimqa,Answer:,['Kristiania'],en,"Question: Where was the place of death of Randi Monsen's father?
-",2wikimqa,2782,1.0
- The Lee Strasberg Theatre and Film Institute,,52,e026b7c57d2d759c12652fae6421931fe4f8cf8745ff9bdb,2wikimqa,Answer:,['Lee Strasberg Theatre and Film Institute'],en,"Question: Where did the performer of song I'Ll Say It graduate from?
-",2wikimqa,7578,1.0
- Hell Up In Harlem,,52,8dedfb4f00b873379cb4457d81113516b8db6c4017a1c912,2wikimqa,Answer:,['Hell Up In Harlem'],en,"Question: Which film has the director who was born first, Hell Up In Harlem or The Soviet Story?
-",2wikimqa,9013,1.0
- Cipriano Castro,,52,7c0b13a81d9d58791b71c2d8e46d2d063de3b9e89c75335f,2wikimqa,Answer:,['Cipriano Castro'],en,"Question: Who was born first, Cipriano Castro or Damir Nikšić?
-",2wikimqa,6026,1.0
- Monster On The Campus,,52,655c0c4e465b47d7fd829d3a487705991f4c059cee3c9aed,2wikimqa,Answer:,['Monster On The Campus'],en,"Question: Which film has the director who died first, The Year Of The Rabbit or Monster On The Campus?
-",2wikimqa,6192,1.0
- Altuğ Çelikbilek,,52,8720ebfc91b6860392a2b7b0ba954b0cd16ffd8c360a1f2b,2wikimqa,Answer:,['Altuğ Çelikbilek'],en,"Question: Who is younger, Guy Arvely Dolsin or Altuğ Çelikbilek?
-",2wikimqa,889,1.0
- Jugband Blues,,52,919cc6b1e482c475dc93740aae3549bc6012d644fb29562c,2wikimqa,Answer:,['Jugband Blues'],en,"Question: Which song came out first, Joel The Lump Of Coal or Jugband Blues?
-",2wikimqa,3517,1.0
- No,,52,0d02726cbaab0fbd2e84b7537550154e8aa96f81abb2864b,2wikimqa,Answer:,['yes'],en,"Question: Are both Open Mobile and Primestar located in the same country?
-",2wikimqa,4141,1.0
- Rathold Rátót,,52,33e3bc2dc011e79c047553153b1ab176c6a08f923af245ec,2wikimqa,Answer:,['Leustach Rátót'],en,"Question: Who is the paternal grandfather of Baldwin I Rátót?
-",2wikimqa,3948,1.0
- Bhaktapur,,52,6275ba9fee197d2fab82671a4497b4764a461c2c7c33ac0b,2wikimqa,Answer:,['Nepal'],en,"Question: What is the place of birth of Ratna Malla's father?
-",2wikimqa,4625,1.0
-" Arthur Acheson, 1st Earl of Gosford",,52,40de6f6c353c080845a8ea644039e9ba83cd481d3745395b,2wikimqa,Answer:,"['Archibald Acheson, 2nd Earl of Gosford']",en,"Question: Who is Archibald Acheson, 4Th Earl Of Gosford's paternal grandfather?
-",2wikimqa,4383,1.0
- J. Paul Getty,,52,35ffcf04ff64965decfcd3d34ff37b35da2a92f0b64346cd,2wikimqa,Answer:,['Jean Paul Getty'],en,"Question: Who is the paternal grandfather of Mark Getty?
-",2wikimqa,5464,1.0
-" Goring-on-Thames, Oxfordshire",,52,47ed89f40cae521df8767b1b7077fe9c547c10fd8bf1c6b2,2wikimqa,Answer:,"['Goring-on-Thames, Oxfordshire']",en,"Question: Where did the performer of song Fantasy (George Michael Song) die?
-",2wikimqa,11686,1.0
- No,,52,ead67129fee9b0024c9c3f53041469d74cf8a0281e39febb,2wikimqa,Answer:,['yes'],en,"Question: Do director of film Betrayal (1932 Film) and director of film The Godsend (Film) share the same nationality?
-",2wikimqa,3122,1.0
- The Abduction Club,,52,0ef1c3ac6b07212a6d5a91bfab2c12f2823412f10f667616,2wikimqa,Answer:,['Wooden Crosses'],en,"Question: Which film whose director was born first, The Abduction Club or Wooden Crosses?
-",2wikimqa,4154,1.0
- Above Rubies (1932) came out earlier than The Magic Aster (2009).,,52,8daefc2a4f66b3614a6934857c8c8f9cfdeb3ca23d16e172,2wikimqa,Answer:,['Above Rubies'],en,"Question: Which film came out earlier, Above Rubies or The Magic Aster?
-",2wikimqa,3299,1.0
- The Longshot,,52,bc40752faddd32264f8402321411881736ab5a4733eee758,2wikimqa,Answer:,['Blue Blood And Red'],en,"Question: Which film has the director who is older than the other, Blue Blood And Red or The Longshot? 
-",2wikimqa,4436,1.0
- Australia,,52,6e7d2d0700c8ec6fc15dc188c42d8104b89935219254fdaf,2wikimqa,Answer:,"['Castlemaine, Victoria, Australia']",en,"Question: What is the place of birth of the director of film Clowning Around?
-",2wikimqa,2896,1.0
- Paul De Scherff was born earlier.,,52,9a0ab728b48d43221f196b43d2816a4dff4142fd0054a4eb,2wikimqa,Answer:,['Lyudmyla Olyanovska'],en,"Question: Who was born later, Paul De Scherff or Lyudmyla Olyanovska?
-",2wikimqa,6416,1.0
- Yıldız Palace in Istanbul.,,52,6e7c0185fda0b6211274db748205994ee1468cfb30e2023d,2wikimqa,Answer:,['Constantinople'],en,"Question: Where was the place of death of Kamures Kadın's husband?
-",2wikimqa,4769,1.0
- Worms,,52,55acb15a501d22031778ff4ccb655e787668b617d911daa9,2wikimqa,Answer:,['East Francia'],en,"Question: What is the place of birth of Bernard (Son Of Charles The Fat)'s father?
-",2wikimqa,4957,1.0
- Henry Goes Arizona,,52,57543e0892f90733bf97dc270cdb36eb9bf8e2230940bcb9,2wikimqa,Answer:,['Henry Goes Arizona'],en,"Question: Which film has the director who died first, Tex And The Lord Of The Deep or Henry Goes Arizona?
-",2wikimqa,2540,1.0
- Wales,,52,2d1951b62f317038d28f6ac6a2b21e9d2e7f921ea528948b,2wikimqa,Answer:,['United Kingdom'],en,"Question: Which country the performer of song I Believe In Your Sweet Love is from?
-",2wikimqa,8759,1.0
- All-American Co-Ed,,52,b126cad8f81aed3c5cc29c20c25b1adc7d1f33e1c4e264c3,2wikimqa,Answer:,['All-American Co-Ed'],en,"Question: Which film whose producer was born first, All-American Co-Ed or Lagu Kenangan?
-",2wikimqa,5527,1.0
- Argentina,,52,188123e1b35a7de33fc44a40b55ab9ff0b59d29dc30f9148,2wikimqa,Answer:,['Buenos Aires'],en,"Question: What is the place of birth of the director of film A Chrysanthemum Bursts In Cincoesquinas?
-",2wikimqa,3859,1.0
- Catherine I of Russia,,52,5ff6349ea0b2ecb882f535ff3cec2f9c012d3468fb7b912e,2wikimqa,Answer:,['Charlotte Amalie of Hesse-Kassel'],en,"Question: Who is the mother-in-law of Louise Of Mecklenburg-Güstrow?
-",2wikimqa,5695,1.0
- The passage does not mention the place of death of Agnes Of Hohenstaufen's husband.,,52,314e76591d11d30d2bd59b2f12b671e873b786656f19956d,2wikimqa,Answer:,['Brunswick'],en,"Question: Where was the place of death of Agnes Of Hohenstaufen's husband?
-",2wikimqa,3954,1.0
- Not mentioned in the passages.,,52,7140432f1c424674d04ea819fa63f85aa4f154d72ab66285,2wikimqa,Answer:,['Vibia Sabina'],en,"Question: Who is Marcus Annius Libo's aunt?
-",2wikimqa,3690,1.0
- Bajo Otro Sol,,52,3292d2bcbbf8fc4816d168bcb7f81c13341198da1e88b903,2wikimqa,Answer:,['Bajo Otro Sol'],en,"Question: Which film was released more recently, Bajo Otro Sol or Riding The California Trail?
-",2wikimqa,1120,1.0
- Marie Laforêt,,52,5421c1e591296d64636a7e99fbfe98dddfed0f83d2053380,2wikimqa,Answer:,['Marie Laforêt'],en,"Question: Who is the mother of the director of film Dalida (2017 Film)?
-",2wikimqa,3219,1.0
- Sandra Nelson,,52,f67db35cb225c73bb753006bd14fab03942bbe0157a74979,2wikimqa,Answer:,['Sandra Nelson'],en,"Question: Who is the spouse of the director of film Streets Of Blood?
-",2wikimqa,10498,1.0
- 1669,,52,96500ef697df70106798988a9065594622cdeff67156cd20,2wikimqa,Answer:,"['May 19, 1669']",en,"Question: When is Henrietta Maria Of Brandenburg-Schwedt's father's birthday?
-",2wikimqa,4570,1.0
- León.,,52,5a867841d94c9f88f3bc0c333e93484486b09341db474bd6,2wikimqa,Answer:,['Palencia'],en,"Question: Where was the place of death of Sancha Of Castile, Queen Of Navarre's mother?
-",2wikimqa,3496,1.0
- Miley Naa Miley Hum,,52,059802de84ebd63ee99284c9cb2b7db2d45ca66c55e68ee1,2wikimqa,Answer:,['Miley Naa Miley Hum'],en,"Question: Which film was released more recently, Dance With A Stranger or Miley Naa Miley Hum?
-",2wikimqa,3934,1.0
- Tom Mix In Arabia,,52,fcc4a49fbe72f1b8ffef144e2e9d85bfc8897ba2864fd521,2wikimqa,Answer:,['Tom Mix In Arabia'],en,"Question: Which film has the director who is older, Space Probe Taurus or Tom Mix In Arabia?
-",2wikimqa,3324,1.0
- Daughter Of The Jungle,,52,633204c891118a6f3d1ae62d7b444c2ee02ad0cbae4876cc,2wikimqa,Answer:,['Seven In The Sun'],en,"Question: Which film has the director died later, Seven In The Sun or Daughter Of The Jungle?
-",2wikimqa,2708,1.0
- Dr. Socrates,,52,977f59ef09f7cc4ad6c71fc18d8b60e818e07a43cd7bee92,2wikimqa,Answer:,['Dr. Socrates'],en,"Question: Which film was released first, Vacations In Majorca or Dr. Socrates?
-",2wikimqa,4218,1.0
- Changeland,,52,5c3829f10f9daf565e9b5b52ca19f5c044550e916479da74,2wikimqa,Answer:,['Changeland'],en,"Question: Which film has the director born later, Woman In The Moon or Changeland?
-",2wikimqa,6736,1.0
- Peter Rosegger,,52,0a64d8873482d91efc595a508218c6ce881c13c95028039e,2wikimqa,Answer:,['Ruel Redinger'],en,"Question: Who is younger, Peter Rosegger or Ruel Redinger?
-",2wikimqa,2046,1.0
- Vasily Karatygin,,52,44b7f326c7b3c430968c237ee4017425d03eef586d5d6cb7,2wikimqa,Answer:,['Alexandra Kolosova'],en,"Question: Who is Pyotr Karatygin's sibling-in-law?
-",2wikimqa,2898,1.0
-" There is no information about the spouse of the performer of the song ""This Time"" in the given passages.",,52,85d2e8c38cc3b6f464eae6d84ef2df5f41807c9f8bf3aac8,2wikimqa,Answer:,['Jessi Colter'],en,"Question: Who is the spouse of the performer of song This Time (Waylon Jennings Song)?
-",2wikimqa,7833,1.0
- Yes,,52,1038dcf795ffefdb5d947e54a7e2d3b04d73895e482fd324,2wikimqa,Answer:,['yes'],en,"Question: Are Twin Cairns Island and Nova Zembla Island located in the same country?
-",2wikimqa,2351,1.0
-" Erich Haenisch died on 21 December 1966, and William Pooley died on 5 August 1629.",,52,62616c28af945825f87a95c47c1783dc284b06ec2d447402,2wikimqa,Answer:,['William Pooley'],en,"Question: Who died first, Erich Haenisch or William Pooley?
-",2wikimqa,2189,1.0
- American,,52,a3c88e70534d79b432d32c0b53d0d181c957b353f658dc95,2wikimqa,Answer:,['Sweden'],en,"Question: What nationality is the performer of song You Can?
-",2wikimqa,4845,1.0
- Yes,,52,63df7238a0005c6bffc122ca97570a95eb1d3711abaee205,2wikimqa,Answer:,['yes'],en,"Question: Do Nick Varner and Carl Duser share the same nationality?
-",2wikimqa,1412,1.0
- Ladies Love Danger,,52,c94e0220a7c5dadee3094df576df766b6d1a15b6c6e21011,2wikimqa,Answer:,['Melody Of The World'],en,"Question: Which film has the director who died earlier, Melody Of The World or Ladies Love Danger?
-",2wikimqa,4784,1.0
- Spain,,52,cab5465c3f7663e5d72c15a32bc04c8a917dac3c03828814,2wikimqa,Answer:,['Madrid'],en,"Question: Where was the place of death of the composer of film Miracle Of Marcelino?
-",2wikimqa,2868,1.0
- Not mentioned in the passages.,,52,be0651d84c04af5de43e28cf89e78d7e87490e637167632e,2wikimqa,Answer:,['Gisela Elsner'],en,"Question: Who is the mother of the director of film Atomised (Film)?
-",2wikimqa,3211,1.0
- The Great Man's Lady,,52,ef73e58876b94a997d928ee13b7ac7cdb8b8aa0bac856a92,2wikimqa,Answer:,['La Belle Américaine'],en,"Question: Which film has the director who died later, The Great Man'S Lady or La Belle Américaine?
-",2wikimqa,4142,1.0
- Not mentioned in the passage.,,52,7940c60a5ff2d81b62d118253577d1d891057ca45695e91a,2wikimqa,Answer:,"['Oklahoma City, Oklahoma']",en,"Question: What is the place of birth of the director of film Sweepstakes (Film)?
-",2wikimqa,3277,1.0
- Dubai,,52,a88430cef36a0222c3c30780328ff266b16325a7ec723a97,2wikimqa,Answer:,['Dubai'],en,"Question: Where was the place of death of Shahnawaz Bhutto's mother?
-",2wikimqa,4240,1.0
-" La Trinité, a commune within the Nice metropolitan area.",,52,0bcff697444354703dd1e8987a709b8ed2f44bf9d6b2d320,2wikimqa,Answer:,['La Trinité'],en,"Question: Where was the performer of song Égérie (Song) born?
-",2wikimqa,4966,1.0
- Prince Albert of Prussia,,52,24e27e943be014d4549674d581cdc20fdae92fa3d9cd256c,2wikimqa,Answer:,['Prince Albert of Prussia'],en,"Question: Who is the father-in-law of Duke William Of Mecklenburg-Schwerin?
-",2wikimqa,4350,1.0
- Yes,,52,0c43156b7d6bc17425a89dc6c6d48fc8c2c72ac9eba55a87,2wikimqa,Answer:,['yes'],en,"Question: Are Gut (Crișul Alb) and Gepiș both located in the same country?
-",2wikimqa,562,1.0
- Northampton,,52,64d6357ab735a8542112f87893a6e7c89b1b307bdb0e24c7,2wikimqa,Answer:,['Banbury'],en,"Question: Where was the place of death of Anne Devereux's husband?
-",2wikimqa,3847,1.0
-" Sir Paul Gore, 1st Baronet",,52,9ef1c9e836fb3844fe16369a346088af89b8da29e24aab1f,2wikimqa,Answer:,"['Sir Paul Gore, 1st Baronet']",en,"Question: Who is Sir William Gore, 3Rd Baronet's paternal grandfather?
-",2wikimqa,2779,1.0
- Egypt,,52,f11ac580e22d7d0e3da7cf1c725c8def8aef4aa891baa07a,2wikimqa,Answer:,['Fatimid caliphate'],en,"Question: Which country Nizar Al-Mustafa's father is from?
-",2wikimqa,8314,1.0
-" Dayton, Ohio.",,52,884614fa7d0fe723587d2f2677d3f2143cd13ab74391bea6,2wikimqa,Answer:,"['Dayton, Ohio']",en,"Question: Where was the wife of Lou Breslow born?
-",2wikimqa,3761,1.0
- Edward Buzzell,,52,ec4ba162decfc8dd03ccbca7832f3cecf985a5542e70dec1,2wikimqa,Answer:,['Ona Munson'],en,"Question: Who is the spouse of the director of film Ann Carver'S Profession?
-",2wikimqa,11373,1.0
- The Drover's Sweetheart (1911) came out earlier than Pigsty (1969).,,52,9c5350cca5afdd1a7254dbc26b3642401551473f4b071ce6,2wikimqa,Answer:,"[""The Drover'S Sweetheart""]",en,"Question: Which film came out earlier, The Drover'S Sweetheart or Pigsty (Film)?
-",2wikimqa,3866,1.0
- North Karnataka,,52,9ce10c5072e04cbd0d81d7e721fba8cf8062cc665fd32314,2wikimqa,Answer:,['Tumkur'],en,"Question: What is the place of birth of the director of film Bhagirathi (Film)?
-",2wikimqa,3459,1.0
- Det Sande Ansigt (1951) came out earlier than Closely Watched Trains (1966).,,52,58301315eaee3256c8f5ddefb03de59d55a75d3a37aab88a,2wikimqa,Answer:,['Det Sande Ansigt'],en,"Question: Which film came out earlier, Closely Watched Trains or Det Sande Ansigt?
-",2wikimqa,4713,1.0
- Il Gaucho,,52,62453a76a4867b6d09ac435581e1a327ec5b55cf231c79f9,2wikimqa,Answer:,['Bomgay'],en,"Question: Which film has the director who died earlier, Il Gaucho or Bomgay?
-",2wikimqa,4261,1.0
-" The passage does not mention the place of death of Maria's husband, Andries van Hoorn.",,52,e5eb5e5215ff4d3f7a036fa1a20699d85cdfb68a7908f086,2wikimqa,Answer:,['Preslav'],en,"Question: Where was the place of death of Maria (Wife Of Boris I Of Bulgaria)'s husband?
-",2wikimqa,5869,1.0
- Revolt Of The Praetorians.,,52,1d38c4b905f131417ce218eb86f68305a10160f9757cbeca,2wikimqa,Answer:,['Revolt Of The Praetorians'],en,"Question: Which film came out first, The Pyrammmid or Revolt Of The Praetorians?
-",2wikimqa,3504,1.0
- No,,52,c1b46a5458b15fdbfcd264b7e26e42d2cbaafb0e6dc5f48d,2wikimqa,Answer:,['yes'],en,"Question: Are both directors of films La Morte Vivante and Stranger On Horseback from the same country?
-",2wikimqa,10582,1.0
- Arsenic poisoning.,,52,98ead8987446388d37301c03d7d9f24e2f511a9e0c10bcdf,2wikimqa,Answer:,['poisoning'],en,"Question: What is the cause of death of Constantia Eriksdotter's father?
-",2wikimqa,5584,1.0
- American,,52,d267c5682ee42c1a570524a4b129fa908997a0ecfe07f8f6,2wikimqa,Answer:,['America'],en,"Question: What nationality is the director of film Postmortem (1998 Film)?
-",2wikimqa,5631,1.0
-" None, Keōpūolani's husband, Hoapili, is a High Chief from Hawaii.",,52,fac1e789f954097c329b2709c591f0b35841438b14d08784,2wikimqa,Answer:,['Kingdom of Hawaii'],en,"Question: Which country Keōpūolani's husband is from?
-",2wikimqa,8829,1.0
- X-Paroni (1964) came out earlier than Mi Novia Está De Madre (2007).,,52,c9e8d02824dfbdf95fe9f90c45dc13bc12f45b6969b1467b,2wikimqa,Answer:,['X-Paroni'],en,"Question: Which film came out earlier, X-Paroni or Mi Novia Está De Madre?
-",2wikimqa,2674,1.0
- Vasantha Raagam,,52,f77d9c5f3892f245b951dfd32e935473f63a4c6b565e31a9,2wikimqa,Answer:,['Vasantha Raagam'],en,"Question: Which film was released earlier, August Underground'S Penance or Vasantha Raagam?
-",2wikimqa,6052,1.0
- Lee Kun-hee,,52,eb1478ef3d4926564e153e99fd139c87e59cfaee49caac88,2wikimqa,Answer:,['Lee Byung-chul'],en,"Question: Who is the father-in-law of Hong Ra-Hee?
-",2wikimqa,6337,1.0
-" Louis I, Duke of Bourbon",,52,259e029da053a54f862f2455f3b92fb5f1b810647f1c1825,2wikimqa,Answer:,"['John I, Duke of Bourbon']",en,"Question: Who is Isabella Of Bourbon's paternal grandfather?
-",2wikimqa,4501,1.0
- 22 October 1893,,52,70923ff731dcad518ecdcdc8b53e165e8515a96ecf8f23c7,2wikimqa,Answer:,['27 June 1839'],en,"Question: What is the date of death of Duleep Singh's father?
-",2wikimqa,10742,1.0
-" Marshall, Indiana.",,52,a14e739445167b1be10d3a125f958a244c4b378261598a57,2wikimqa,Answer:,['Gura Humorului'],en,"Question: What is the place of birth of the director of film Gunsmoke (Film)?
-",2wikimqa,3888,1.0
- Jacques Dutronc,,52,32092cc7b80094b9c8914c1f70000295aefc4a985747b0ed,2wikimqa,Answer:,['Françoise Hardy'],en,"Question: Who is the spouse of the performer of song Et Moi, Et Moi, Et Moi?
-",2wikimqa,5091,1.0
- Charles Wheatstone.,,52,0c4dd15b43d1061d372c11946aa71630926e2570f333f538,2wikimqa,Answer:,['Charles Wheatstone'],en,"Question: Who lived longer, Charles Wheatstone or Jean-Claude Lauzon?
-",2wikimqa,8386,1.0
-" Washington, D.C.",,52,ececb22cb4bba60194702771c0d4de89658a4798d7efa1a1,2wikimqa,Answer:,['Washington'],en,"Question: Where was the place of death of Thomas E. Noell's father?
-",2wikimqa,1917,1.0
- London Melody,,52,da746ca10a31021be62e267f4e1407178b3f4a2d340672d3,2wikimqa,Answer:,['London Melody'],en,"Question: Which film has the director died first, Our Agent Tiger or London Melody?
-",2wikimqa,9611,1.0
- Fernando Bermúdez de Cea,,52,b8ffb375e75ee2976b8825d05d48c34638c7ffeb6d67baff,2wikimqa,Answer:,['Flaín Muñoz'],en,"Question: Who is the paternal grandfather of Diego Fernández De Oviedo?
-",2wikimqa,3208,1.0
- Michael Sorvino,,52,259c17d6e4a5e4c74669836fec3c6de0730bf65e67e6d988,2wikimqa,Answer:,['Mira Sorvino'],en,"Question: Who is the child of the director of film The Trouble With Cali?
-",2wikimqa,4398,1.0
- No,,52,8af3f07b73fabc0cc4ef4e6928818d1ff08ead9f41a5085a,2wikimqa,Answer:,['yes'],en,"Question: Are Ding Yaping and Johann Christian Gustav Lucae of the same nationality?
-",2wikimqa,1863,1.0
- Denmark,,52,3816f7d8e90a5497a1c0e415bf25218037c690e8e4d0d016,2wikimqa,Answer:,['Norway'],en,"Question: Which country Dorothea Of Denmark, Duchess Of Mecklenburg's father is from?
-",2wikimqa,3211,1.0
-" Heonjong Of Goryeo's father, Seonjong of Goryeo, died of illness.",,52,025911ff0afd34976b0a800c198c4117f95edfcd7b64bb24,2wikimqa,Answer:,['illness'],en,"Question: What is the cause of death of Heonjong Of Goryeo's father?
-",2wikimqa,4438,1.0
- Harby near Lincoln.,,52,cdf0b77af7d55cc9a3424613604e8dbabe7a01e4869ad502,2wikimqa,Answer:,['Harby'],en,"Question: Where did Mary Of Woodstock's mother die?
-",2wikimqa,10562,1.0
- None mentioned in the passage.,,52,1ff4dc6c1f7c02445945ced1b35a08544d7ba76089675883,2wikimqa,Answer:,['Hong Kong Film Award for Best Director'],en,"Question: Which award the director of film Tiramisu (2002 Film) earned?
-",2wikimqa,3401,1.0
- 3 September 1992,,52,c7347f362602f3a0be4b051c0b68219e0648afa64772bd30,2wikimqa,Answer:,['3 September 1992'],en,"Question: What is the date of death of the director of film Nallavan Vazhvan?
-",2wikimqa,1680,1.0
- Frederick Cleveland Morgan died first.,,52,0cf27c68148c99571860af561ce5f64c4524fde278defc63,2wikimqa,Answer:,['Nathaniel Mclenaghan'],en,"Question: Who died first, Frederick Cleveland Morgan or Nathaniel Mclenaghan?
-",2wikimqa,3026,1.0
- Carnegie Mellon University.,,52,93ff7c9369b6ff2f37896b54f6e4d8ff91c125f78ae8bf9a,2wikimqa,Answer:,['Tisch'],en,"Question: Where did the director of film Balls Out (2014 Film) graduate from?
-",2wikimqa,3749,1.0
- Cuchillos De Fuego,,52,550f734c7ef908fcfe6b1b7e761826340f00abaa5eb305a0,2wikimqa,Answer:,['Cuchillos De Fuego'],en,"Question: Which film whose director is younger, Cuchillos De Fuego or A Woman Has Killed?
-",2wikimqa,2697,1.0
- Moment Of Danger,,52,860a0ad0039969cc7f01d512df2b0ea283d8f7d0c08886e5,2wikimqa,Answer:,['Moment Of Danger'],en,"Question: Which film was released earlier, Moment Of Danger or The Ballad Of Josie?
-",2wikimqa,4003,1.0
- De AS.,,52,3723ec96e3b1af88c73edaa0a5e87f20194d9d212a67b615,2wikimqa,Answer:,['De As'],en,"Question: Which magazine was established first, Rock Street Journal or De As?
-",2wikimqa,2425,1.0
- The Piper's Price,,52,60735709da9cbdd65bab0a11d1a0991ec842fe74d1ab583b,2wikimqa,Answer:,"[""The Piper'S Price""]",en,"Question: Which film has the director who died first, The Piper'S Price or The Blonde From Singapore?
-",2wikimqa,4134,1.0
- Yes,,52,76a7a3db55c966560ad3e8d34037602d4d12714980898b78,2wikimqa,Answer:,['yes'],en,"Question: Are H. H. Hunnewell and Bob Flanigan (Singer) of the same nationality?
-",2wikimqa,5918,1.0
- Not available in the given passages.,,52,efea9c05de081efb7ef76741d3f24da2e993d54d99677b72,2wikimqa,Answer:,['13 March 1753'],en,"Question: When was Antoine Philippe, Duke Of Montpensier's mother born?
-",2wikimqa,4323,1.0
- No Trees In The Street,,52,435fae9b23d8b22e85a57cfd8ceb8541dea5b0c551acc3a9,2wikimqa,Answer:,['No Trees In The Street'],en,"Question: Which film has the director who died later, True To The Navy or No Trees In The Street?
-",2wikimqa,7162,1.0
- Kerala,,52,3ee59c959e64a29c8a30263816ad47b76ffab36e5b8859ee,2wikimqa,Answer:,['Methala'],en,"Question: What is the place of birth of the director of film Ninamaninja Kalpadukal?
-",2wikimqa,3129,1.0
- Alkohol,,52,43cf26663f3b4cec7a8ea68d56909201a2d1b1ad82512190,2wikimqa,Answer:,['Alkohol'],en,"Question: Which film came out earlier, Alkohol or Night Of Dark Shadows?
-",2wikimqa,5610,1.0
- Do Musafir,,52,77a79ad1902a4732e8030d79380395b7e614d65de3cdd038,2wikimqa,Answer:,['Do Musafir'],en,"Question: Which film whose director is younger, Many Tanks Mr. Atkins or Do Musafir?
-",2wikimqa,1138,1.0
- No,,52,f0523a41000b43996413780968b611c3f4d28b87f4acc859,2wikimqa,Answer:,['no'],en,"Question: Are Revolt In The Big House and The Fugitive (1914 Film) from the same country?
-",2wikimqa,1241,1.0
-" The passage does not mention the birthplace of the composer of the film Consenting Adults. However, the composer of the film's score is Michael Small, and the passage about him does not mention his birthplace either.",,52,6a60fa19187345478a447b63d8f52a1cb5341e964cda29db,2wikimqa,Answer:,['New York'],en,"Question: Where was the composer of film Consenting Adults (1992 Film) born?
-",2wikimqa,2516,1.0
- Contragolpe,,52,78227cb74e7b2401070e50abff8069510f5e5ccec0a2479f,2wikimqa,Answer:,['Contragolpe'],en,"Question: Which film has the director who died earlier, Tiger In The Smoke or Contragolpe?
-",2wikimqa,3675,1.0
- Mumbai,,52,f7abcc33c22de53769935182a278a199e9f263a12e56673e,2wikimqa,Answer:,['Mumbai'],en,"Question: Where was the place of death of the director of film Jail Yatra?
-",2wikimqa,3052,1.0
- The Comedians Of Comedy (2005) came out before F The Prom (2017).,,52,24a43c1b071d8bb99f51fec368dbc438cf7aea1f549ea195,2wikimqa,Answer:,['The Comedians Of Comedy'],en,"Question: Which film came out first, F The Prom or The Comedians Of Comedy?
-",2wikimqa,4756,1.0
- Waiting For The Clouds,,52,89530e21fb2f36eb499cea025efa9c80b10049f72945bfb6,2wikimqa,Answer:,['Tombstone Rashomon'],en,"Question: Which film has the director who was born first, Tombstone Rashomon or Waiting For The Clouds?
-",2wikimqa,5772,1.0
- Dhuen Ki Lakeer,,52,e8c2e5c8d393b186e21c75788f7e93efeaef12a9c44880d9,2wikimqa,Answer:,['Dhuen Ki Lakeer'],en,"Question: Which film has the director who was born earlier, Dhuen Ki Lakeer or Bomma Borusa?
-",2wikimqa,4828,1.0
-" Perdón, Viejita",,52,d7f6203bfe33e28a517ed4214f515fb80671c48edd4720a6,2wikimqa,Answer:,"['Perdón, Viejita']",en,"Question: Which film has the director who was born first, Perdón, Viejita or Smokey And The Bandit?
-",2wikimqa,10456,1.0
- University of Wisconsin-Madison,,52,517da14d56782303ccf8ec057b86bf43169b6f2edcd6d0f1,2wikimqa,Answer:,['University of Wisconsin'],en,"Question: Where did the director of film American Gothic (2007 Film) graduate from?
-",2wikimqa,2748,1.0
- Juan René Serrano was born first.,,52,300ccba91f776e583d418d6d9ecc5e1bdca7bd80580cd36e,2wikimqa,Answer:,['Dudley Russell'],en,"Question: Was Dudley Russell or Juan René Serrano born first?
-",2wikimqa,4526,1.0
-" Vytautas Straižys was born on 20 August 1936, and Mirjam Polkunen was born on 2 March 1926.",,52,81c8cd41355e5f0489dad4010b5fd414b817f7a9134affc2,2wikimqa,Answer:,['Mirjam Polkunen'],en,"Question: Who was born first, Vytautas Straižys or Mirjam Polkunen?
-",2wikimqa,3620,1.0
- Buda,,52,0c8d9e57340d06b13e75f1dd42ddb5f08c1203fb62632353,2wikimqa,Answer:,['Saint Petersburg'],en,"Question: Where did Grand Duchess Elena Vladimirovna Of Russia's father die?
-",2wikimqa,9479,1.0
- Eindhoven,,52,544828db02efd1313bfc0a1bdeb8c3df5985c299254b0222,2wikimqa,Answer:,['Eindhoven'],en,"Question: Where was the director of film The Dinner (2013 Film) born?
-",2wikimqa,3592,1.0
- Women's Suffrage Journal,,52,f5cf6d94b9e4e7adfc30d262396bc29e201d9e07ead1d088,2wikimqa,Answer:,"[""Women'S Suffrage Journal""]",en,"Question: Which magazine was established first, Women'S Suffrage Journal or Mostar (Magazine)?
-",2wikimqa,3828,1.0
- West Virginia,,52,018c9c2d781ea2c9d57a31bd2e0ff30b55e77017a319484a,2wikimqa,Answer:,"['Fairmont, West Virginia']",en,"Question: What is the place of birth of Carrie Watson Fleming's husband?
-",2wikimqa,3228,1.0
- The Market Of Souls,,52,93ef40c0bfa088c2a2dd3302976a950cba3e8d97767f65ce,2wikimqa,Answer:,['The Market Of Souls'],en,"Question: Which film has the director who died earlier, Mayor Muthanna or The Market Of Souls?
-",2wikimqa,2305,1.0
- Yes,,52,e15605da0c5b6f02c85aff9f1f683d3f85d211c083792ecb,2wikimqa,Answer:,['yes'],en,"Question: Do both films, The Glass Castle (1950 Film) and The Ferret (Film), have the directors who are from the same country?
-",2wikimqa,4201,1.0
- Al-Mansur,,52,bf2899717e8d7d3d83d865ca5ff59e26d7f647e6025e2d52,2wikimqa,Answer:,['Morocco'],en,"Question: Where was the father of Muhammad Al-Nasir born?
-",2wikimqa,4417,1.0
- Beaulieu-sur-Loire,,52,57db7adad0b62b8a396fd45937030d876ecd02153b8a931e,2wikimqa,Answer:,['Akkadian empire'],en,"Question: Where was the place of death of Enheduanna's father?
-",2wikimqa,8701,1.0
- Tarzan The Magnificent,,52,ce6a3aae400b3f5f028504fec37d7be8b447bd0cb1a0cff5,2wikimqa,Answer:,['Tarzan The Magnificent'],en,"Question: Which film whose director was born first, Solemn Promise or Tarzan The Magnificent?
-",2wikimqa,4580,1.0
- Wolf Warrior,,52,c997d53083dff6918a3f066cc76c824e43eb4ea21de33c51,2wikimqa,Answer:,['Wolf Warrior'],en,"Question: Which film has the director who was born later, The Man Is Armed or Wolf Warrior?
-",2wikimqa,3774,1.0
- Trịnh Cương,,52,184929a3ff00c41a966da9d53444da794af70ce90d624205,2wikimqa,Answer:,['Trịnh Bính'],en,"Question: Who is the paternal grandfather of Trịnh Doanh?
-",2wikimqa,3718,1.0
-" The director of film Hellcats Of The Navy, Nathan Juran, was born in Gura Humorului, Austro-Hungarian Empire (now Romania).",,52,56db201f810a3d01b7d14e8e9e6dd94820ecaf2f4a86b2b9,2wikimqa,Answer:,['Gura Humorului'],en,"Question: Where was the director of film Hellcats Of The Navy born?
-",2wikimqa,4854,1.0
-" August 15, 1985, in South Central Los Angeles, California.",,52,fefa6cc344f63fdceda9662af921fdcdf645abb8fe87ea73,2wikimqa,Answer:,['Crenshaw'],en,"Question: Where was the performer of song Feelin' Myself (Nipsey Hussle Song) born?
-",2wikimqa,7562,1.0
- Winter Sleepers,,52,9b0dc01a1388db020e5c5c428a002d099f8a35544e9b6261,2wikimqa,Answer:,['Winter Sleepers'],en,"Question: Which film whose director is younger, Winter Sleepers or Poveri Milionari?
-",2wikimqa,3065,1.0
- Adolf III of Berg,,52,34896de8d6a2c70e09b6dc3d113475a58899961d2aa356b3,2wikimqa,Answer:,['Adolf II of Berg'],en,"Question: Who is the paternal grandfather of Bruno Ii Von Berg?
-",2wikimqa,4040,1.0
- No,,52,0f629fbc7a6c3689ee9771af3aa81400674e673f11d47f2d,2wikimqa,Answer:,['no'],en,"Question: Are The Other Half (2016 Film) and Spy Kids 2: The Island Of Lost Dreams from the same country?
-",2wikimqa,6771,1.0
- Mülheim an der Ruhr,,52,13dde588b81d1de4a9984418bf3d6791de7d1b1edf21d61b,2wikimqa,Answer:,['Mülheim an der Ruhr'],en,"Question: Where was the director of film 00 Schneider – Jagd Auf Nihil Baxter born?
-",2wikimqa,3140,1.0
- Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato (1970) came out before The Bag Man (2014).,,52,cf56ec8180c3c7622a439e68704fc1ff73770f2e8ee2926e,2wikimqa,Answer:,['Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato'],en,"Question: Which film came out first, Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato or The Bag Man?
-",2wikimqa,2809,1.0
- Yes,,52,78d3bf98f7b05622b428940d273b8c493f24a4468d1998dd,2wikimqa,Answer:,['yes'],en,"Question: Are the movies The Hatton Garden Job and Carry On Cleo, from the same country?
-",2wikimqa,10991,1.0
- Prince Bhanurangsi Savangwongse,,52,9b0b29e391c61c570b20fae813486bc757c1fb7d25d83049,2wikimqa,Answer:,['Mongkut'],en,"Question: Who is the paternal grandfather of Dibyasambandh?
-",2wikimqa,3759,1.0
- Katherine Skipwith,,52,bdb42f1c30e16bbcdf6f0ab7c1f76765ddaa5817ee5e674b,2wikimqa,Answer:,['Lady Frances Manners'],en,"Question: Who is Charles Willoughby, 10Th Baron Willoughby Of Parham's paternal grandmother?
-",2wikimqa,3293,1.0
- The Cinémathèque Française,,52,a7b5c5d84d974a849b0d042c435bbb3fe90ff50fd5d73f79,2wikimqa,Answer:,['Cahiers du cinéma'],en,"Question: Where does the director of film L'Arbre, Le Maire Et La Médiathèque work at?
-",2wikimqa,9453,1.0
-" Eisenstein was a Soviet film director, but the film Eisenstein In Guanajuato is about his life. The film's director, Peter Greenaway, is a British film director, and the film is about a Soviet film director.",,52,d0b11838d26195f89d1568431f88a02b4f4d8c9cdf99e04a,2wikimqa,Answer:,"['Newport, Wales']",en,"Question: Where was the director of film Eisenstein In Guanajuato born?
-",2wikimqa,3945,1.0
-" Orange County, Virginia",,52,ca72ce55dc8f774617c794681dd7062eadfd14e679418cfa,2wikimqa,Answer:,"['Gordonsville, Virginia']",en,"Question: What is the place of birth of Sextus Barbour's father?
-",2wikimqa,9096,1.0
- Romania,,52,10dc2bd4f7fb1b834c7f563ae3d7af5d269d84b3dfc0b056,2wikimqa,Answer:,['Mangalia'],en,"Question: What is the place of birth of the performer of song Ruleta (Inna Song)?
-",2wikimqa,8046,1.0
- Félix Leclerc,,52,bbaa4eb6b32bad24fc2b8639d03be8c16d1140ec8454b16a,2wikimqa,Answer:,['Félix Leclerc'],en,"Question: Who is the father of the director of film A No-Hit No-Run Summer?
-",2wikimqa,4871,1.0
- Jacques of Savoy,,52,bc596d2ebcd25e79ca9cd689e50746e42e9a6fc579afc683,2wikimqa,Answer:,['Jacques'],en,"Question: Who is Henri Ii, Duke Of Nemours's paternal grandfather?
-",2wikimqa,5577,1.0
- Stephen I of Hungary,,52,f73db1873c311b2a38f27a52c5e05b021da0c2fe9590dac3,2wikimqa,Answer:,['Géza'],en,"Question: Who is Gisela Of Hungary's father-in-law?
-",2wikimqa,11622,1.0
- Wang Jiang,,52,53f6acc70a61443a93c25c91ca7dc7f8780046d02e28c94a,2wikimqa,Answer:,['Yi Jiang'],en,"Question: Who is the paternal grandmother of King Kang Of Zhou?
-",2wikimqa,4142,1.0
- Not found in the given passages.,,52,88e4806d6c6553000e3c1ff8be5c90f5309342954ce4acae,2wikimqa,Answer:,"['November 3, 1867']",en,"Question: What is the date of death of Maria Isabel De Alcântara, Countess Of Iguaçu's mother?
-",2wikimqa,6374,1.0
- Not mentioned in the passage.,,52,25b5c6893c13f6e52ddd541c03f5bd6bb7b17cfeb15d9f16,2wikimqa,Answer:,['Ivy Duke'],en,"Question: Who is the spouse of the director of film Rodney Steps In?
-",2wikimqa,10243,1.0
- 1813,,52,3cff7074281c58717aa65021d875cc1e6a6321f71cd77742,2wikimqa,Answer:,['1 August 1813'],en,"Question: When did Frances Vane, Marchioness Of Londonderry's father die?
-",2wikimqa,2765,1.0
- Season Of Strangers,,52,13c4f5388b670f6c20b168e782f7478616fa3ba2edca3081,2wikimqa,Answer:,['Season Of Strangers'],en,"Question: Which film has the director who is older than the other, Season Of Strangers or The Yellow Teddy Bears? 
-",2wikimqa,6966,1.0
- Yes,,52,0c35123885c26fc474a7cd8e7c03fe75bfff4fc15845d3b9,2wikimqa,Answer:,['yes'],en,"Question: Were Jake Eisenhart and Michael T. Ullman of the same nationality?
-",2wikimqa,4450,1.0
- Antoine Casavant was born first.,,52,2a0554b724822b6c611539e39b44381f752acdecce4868ad,2wikimqa,Answer:,['Antoine Casavant'],en,"Question: Who was born first, Antoine Casavant or Abdul Ali Lalu?
-",2wikimqa,3131,1.0
- Oxford University,,52,acb93469117282f2d0131e19f6210e007d681bc7a78e7b64,2wikimqa,Answer:,['Oxford'],en,"Question: Where did Rameshwari Nehru's husband graduate from?
-",2wikimqa,4103,1.0
-" Sir Hew Dalrymple, 3rd Baronet",,52,a7d0cfa55dce1e96490d1e6c0188398864724e96a44e4b79,2wikimqa,Answer:,"['Sir Hew Dalrymple, 2nd Baronet']",en,"Question: Who is the paternal grandfather of Sir John Hamilton-Dalrymple, 5Th Baronet?
-",2wikimqa,2932,1.0
- Khud-Daar,,52,7a35ba110f4c26f7eb9d4dcc2e8c1baac383c777f0904976,2wikimqa,Answer:,['Murderer In The Fog'],en,"Question: Which film has the director who was born earlier, Khud-Daar or Murderer In The Fog?
-",2wikimqa,2692,1.0
- Milla Jovovich,,52,b9a9b860c0f0430853d1db2756095da274d522beed2acbeb,2wikimqa,Answer:,['Milla'],en,"Question: Who is the spouse of the director of film Soldier (1998 American Film)?
-",2wikimqa,7443,1.0
- Not found in the given passages.,,52,a49e29926d7019e6cbaf6b0610453eda22fa1ce9043f5829,2wikimqa,Answer:,['Lecce'],en,"Question: Where did Catherine Of Taranto, Countess Of Copertino's mother die?
-",2wikimqa,3523,1.0
- Prometheus Award,,52,29ec971fbdf0df2d0c41c497de945024db6159c0c30be307,2wikimqa,Answer:,['Prometheus Award'],en,"Question: Which award the director of film Lady Magdalene'S got?
-",2wikimqa,3529,1.0
- German,,52,de14d0bf7b2c73f7a21875677eed84a1ef270d2f29dc5b99,2wikimqa,Answer:,['Duchy of Saxe-Gotha-Altenburg'],en,"Question: What nationality is Princess Charlotte Of Saxe-Meiningen's husband?
-",2wikimqa,4847,1.0
- The Longshots,,52,49035ecce6e78a355307dd6a1ddb11a87cab76090d655d2f,2wikimqa,Answer:,['Station For Two'],en,"Question: Which film has the director who was born first, The Longshots or Station For Two?
-",2wikimqa,9998,1.0
- Scotland,,52,d04cc75917c9ef6b7a78b82491229023013ef3cea72bfba4,2wikimqa,Answer:,['Inverkeithing'],en,"Question: What is the place of birth of Aleksey Greig's father?
-",2wikimqa,4097,1.0
-" After the death of his father, Alan of Galloway.",,52,8848d4bd1425f8bef31b6c279ec378bcbca14f10b702c4ea,2wikimqa,Answer:,['1234'],en,"Question: When did Thomas Of Galloway (Bastard)'s father die?
-",2wikimqa,9182,1.0
- 24 October 1642,,52,72132e87102859b583fb69a8a2a6a8b026be4fec5a1437e0,2wikimqa,Answer:,['25 July 1666'],en,"Question: When did Robert Bertie, 3Rd Earl Of Lindsey's father die?
-",2wikimqa,6136,1.0
- The Wind's Fierce,,52,0c15fb826ac59bbde9df698db9c277def2bc72fa5b7b497d,2wikimqa,Answer:,"[""The Wind'S Fierce""]",en,"Question: Which film has the director born later, The Wind'S Fierce or Special Delivery (1927 Film)?
-",2wikimqa,9043,1.0
- He drowned himself in his swimming pool.,,52,cf5321576ab8cc1b8453991abac66aa5d46155d8ffa7ee17,2wikimqa,Answer:,['drowning'],en,"Question: Why did the director of film Port Of Seven Seas die?
-",2wikimqa,8169,1.0
- Abu Dhabi,,52,6110cb2d4156df8d180fdd01e5f340c4731f7d1f4583fc5a,2wikimqa,Answer:,['Abu Dhabi'],en,"Question: What is the place of birth of Abdulaziz Nasser Al Shamsi's wife?
-",2wikimqa,3593,1.0
- Prenzlau,,52,b1034d8bbeeba5f9001f48311c182d2a20782462f0c2ed65,2wikimqa,Answer:,['Prenzlau'],en,"Question: What is the place of birth of Frank Wartenberg's wife?
-",2wikimqa,3584,1.0
-" Poznań, Poland",,52,7218faa7d718853f8df4329a7242806cf70e63ece56f8cdb,2wikimqa,Answer:,['Poznań'],en,"Question: Where was the director of film Edges Of The Lord born?
-",2wikimqa,3814,1.0
- Forlì,,52,78436f55ae9c254da5a54558ddd196c94850ba7a2b6fa637,2wikimqa,Answer:,['Italy'],en,"Question: Where was the father of Teobaldo Ii Ordelaffi born?
-",2wikimqa,4597,1.0
-" Toronto, Ontario.",,52,ddd046530f4979511397f82fe5391d0a646c0aa18225a98e,2wikimqa,Answer:,"['Toronto, Ontario']",en,"Question: Where was the husband of Maude Smith born?
-",2wikimqa,3366,1.0
- The Third Kiss (1919) was released earlier than Forbidden Daughters (1927).,,52,2ce836524b90befee94e944e77ce3420878e75b5a1e14c26,2wikimqa,Answer:,['Forbidden Daughters'],en,"Question: Which film was released earlier, Forbidden Daughters or The Third Kiss?
-",2wikimqa,4389,1.0
- No,,52,bcd3d700ef14d9a1f6b766c5d185b43ac8f3b7feffd4732f,2wikimqa,Answer:,['yes'],en,"Question: Does Leslie Pietrzyk have the same nationality as Marianne Wiggins?
-",2wikimqa,4958,1.0
- Bogdan Țăruș was born first.,,52,24591a37ff748fb849a62e6a4f4095f7089d7ced43595d01,2wikimqa,Answer:,['Bogdan Țăruș'],en,"Question: Who was born first, Bogdan Țăruș or Robert Wulnikowski?
-",2wikimqa,3425,1.0
- Folgore Division,,52,2e86241a9d27925aa52e039067fa83e27e305301188daef7,2wikimqa,Answer:,['Sandflow'],en,"Question: Which film has the director who died first, Folgore Division or Sandflow?
-",2wikimqa,1945,1.0
- From Corleone To Brooklyn,,52,c1d354f1d1855b21eb3c3cd204d5030080ef9e3c7e4b0195,2wikimqa,Answer:,['From Corleone To Brooklyn'],en,"Question: Which film has the director born later, From Corleone To Brooklyn or Durango Valley Raiders?
-",2wikimqa,3894,1.0
- Yes,,52,2c605656720054b6c9e6e0f15f99c1b4675db67e6e098cee,2wikimqa,Answer:,['yes'],en,"Question: Are both Howard Lake (British Columbia) and North Buck Lake (Alberta) located in the same country?
-",2wikimqa,667,1.0
- Vienna,,52,1edc61803f35344a5a4b6d273e6eb0f643fefcec0fa0a22a,2wikimqa,Answer:,['Vienna'],en,"Question: Where was the place of death of the composer of song Gretchen Am Spinnrade?
-",2wikimqa,10974,1.0
-" Hugh Evelyn Wortham was born in 1884, and Johnny Ekström was born in 1965.",,52,d65eba4a41497416d108c17f366636efb4cbda4c215c8818,2wikimqa,Answer:,['Johnny Ekström'],en,"Question: Who was born later, Hugh Evelyn Wortham or Johnny Ekström?
-",2wikimqa,6044,1.0
- Yes,,52,2df722c08f52cbf987c84019f7f2e5455cd29992738441cc,2wikimqa,Answer:,['yes'],en,"Question: Are both mountains, Yana Urqu (Q'Umirqucha) and Puka Rumi, located in the same country?
-",2wikimqa,592,1.0
- English,,52,814dddaa4a997380fc80cc1c72d48cb20545411924a0603f,2wikimqa,Answer:,['England'],en,"Question: What nationality is Elizabeth Of Rhuddlan's father?
-",2wikimqa,11950,1.0
- Parkinson's disease.,,52,1d554e7ae21ed7b5d142b57bcdab110cf6cea6f5256a58ee,2wikimqa,Answer:,['Parkinson'],en,"Question: What is the cause of death of director of film I Will, I Will... For Now?
-",2wikimqa,4337,1.0
- Hugh le Despenser,,52,d0ebddd00bfc9c5747021ae27c0ea5cdf21355bc86b83753,2wikimqa,Answer:,"['Roger Mortimer, 1st Earl of March']",en,"Question: Who is Maurice De Berkeley, 4Th Baron Berkeley's maternal grandfather?
-",2wikimqa,3947,1.0
- Ali Dinar died first.,,52,8f6c8de1c1518b5bdcbc4ff1cdfe035b9207971a6362574f,2wikimqa,Answer:,['Albertus Seba'],en,"Question: Who died first, Albertus Seba or Ali Dinar?
-",2wikimqa,4441,1.0
-" Francis II, Holy Roman Emperor",,52,59e42b2cab6da2436fae05e25c49f6f4b4893b07bb48e3c1,2wikimqa,Answer:,['Ferdinand I of the Two Sicilies'],en,"Question: Who is the maternal grandfather of Marie Louise, Duchess Of Parma?
-",2wikimqa,8935,1.0
- Prince Of Arcadia,,52,35cbcb102aa5b4f9188011190e0f30456df5673fcddacf49,2wikimqa,Answer:,['Prince Of Arcadia'],en,"Question: Which film was released earlier, Prince Of Arcadia or Italia-Germania 4-3?
-",2wikimqa,3155,1.0
- Milan,,52,44864cf7bbca78294d1b24c5acfa035f30849d802356aad4,2wikimqa,Answer:,['Milan'],en,"Question: Where was the director of film Love At First Sight (1985 Film) born?
-",2wikimqa,3195,1.0
- Köln,,52,67705e148a6e0540819f466bb4fdc73ed2e5cbcd64d80930,2wikimqa,Answer:,['Köln'],en,"Question: Where did the director of film Nanon (1938 Film) die?
-",2wikimqa,3719,1.0
+task,max_new_tokens,predicted_answer,question,language,compression_ratio,all_classes,dataset,_id,answers,length,answer_prefix
+2wikimqa,52, Ozalj,"Question: Where was the wife of Francis I Rákóczi born?
+",en,1.0,,2wikimqa,41ac2a4beb0af8f58d01863a62b90692f7c7d74b5e3a58d9,['Ozalj'],4696,Answer:
+2wikimqa,52, Elizabeth,"Question: Who is Sobe (Sister Of Saint Anne)'s grandchild?
+",en,1.0,,2wikimqa,3924e4ac5039ce3fadda49604bfcb0f5238af81774616e53,['John the Baptist'],4776,Answer:
+2wikimqa,52, The film Man At Bath is directed by Christophe Honoré.,"Question: Where does the director of film Man At Bath work at?
+",en,1.0,,2wikimqa,2c952e3e1ca394df975103b3135b3c38e0ee16e25d860258,['Cahiers du cinéma'],4274,Answer:
+2wikimqa,52, No,"Question: Do both Beauty And The Bad Man and Wild Child (Film) films have the directors from the same country?
+",en,1.0,,2wikimqa,aec83da1f2faf6ec8badfd53d632f525c9ef2090d99d1c6c,['no'],8125,Answer:
+2wikimqa,52, c. 1532,"Question: What is the date of birth of William Paulet, 3Rd Marquess Of Winchester's father?
+",en,1.0,,2wikimqa,4b28d517ce1c1e3cfec9282ca7b212c1cb87c254781d7c86,['1510'],4621,Answer:
+2wikimqa,52," Lewis Watson, 1st Earl of Rockingham","Question: Who is Edward Watson, Viscount Sondes's paternal grandfather?
+",en,1.0,,2wikimqa,81cd47ec621f2228d8bb4ec351ffd6b23d23107e5b287ffb,['Edward Watson'],4625,Answer:
+2wikimqa,52, 1373,"Question: What is the date of death of Humphrey De Bohun, 7Th Earl Of Hereford's father?
+",en,1.0,,2wikimqa,048e82b64b5651b74d452db7151c2110a718128dfd12a774,['16 September 1360'],5001,Answer:
+2wikimqa,52, Alboin,"Question: Who is Helmichis's father-in-law?
+",en,1.0,,2wikimqa,c8fd8db4d295aef41a9434299a8eeffb9af5e2bbcde4f13a,['Cunimund'],7639,Answer:
+2wikimqa,52," St Patrick's College, Dublin","Question: Where did Helena Carroll's father study?
+",en,1.0,,2wikimqa,4db5bcd1d49fce674507d9128850eb71b808b7dc4246e882,"[""St Patrick's College""]",3964,Answer:
+2wikimqa,52, Bob Jones University.,"Question: Where does the director of film Wine Of Morning work at?
+",en,1.0,,2wikimqa,be97290f663a83ba27007dd262ca2a6072c9156f775a24ad,['Bob Jones University'],5162,Answer:
+2wikimqa,52, The House Of The Seven Hawks,"Question: Which film has the director who was born earlier, The Secret Invasion or The House Of The Seven Hawks?
+",en,1.0,,2wikimqa,538d0eac8ec082e93d6f273237fafd1f23fb405e35bad84e,['The House Of The Seven Hawks'],10338,Answer:
+2wikimqa,52, Margaret of Artois,"Question: Who is the paternal grandmother of Marie Of Brabant, Queen Of France?
+",en,1.0,,2wikimqa,37022dee1597491021c2aa7522276a600eb0dd316f12cbb6,['Marie of Hohenstaufen'],3596,Answer:
+2wikimqa,52," Renaud I, Count of Soissons","Question: Who is Renaud Ii, Count Of Soissons's uncle?
+",en,1.0,,2wikimqa,90f7f51f0c27f041e730cf8893f79f3f40fcb0aab1820a4d,"['Guy II, Count of Soissons']",1280,Answer:
+2wikimqa,52, 1837,"Question: When did William Le Poer Trench's father die?
+",en,1.0,,2wikimqa,ee29eb2556135405fa19a48b0abdff0aceddef7594169c33,['26 April 1872'],3432,Answer:
+2wikimqa,52, Poland,"Question: Which country the director of film Renegade Force is from?
+",en,1.0,,2wikimqa,2a398d925d3607c94ffb2d0cf9fe2fe6da6e9970ce95578a,['America'],4442,Answer:
+2wikimqa,52, Barbara Hale,"Question: Who is the spouse of the director of film Emergency Wedding?
+",en,1.0,,2wikimqa,8d3cf7916a2f8a2762de13a9520b6350e46464fbf7f63dd5,['Ona Munson'],10444,Answer:
+2wikimqa,52, Indradhanura Chhai,"Question: Which film came out earlier, Indradhanura Chhai or The Death Of Black King?
+",en,1.0,,2wikimqa,5844352bd3fe5898756970abec3099ec694be6ad15c498db,['The Death Of Black King'],1696,Answer:
+2wikimqa,52, No,"Question: Do both films The Reincarnation Of Golden Lotus and I'Ll Get By (Film) have the directors from the same country?
+",en,1.0,,2wikimqa,4413705182b57f12dc553e0919b50fd3c3b111cb4d82d12f,['no'],5932,Answer:
+2wikimqa,52, No,"Question: Are both villages, Rhosgoch and Qaleh-Ye Sahar, located in the same country?
+",en,1.0,,2wikimqa,cc32d31bbeb3e0d8787e963cf0843ae6b22f33817eb5a587,['no'],535,Answer:
+2wikimqa,52, Mysore.,"Question: Where was the director of film Kanneshwara Rama born?
+",en,1.0,,2wikimqa,b3845fcad97309850a76e3720cd829a45d2bb12ee29a9cfb,['Mysore'],3532,Answer:
+2wikimqa,52, Not specified in the passages.,"Question: Where was the place of death of Randi Monsen's father?
+",en,1.0,,2wikimqa,236eb4a8c2ba63d96ed3b6aec9ff7b00fa5e4df1173dd01c,['Kristiania'],2782,Answer:
+2wikimqa,52, The Lee Strasberg Theatre and Film Institute,"Question: Where did the performer of song I'Ll Say It graduate from?
+",en,1.0,,2wikimqa,e026b7c57d2d759c12652fae6421931fe4f8cf8745ff9bdb,['Lee Strasberg Theatre and Film Institute'],7578,Answer:
+2wikimqa,52, Hell Up In Harlem,"Question: Which film has the director who was born first, Hell Up In Harlem or The Soviet Story?
+",en,1.0,,2wikimqa,8dedfb4f00b873379cb4457d81113516b8db6c4017a1c912,['Hell Up In Harlem'],9013,Answer:
+2wikimqa,52, Cipriano Castro,"Question: Who was born first, Cipriano Castro or Damir Nikšić?
+",en,1.0,,2wikimqa,7c0b13a81d9d58791b71c2d8e46d2d063de3b9e89c75335f,['Cipriano Castro'],6026,Answer:
+2wikimqa,52, Monster On The Campus,"Question: Which film has the director who died first, The Year Of The Rabbit or Monster On The Campus?
+",en,1.0,,2wikimqa,655c0c4e465b47d7fd829d3a487705991f4c059cee3c9aed,['Monster On The Campus'],6192,Answer:
+2wikimqa,52, Altuğ Çelikbilek,"Question: Who is younger, Guy Arvely Dolsin or Altuğ Çelikbilek?
+",en,1.0,,2wikimqa,8720ebfc91b6860392a2b7b0ba954b0cd16ffd8c360a1f2b,['Altuğ Çelikbilek'],889,Answer:
+2wikimqa,52, Joel The Lump Of Coal,"Question: Which song came out first, Joel The Lump Of Coal or Jugband Blues?
+",en,1.0,,2wikimqa,919cc6b1e482c475dc93740aae3549bc6012d644fb29562c,['Jugband Blues'],3517,Answer:
+2wikimqa,52, Yes,"Question: Are both Open Mobile and Primestar located in the same country?
+",en,1.0,,2wikimqa,0d02726cbaab0fbd2e84b7537550154e8aa96f81abb2864b,['yes'],4141,Answer:
+2wikimqa,52, Rathold Rátót,"Question: Who is the paternal grandfather of Baldwin I Rátót?
+",en,1.0,,2wikimqa,33e3bc2dc011e79c047553153b1ab176c6a08f923af245ec,['Leustach Rátót'],3948,Answer:
+2wikimqa,52, Bhaktapur,"Question: What is the place of birth of Ratna Malla's father?
+",en,1.0,,2wikimqa,6275ba9fee197d2fab82671a4497b4764a461c2c7c33ac0b,['Nepal'],4625,Answer:
+2wikimqa,52," Arthur Acheson, 1st Earl of Gosford","Question: Who is Archibald Acheson, 4Th Earl Of Gosford's paternal grandfather?
+",en,1.0,,2wikimqa,40de6f6c353c080845a8ea644039e9ba83cd481d3745395b,"['Archibald Acheson, 2nd Earl of Gosford']",4383,Answer:
+2wikimqa,52, J. Paul Getty,"Question: Who is the paternal grandfather of Mark Getty?
+",en,1.0,,2wikimqa,35ffcf04ff64965decfcd3d34ff37b35da2a92f0b64346cd,['Jean Paul Getty'],5464,Answer:
+2wikimqa,52, Goring-on-Thames,"Question: Where did the performer of song Fantasy (George Michael Song) die?
+",en,1.0,,2wikimqa,47ed89f40cae521df8767b1b7077fe9c547c10fd8bf1c6b2,"['Goring-on-Thames, Oxfordshire']",11686,Answer:
+2wikimqa,52, Yes,"Question: Do director of film Betrayal (1932 Film) and director of film The Godsend (Film) share the same nationality?
+",en,1.0,,2wikimqa,ead67129fee9b0024c9c3f53041469d74cf8a0281e39febb,['yes'],3122,Answer:
+2wikimqa,52, The Abduction Club,"Question: Which film whose director was born first, The Abduction Club or Wooden Crosses?
+",en,1.0,,2wikimqa,0ef1c3ac6b07212a6d5a91bfab2c12f2823412f10f667616,['Wooden Crosses'],4154,Answer:
+2wikimqa,52, Above Rubies (1932) came out earlier than The Magic Aster (2009).,"Question: Which film came out earlier, Above Rubies or The Magic Aster?
+",en,1.0,,2wikimqa,8daefc2a4f66b3614a6934857c8c8f9cfdeb3ca23d16e172,['Above Rubies'],3299,Answer:
+2wikimqa,52, The Longshot,"Question: Which film has the director who is older than the other, Blue Blood And Red or The Longshot? 
+",en,1.0,,2wikimqa,bc40752faddd32264f8402321411881736ab5a4733eee758,['Blue Blood And Red'],4436,Answer:
+2wikimqa,52, Australia,"Question: What is the place of birth of the director of film Clowning Around?
+",en,1.0,,2wikimqa,6e7d2d0700c8ec6fc15dc188c42d8104b89935219254fdaf,"['Castlemaine, Victoria, Australia']",2896,Answer:
+2wikimqa,52, Paul De Scherff was born earlier.,"Question: Who was born later, Paul De Scherff or Lyudmyla Olyanovska?
+",en,1.0,,2wikimqa,9a0ab728b48d43221f196b43d2816a4dff4142fd0054a4eb,['Lyudmyla Olyanovska'],6416,Answer:
+2wikimqa,52, Yıldız Palace in Istanbul.,"Question: Where was the place of death of Kamures Kadın's husband?
+",en,1.0,,2wikimqa,6e7c0185fda0b6211274db748205994ee1468cfb30e2023d,['Constantinople'],4769,Answer:
+2wikimqa,52, Worms,"Question: What is the place of birth of Bernard (Son Of Charles The Fat)'s father?
+",en,1.0,,2wikimqa,55acb15a501d22031778ff4ccb655e787668b617d911daa9,['East Francia'],4957,Answer:
+2wikimqa,52, Henry Goes Arizona,"Question: Which film has the director who died first, Tex And The Lord Of The Deep or Henry Goes Arizona?
+",en,1.0,,2wikimqa,57543e0892f90733bf97dc270cdb36eb9bf8e2230940bcb9,['Henry Goes Arizona'],2540,Answer:
+2wikimqa,52, Wales,"Question: Which country the performer of song I Believe In Your Sweet Love is from?
+",en,1.0,,2wikimqa,2d1951b62f317038d28f6ac6a2b21e9d2e7f921ea528948b,['United Kingdom'],8759,Answer:
+2wikimqa,52, All-American Co-Ed,"Question: Which film whose producer was born first, All-American Co-Ed or Lagu Kenangan?
+",en,1.0,,2wikimqa,b126cad8f81aed3c5cc29c20c25b1adc7d1f33e1c4e264c3,['All-American Co-Ed'],5527,Answer:
+2wikimqa,52, Argentina,"Question: What is the place of birth of the director of film A Chrysanthemum Bursts In Cincoesquinas?
+",en,1.0,,2wikimqa,188123e1b35a7de33fc44a40b55ab9ff0b59d29dc30f9148,['Buenos Aires'],3859,Answer:
+2wikimqa,52, Catherine I of Russia,"Question: Who is the mother-in-law of Louise Of Mecklenburg-Güstrow?
+",en,1.0,,2wikimqa,5ff6349ea0b2ecb882f535ff3cec2f9c012d3468fb7b912e,['Charlotte Amalie of Hesse-Kassel'],5695,Answer:
+2wikimqa,52, The passage does not mention the place of death of Agnes Of Hohenstaufen's husband.,"Question: Where was the place of death of Agnes Of Hohenstaufen's husband?
+",en,1.0,,2wikimqa,314e76591d11d30d2bd59b2f12b671e873b786656f19956d,['Brunswick'],3954,Answer:
+2wikimqa,52, Not specified in the passages.,"Question: Who is Marcus Annius Libo's aunt?
+",en,1.0,,2wikimqa,7140432f1c424674d04ea819fa63f85aa4f154d72ab66285,['Vibia Sabina'],3690,Answer:
+2wikimqa,52, Riding The California Trail,"Question: Which film was released more recently, Bajo Otro Sol or Riding The California Trail?
+",en,1.0,,2wikimqa,3292d2bcbbf8fc4816d168bcb7f81c13341198da1e88b903,['Bajo Otro Sol'],1120,Answer:
+2wikimqa,52, Marie Laforêt,"Question: Who is the mother of the director of film Dalida (2017 Film)?
+",en,1.0,,2wikimqa,5421c1e591296d64636a7e99fbfe98dddfed0f83d2053380,['Marie Laforêt'],3219,Answer:
+2wikimqa,52, Sandra Nelson,"Question: Who is the spouse of the director of film Streets Of Blood?
+",en,1.0,,2wikimqa,f67db35cb225c73bb753006bd14fab03942bbe0157a74979,['Sandra Nelson'],10498,Answer:
+2wikimqa,52, 1669,"Question: When is Henrietta Maria Of Brandenburg-Schwedt's father's birthday?
+",en,1.0,,2wikimqa,96500ef697df70106798988a9065594622cdeff67156cd20,"['May 19, 1669']",4570,Answer:
+2wikimqa,52, León.,"Question: Where was the place of death of Sancha Of Castile, Queen Of Navarre's mother?
+",en,1.0,,2wikimqa,5a867841d94c9f88f3bc0c333e93484486b09341db474bd6,['Palencia'],3496,Answer:
+2wikimqa,52, Miley Naa Miley Hum,"Question: Which film was released more recently, Dance With A Stranger or Miley Naa Miley Hum?
+",en,1.0,,2wikimqa,059802de84ebd63ee99284c9cb2b7db2d45ca66c55e68ee1,['Miley Naa Miley Hum'],3934,Answer:
+2wikimqa,52, Tom Mix In Arabia,"Question: Which film has the director who is older, Space Probe Taurus or Tom Mix In Arabia?
+",en,1.0,,2wikimqa,fcc4a49fbe72f1b8ffef144e2e9d85bfc8897ba2864fd521,['Tom Mix In Arabia'],3324,Answer:
+2wikimqa,52, Daughter Of The Jungle,"Question: Which film has the director died later, Seven In The Sun or Daughter Of The Jungle?
+",en,1.0,,2wikimqa,633204c891118a6f3d1ae62d7b444c2ee02ad0cbae4876cc,['Seven In The Sun'],2708,Answer:
+2wikimqa,52, Dr. Socrates,"Question: Which film was released first, Vacations In Majorca or Dr. Socrates?
+",en,1.0,,2wikimqa,977f59ef09f7cc4ad6c71fc18d8b60e818e07a43cd7bee92,['Dr. Socrates'],4218,Answer:
+2wikimqa,52, Changeland,"Question: Which film has the director born later, Woman In The Moon or Changeland?
+",en,1.0,,2wikimqa,5c3829f10f9daf565e9b5b52ca19f5c044550e916479da74,['Changeland'],6736,Answer:
+2wikimqa,52, Peter Rosegger,"Question: Who is younger, Peter Rosegger or Ruel Redinger?
+",en,1.0,,2wikimqa,0a64d8873482d91efc595a508218c6ce881c13c95028039e,['Ruel Redinger'],2046,Answer:
+2wikimqa,52, Vasily Karatygin,"Question: Who is Pyotr Karatygin's sibling-in-law?
+",en,1.0,,2wikimqa,44b7f326c7b3c430968c237ee4017425d03eef586d5d6cb7,['Alexandra Kolosova'],2898,Answer:
+2wikimqa,52," There is no information about the spouse of the performer of the song ""This Time"" in the given passages.","Question: Who is the spouse of the performer of song This Time (Waylon Jennings Song)?
+",en,1.0,,2wikimqa,85d2e8c38cc3b6f464eae6d84ef2df5f41807c9f8bf3aac8,['Jessi Colter'],7833,Answer:
+2wikimqa,52, Yes,"Question: Are Twin Cairns Island and Nova Zembla Island located in the same country?
+",en,1.0,,2wikimqa,1038dcf795ffefdb5d947e54a7e2d3b04d73895e482fd324,['yes'],2351,Answer:
+2wikimqa,52," Erich Haenisch died in 1966, and William Pooley died in 1629.","Question: Who died first, Erich Haenisch or William Pooley?
+",en,1.0,,2wikimqa,62616c28af945825f87a95c47c1783dc284b06ec2d447402,['William Pooley'],2189,Answer:
+2wikimqa,52, American,"Question: What nationality is the performer of song You Can?
+",en,1.0,,2wikimqa,a3c88e70534d79b432d32c0b53d0d181c957b353f658dc95,['Sweden'],4845,Answer:
+2wikimqa,52, Yes,"Question: Do Nick Varner and Carl Duser share the same nationality?
+",en,1.0,,2wikimqa,63df7238a0005c6bffc122ca97570a95eb1d3711abaee205,['yes'],1412,Answer:
+2wikimqa,52, Ladies Love Danger,"Question: Which film has the director who died earlier, Melody Of The World or Ladies Love Danger?
+",en,1.0,,2wikimqa,c94e0220a7c5dadee3094df576df766b6d1a15b6c6e21011,['Melody Of The World'],4784,Answer:
+2wikimqa,52, Spain,"Question: Where was the place of death of the composer of film Miracle Of Marcelino?
+",en,1.0,,2wikimqa,cab5465c3f7663e5d72c15a32bc04c8a917dac3c03828814,['Madrid'],2868,Answer:
+2wikimqa,52, Not mentioned in the passages.,"Question: Who is the mother of the director of film Atomised (Film)?
+",en,1.0,,2wikimqa,be0651d84c04af5de43e28cf89e78d7e87490e637167632e,['Gisela Elsner'],3211,Answer:
+2wikimqa,52, The Great Man's Lady,"Question: Which film has the director who died later, The Great Man'S Lady or La Belle Américaine?
+",en,1.0,,2wikimqa,ef73e58876b94a997d928ee13b7ac7cdb8b8aa0bac856a92,['La Belle Américaine'],4142,Answer:
+2wikimqa,52, Not mentioned in the passage.,"Question: What is the place of birth of the director of film Sweepstakes (Film)?
+",en,1.0,,2wikimqa,7940c60a5ff2d81b62d118253577d1d891057ca45695e91a,"['Oklahoma City, Oklahoma']",3277,Answer:
+2wikimqa,52, Dubai,"Question: Where was the place of death of Shahnawaz Bhutto's mother?
+",en,1.0,,2wikimqa,a88430cef36a0222c3c30780328ff266b16325a7ec723a97,['Dubai'],4240,Answer:
+2wikimqa,52," La Trinité, a commune within the Nice metropolitan area.","Question: Where was the performer of song Égérie (Song) born?
+",en,1.0,,2wikimqa,0bcff697444354703dd1e8987a709b8ed2f44bf9d6b2d320,['La Trinité'],4966,Answer:
+2wikimqa,52, Prince Albert of Prussia,"Question: Who is the father-in-law of Duke William Of Mecklenburg-Schwerin?
+",en,1.0,,2wikimqa,24e27e943be014d4549674d581cdc20fdae92fa3d9cd256c,['Prince Albert of Prussia'],4350,Answer:
+2wikimqa,52, Yes,"Question: Are Gut (Crișul Alb) and Gepiș both located in the same country?
+",en,1.0,,2wikimqa,0c43156b7d6bc17425a89dc6c6d48fc8c2c72ac9eba55a87,['yes'],562,Answer:
+2wikimqa,52, Northampton,"Question: Where was the place of death of Anne Devereux's husband?
+",en,1.0,,2wikimqa,64d6357ab735a8542112f87893a6e7c89b1b307bdb0e24c7,['Banbury'],3847,Answer:
+2wikimqa,52," Sir Paul Gore, 1st Baronet","Question: Who is Sir William Gore, 3Rd Baronet's paternal grandfather?
+",en,1.0,,2wikimqa,9ef1c9e836fb3844fe16369a346088af89b8da29e24aab1f,"['Sir Paul Gore, 1st Baronet']",2779,Answer:
+2wikimqa,52, Egypt,"Question: Which country Nizar Al-Mustafa's father is from?
+",en,1.0,,2wikimqa,f11ac580e22d7d0e3da7cf1c725c8def8aef4aa891baa07a,['Fatimid caliphate'],8314,Answer:
+2wikimqa,52," Dayton, Ohio.","Question: Where was the wife of Lou Breslow born?
+",en,1.0,,2wikimqa,884614fa7d0fe723587d2f2677d3f2143cd13ab74391bea6,"['Dayton, Ohio']",3761,Answer:
+2wikimqa,52, Edward Buzzell,"Question: Who is the spouse of the director of film Ann Carver'S Profession?
+",en,1.0,,2wikimqa,ec4ba162decfc8dd03ccbca7832f3cecf985a5542e70dec1,['Ona Munson'],11373,Answer:
+2wikimqa,52, The Drover's Sweetheart (1911) came out earlier than Pigsty (1969).,"Question: Which film came out earlier, The Drover'S Sweetheart or Pigsty (Film)?
+",en,1.0,,2wikimqa,9c5350cca5afdd1a7254dbc26b3642401551473f4b071ce6,"[""The Drover'S Sweetheart""]",3866,Answer:
+2wikimqa,52, North Karnataka,"Question: What is the place of birth of the director of film Bhagirathi (Film)?
+",en,1.0,,2wikimqa,9ce10c5072e04cbd0d81d7e721fba8cf8062cc665fd32314,['Tumkur'],3459,Answer:
+2wikimqa,52, Det Sande Ansigt (1951) came out earlier than Closely Watched Trains (1966).,"Question: Which film came out earlier, Closely Watched Trains or Det Sande Ansigt?
+",en,1.0,,2wikimqa,58301315eaee3256c8f5ddefb03de59d55a75d3a37aab88a,['Det Sande Ansigt'],4713,Answer:
+2wikimqa,52, Il Gaucho,"Question: Which film has the director who died earlier, Il Gaucho or Bomgay?
+",en,1.0,,2wikimqa,62453a76a4867b6d09ac435581e1a327ec5b55cf231c79f9,['Bomgay'],4261,Answer:
+2wikimqa,52," The passage does not mention the place of death of Maria's husband, Andries van Hoorn.","Question: Where was the place of death of Maria (Wife Of Boris I Of Bulgaria)'s husband?
+",en,1.0,,2wikimqa,e5eb5e5215ff4d3f7a036fa1a20699d85cdfb68a7908f086,['Preslav'],5869,Answer:
+2wikimqa,52, The Pyrammmid.,"Question: Which film came out first, The Pyrammmid or Revolt Of The Praetorians?
+",en,1.0,,2wikimqa,1d38c4b905f131417ce218eb86f68305a10160f9757cbeca,['Revolt Of The Praetorians'],3504,Answer:
+2wikimqa,52, No,"Question: Are both directors of films La Morte Vivante and Stranger On Horseback from the same country?
+",en,1.0,,2wikimqa,c1b46a5458b15fdbfcd264b7e26e42d2cbaafb0e6dc5f48d,['yes'],10582,Answer:
+2wikimqa,52, Arsenic poisoning.,"Question: What is the cause of death of Constantia Eriksdotter's father?
+",en,1.0,,2wikimqa,98ead8987446388d37301c03d7d9f24e2f511a9e0c10bcdf,['poisoning'],5584,Answer:
+2wikimqa,52, American,"Question: What nationality is the director of film Postmortem (1998 Film)?
+",en,1.0,,2wikimqa,d267c5682ee42c1a570524a4b129fa908997a0ecfe07f8f6,['America'],5631,Answer:
+2wikimqa,52," None, Keōpūolani's husband, Hoapili, is a High Chief from Hawaii.","Question: Which country Keōpūolani's husband is from?
+",en,1.0,,2wikimqa,fac1e789f954097c329b2709c591f0b35841438b14d08784,['Kingdom of Hawaii'],8829,Answer:
+2wikimqa,52, X-Paroni (1964) came out earlier than Mi Novia Está De Madre (2007).,"Question: Which film came out earlier, X-Paroni or Mi Novia Está De Madre?
+",en,1.0,,2wikimqa,c9e8d02824dfbdf95fe9f90c45dc13bc12f45b6969b1467b,['X-Paroni'],2674,Answer:
+2wikimqa,52, Vasantha Raagam,"Question: Which film was released earlier, August Underground'S Penance or Vasantha Raagam?
+",en,1.0,,2wikimqa,f77d9c5f3892f245b951dfd32e935473f63a4c6b565e31a9,['Vasantha Raagam'],6052,Answer:
+2wikimqa,52, Lee Kun-hee,"Question: Who is the father-in-law of Hong Ra-Hee?
+",en,1.0,,2wikimqa,eb1478ef3d4926564e153e99fd139c87e59cfaee49caac88,['Lee Byung-chul'],6337,Answer:
+2wikimqa,52," Louis I, Duke of Bourbon","Question: Who is Isabella Of Bourbon's paternal grandfather?
+",en,1.0,,2wikimqa,259e029da053a54f862f2455f3b92fb5f1b810647f1c1825,"['John I, Duke of Bourbon']",4501,Answer:
+2wikimqa,52, 1839,"Question: What is the date of death of Duleep Singh's father?
+",en,1.0,,2wikimqa,70923ff731dcad518ecdcdc8b53e165e8515a96ecf8f23c7,['27 June 1839'],10742,Answer:
+2wikimqa,52," Marshall, Indiana.","Question: What is the place of birth of the director of film Gunsmoke (Film)?
+",en,1.0,,2wikimqa,a14e739445167b1be10d3a125f958a244c4b378261598a57,['Gura Humorului'],3888,Answer:
+2wikimqa,52, Jacques Dutronc,"Question: Who is the spouse of the performer of song Et Moi, Et Moi, Et Moi?
+",en,1.0,,2wikimqa,32092cc7b80094b9c8914c1f70000295aefc4a985747b0ed,['Françoise Hardy'],5091,Answer:
+2wikimqa,52, Charles Wheatstone,"Question: Who lived longer, Charles Wheatstone or Jean-Claude Lauzon?
+",en,1.0,,2wikimqa,0c4dd15b43d1061d372c11946aa71630926e2570f333f538,['Charles Wheatstone'],8386,Answer:
+2wikimqa,52," Washington, D.C.","Question: Where was the place of death of Thomas E. Noell's father?
+",en,1.0,,2wikimqa,ececb22cb4bba60194702771c0d4de89658a4798d7efa1a1,['Washington'],1917,Answer:
+2wikimqa,52, London Melody,"Question: Which film has the director died first, Our Agent Tiger or London Melody?
+",en,1.0,,2wikimqa,da746ca10a31021be62e267f4e1407178b3f4a2d340672d3,['London Melody'],9611,Answer:
+2wikimqa,52, Fernando Bermúdez de Cea,"Question: Who is the paternal grandfather of Diego Fernández De Oviedo?
+",en,1.0,,2wikimqa,b8ffb375e75ee2976b8825d05d48c34638c7ffeb6d67baff,['Flaín Muñoz'],3208,Answer:
+2wikimqa,52, Michael Sorvino,"Question: Who is the child of the director of film The Trouble With Cali?
+",en,1.0,,2wikimqa,259c17d6e4a5e4c74669836fec3c6de0730bf65e67e6d988,['Mira Sorvino'],4398,Answer:
+2wikimqa,52, No,"Question: Are Ding Yaping and Johann Christian Gustav Lucae of the same nationality?
+",en,1.0,,2wikimqa,8af3f07b73fabc0cc4ef4e6928818d1ff08ead9f41a5085a,['yes'],1863,Answer:
+2wikimqa,52, Denmark,"Question: Which country Dorothea Of Denmark, Duchess Of Mecklenburg's father is from?
+",en,1.0,,2wikimqa,3816f7d8e90a5497a1c0e415bf25218037c690e8e4d0d016,['Norway'],3211,Answer:
+2wikimqa,52," Heonjong Of Goryeo's father, Seonjong of Goryeo, died of illness.","Question: What is the cause of death of Heonjong Of Goryeo's father?
+",en,1.0,,2wikimqa,025911ff0afd34976b0a800c198c4117f95edfcd7b64bb24,['illness'],4438,Answer:
+2wikimqa,52, Harby near Lincoln.,"Question: Where did Mary Of Woodstock's mother die?
+",en,1.0,,2wikimqa,cdf0b77af7d55cc9a3424613604e8dbabe7a01e4869ad502,['Harby'],10562,Answer:
+2wikimqa,52, None mentioned in the passage.,"Question: Which award the director of film Tiramisu (2002 Film) earned?
+",en,1.0,,2wikimqa,1ff4dc6c1f7c02445945ced1b35a08544d7ba76089675883,['Hong Kong Film Award for Best Director'],3401,Answer:
+2wikimqa,52, 3 September 1992,"Question: What is the date of death of the director of film Nallavan Vazhvan?
+",en,1.0,,2wikimqa,c7347f362602f3a0be4b051c0b68219e0648afa64772bd30,['3 September 1992'],1680,Answer:
+2wikimqa,52, Frederick Cleveland Morgan died first.,"Question: Who died first, Frederick Cleveland Morgan or Nathaniel Mclenaghan?
+",en,1.0,,2wikimqa,0cf27c68148c99571860af561ce5f64c4524fde278defc63,['Nathaniel Mclenaghan'],3026,Answer:
+2wikimqa,52, Carnegie Mellon University.,"Question: Where did the director of film Balls Out (2014 Film) graduate from?
+",en,1.0,,2wikimqa,93ff7c9369b6ff2f37896b54f6e4d8ff91c125f78ae8bf9a,['Tisch'],3749,Answer:
+2wikimqa,52, Cuchillos De Fuego,"Question: Which film whose director is younger, Cuchillos De Fuego or A Woman Has Killed?
+",en,1.0,,2wikimqa,550f734c7ef908fcfe6b1b7e761826340f00abaa5eb305a0,['Cuchillos De Fuego'],2697,Answer:
+2wikimqa,52, Moment Of Danger,"Question: Which film was released earlier, Moment Of Danger or The Ballad Of Josie?
+",en,1.0,,2wikimqa,860a0ad0039969cc7f01d512df2b0ea283d8f7d0c08886e5,['Moment Of Danger'],4003,Answer:
+2wikimqa,52, De AS.,"Question: Which magazine was established first, Rock Street Journal or De As?
+",en,1.0,,2wikimqa,3723ec96e3b1af88c73edaa0a5e87f20194d9d212a67b615,['De As'],2425,Answer:
+2wikimqa,52, The Piper's Price,"Question: Which film has the director who died first, The Piper'S Price or The Blonde From Singapore?
+",en,1.0,,2wikimqa,60735709da9cbdd65bab0a11d1a0991ec842fe74d1ab583b,"[""The Piper'S Price""]",4134,Answer:
+2wikimqa,52, Yes,"Question: Are H. H. Hunnewell and Bob Flanigan (Singer) of the same nationality?
+",en,1.0,,2wikimqa,76a7a3db55c966560ad3e8d34037602d4d12714980898b78,['yes'],5918,Answer:
+2wikimqa,52, Not available in the given passages.,"Question: When was Antoine Philippe, Duke Of Montpensier's mother born?
+",en,1.0,,2wikimqa,efea9c05de081efb7ef76741d3f24da2e993d54d99677b72,['13 March 1753'],4323,Answer:
+2wikimqa,52, No Trees In The Street,"Question: Which film has the director who died later, True To The Navy or No Trees In The Street?
+",en,1.0,,2wikimqa,435fae9b23d8b22e85a57cfd8ceb8541dea5b0c551acc3a9,['No Trees In The Street'],7162,Answer:
+2wikimqa,52," Kerala, India","Question: What is the place of birth of the director of film Ninamaninja Kalpadukal?
+",en,1.0,,2wikimqa,3ee59c959e64a29c8a30263816ad47b76ffab36e5b8859ee,['Methala'],3129,Answer:
+2wikimqa,52, Alkohol,"Question: Which film came out earlier, Alkohol or Night Of Dark Shadows?
+",en,1.0,,2wikimqa,43cf26663f3b4cec7a8ea68d56909201a2d1b1ad82512190,['Alkohol'],5610,Answer:
+2wikimqa,52, Do Musafir,"Question: Which film whose director is younger, Many Tanks Mr. Atkins or Do Musafir?
+",en,1.0,,2wikimqa,77a79ad1902a4732e8030d79380395b7e614d65de3cdd038,['Do Musafir'],1138,Answer:
+2wikimqa,52, No,"Question: Are Revolt In The Big House and The Fugitive (1914 Film) from the same country?
+",en,1.0,,2wikimqa,f0523a41000b43996413780968b611c3f4d28b87f4acc859,['no'],1241,Answer:
+2wikimqa,52," The passage does not mention the birthplace of the composer of the film Consenting Adults. However, it does mention that the film's composer, Michael Small, was born in New York City.","Question: Where was the composer of film Consenting Adults (1992 Film) born?
+",en,1.0,,2wikimqa,6a60fa19187345478a447b63d8f52a1cb5341e964cda29db,['New York'],2516,Answer:
+2wikimqa,52, Contragolpe,"Question: Which film has the director who died earlier, Tiger In The Smoke or Contragolpe?
+",en,1.0,,2wikimqa,78227cb74e7b2401070e50abff8069510f5e5ccec0a2479f,['Contragolpe'],3675,Answer:
+2wikimqa,52, Mumbai,"Question: Where was the place of death of the director of film Jail Yatra?
+",en,1.0,,2wikimqa,f7abcc33c22de53769935182a278a199e9f263a12e56673e,['Mumbai'],3052,Answer:
+2wikimqa,52, The Comedians Of Comedy (2005) came out before F The Prom (2017).,"Question: Which film came out first, F The Prom or The Comedians Of Comedy?
+",en,1.0,,2wikimqa,24a43c1b071d8bb99f51fec368dbc438cf7aea1f549ea195,['The Comedians Of Comedy'],4756,Answer:
+2wikimqa,52, Tombstone Rashomon,"Question: Which film has the director who was born first, Tombstone Rashomon or Waiting For The Clouds?
+",en,1.0,,2wikimqa,89530e21fb2f36eb499cea025efa9c80b10049f72945bfb6,['Tombstone Rashomon'],5772,Answer:
+2wikimqa,52, Dhuen Ki Lakeer,"Question: Which film has the director who was born earlier, Dhuen Ki Lakeer or Bomma Borusa?
+",en,1.0,,2wikimqa,e8c2e5c8d393b186e21c75788f7e93efeaef12a9c44880d9,['Dhuen Ki Lakeer'],4828,Answer:
+2wikimqa,52," Perdón, Viejita","Question: Which film has the director who was born first, Perdón, Viejita or Smokey And The Bandit?
+",en,1.0,,2wikimqa,d7f6203bfe33e28a517ed4214f515fb80671c48edd4720a6,"['Perdón, Viejita']",10456,Answer:
+2wikimqa,52, University of Wisconsin-Madison,"Question: Where did the director of film American Gothic (2007 Film) graduate from?
+",en,1.0,,2wikimqa,517da14d56782303ccf8ec057b86bf43169b6f2edcd6d0f1,['University of Wisconsin'],2748,Answer:
+2wikimqa,52, Juan René Serrano was born first.,"Question: Was Dudley Russell or Juan René Serrano born first?
+",en,1.0,,2wikimqa,300ccba91f776e583d418d6d9ecc5e1bdca7bd80580cd36e,['Dudley Russell'],4526,Answer:
+2wikimqa,52," Vytautas Straižys was born on 20 August 1936, and Mirjam Polkunen was born on 2 March 1926.","Question: Who was born first, Vytautas Straižys or Mirjam Polkunen?
+",en,1.0,,2wikimqa,81c8cd41355e5f0489dad4010b5fd414b817f7a9134affc2,['Mirjam Polkunen'],3620,Answer:
+2wikimqa,52, Buda,"Question: Where did Grand Duchess Elena Vladimirovna Of Russia's father die?
+",en,1.0,,2wikimqa,0c8d9e57340d06b13e75f1dd42ddb5f08c1203fb62632353,['Saint Petersburg'],9479,Answer:
+2wikimqa,52, Eindhoven,"Question: Where was the director of film The Dinner (2013 Film) born?
+",en,1.0,,2wikimqa,544828db02efd1313bfc0a1bdeb8c3df5985c299254b0222,['Eindhoven'],3592,Answer:
+2wikimqa,52, Women's Suffrage Journal,"Question: Which magazine was established first, Women'S Suffrage Journal or Mostar (Magazine)?
+",en,1.0,,2wikimqa,f5cf6d94b9e4e7adfc30d262396bc29e201d9e07ead1d088,"[""Women'S Suffrage Journal""]",3828,Answer:
+2wikimqa,52, West Virginia,"Question: What is the place of birth of Carrie Watson Fleming's husband?
+",en,1.0,,2wikimqa,018c9c2d781ea2c9d57a31bd2e0ff30b55e77017a319484a,"['Fairmont, West Virginia']",3228,Answer:
+2wikimqa,52, The Market Of Souls,"Question: Which film has the director who died earlier, Mayor Muthanna or The Market Of Souls?
+",en,1.0,,2wikimqa,93ef40c0bfa088c2a2dd3302976a950cba3e8d97767f65ce,['The Market Of Souls'],2305,Answer:
+2wikimqa,52, Yes,"Question: Do both films, The Glass Castle (1950 Film) and The Ferret (Film), have the directors who are from the same country?
+",en,1.0,,2wikimqa,e15605da0c5b6f02c85aff9f1f683d3f85d211c083792ecb,['yes'],4201,Answer:
+2wikimqa,52, Al-Andalus (Iberian Peninsula),"Question: Where was the father of Muhammad Al-Nasir born?
+",en,1.0,,2wikimqa,bf2899717e8d7d3d83d865ca5ff59e26d7f647e6025e2d52,['Morocco'],4417,Answer:
+2wikimqa,52, Beaulieu-sur-Loire,"Question: Where was the place of death of Enheduanna's father?
+",en,1.0,,2wikimqa,57db7adad0b62b8a396fd45937030d876ecd02153b8a931e,['Akkadian empire'],8701,Answer:
+2wikimqa,52, Tarzan The Magnificent,"Question: Which film whose director was born first, Solemn Promise or Tarzan The Magnificent?
+",en,1.0,,2wikimqa,ce6a3aae400b3f5f028504fec37d7be8b447bd0cb1a0cff5,['Tarzan The Magnificent'],4580,Answer:
+2wikimqa,52, Wolf Warrior,"Question: Which film has the director who was born later, The Man Is Armed or Wolf Warrior?
+",en,1.0,,2wikimqa,c997d53083dff6918a3f066cc76c824e43eb4ea21de33c51,['Wolf Warrior'],3774,Answer:
+2wikimqa,52, Trịnh Cương,"Question: Who is the paternal grandfather of Trịnh Doanh?
+",en,1.0,,2wikimqa,184929a3ff00c41a966da9d53444da794af70ce90d624205,['Trịnh Bính'],3718,Answer:
+2wikimqa,52," The director of film Hellcats Of The Navy, Nathan Juran, was born in Gura Humorului, Austro-Hungarian Empire (now Romania).","Question: Where was the director of film Hellcats Of The Navy born?
+",en,1.0,,2wikimqa,56db201f810a3d01b7d14e8e9e6dd94820ecaf2f4a86b2b9,['Gura Humorului'],4854,Answer:
+2wikimqa,52," August 15, 1985, in South Central Los Angeles, California.","Question: Where was the performer of song Feelin' Myself (Nipsey Hussle Song) born?
+",en,1.0,,2wikimqa,fefa6cc344f63fdceda9662af921fdcdf645abb8fe87ea73,['Crenshaw'],7562,Answer:
+2wikimqa,52, Winter Sleepers,"Question: Which film whose director is younger, Winter Sleepers or Poveri Milionari?
+",en,1.0,,2wikimqa,9b0dc01a1388db020e5c5c428a002d099f8a35544e9b6261,['Winter Sleepers'],3065,Answer:
+2wikimqa,52, Adolf III of Berg,"Question: Who is the paternal grandfather of Bruno Ii Von Berg?
+",en,1.0,,2wikimqa,34896de8d6a2c70e09b6dc3d113475a58899961d2aa356b3,['Adolf II of Berg'],4040,Answer:
+2wikimqa,52, Yes,"Question: Are The Other Half (2016 Film) and Spy Kids 2: The Island Of Lost Dreams from the same country?
+",en,1.0,,2wikimqa,0f629fbc7a6c3689ee9771af3aa81400674e673f11d47f2d,['no'],6771,Answer:
+2wikimqa,52, Mülheim an der Ruhr,"Question: Where was the director of film 00 Schneider – Jagd Auf Nihil Baxter born?
+",en,1.0,,2wikimqa,13dde588b81d1de4a9984418bf3d6791de7d1b1edf21d61b,['Mülheim an der Ruhr'],3140,Answer:
+2wikimqa,52, Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato (1970) came out before The Bag Man (2014).,"Question: Which film came out first, Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato or The Bag Man?
+",en,1.0,,2wikimqa,cf56ec8180c3c7622a439e68704fc1ff73770f2e8ee2926e,['Una Prostituta Al Servizio Del Pubblico E In Regola Con Le Leggi Dello Stato'],2809,Answer:
+2wikimqa,52, Yes,"Question: Are the movies The Hatton Garden Job and Carry On Cleo, from the same country?
+",en,1.0,,2wikimqa,78d3bf98f7b05622b428940d273b8c493f24a4468d1998dd,['yes'],10991,Answer:
+2wikimqa,52, Prince Bhanurangsi Savangwongse,"Question: Who is the paternal grandfather of Dibyasambandh?
+",en,1.0,,2wikimqa,9b0b29e391c61c570b20fae813486bc757c1fb7d25d83049,['Mongkut'],3759,Answer:
+2wikimqa,52, Katherine Skipwith,"Question: Who is Charles Willoughby, 10Th Baron Willoughby Of Parham's paternal grandmother?
+",en,1.0,,2wikimqa,bdb42f1c30e16bbcdf6f0ab7c1f76765ddaa5817ee5e674b,['Lady Frances Manners'],3293,Answer:
+2wikimqa,52, The Cinémathèque Française,"Question: Where does the director of film L'Arbre, Le Maire Et La Médiathèque work at?
+",en,1.0,,2wikimqa,a7b5c5d84d974a849b0d042c435bbb3fe90ff50fd5d73f79,['Cahiers du cinéma'],9453,Answer:
+2wikimqa,52," Eisenstein was a Soviet film director, but the film Eisenstein In Guanajuato is about his life.","Question: Where was the director of film Eisenstein In Guanajuato born?
+",en,1.0,,2wikimqa,d0b11838d26195f89d1568431f88a02b4f4d8c9cdf99e04a,"['Newport, Wales']",3945,Answer:
+2wikimqa,52," Orange County, Virginia","Question: What is the place of birth of Sextus Barbour's father?
+",en,1.0,,2wikimqa,ca72ce55dc8f774617c794681dd7062eadfd14e679418cfa,"['Gordonsville, Virginia']",9096,Answer:
+2wikimqa,52, Romania,"Question: What is the place of birth of the performer of song Ruleta (Inna Song)?
+",en,1.0,,2wikimqa,10dc2bd4f7fb1b834c7f563ae3d7af5d269d84b3dfc0b056,['Mangalia'],8046,Answer:
+2wikimqa,52, Félix Leclerc,"Question: Who is the father of the director of film A No-Hit No-Run Summer?
+",en,1.0,,2wikimqa,bbaa4eb6b32bad24fc2b8639d03be8c16d1140ec8454b16a,['Félix Leclerc'],4871,Answer:
+2wikimqa,52, Jacques of Savoy,"Question: Who is Henri Ii, Duke Of Nemours's paternal grandfather?
+",en,1.0,,2wikimqa,bc596d2ebcd25e79ca9cd689e50746e42e9a6fc579afc683,['Jacques'],5577,Answer:
+2wikimqa,52, Stephen I of Hungary,"Question: Who is Gisela Of Hungary's father-in-law?
+",en,1.0,,2wikimqa,f73db1873c311b2a38f27a52c5e05b021da0c2fe9590dac3,['Géza'],11622,Answer:
+2wikimqa,52, Wang Jiang,"Question: Who is the paternal grandmother of King Kang Of Zhou?
+",en,1.0,,2wikimqa,53f6acc70a61443a93c25c91ca7dc7f8780046d02e28c94a,['Yi Jiang'],4142,Answer:
+2wikimqa,52, 1896,"Question: What is the date of death of Maria Isabel De Alcântara, Countess Of Iguaçu's mother?
+",en,1.0,,2wikimqa,88e4806d6c6553000e3c1ff8be5c90f5309342954ce4acae,"['November 3, 1867']",6374,Answer:
+2wikimqa,52, Not specified in the passage.,"Question: Who is the spouse of the director of film Rodney Steps In?
+",en,1.0,,2wikimqa,25b5c6893c13f6e52ddd541c03f5bd6bb7b17cfeb15d9f16,['Ivy Duke'],10243,Answer:
+2wikimqa,52, 1813,"Question: When did Frances Vane, Marchioness Of Londonderry's father die?
+",en,1.0,,2wikimqa,3cff7074281c58717aa65021d875cc1e6a6321f71cd77742,['1 August 1813'],2765,Answer:
+2wikimqa,52, Season Of Strangers,"Question: Which film has the director who is older than the other, Season Of Strangers or The Yellow Teddy Bears? 
+",en,1.0,,2wikimqa,13c4f5388b670f6c20b168e782f7478616fa3ba2edca3081,['Season Of Strangers'],6966,Answer:
+2wikimqa,52, Yes,"Question: Were Jake Eisenhart and Michael T. Ullman of the same nationality?
+",en,1.0,,2wikimqa,0c35123885c26fc474a7cd8e7c03fe75bfff4fc15845d3b9,['yes'],4450,Answer:
+2wikimqa,52, Antoine Casavant was born first.,"Question: Who was born first, Antoine Casavant or Abdul Ali Lalu?
+",en,1.0,,2wikimqa,2a0554b724822b6c611539e39b44381f752acdecce4868ad,['Antoine Casavant'],3131,Answer:
+2wikimqa,52, Oxford University,"Question: Where did Rameshwari Nehru's husband graduate from?
+",en,1.0,,2wikimqa,acb93469117282f2d0131e19f6210e007d681bc7a78e7b64,['Oxford'],4103,Answer:
+2wikimqa,52," Sir Hew Dalrymple, 3rd Baronet","Question: Who is the paternal grandfather of Sir John Hamilton-Dalrymple, 5Th Baronet?
+",en,1.0,,2wikimqa,a7d0cfa55dce1e96490d1e6c0188398864724e96a44e4b79,"['Sir Hew Dalrymple, 2nd Baronet']",2932,Answer:
+2wikimqa,52, Khud-Daar,"Question: Which film has the director who was born earlier, Khud-Daar or Murderer In The Fog?
+",en,1.0,,2wikimqa,7a35ba110f4c26f7eb9d4dcc2e8c1baac383c777f0904976,['Murderer In The Fog'],2692,Answer:
+2wikimqa,52, Milla Jovovich,"Question: Who is the spouse of the director of film Soldier (1998 American Film)?
+",en,1.0,,2wikimqa,b9a9b860c0f0430853d1db2756095da274d522beed2acbeb,['Milla'],7443,Answer:
+2wikimqa,52, Not specified in the given passages.,"Question: Where did Catherine Of Taranto, Countess Of Copertino's mother die?
+",en,1.0,,2wikimqa,a49e29926d7019e6cbaf6b0610453eda22fa1ce9043f5829,['Lecce'],3523,Answer:
+2wikimqa,52, Prometheus Award,"Question: Which award the director of film Lady Magdalene'S got?
+",en,1.0,,2wikimqa,29ec971fbdf0df2d0c41c497de945024db6159c0c30be307,['Prometheus Award'],3529,Answer:
+2wikimqa,52, German,"Question: What nationality is Princess Charlotte Of Saxe-Meiningen's husband?
+",en,1.0,,2wikimqa,de14d0bf7b2c73f7a21875677eed84a1ef270d2f29dc5b99,['Duchy of Saxe-Gotha-Altenburg'],4847,Answer:
+2wikimqa,52, The Longshots,"Question: Which film has the director who was born first, The Longshots or Station For Two?
+",en,1.0,,2wikimqa,49035ecce6e78a355307dd6a1ddb11a87cab76090d655d2f,['Station For Two'],9998,Answer:
+2wikimqa,52, Scotland,"Question: What is the place of birth of Aleksey Greig's father?
+",en,1.0,,2wikimqa,d04cc75917c9ef6b7a78b82491229023013ef3cea72bfba4,['Inverkeithing'],4097,Answer:
+2wikimqa,52," After the death of his father, King Alexander II of Scotland planned to divide the lordship between the husbands of Alan's three daughters.","Question: When did Thomas Of Galloway (Bastard)'s father die?
+",en,1.0,,2wikimqa,8848d4bd1425f8bef31b6c279ec378bcbca14f10b702c4ea,['1234'],9182,Answer:
+2wikimqa,52, 24 October 1642,"Question: When did Robert Bertie, 3Rd Earl Of Lindsey's father die?
+",en,1.0,,2wikimqa,72132e87102859b583fb69a8a2a6a8b026be4fec5a1437e0,['25 July 1666'],6136,Answer:
+2wikimqa,52, The Wind's Fierce,"Question: Which film has the director born later, The Wind'S Fierce or Special Delivery (1927 Film)?
+",en,1.0,,2wikimqa,0c15fb826ac59bbde9df698db9c277def2bc72fa5b7b497d,"[""The Wind'S Fierce""]",9043,Answer:
+2wikimqa,52, He drowned himself in his swimming pool.,"Question: Why did the director of film Port Of Seven Seas die?
+",en,1.0,,2wikimqa,cf5321576ab8cc1b8453991abac66aa5d46155d8ffa7ee17,['drowning'],8169,Answer:
+2wikimqa,52, Abu Dhabi,"Question: What is the place of birth of Abdulaziz Nasser Al Shamsi's wife?
+",en,1.0,,2wikimqa,6110cb2d4156df8d180fdd01e5f340c4731f7d1f4583fc5a,['Abu Dhabi'],3593,Answer:
+2wikimqa,52, Prenzlau,"Question: What is the place of birth of Frank Wartenberg's wife?
+",en,1.0,,2wikimqa,b1034d8bbeeba5f9001f48311c182d2a20782462f0c2ed65,['Prenzlau'],3584,Answer:
+2wikimqa,52, Poland,"Question: Where was the director of film Edges Of The Lord born?
+",en,1.0,,2wikimqa,7218faa7d718853f8df4329a7242806cf70e63ece56f8cdb,['Poznań'],3814,Answer:
+2wikimqa,52, Forlì,"Question: Where was the father of Teobaldo Ii Ordelaffi born?
+",en,1.0,,2wikimqa,78436f55ae9c254da5a54558ddd196c94850ba7a2b6fa637,['Italy'],4597,Answer:
+2wikimqa,52," Toronto, Ontario.","Question: Where was the husband of Maude Smith born?
+",en,1.0,,2wikimqa,ddd046530f4979511397f82fe5391d0a646c0aa18225a98e,"['Toronto, Ontario']",3366,Answer:
+2wikimqa,52, The Third Kiss (1919) was released earlier than Forbidden Daughters (1927).,"Question: Which film was released earlier, Forbidden Daughters or The Third Kiss?
+",en,1.0,,2wikimqa,2ce836524b90befee94e944e77ce3420878e75b5a1e14c26,['Forbidden Daughters'],4389,Answer:
+2wikimqa,52, No,"Question: Does Leslie Pietrzyk have the same nationality as Marianne Wiggins?
+",en,1.0,,2wikimqa,bcd3d700ef14d9a1f6b766c5d185b43ac8f3b7feffd4732f,['yes'],4958,Answer:
+2wikimqa,52, Bogdan Țăruș was born first.,"Question: Who was born first, Bogdan Țăruș or Robert Wulnikowski?
+",en,1.0,,2wikimqa,24591a37ff748fb849a62e6a4f4095f7089d7ced43595d01,['Bogdan Țăruș'],3425,Answer:
+2wikimqa,52, Folgore Division,"Question: Which film has the director who died first, Folgore Division or Sandflow?
+",en,1.0,,2wikimqa,2e86241a9d27925aa52e039067fa83e27e305301188daef7,['Sandflow'],1945,Answer:
+2wikimqa,52, From Corleone To Brooklyn,"Question: Which film has the director born later, From Corleone To Brooklyn or Durango Valley Raiders?
+",en,1.0,,2wikimqa,c1d354f1d1855b21eb3c3cd204d5030080ef9e3c7e4b0195,['From Corleone To Brooklyn'],3894,Answer:
+2wikimqa,52, Yes,"Question: Are both Howard Lake (British Columbia) and North Buck Lake (Alberta) located in the same country?
+",en,1.0,,2wikimqa,2c605656720054b6c9e6e0f15f99c1b4675db67e6e098cee,['yes'],667,Answer:
+2wikimqa,52, Vienna,"Question: Where was the place of death of the composer of song Gretchen Am Spinnrade?
+",en,1.0,,2wikimqa,1edc61803f35344a5a4b6d273e6eb0f643fefcec0fa0a22a,['Vienna'],10974,Answer:
+2wikimqa,52," Hugh Evelyn Wortham was born in 1884, and Johnny Ekström was born in 1965.","Question: Who was born later, Hugh Evelyn Wortham or Johnny Ekström?
+",en,1.0,,2wikimqa,d65eba4a41497416d108c17f366636efb4cbda4c215c8818,['Johnny Ekström'],6044,Answer:
+2wikimqa,52, Yes,"Question: Are both mountains, Yana Urqu (Q'Umirqucha) and Puka Rumi, located in the same country?
+",en,1.0,,2wikimqa,2df722c08f52cbf987c84019f7f2e5455cd29992738441cc,['yes'],592,Answer:
+2wikimqa,52, English,"Question: What nationality is Elizabeth Of Rhuddlan's father?
+",en,1.0,,2wikimqa,814dddaa4a997380fc80cc1c72d48cb20545411924a0603f,['England'],11950,Answer:
+2wikimqa,52, Parkinson's disease.,"Question: What is the cause of death of director of film I Will, I Will... For Now?
+",en,1.0,,2wikimqa,1d554e7ae21ed7b5d142b57bcdab110cf6cea6f5256a58ee,['Parkinson'],4337,Answer:
+2wikimqa,52, Hugh le Despenser,"Question: Who is Maurice De Berkeley, 4Th Baron Berkeley's maternal grandfather?
+",en,1.0,,2wikimqa,d0ebddd00bfc9c5747021ae27c0ea5cdf21355bc86b83753,"['Roger Mortimer, 1st Earl of March']",3947,Answer:
+2wikimqa,52, Ali Dinar died first.,"Question: Who died first, Albertus Seba or Ali Dinar?
+",en,1.0,,2wikimqa,8f6c8de1c1518b5bdcbc4ff1cdfe035b9207971a6362574f,['Albertus Seba'],4441,Answer:
+2wikimqa,52," Francis II, Holy Roman Emperor","Question: Who is the maternal grandfather of Marie Louise, Duchess Of Parma?
+",en,1.0,,2wikimqa,59e42b2cab6da2436fae05e25c49f6f4b4893b07bb48e3c1,['Ferdinand I of the Two Sicilies'],8935,Answer:
+2wikimqa,52, Prince Of Arcadia,"Question: Which film was released earlier, Prince Of Arcadia or Italia-Germania 4-3?
+",en,1.0,,2wikimqa,35cbcb102aa5b4f9188011190e0f30456df5673fcddacf49,['Prince Of Arcadia'],3155,Answer:
+2wikimqa,52, Milan,"Question: Where was the director of film Love At First Sight (1985 Film) born?
+",en,1.0,,2wikimqa,44864cf7bbca78294d1b24c5acfa035f30849d802356aad4,['Milan'],3195,Answer:
+2wikimqa,52, Köln,"Question: Where did the director of film Nanon (1938 Film) die?
+",en,1.0,,2wikimqa,67705e148a6e0540819f466bb4fdc73ed2e5cbcd64d80930,['Köln'],3719,Answer:
