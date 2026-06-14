@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """K-cache quantization with a CALIBRATE/EVAL split over the `full` dataset.
 
-Calibrate (basis, std, bit allocation, and QPCA-EC's uniform-step delta + per-coord
-entropy model) on a chosen subset of `full` example indices; evaluate top-1/top-5/
-MSE/logit-err and the QPCA-EC coded rate on the DISJOINT remaining examples.
+Calibrate (basis, std, bit allocation, and QPCA-EC's delta + per-coord entropy
+model) on a chosen subset of `full` example indices; evaluate top-1/top-5/MSE/
+logit-err and the QPCA-EC coded rate on the DISJOINT remaining examples.
 
 This makes the comparison honest: nothing fit on eval. QPCA-EC's range-coder
 frequency model is FROZEN on calibration and applied to eval indices, so its
@@ -13,8 +13,19 @@ generalizes poorly -- the correct penalty).
 Calibration second moments are recomputed from the CALIB raw tensors (NOT from
 pooled_stats.pt, which was pooled over all of full and would leak eval into the basis).
 
+QPCA-EC quantizer modes:
+  default          per-coord closed-form delta (ell-weighted ECSQ allocation).
+  --match-rate     per-coord delta re-solved by bisection so deadzoned entropy
+                   hits the target; dz becomes an RD knob at fixed rate.
+  --qpca-uniform   SINGLE uniform delta per head (no ell-weighting). QPCA's
+                   non-orthonormal forward already carries the allocation, so a
+                   uniform step in the transform domain is the configuration QPCA
+                   is optimal for. One scalar Delta per head is bisected to the
+                   pooled rate b. Use dz=0.5 for the clean round-to-nearest
+                   property. Overrides --match-rate.
+
     python run_pca_split.py --calib-idx 0 1 2 3 --eval-idx 4 5 6 7
-    python run_pca_split.py --calib-idx 0 1 2 3 4 5 --eval-idx 6 7 --bits 2 3 4
+    python run_pca_split.py --calib-idx 0 1 2 --eval-idx 4 --dz 0.5 --qpca-uniform
 """
 
 import argparse
@@ -458,22 +469,24 @@ def coded_bits_eval(fetch_eval, delta, model, n_layers, n_kv_heads, d, dz=0.5):
 
 def _entropy_per_coord(idx):
     """Discrete entropy (bits) of each column of an integer tensor idx (N, d).
-    Fully vectorized via a single offset bincount + segment scatter."""
+    Fully vectorized via a single offset bincount + segment scatter. Device-safe
+    (helper tensors allocated on idx.device)."""
     N, d = idx.shape
+    dev = idx.device
     mins = idx.min(dim=0).values
     shifted = idx - mins.unsqueeze(0)                       # >= 0
     widths = (shifted.max(dim=0).values + 1).clamp_min(1)   # (d,) long
-    offsets = torch.zeros(d, dtype=torch.long)
+    offsets = torch.zeros(d, dtype=torch.long, device=dev)
     if d > 1:
         offsets[1:] = torch.cumsum(widths, 0)[:-1]
     total = int(offsets[-1].item() + widths[-1].item())
     flat = (shifted + offsets.unsqueeze(0)).reshape(-1)
     counts = torch.bincount(flat, minlength=total).double()
-    seg = torch.repeat_interleave(torch.arange(d), widths)  # bin -> column id
-    col_sum = torch.zeros(d, dtype=torch.double).scatter_add_(0, seg, counts)
+    seg = torch.repeat_interleave(torch.arange(d, device=dev), widths)  # bin -> column id
+    col_sum = torch.zeros(d, dtype=torch.double, device=dev).scatter_add_(0, seg, counts)
     p = counts / col_sum[seg].clamp_min(1.0)
     term = torch.where(p > 0, -p * p.clamp_min(1e-30).log2(), torch.zeros_like(p))
-    return torch.zeros(d, dtype=torch.double).scatter_add_(0, seg, term)
+    return torch.zeros(d, dtype=torch.double, device=dev).scatter_add_(0, seg, term)
 
 
 def _solve_delta_matched(r, Hj_head, dz, delta0_head, n_iter=24, bracket_bits=6.0):
@@ -497,26 +510,64 @@ def _solve_delta_matched(r, Hj_head, dz, delta0_head, n_iter=24, bracket_bits=6.
     return torch.pow(2.0, 0.5 * (lo + hi))
 
 
+def _solve_delta_uniform(r, b, dz, delta0_scalar, n_iter=30, bracket_bits=8.0):
+    """QPCA-faithful single scalar step for a whole head: uniform quantization in
+    the (non-orthonormal) transform domain, where F already carries the bit
+    allocation. Bisects one Delta so the summed deadzoned per-coord entropy equals
+    b*d bits (= b bits/coord pooled). r:(N,d). Returns a Python float Delta.
+
+    One knob, not d: targets the SUMMED (pooled) entropy. Summed entropy is monotone
+    decreasing in Delta, so the bisection around the per-coord geometric-mean start
+    is well-posed."""
+    r = r.double()
+    d = r.shape[1]
+    log2d0 = math.log2(max(float(delta0_scalar), 1e-30))
+    lo, hi = log2d0 - bracket_bits, log2d0 + bracket_bits
+    target = float(b) * d
+    for _ in range(n_iter):
+        mid = 0.5 * (lo + hi)
+        delta = 2.0 ** mid
+        idx = (torch.sign(r) * torch.floor(r.abs() / delta + dz)).long()
+        if float(_entropy_per_coord(idx).sum()) > target:
+            lo = mid          # too many bits -> larger step
+        else:
+            hi = mid
+    return 2.0 ** (0.5 * (lo + hi))
+
+
 def build_qpca_ec(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
-                  fetch_calib, root, calib_idx, dz=0.5, match_rate=False, verbose=False):
+                  fetch_calib, root, calib_idx, dz=0.5, match_rate=False,
+                  uniform_step=False, verbose=False):
     """delta + entropy model from CALIB codes. Cached on disk keyed by
-    (dataset, calib-idx, bits, dz, match_rate) -- independent of eval-idx -- so
-    sweeping eval splits skips the calib raw-example walk. With match_rate=False,
-    delta is the closed-form round-to-nearest step and dz only reshapes the index
-    histogram (rate drops). With match_rate=True, delta is re-solved per coord so
-    the deadzoned entropy hits Hj and rate stays ~b. Returns (comps, delta, model)."""
+    (dataset, calib-idx, bits, dz, match_rate, uniform_step) -- independent of
+    eval-idx -- so sweeping eval splits skips the calib raw-example walk.
+
+    Modes:
+      default (mr=0, us=0)  closed-form per-coord round-to-nearest step; dz only
+                            reshapes the index histogram (rate drops with dz<0.5).
+      match_rate (mr=1)     per-coord delta re-solved by bisection so the deadzoned
+                            entropy hits Hj and rate stays ~b across dz.
+      uniform_step (us=1)   SINGLE uniform delta/head, no ell-weighting. QPCA's
+                            non-orthonormal F already carries the allocation, so one
+                            uniform step in the transform domain is optimal in the
+                            original (Q-weighted) domain. One scalar Delta/head
+                            bisected to pooled rate b. Overrides match_rate.
+
+    Returns (comps, delta, model)."""
     F = qpca_cen["forward"]
     d = F.shape[-1]
     MOMENTS_CACHE.mkdir(parents=True, exist_ok=True)
     key = (f"{root.name}__ecmodel__idx_" + "_".join(str(i) for i in sorted(calib_idx))
-           + f"__b{b}__dz{dz:g}__mr{int(match_rate)}")
+           + f"__b{b}__dz{dz:g}__mr{int(match_rate)}__us{int(uniform_step)}")
     cache_path = MOMENTS_CACHE / f"{key}.pt"
     if cache_path.exists():
         c = torch.load(cache_path, map_location="cpu", weights_only=False)
         delta, model = c["delta"], c["model"]
-        print(f"  [EC] b={b} dz={dz:g} mr={int(match_rate)}: model CACHE HIT {cache_path.name}")
+        print(f"  [EC] b={b} dz={dz:g} mr={int(match_rate)} us={int(uniform_step)}: "
+              f"model CACHE HIT {cache_path.name}")
     else:
-        print(f"  [EC] b={b} dz={dz:g} mr={int(match_rate)}: model cache miss, fitting on calib...")
+        print(f"  [EC] b={b} dz={dz:g} mr={int(match_rate)} us={int(uniform_step)}: "
+              f"model cache miss, fitting on calib...")
         fwdt = F.transpose(-1, -2)
         ell = (fwdt @ regularize_batch(qpca_unc["sigma_q"], EPS).to(F.dtype) @ F
                ).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
@@ -524,8 +575,16 @@ def build_qpca_ec(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
         target = h + 0.5 * ell.double().log2()
         Hj = (target - target.mean(-1, keepdim=True) + float(b)).clamp_min(0.0)
         Hj = Hj * (float(b) * d / Hj.sum(-1, keepdim=True).clamp_min(1e-9))
-        delta = torch.pow(2.0, (h - Hj))             # closed-form (round-to-nearest) step
-        if match_rate:
+        delta = torch.pow(2.0, (h - Hj))             # closed-form per-coord step (also the
+                                                     # per-head geometric-mean starting guess)
+        if uniform_step:
+            print(f"    [EC] uniform-step: bisecting one scalar delta/head to pooled b={b} "
+                  f"(dz={dz:g})...")
+            for l in range(n_layers):
+                for hh in range(n_kv_heads):
+                    d0 = 2.0 ** float(delta[l, hh].clamp_min(1e-30).log2().mean())
+                    delta[l, hh] = _solve_delta_uniform(fetch_calib(l, hh), b, dz, d0)
+        elif match_rate:
             print(f"    [EC] match-rate: re-solving deadzone-aware delta (dz={dz:g})...")
             for l in range(n_layers):
                 for hh in range(n_kv_heads):
@@ -534,7 +593,8 @@ def build_qpca_ec(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
         delta = delta.float()
         model = freeze_coder_model(fetch_calib, delta, n_layers, n_kv_heads, d, dz)
         torch.save({"delta": delta, "model": model, "calib_idx": sorted(calib_idx),
-                    "b": b, "dz": dz, "match_rate": match_rate}, cache_path)
+                    "b": b, "dz": dz, "match_rate": match_rate,
+                    "uniform_step": uniform_step}, cache_path)
         print(f"    cached EC model -> {cache_path.name}")
     comps = {}
     for l in range(n_layers):
@@ -623,16 +683,23 @@ def main():
     ap.add_argument("--dz", type=float, default=0.5,
                     help="deadzone rounding offset for QPCA-EC; 0.5=round-to-nearest "
                          "(current behavior), smaller widens the zero bin "
-                         "(H.264 intra ~0.375, inter ~0.167)")
+                         "(H.264 intra ~0.375, inter ~0.167). Use 0.5 with "
+                         "--qpca-uniform for the clean QPCA optimality property.")
     ap.add_argument("--match-rate", action="store_true",
                     help="re-solve QPCA-EC delta per coord so the deadzoned entropy "
                          "hits the target -> rate stays ~b across dz (turns dz into an "
                          "RD knob). Off = closed-form delta, dz just lowers the rate.")
+    ap.add_argument("--no-qpca-uniform", dest="qpca_uniform", action="store_false",
+                    help="use per-coord ECSQ step instead of the default single "
+                         "uniform step per head.")
+    ap.set_defaults(qpca_uniform=True)    
     args = ap.parse_args()
     k_bits = sorted(args.bits)
     overlap = set(args.calib_idx) & set(args.eval_idx)
     if overlap:
         sys.exit(f"calib and eval indices overlap: {sorted(overlap)} -- must be disjoint")
+    if args.qpca_uniform and args.match_rate:
+        print("[note] --qpca-uniform overrides --match-rate (single uniform step per head)")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     root = data_root(); manifest = load_manifest(root)
@@ -651,9 +718,11 @@ def main():
     qpca_unc = build_qpca_basis(sigma_q, sigma_k); qpca_unc["sigma_k"] = sigma_k; qpca_unc["sigma_q"] = sigma_q
     qpca_cen = build_qpca_basis(sigma_q, k_cov);   qpca_cen["sigma_k"] = sigma_k
 
-    print(f"\nQPCA widen {tuple(args.widen)} x{args.widen_mult}; QPCA-EC uniform+ECSQ, "
+    ec_mode = ("uniform-step" if args.qpca_uniform
+               else "match-rate" if args.match_rate else "closed-form per-coord")
+    print(f"\nQPCA widen {tuple(args.widen)} x{args.widen_mult}; QPCA-EC {ec_mode}, "
           f"dz={args.dz:g} ({'round-to-nearest' if args.dz == 0.5 else 'deadzone'}), "
-          f"match_rate={args.match_rate}, coder model frozen on calib")
+          f"coder model frozen on calib")
 
     comps = {}
     comps["TurboQuant"] = {b: {(l, h): turbo[b] for l in range(n_layers) for h in range(n_kv_heads)} for b in k_bits}
@@ -673,7 +742,8 @@ def main():
         ec_comps, delta, model = build_qpca_ec(qpca_cen, qpca_unc, k_mean, b,
                                                n_layers, n_kv_heads, fetch_calib,
                                                root, args.calib_idx, dz=args.dz,
-                                               match_rate=args.match_rate)
+                                               match_rate=args.match_rate,
+                                               uniform_step=args.qpca_uniform)
         comps["QPCA-EC"][b] = ec_comps
         ec_rate[b] = coded_bits_eval(fetch_eval, delta, model, n_layers, n_kv_heads, d_head, dz=args.dz)
         print(f"  [EC] b={b}: held-out constriction rate = {ec_rate[b]:.3f} bits/coord")
@@ -695,6 +765,9 @@ def main():
         print()
     print("rate(b/c): baselines = grid-bits; QPCA-EC = HELD-OUT constriction bits "
           "(model frozen on calib, applied to eval). Calib/eval disjoint.")
+    if args.qpca_uniform:
+        print("QPCA-EC mode = uniform-step: one scalar delta/head, no ell-weighted "
+              "per-coord allocation (QPCA's optimal config).")
 
     fig, axes = plt.subplots(1, 4, figsize=(15, 3.6))
     titles = {"top1": ("top-1","higher"), "top5": ("top-5","higher"),
