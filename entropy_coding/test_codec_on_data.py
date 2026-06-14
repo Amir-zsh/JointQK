@@ -93,6 +93,57 @@ def build_ladder_uniform(fwd, inv, k_mean, b, L, Hkv, d, fetch, root, calib_idx,
     return ladder, delta0, model0
 
 
+def build_ec_percoord(fwd, inv, sigma_q, k_mean, b, L, Hkv, d, fetch, root,
+                      calib_idx, dz, tag, match_rate=False):
+    """Per-coord ECSQ EC base fit on an arbitrary basis. delta varies per coordinate
+    via ell = diag(F^T Sigma_Q F) weighting; for an ORTHONORMAL basis (R_sym) this
+    is the allocation mechanism, since the basis itself carries none. match_rate
+    re-solves delta per coord (deadzone-aware) to hit b. Cached with a basis tag.
+    Returns (delta0(L,Hkv,d), model0)."""
+    base.MOMENTS_CACHE.mkdir(parents=True, exist_ok=True)
+    key = (f"{root.name}__ecmodel_{tag}__idx_" + "_".join(str(i) for i in sorted(calib_idx))
+           + f"__b{b}__dz{dz:g}__mr{int(match_rate)}__pc1")
+    cp = base.MOMENTS_CACHE / f"{key}.pt"
+    if cp.exists():
+        c = torch.load(cp, map_location="cpu", weights_only=False)
+        print(f"  [EC-{tag}] b={b} dz={dz:g} mr={int(match_rate)} per-coord: CACHE HIT {cp.name}")
+        return c["delta"], c["model"]
+    print(f"  [EC-{tag}] b={b} dz={dz:g} mr={int(match_rate)} per-coord: fitting on calib...")
+    ell = (fwd.transpose(-1, -2).double() @ base.regularize_batch(sigma_q, base.EPS).double()
+           @ fwd.double()).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+    h = base._diff_entropy_from_fetch(fetch, L, Hkv, d)            # (L,Hkv,d)
+    target = h + 0.5 * ell.log2()
+    Hj = (target - target.mean(-1, keepdim=True) + float(b)).clamp_min(0.0)
+    Hj = Hj * (float(b) * d / Hj.sum(-1, keepdim=True).clamp_min(1e-9))
+    delta = torch.pow(2.0, (h - Hj)).float()                      # closed-form per-coord step
+    if match_rate:
+        for l in range(L):
+            for hh in range(Hkv):
+                delta[l, hh] = base._solve_delta_matched(fetch(l, hh), Hj[l, hh], dz, delta[l, hh])
+    delta = delta.float()
+    model = base.freeze_coder_model(fetch, delta, L, Hkv, d, dz)
+    torch.save({"delta": delta, "model": model, "calib_idx": sorted(calib_idx),
+                "b": b, "dz": dz, "match_rate": match_rate, "tag": tag}, cp)
+    print(f"    cached -> {cp.name}")
+    return delta, model
+
+
+def build_ladder_percoord(fwd, inv, sigma_q, k_mean, b, L, Hkv, d, fetch, root,
+                          calib_idx, m_grid, dz, tag, match_rate=False):
+    """Per-coord-step m-ladder on an arbitrary basis (JointQK R_sym). Base step from
+    build_ec_percoord (cached, tagged); other rungs scale the per-coord delta by m."""
+    delta0, model0 = build_ec_percoord(fwd, inv, sigma_q, k_mean, b, L, Hkv, d, fetch,
+                                        root, calib_idx, dz, tag, match_rate=match_rate)
+    ladder = []
+    for m in sorted(float(x) for x in m_grid):
+        if abs(m - 1.0) < 1e-9:
+            ladder.append((1.0, delta0, model0))
+        else:
+            dm = (delta0 * m).float()
+            ladder.append((m, dm, base.freeze_coder_model(fetch, dm, L, Hkv, d, dz)))
+    return ladder, delta0, model0
+
+
 def _build_codecs(fwd, inv, k_mean, ladder, L, Hkv, page_bits, P, dz, lanes, rdo):
     if rdo:
         from kvq_codec_rdo import build_codecs_from_ladder_rdo_cuda
@@ -265,7 +316,10 @@ def main():
     ap.add_argument("--cpu-encode", action="store_true",
                     help="force CPU encode (default is GPU encode for per-page)")
     ap.add_argument("--no-jqec", action="store_true",
-                    help="skip the JointQK-EC paged arm (R_sym basis, EC+uniform ladder)")
+                    help="skip the JointQK-EC paged arm (R_sym basis, EC+per-coord ladder)")
+    ap.add_argument("--jq-match-rate", action="store_true",
+                    help="JointQK-EC: deadzone-aware per-coord delta re-solve to hit b "
+                         "(default is closed-form per-coord step)")
     ap.add_argument("--save-config", type=str, default="")
     args = ap.parse_args()
     k_bits = sorted(args.bits); m_grid = sorted(set(args.m_grid) | {1.0})
@@ -296,6 +350,12 @@ def main():
     turbo = base.build_turboquant(d, k_bits)
     jq = base.build_jointqk_basis(sigma_q, sigma_k)
     F_jq, inv_jq = jq["forward"], jq["inverse"]
+    # Centered per-coord std for the JointQK grid: variance of the CENTERED rotated
+    # keys (diag(R^T k_cov R)), not the uncentered sigma_k that build_jointqk_basis
+    # used. Matches the centering applied below so the quantizer grid is scaled to
+    # the centered dynamic range.
+    jq_std_cen = (inv_jq.double() @ base.regularize_batch(k_cov, base.EPS).double()
+                  @ F_jq.double()).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30).sqrt().float()
     fetch_calib_jq = base._codes_for_idx(root, manifest, args.calib_idx, F_jq, k_mean, L, Hkv, d)
     fetch_eval_jq = base._codes_for_idx(root, manifest, args.eval_idx, F_jq, k_mean, L, Hkv, d)
 
@@ -307,7 +367,9 @@ def main():
     reset_timers()
     for b in k_bits:
         comps["TurboQuant"][b] = {(l, h): turbo[b] for l in range(L) for h in range(Hkv)}
-        comps["JointQK"][b] = base.build_compressors(jq, b, L, Hkv)
+        jq_grid = base.build_compressors(jq, b, L, Hkv, std_override=jq_std_cen)
+        comps["JointQK"][b] = {(l, h): base.CenteredRoundtrip(jq_grid[(l, h)], k_mean[l, h])
+                               for (l, h) in jq_grid}
         page_bits = b * d * args.ptok
 
         # QPCA paged (uniform base step)
@@ -323,11 +385,11 @@ def main():
                               for l in range(L) for h in range(Hkv)}
         comps[PAGED][b] = paged_codecs[PAGED][b]
 
-        # JointQK-EC paged (R_sym basis, uniform ladder)
+        # JointQK-EC paged (R_sym basis, per-coord ECSQ ladder)
         if use_jqec:
-            jq_ladder, jq_delta0, jq_model0 = build_ladder_uniform(
-                F_jq, inv_jq, k_mean, b, L, Hkv, d, fetch_calib_jq,
-                root, args.calib_idx, m_grid, args.dz, "rsym")
+            jq_ladder, jq_delta0, jq_model0 = build_ladder_percoord(
+                F_jq, inv_jq, sigma_q, k_mean, b, L, Hkv, d, fetch_calib_jq,
+                root, args.calib_idx, m_grid, args.dz, "rsym", match_rate=args.jq_match_rate)
             jq_ec_rate[b] = base.coded_bits_eval(fetch_eval_jq, jq_delta0, jq_model0,
                                                  L, Hkv, d, dz=args.dz)
             paged_codecs[JQEC][b] = _build_codecs(F_jq, inv_jq, k_mean, jq_ladder, L, Hkv,
