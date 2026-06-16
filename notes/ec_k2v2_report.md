@@ -402,7 +402,7 @@ re-benched. The corrected numbers (above) move by ≤2 pp per cell and **do not 
 any conclusion**: QPCA-EC still loses to r_sym-EC by ~3 pp mean and to TurboQuant on
 mean F1, winning only 2wikimqa.
 
-## Uniform-step quantizer (2026-06-15): QPCA's optimal config still loses to r_sym
+## Uniform-step quantizer (2026-06-16): QPCA's optimal config still loses to r_sym
 
 The per-coord results above allocate the deadzone step per coordinate, weighted by
 `ell = diag(F^T Σ_Q F)` (ECSQ water-fill). An alternative — upstreamed into the
@@ -410,31 +410,33 @@ The per-coord results above allocate the deadzone step per coordinate, weighted 
 a **single scalar step Δ per head**, bisected to the pooled rate, with no per-coord
 allocation. The rationale: QPCA's forward map is *non-orthonormal* and already bakes
 the bit allocation into the basis, so a uniform step in the transform domain is the
-configuration QPCA is theoretically optimal for. (For the *orthonormal* r_sym basis,
-per-coord `ell`-weighting is the natural fit, so uniform-step is expected to help QPCA
-but not r_sym — the r_sym-uniform control is benching now and will be appended.)
+configuration QPCA is theoretically optimal for. The *orthonormal* r_sym basis does
+not carry allocation in the basis, so per-coord `ell`-weighting should be its natural
+fit and uniform-step should hurt it. Both bases were benched both ways at dz=0.5.
 
-QPCA, dz=0.5, K=2/V=2, uniform-step vs per-coord:
+**The full 2×2 (dz=0.5, K=2/V=2) confirms the prediction exactly** — uniform-step is
+the right config for the basis that carries its own allocation, and the wrong one for
+the basis that doesn't:
 
-| task | per-coord | uniform | Δ |
-|---|---|---|---|
-| lcc | 46.64 | 49.29 | **+2.65** |
-| musique | 30.11 | 28.02 | **−2.09** |
-| 2wikimqa | 47.41 | 48.61 | +1.20 |
-| **mean** | 41.39 | 41.97 | **+0.58** |
+| basis | mode | lcc | musique | 2wikimqa | mean | Δ mean (uniform − per-coord) |
+|---|---|---|---|---|---|---|
+| QPCA  | per-coord | 46.64 | 30.11 | 47.41 | 41.39 | — |
+| QPCA  | **uniform** | 49.29 | 28.02 | 48.61 | 41.97 | **+0.58** |
+| r_sym | **per-coord** | 50.86 | 31.75 | 49.32 | 43.98 | — |
+| r_sym | uniform | 45.61 | 32.87 | 48.77 | 42.42 | **−1.56** |
 
-Uniform-step does help QPCA (mean +0.58), exactly where the basis carries the
-structure (lcc +2.65, 2wikimqa +1.2), at the cost of the in-calibration task where
-per-coord precision mattered (musique −2.09). It flips QPCA from tying TurboQuant
-(41.39 vs 41.52) to nominally beating it (41.97, 2/3 tasks won). Rate is matched
-(per-task post-hoc held-out: uniform 2.00 / 2.05 / 1.95 on lcc/musique/2wikimqa).
+- **Uniform-step helps QPCA (+0.58)** and **hurts r_sym (−1.56)** — opposite signs,
+  as the basis geometry predicts. The lcc task drives both: uniform *helps* QPCA's lcc
+  (+2.65) but *hurts* r_sym's lcc (−5.25); musique moves the other way on each
+  (QPCA −2.09, r_sym +1.12). Each basis is best in its natural config.
+- Rates are matched across all four (per-task post-hoc held-out within 1.94–2.05 b/c).
 
-**But it does not change the basis verdict.** Even in its optimal config, QPCA-EC
-(41.97 mean) still loses to r_sym-EC per-coord (43.98 at dz0.5, 44.47 at dz0.375) by
-~2 pp mean and on every individual task (lcc 49.29 vs 50.86–51.10, musique 28.02 vs
-31.3–31.8, 2wikimqa 48.61 vs 49.32–51.03) — and at a slightly *higher* rate (lcc
-2.00 vs ~1.99). The earlier ~3-pp gap narrows to ~2 pp, not closed. The argmax-aware
-R_sym (JointQK) remains the best K-side basis under entropy coding.
+**Each basis at its best config still leaves r_sym on top.** r_sym-per-coord (43.98 at
+dz0.5; 44.47 at dz0.375) beats QPCA-uniform (41.97) by ~2 pp mean and on every task
+(lcc 49.29 vs 50.86–51.10, musique 28.02 vs 31.3–31.8, 2wikimqa 48.61 vs 49.32–51.03),
+at an equal-or-lower rate. Giving QPCA its theoretically-optimal quantizer narrows the
+earlier ~3-pp gap to ~2 pp but does not close it. The argmax-aware R_sym (JointQK)
+remains the best K-side basis under entropy coding, in its per-coord config.
 
 ## Artifacts
 

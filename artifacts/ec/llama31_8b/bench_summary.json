@@ -181,5 +181,15 @@
    "repobench-p": 1.9867183522700977,
    "triviaqa": 1.924392054405849
   }
+ },
+ "ec_r_sym_dz0.5_uniform": {
+  "f1": {
+   "2wikimqa": 48.77,
+   "lcc": 45.61,
+   "musique": 32.87
+  },
+  "mean_f1": 42.416666666666664,
+  "rate": null,
+  "rate_per_task": null
  }
 }
