@@ -569,6 +569,21 @@ def build_qpca_ec(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
         print(f"  [EC] b={b} dz={dz:g} mr={int(match_rate)} us={int(uniform_step)}: "
               f"model cache miss, fitting on calib...")
         fwdt = F.transpose(-1, -2)
+        # BUG (per-coord modes only; flagged 2026-06-16): `ell` is the per-coord
+        # distortion-importance weight for the Q-weighted objective. The correct
+        # weight is diag(G Sigma_Q G^T) where G is the INVERSE map (a code-coord-j
+        # error reconstructs to original space via row j of G). This code uses
+        # diag(F^T Sigma_Q F) instead, which equals diag(G Sigma_Q G^T) ONLY for an
+        # orthonormal basis (G = F^T). The QPCA basis here is NON-orthonormal
+        # (F = M_q^{1/2} V, G = V^T M_q^{-1/2}): QPCA absorbs the Q-weighting so the
+        # correct weight is uniform (G Sigma_Q G^T = I), but diag(F^T Sigma_Q F)
+        # spans ~1e5-1e11x per head, badly mis-allocating bits across coordinates.
+        # Harmless in the DEFAULT --qpca-uniform mode (uniform_step=True bypasses
+        # `ell` below); only the per-coord closed-form / match-rate modes are wrong.
+        # Fix when needed: ell = diag(inverse @ Sigma_Q @ inverse^T). For an
+        # orthonormal basis this is identical, so it is a safe generalization.
+        # (Fixed downstream in pipelines/ec/fit_ec_bundle.py; see notes/ec_k2v2_report.md
+        # "Audit fix (2026-06-16)".)
         ell = (fwdt @ regularize_batch(qpca_unc["sigma_q"], EPS).to(F.dtype) @ F
                ).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
         h = _diff_entropy_from_fetch(fetch_calib, n_layers, n_kv_heads, d)
