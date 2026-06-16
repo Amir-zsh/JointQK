@@ -25,9 +25,9 @@ JointQK basis (`ec_r_sym`):
 | jointqk_k2_v2 | 37.23 | 27.08 | 49.25 | 37.85 | 2.0 grid |
 | kivi_int2 | 44.31 | 19.58 | 37.39 | 33.76 | 2.0 grid |
 | ec_hadamard_dz0.25 | **51.61** | 28.82 | 45.70 | 42.04 | 1.949 |
-| ec_qpca_dz0.25 | 45.70 | 29.19 | 46.79 | 40.56 | 1.958 |
-| ec_qpca_dz0.375 | 45.58 | 29.21 | 46.98 | 40.59 | 1.958 |
-| ec_qpca_dz0.5 | 46.64 | 30.11 | 47.41 | 41.39 | 1.958 |
+| ec_qpca_dz0.25 | 49.04 | 30.30 | 47.46 | 42.27 | 1.959 |
+| ec_qpca_dz0.375 | 50.60 | 29.49 | 45.85 | 41.98 | 1.959 |
+| ec_qpca_dz0.5 | 49.19 | 28.18 | 47.67 | 41.68 | 1.958 |
 | ec_r_sym_dz0.25 | 50.28 | 31.37 | 49.43 | 43.69 | 1.947 |
 | **ec_r_sym_dz0.375** | 51.10 | 31.29 | **51.03** | **44.47** | 1.947 |
 | **ec_r_sym_dz0.5** | 50.86 | **31.75** | 49.32 | 43.98 | 1.948 |
@@ -124,12 +124,17 @@ bits buy a finer step elsewhere, making dz a pure RD knob at fixed rate.
 | method (K=2) | top-1 | top-5 | k_mse | logit_err | rate |
 |---|---|---|---|---|---|
 | jq_k2 (plain) | **0.5596** | 0.9836 | 2.60e-1 | 2.07e-3 | 2.000 |
-| ec_r_sym_dz0.375 | 0.5158 | **0.9924** | 2.37e-1 | **1.60e-3** | 1.947 |
-| ec_qpca_dz0.375 | 0.4902 | 0.9845 | 4.28e-1 | 2.24e-3 | 1.958 |
+| ec_r_sym_dz0.375 | 0.5158 | 0.9924 | 2.37e-1 | 1.60e-3 | 1.947 |
+| ec_qpca_dz0.375 (fixed weight) | 0.5158 | **0.9935** | **2.17e-1** | **1.33e-3** | 1.959 |
 | ec_hadamard_dz0.25 | 0.4608 | 0.9644 | 3.10e-1 | 5.53e-3 | 1.949 |
 | tq_k2 | 0.4031 | 0.9212 | 5.57e-1 | 2.33e-2 | 2.125 |
 
   All EC candidates beat TQ on every proxy, incl. repobench-p top-1 (0.52/0.46 vs 0.41). PASS.
+  (With the corrected allocation, QPCA-EC now achieves the **lowest k_mse and logit_err of
+  all methods** — 1.33e-3, below r_sym-EC's 1.60e-3 — yet still loses downstream F1 to
+  r_sym by ~2 pp. This is the cleanest instance of the project's MSE-vs-argmax disconnect:
+  the MSE-optimal basis wins the reconstruction proxies it is built for and loses the
+  attention-argmax → task metric that actually matters.)
   (Caveat reconfirmed: plain JQ wins top-1 yet loses lcc F1 by 11 pp — proxies don't decide
   F1 on Llama; the bench does.)
 
@@ -144,9 +149,9 @@ measurement only, no feedback into fitting):
 | ec_r_sym_dz0.375 | 1.995 | 1.990 | 1.937 |
 | ec_r_sym_dz0.25 | 1.998 | 1.991 | 1.936 |
 | ec_hadamard_dz0.25 | 1.974 | 2.021 | 1.942 |
-| ec_qpca_dz0.5 | 1.989 | 2.037 | 1.948 |
-| ec_qpca_dz0.375 | 1.991 | 2.042 | 1.948 |
-| ec_qpca_dz0.25 | 1.993 | 2.046 | 1.948 |
+| ec_qpca_dz0.5 | 1.999 | 2.045 | 1.948 |
+| ec_qpca_dz0.375 | 2.003 | 2.053 | 1.948 |
+| ec_qpca_dz0.25 | 2.006 | 2.060 | 1.948 |
 
 All r_sym rates ≤ 2.0 even on fully-OOD lcc (the snap-escape penalty shows up but stays
 small: +0.04 b/c over the in-domain selection rate). TurboQuant's comparison rate is
@@ -354,35 +359,33 @@ gates passed incl. G1 on its non-orthogonal inverse), loses to both TurboQuant a
 r_sym-EC downstream:
 
 QPCA here is faithful (built on raw moments for l≥1, bit-identical to
-unregularized; layer 0 = identity and unused — see the Correction note):
+unregularized; layer 0 = identity and unused — see the Correction note) and uses
+the corrected per-coord allocation weight (see the Audit fix note below):
 
 | | lcc | musique | 2wikimqa | mean |
 |---|---|---|---|---|
-| ec_qpca (best per task across dz) | 46.64 | 30.11 | 47.41 | 41.39 (best mean, dz0.5) |
+| ec_qpca (best-mean config, dz0.25) | 49.04 | 30.30 | 47.46 | 42.27 |
 | ec_r_sym_dz0.375 | 51.10 | 31.29 | 51.03 | 44.47 |
 | turboquant_k2_v2 | 48.37 | 31.55 | 44.64 | 41.52 |
 
-ec_qpca wins only 2wikimqa vs TurboQuant at every dz (1/3), never lcc or musique;
-ec_r_sym wins 2–3/3. This cleanly decomposes the original lcc failure at K=2
-(all with identical V):
+ec_qpca now beats TurboQuant on mean at every dz (42.27/41.98/41.68 vs 41.52, 2/3
+tasks each) but still loses to ec_r_sym (43.69–44.47). This cleanly decomposes the
+original lcc failure at K=2 (all with identical V):
 
 | K-side configuration | lcc |
 |---|---|
 | R_sym basis + integer Lloyd-Max codebooks (`jointqk_k2_v2`) | 37.23 |
-| QPCA basis + EC deadzone quantizer | 45.6–46.6 |
+| QPCA basis + EC deadzone quantizer | 49.0–50.6 |
 | R_sym basis + EC deadzone quantizer | 50.3–51.1 |
 
 Switching the quantizer (codebooks → deadzone-EC, R_sym fixed) is worth **+13–14 pp**;
-switching the basis (QPCA → R_sym, EC fixed) is worth another **~4 pp**. So the
+switching the basis (QPCA → R_sym, EC fixed) is worth another **~2 pp**. So the
 2026-05 disconnect was *mostly* the K=2 integer-codebook allocation, but the basis
 choice is not neutral: the argmax-aware R_sym beats the MSE-optimal QPCA under the
-better quantizer too. Notably, QPCA's one on-paper advantage — minimal logit MSE —
-does not even survive the EC pipeline (Phase A: logit_err ~2.3e-3 vs r_sym-EC's
-1.60e-3), because the entropy water-fill reshapes per-coord precision around
-`diag(F^T Σ_Q F)` in either basis. QPCA-EC's coder model also generalizes slightly
-worse OOD (musique post-hoc rate 2.04 vs r_sym's 1.99). The May-2026 verdict
-("JointQK remains the deployed basis; QPCA is the baseline to beat") stands under
-entropy coding — by a ~3-pp mean-F1 margin at equal rate.
+better quantizer too. QPCA-EC's coder model also generalizes slightly worse OOD
+(musique post-hoc rate ~2.05 vs r_sym's ~1.99). The May-2026 verdict ("JointQK
+remains the deployed basis; QPCA is the baseline to beat") stands under entropy
+coding — by a ~2-pp mean-F1 margin at equal-or-lower rate.
 
 ### Correction (2026-06-13)
 
@@ -414,29 +417,65 @@ configuration QPCA is theoretically optimal for. The *orthonormal* r_sym basis d
 not carry allocation in the basis, so per-coord `ell`-weighting should be its natural
 fit and uniform-step should hurt it. Both bases were benched both ways at dz=0.5.
 
-**The full 2×2 (dz=0.5, K=2/V=2) confirms the prediction exactly** — uniform-step is
-the right config for the basis that carries its own allocation, and the wrong one for
-the basis that doesn't:
+**The full 2×2 (dz=0.5, K=2/V=2)** — per-coord here uses the *corrected* allocation
+weight (see the Audit fix note below); the QPCA rows changed materially from an
+earlier version that used the buggy weight:
 
 | basis | mode | lcc | musique | 2wikimqa | mean | Δ mean (uniform − per-coord) |
 |---|---|---|---|---|---|---|
-| QPCA  | per-coord | 46.64 | 30.11 | 47.41 | 41.39 | — |
-| QPCA  | **uniform** | 49.29 | 28.02 | 48.61 | 41.97 | **+0.58** |
+| QPCA  | per-coord (fixed) | 49.19 | 28.18 | 47.67 | 41.68 | — |
+| QPCA  | uniform | 49.29 | 28.02 | 48.61 | 41.97 | **+0.29** |
 | r_sym | **per-coord** | 50.86 | 31.75 | 49.32 | 43.98 | — |
 | r_sym | uniform | 45.61 | 32.87 | 48.77 | 42.42 | **−1.56** |
 
-- **Uniform-step helps QPCA (+0.58)** and **hurts r_sym (−1.56)** — opposite signs,
-  as the basis geometry predicts. The lcc task drives both: uniform *helps* QPCA's lcc
-  (+2.65) but *hurts* r_sym's lcc (−5.25); musique moves the other way on each
-  (QPCA −2.09, r_sym +1.12). Each basis is best in its natural config.
-- Rates are matched across all four (per-task post-hoc held-out within 1.94–2.05 b/c).
+- **QPCA: per-coord ≈ uniform now (+0.29).** This is the expected result once the
+  allocation weight is fixed: QPCA's correct per-coord importance is uniform, so the
+  per-coord water-fill collapses toward a single Δ — i.e. essentially the uniform-step
+  config. (The earlier "uniform helps QPCA by +0.58" was an artifact of comparing
+  against the *mis-weighted* per-coord baseline, which the bug had depressed.)
+- **r_sym: uniform-step hurts (−1.56).** The orthonormal basis genuinely has a
+  non-uniform per-coord importance (`ell` varies), so forcing one scalar Δ throws away
+  a real allocation — lcc −5.25. Per-coord is r_sym's natural config.
+- Net: uniform-step is right for QPCA (whose basis carries the allocation) and wrong
+  for r_sym (whose allocation lives in the per-coord weights). Rates matched (per-task
+  post-hoc held-out within 1.94–2.06 b/c).
 
 **Each basis at its best config still leaves r_sym on top.** r_sym-per-coord (43.98 at
-dz0.5; 44.47 at dz0.375) beats QPCA-uniform (41.97) by ~2 pp mean and on every task
-(lcc 49.29 vs 50.86–51.10, musique 28.02 vs 31.3–31.8, 2wikimqa 48.61 vs 49.32–51.03),
-at an equal-or-lower rate. Giving QPCA its theoretically-optimal quantizer narrows the
-earlier ~3-pp gap to ~2 pp but does not close it. The argmax-aware R_sym (JointQK)
-remains the best K-side basis under entropy coding, in its per-coord config.
+dz0.5; 44.47 at dz0.375) beats QPCA at its best (per-coord-fixed 42.27 at dz0.25;
+uniform 41.97) by ~1.7–2 pp mean and on every task, at an equal-or-lower rate. Giving
+QPCA its correct allocation narrows the earlier (mis-weighted) ~3-pp gap to ~2 pp but
+does not close it. The argmax-aware R_sym (JointQK) remains the best K-side basis under
+entropy coding, in its per-coord config.
+
+### Audit fix (2026-06-16): per-coord allocation weight for non-orthonormal QPCA
+
+A code audit found a real bug in the EC per-coord bit allocation. The importance
+weight was `ell = diag(Fᵀ Σ_Q F)` (F = forward map) — the correct formula **only for
+an orthonormal basis**. For the deployed objective (attention-logit error ≈ Q-weighted
+key MSE `E[(k−k̂)ᵀ Σ_Q (k−k̂)]`), a code-coordinate-j error reconstructs to original
+space via row j of the **inverse** map G, so the correct per-coord importance is
+`diag(G Σ_Q Gᵀ)`. For an orthonormal basis G = Fᵀ and the two coincide; for the
+**non-orthonormal QPCA basis they do not** — QPCA absorbs the Q-weighting, giving
+`G Σ_Q Gᵀ = I` (uniform). Verified numerically: `diag(G Σ_Q Gᵀ)` = 1.0000 across heads,
+while the `diag(Fᵀ Σ_Q F)` actually used spanned **10⁵–10¹¹×** per head — a wildly
+mis-weighted allocation for QPCA.
+
+Impact and fix:
+- **r_sym (orthonormal) is unaffected** — G = Rᵀ, so the new and old weights are
+  bit-identical (verified, max abs diff 4.6e-14). All r_sym numbers stand unchanged.
+- **QPCA per-coord was mis-allocated.** Fixed in `fit_ec_bundle.py` (use the inverse
+  map: `ell = diag(G Σ_Q Gᵀ)`); refit all 3 per-coord QPCA bundles and re-benched.
+  Corrected per-coord QPCA (best 42.27 mean at dz0.25; 41.68 at dz0.5) now matches the
+  uniform-step result (41.97) — as theory requires, since the correct QPCA weight is
+  uniform so per-coord water-fill collapses to ~one Δ. The old (buggy) per-coord
+  numbers were 40.56/40.59/41.39; the fix *improved* QPCA by up to +1.7 pp.
+- **Conclusion unchanged.** Even with the correct allocation (and now the lowest
+  logit-MSE of any method), QPCA-EC still loses downstream F1 to r_sym-EC by ~2 pp.
+  JointQK (R_sym, per-coord) remains the best K-side basis.
+- The harness `entropy_coding/run_pca_ec_deadzone.py` `build_qpca_ec` has the same
+  latent `ell = diag(Fᵀ Σ_Q F)` issue, but its default QPCA mode is `--qpca-uniform`
+  (single Δ/head), which bypasses `ell` entirely, so its shipped QPCA path is unaffected;
+  only its non-default per-coord/match-rate modes would mis-weight QPCA.
 
 ## Artifacts
 

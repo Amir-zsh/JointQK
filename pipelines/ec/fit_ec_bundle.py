@@ -249,9 +249,16 @@ def main() -> None:
     print(f"[fit] k_mean/k_cov from {ntok:,} calib tokens ({time.time()-t0:.0f}s)", flush=True)
 
     F, Finv = build_basis(args.basis, cca, k_mean, k_cov)
-    ell = (F.transpose(-1, -2).double()
+    # Per-coord distortion importance for the Q-weighted objective (attention-logit
+    # error ~ E[(k-k_hat)^T Sigma_Q (k-k_hat)]). A code-coord-j error reconstructs to
+    # original space via row j of the INVERSE map G, so the importance is
+    # diag(G Sigma_Q G^T), NOT diag(F^T Sigma_Q F). For an orthonormal basis G=F^T and
+    # the two coincide (r_sym unaffected); for the non-orthonormal QPCA basis they do
+    # NOT — QPCA absorbs the Q-weighting into the basis (G Sigma_Q G^T = I), so the
+    # correct weight is uniform. Using F here mis-weighted QPCA by ~10^5-10^11x.
+    ell = (Finv.double()
            @ regularize_batch(cca["sigma_q"], EPS).double()
-           @ F.double()).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)  # (L,Hkv,d)
+           @ Finv.transpose(-1, -2).double()).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)  # (L,Hkv,d)
 
     delta = torch.empty(L, Hkv, d)
     model: dict = {}
