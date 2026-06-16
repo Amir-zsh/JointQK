@@ -31,6 +31,7 @@ sys.path.insert(0, str(REPO / "entropy_coding"))
 
 import argparse  # noqa: E402
 import json  # noqa: E402
+import math  # noqa: E402
 import time  # noqa: E402
 
 import torch  # noqa: E402
@@ -154,6 +155,28 @@ def solve_delta_matched_dev(r, Hj_head, dz, delta0_head, n_iter=24, bracket_bits
     return torch.pow(2.0, 0.5 * (lo + hi))
 
 
+def solve_delta_uniform_dev(r, b, dz, delta0_scalar, n_iter=30, bracket_bits=8.0):
+    """Single scalar step for a whole head (mirrors entropy_coding's
+    _solve_delta_uniform): uniform quantization in the transform domain, where a
+    non-orthonormal F already carries the per-coord allocation. Bisects ONE Delta
+    so the SUMMED deadzoned per-coord entropy equals b*d bits (= b bits/coord
+    pooled). r:(N,d). Returns a (d,)-broadcast tensor of the single Delta."""
+    r = r.double()
+    d = r.shape[1]
+    log2d0 = math.log2(max(float(delta0_scalar), 1e-30))
+    lo, hi = log2d0 - bracket_bits, log2d0 + bracket_bits
+    target = float(b) * d
+    for _ in range(n_iter):
+        mid = 0.5 * (lo + hi)
+        delta = 2.0 ** mid
+        idx = (torch.sign(r) * torch.floor(r.abs() / delta + dz)).long()
+        if float(entropy_per_coord_dev(idx).sum()) > target:
+            lo = mid          # too many bits -> larger step
+        else:
+            hi = mid
+    return torch.full((d,), 2.0 ** (0.5 * (lo + hi)), dtype=torch.float64)
+
+
 def build_basis(basis: str, cca: dict, k_mean: torch.Tensor, k_cov: torch.Tensor):
     """Return (forward (L,Hkv,d,d), inverse (L,Hkv,d,d)) float32."""
     L, Hkv, d, _ = cca["sigma_q"].shape
@@ -203,9 +226,13 @@ def main() -> None:
     ap.add_argument("--dz", type=float, required=True)
     ap.add_argument("--b-target", type=float, default=1.95)
     ap.add_argument("--no-match-rate", action="store_true")
+    ap.add_argument("--uniform-step", action="store_true",
+                    help="single scalar delta/head (no ell-weighted per-coord "
+                         "allocation); the config QPCA's non-orthonormal basis is "
+                         "optimal for. Overrides match-rate. Use dz=0.5.")
     ap.add_argument("--device", default="cuda:0")
     args = ap.parse_args()
-    match_rate = not args.no_match_rate
+    match_rate = not args.no_match_rate and not args.uniform_step
     dev = torch.device(args.device)
     t0 = time.time()
 
@@ -236,7 +263,11 @@ def main() -> None:
             Hj = (target - target.mean() + args.b_target).clamp_min(0.0)
             Hj = Hj * (args.b_target * d / Hj.sum().clamp_min(1e-9))
             d0 = torch.pow(2.0, (hcoord - Hj))
-            if match_rate:
+            if args.uniform_step:
+                # one scalar Delta/head, seeded at the per-coord geometric mean
+                d0_scalar = float(d0.clamp_min(1e-30).log2().mean().exp2())
+                dlh = solve_delta_uniform_dev(r_gpu, args.b_target, args.dz, d0_scalar).cpu()
+            elif match_rate:
                 dlh = solve_delta_matched_dev(r_gpu, Hj.to(dev), args.dz, d0.to(dev)).cpu()
             else:
                 dlh = d0
@@ -304,8 +335,9 @@ def main() -> None:
     print(f"[fit] alphabet vmax={vmax}")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    mode_tag = "__uniform" if args.uniform_step else ""
     out = OUT_DIR / (f"ec_bundle__{args.basis}__b{args.b_target:g}"
-                     f"__dz{args.dz:g}__compact8train{len(fit_pool.rows)}.pt")
+                     f"__dz{args.dz:g}__compact8train{len(fit_pool.rows)}{mode_tag}.pt")
     torch.save({
         "version": BUNDLE_VERSION,
         "model_tag": "llama31_8b",
@@ -313,6 +345,7 @@ def main() -> None:
         "dz": args.dz,
         "b_target": args.b_target,
         "match_rate": match_rate,
+        "uniform_step": args.uniform_step,
         "n_layers": L, "n_kv_heads": Hkv, "head_dim": d,
         "forward": F, "inverse": Finv, "mu": k_mean, "delta": delta,
         "support_vals": support_vals, "support_probs": support_probs,

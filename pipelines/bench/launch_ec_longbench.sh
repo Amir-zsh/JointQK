@@ -21,16 +21,23 @@ MAX_RETRIES="${MAX_RETRIES:-10}"
 FRACTION="${EVAL_FRACTION:-1.0}"
 VARIANTS="r_sym:0.375,hadamard:0.375"
 DRY_RUN=0
+MODE=percoord   # percoord (ell-weighted, *.pt) | uniform (single scalar/head, *__uniform.pt)
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --variants) VARIANTS="$2"; shift 2 ;;
         --gpus) GPUS="$2"; shift 2 ;;
         --fraction) FRACTION="$2"; shift 2 ;;
         --jobs-per-gpu) JOBS_PER_GPU="$2"; shift 2 ;;
+        --mode) MODE="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
+case "$MODE" in
+    percoord) BUNDLE_GLOB_SUFFIX="compact8train*[0-9].pt"; LABEL_SUFFIX="" ;;
+    uniform)  BUNDLE_GLOB_SUFFIX="compact8train*__uniform.pt"; LABEL_SUFFIX="_uniform" ;;
+    *) echo "Unknown --mode: $MODE (expected percoord|uniform)" >&2; exit 1 ;;
+esac
 
 MODEL="meta-llama/Llama-3.1-8B-Instruct"
 CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
@@ -52,10 +59,10 @@ CMDS="$LOG_DIR/commands.jsonl"
 IFS=',' read -ra VAR_ARR <<< "$VARIANTS"
 for var in "${VAR_ARR[@]}"; do
     basis="${var%%:*}"; dz="${var##*:}"
-    BUNDLE=$(ls "$EC_DIR"/ec_bundle__${basis}__b*__dz${dz}__compact8train*.pt 2>/dev/null | head -1)
-    [[ -n "$BUNDLE" ]] || { echo "ERROR: no bundle for $basis dz=$dz in $EC_DIR" >&2; exit 1; }
+    BUNDLE=$(ls "$EC_DIR"/ec_bundle__${basis}__b*__dz${dz}__${BUNDLE_GLOB_SUFFIX} 2>/dev/null | head -1)
+    [[ -n "$BUNDLE" ]] || { echo "ERROR: no $MODE bundle for $basis dz=$dz in $EC_DIR" >&2; exit 1; }
     for task in "${TASKS[@]}"; do
-        label="ec_${basis}_dz${dz}_k2_v2_${task}"
+        label="ec_${basis}_dz${dz}${LABEL_SUFFIX}_k2_v2_${task}"
         BUNDLE="$BUNDLE" basis="$basis" dz="$dz" task="$task" label="$label" \
         CCA="$CCA" VST="$VST" FRACTION="$FRACTION" OUT_BASE="$OUT_BASE" \
         EXCLUDE_INDICES_FILE="$EXCLUDE_INDICES_FILE" \
