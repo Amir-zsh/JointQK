@@ -18,6 +18,15 @@ JointQK basis (`ec_r_sym`):
   quantizer on the *same R_sym basis* scores 50.3–51.1. The basis was never the problem —
   the per-coord Lloyd-Max codebook + integer waterfill at K=2 was.
 
+**Update (2026-06-18) — the basis question reopened.** A later fairness check found
+QPCA and r_sym had NOT been calibrated on the same K data. Re-running QPCA on the
+*same* 400-prompt uncentered Σ_K that r_sym uses (`ec_qpca_unc`) lifts it to **mean
+44.90 (dz=0.5) — statistically tied with r_sym (44.47/43.98) and essentially equal to
+full precision (44.99)**, and it beats TurboQuant on all 3 tasks. So the earlier "r_sym
+is the best K-side basis; QPCA loses by ~2 pp" was a **calibration-data artifact**, not a
+basis property. With matched data, the MSE-optimal QPCA basis is on par with the
+argmax-aware R_sym. See "Calibration-data fairness" below.
+
 | method | lcc | musique | 2wikimqa | mean | true K rate (b/c) |
 |---|---|---|---|---|---|
 | full_precision | 51.37 | 32.62 | 50.99 | 44.99 | 16 (fp16) |
@@ -25,12 +34,15 @@ JointQK basis (`ec_r_sym`):
 | jointqk_k2_v2 | 37.23 | 27.08 | 49.25 | 37.85 | 2.0 grid |
 | kivi_int2 | 44.31 | 19.58 | 37.39 | 33.76 | 2.0 grid |
 | ec_hadamard_dz0.25 | **51.61** | 28.82 | 45.70 | 42.04 | 1.949 |
-| ec_qpca_dz0.25 | 49.04 | 30.30 | 47.46 | 42.27 | 1.959 |
-| ec_qpca_dz0.375 | 50.60 | 29.49 | 45.85 | 41.98 | 1.959 |
-| ec_qpca_dz0.5 | 49.19 | 28.18 | 47.67 | 41.68 | 1.958 |
+| ec_qpca_dz0.25 (centered, 18-row K) | 49.04 | 30.30 | 47.46 | 42.27 | 1.959 |
+| ec_qpca_dz0.375 (centered, 18-row K) | 50.60 | 29.49 | 45.85 | 41.98 | 1.959 |
+| ec_qpca_dz0.5 (centered, 18-row K) | 49.19 | 28.18 | 47.67 | 41.68 | 1.958 |
+| ec_qpca_unc_dz0.25 (data-matched K) | 49.31 | 31.18 | 48.30 | 42.93 | 1.946 |
+| ec_qpca_unc_dz0.375 (data-matched K) | 49.47 | 33.33 | 49.10 | 43.97 | 1.946 |
+| **ec_qpca_unc_dz0.5** (data-matched K) | 49.61 | **33.73** | **51.36** | **44.90** | 1.947 |
 | ec_r_sym_dz0.25 | 50.28 | 31.37 | 49.43 | 43.69 | 1.947 |
-| **ec_r_sym_dz0.375** | 51.10 | 31.29 | **51.03** | **44.47** | 1.947 |
-| **ec_r_sym_dz0.5** | 50.86 | **31.75** | 49.32 | 43.98 | 1.948 |
+| ec_r_sym_dz0.375 | 51.10 | 31.29 | 51.03 | 44.47 | 1.947 |
+| ec_r_sym_dz0.5 | 50.86 | 31.75 | 49.32 | 43.98 | 1.948 |
 
 Eval protocol identical to the v7 baselines (fraction=1.0, compact8 train rows excluded,
 layer-0 fp16 for all methods, Mode A, V side = v_turboquant @ 2 bits for both JQ-family
@@ -378,14 +390,14 @@ original lcc failure at K=2 (all with identical V):
 | QPCA basis + EC deadzone quantizer | 49.0–50.6 |
 | R_sym basis + EC deadzone quantizer | 50.3–51.1 |
 
-Switching the quantizer (codebooks → deadzone-EC, R_sym fixed) is worth **+13–14 pp**;
-switching the basis (QPCA → R_sym, EC fixed) is worth another **~2 pp**. So the
-2026-05 disconnect was *mostly* the K=2 integer-codebook allocation, but the basis
-choice is not neutral: the argmax-aware R_sym beats the MSE-optimal QPCA under the
-better quantizer too. QPCA-EC's coder model also generalizes slightly worse OOD
-(musique post-hoc rate ~2.05 vs r_sym's ~1.99). The May-2026 verdict ("JointQK
-remains the deployed basis; QPCA is the baseline to beat") stands under entropy
-coding — by a ~2-pp mean-F1 margin at equal-or-lower rate.
+Switching the quantizer (codebooks → deadzone-EC, R_sym fixed) is worth **+13–14 pp**.
+The apparent further "~2 pp from switching the basis (QPCA → R_sym)" reported here was,
+on later audit, **a calibration-data artifact** — QPCA's K basis came from 18 centered
+rows vs r_sym's 400-prompt uncentered Σ_K. **With matched K data the basis gap vanishes**
+(QPCA ties r_sym; see "Calibration-data fairness (2026-06-18)"). So the corrected
+decomposition is: the 2026-05 lcc disconnect was essentially **all** the K=2
+integer-codebook allocation (+13–14 pp from the EC quantizer), and the basis choice
+(QPCA vs R_sym) is roughly **neutral** under a fair, MSE-quantizer-friendly pipeline.
 
 ### Correction (2026-06-13)
 
@@ -440,12 +452,15 @@ earlier version that used the buggy weight:
   for r_sym (whose allocation lives in the per-coord weights). Rates matched (per-task
   post-hoc held-out within 1.94–2.06 b/c).
 
+**[SUPERSEDED 2026-06-18 — see "Calibration-data fairness" below.** This paragraph
+compared r_sym against QPCA built from a *centered 18-row* K covariance; once QPCA is
+given the *same 400-prompt uncentered Σ_K as r_sym* it ties r_sym. The gap below was a
+calibration-data artifact.]
 **Each basis at its best config still leaves r_sym on top.** r_sym-per-coord (43.98 at
 dz0.5; 44.47 at dz0.375) beats QPCA at its best (per-coord-fixed 42.27 at dz0.25;
 uniform 41.97) by ~1.7–2 pp mean and on every task, at an equal-or-lower rate. Giving
 QPCA its correct allocation narrows the earlier (mis-weighted) ~3-pp gap to ~2 pp but
-does not close it. The argmax-aware R_sym (JointQK) remains the best K-side basis under
-entropy coding, in its per-coord config.
+does not close it.
 
 ### Audit fix (2026-06-16): per-coord allocation weight for non-orthonormal QPCA
 
@@ -469,13 +484,67 @@ Impact and fix:
   uniform-step result (41.97) — as theory requires, since the correct QPCA weight is
   uniform so per-coord water-fill collapses to ~one Δ. The old (buggy) per-coord
   numbers were 40.56/40.59/41.39; the fix *improved* QPCA by up to +1.7 pp.
-- **Conclusion unchanged.** Even with the correct allocation (and now the lowest
-  logit-MSE of any method), QPCA-EC still loses downstream F1 to r_sym-EC by ~2 pp.
-  JointQK (R_sym, per-coord) remains the best K-side basis.
+- **Conclusion (as of this fix; later revised).** Even with the correct allocation
+  (and the lowest logit-MSE of any method), the *centered-18-row* QPCA-EC still lost
+  downstream F1 to r_sym-EC by ~2 pp. **This was overturned two days later** — see
+  "Calibration-data fairness" — once QPCA was given r_sym's K data.
 - The harness `entropy_coding/run_pca_ec_deadzone.py` `build_qpca_ec` has the same
   latent `ell = diag(Fᵀ Σ_Q F)` issue, but its default QPCA mode is `--qpca-uniform`
   (single Δ/head), which bypasses `ell` entirely, so its shipped QPCA path is unaffected;
   only its non-default per-coord/match-rate modes would mis-weight QPCA.
+
+### Calibration-data fairness (2026-06-18): QPCA ties r_sym once given the same K data
+
+The QPCA-vs-r_sym comparison above was **not calibrated on the same key statistics** —
+a confound found on audit:
+
+| | Σ_Q (query) | Σ_K (key) used to build the basis |
+|---|---|---|
+| r_sym | bundle, 400 prompts (4.4M tok) | **uncentered Σ_K, 400 prompts** |
+| qpca (centered) | bundle, 400 prompts (same) | **centered cov, 18 fit rows (138k tok)** |
+
+Both shared Σ_Q, but QPCA's K basis was estimated from a *centered covariance over only
+18 prompts*, while r_sym used the *uncentered second moment over 400 prompts*. (QPCA was
+stuck with the 18-row stat because the n400 bundle stored only uncentered Σ_K, no mean,
+and QPCA's centered variant needs μ.)
+
+Re-running QPCA from the bundle's **own uncentered Σ_Q + Σ_K** — the identical
+400-prompt data r_sym uses — (`ec_qpca_unc`, corrected uniform allocation, layer 0 = I,
+roundtrip centered by k_mean as r_sym is):
+
+| method | lcc | musique | 2wikimqa | mean | rate (post-hoc held-out, b/c) |
+|---|---|---|---|---|---|
+| ec_qpca (centered 18-row) dz0.5 | 49.19 | 28.18 | 47.67 | 41.68 | 2.00 / 2.05 / 1.95 |
+| **ec_qpca_unc (data-matched) dz0.5** | 49.61 | 33.73 | 51.36 | **44.90** | 2.00 / 1.98 / 1.94 |
+| ec_qpca_unc dz0.375 | 49.47 | 33.33 | 49.10 | 43.97 | 2.00 / 1.98 / 1.93 |
+| ec_r_sym_dz0.375 | 51.10 | 31.29 | 51.03 | 44.47 | 2.00 / 1.99 / 1.94 |
+| ec_r_sym_dz0.5 | 50.86 | 31.75 | 49.32 | 43.98 | 2.00 / 1.99 / 1.94 |
+| full_precision | 51.37 | 32.62 | 50.99 | 44.99 | fp16 |
+
+**Revised verdict.** Matching the K calibration data lifts QPCA from 41.68 → **44.90**
+mean (+3.2 pp) at dz=0.5 — **statistically tied with r_sym (44.47/43.98) and essentially
+equal to full precision (44.99)**, beating TurboQuant on all 3 tasks. So the earlier
+"r_sym is the best K-side basis; QPCA loses by ~2 pp" was a **calibration-data artifact**,
+not a property of the basis. Under entropy coding with matched calibration, the
+MSE-optimal QPCA basis and the argmax-aware R_sym basis are **on par** (differences ≤ ~0.5
+pp, within eval noise at 150–500 rows), both ≈ full precision. This also blunts the
+earlier "MSE-vs-argmax disconnect" framing for QPCA: with adequate, matched K calibration
+the MSE-optimal basis is not worse downstream.
+
+Verification (this is a headline change, so checked): **G1 bit-exactness PASS** on the
+qpca_unc bundle (codec reconstructs the press's snapped indices, 2/6.3M off by ±1 bin,
+real rate 1.945 b/c); post-hoc rates 1.93–2.00 b/c (genuine K=2); predictions are
+well-formed answers (not degenerate).
+
+**Open confound (honest caveat).** The data-matched run changed *two* things at once vs
+the centered QPCA: centering (centered → uncentered) **and** sample (18 → 400 prompts).
+138k tokens over 18 prompts is plausibly under-sampled for a 128-dim per-head covariance
+(tokens within a prompt are correlated → few effective samples), so the dominant driver
+is likely the sample size, but an uncentered-18-row QPCA run would be needed to pin it.
+Either way the headline holds: **QPCA on matched K data ties r_sym.** The practical
+takeaway for the deployed system is unchanged (r_sym is fine and is what ships), but the
+*scientific* claim that the argmax-aware basis beats the MSE-optimal one does **not**
+survive a fair calibration.
 
 ## Artifacts
 

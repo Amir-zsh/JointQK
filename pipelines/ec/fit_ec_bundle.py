@@ -217,12 +217,27 @@ def build_basis(basis: str, cca: dict, k_mean: torch.Tensor, k_cov: torch.Tensor
         fwd = torch.cat([eye, fwd1], dim=0).contiguous()
         inv = torch.cat([eye, inv1], dim=0).contiguous()
         return fwd, inv
+    if basis == "qpca_unc":
+        # Data-matched QPCA: built from the bundle's OWN uncentered Σ_Q and Σ_K —
+        # the identical 400-prompt (4.4M-token) statistics R_sym uses — instead of
+        # the centered k_cov recomputed from 18 fit rows. This removes the K-side
+        # calibration asymmetry between `qpca` (centered, 18-row) and r_sym
+        # (uncentered, 400-prompt), so QPCA and r_sym are calibrated on the same K
+        # data. Roundtrip still centers by k_mean (matching r_sym's convention).
+        # Layer 0 sliced/identity as for `qpca`.
+        d = cca["sigma_q"].shape[-1]
+        q = ec.build_qpca_basis(cca["sigma_q"][1:], cca["sigma_k"][1:])
+        fwd1, inv1 = q["forward"].float(), q["inverse"].float()
+        eye = torch.eye(d).expand(1, fwd1.shape[1], d, d)
+        fwd = torch.cat([eye, fwd1], dim=0).contiguous()
+        inv = torch.cat([eye, inv1], dim=0).contiguous()
+        return fwd, inv
     raise ValueError(f"unknown basis {basis!r}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--basis", required=True, choices=["r_sym", "hadamard", "qpca"])
+    ap.add_argument("--basis", required=True, choices=["r_sym", "hadamard", "qpca", "qpca_unc"])
     ap.add_argument("--dz", type=float, required=True)
     ap.add_argument("--b-target", type=float, default=1.95)
     ap.add_argument("--no-match-rate", action="store_true")
