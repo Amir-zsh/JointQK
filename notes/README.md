@@ -42,6 +42,16 @@ This directory organises the project notes by role.
 - [qpca_basis_report.md](qpca_basis_report.md)
   - QPCA basis test: closed-form optimum for logit MSE. Wins logit_err by 16–36 % proxy and loses top-1 by 3–5 pp; downstream LongBench F1 confirms (−5.36 pp mean F1 at k=2). 3-experiment investigation (pooled K-fidelity → per-task K-fidelity → F1 sweep), production basis unchanged.
 
+## Page-unit quantization (paged_quant branch)
+
+- [page_quant/plan.md](page_quant/plan.md)
+  - plan assessment → recon → 3-critic adversarial review → design v3
+- [page_quant/report.md](page_quant/report.md)
+  - per-token-precision fixed-byte pages: ω decomposition on F1, EC serving verdict
+    (measured), fixed-width bug chain, kernel prototype
+- [page_quant/fixes_to_apply.md](page_quant/fixes_to_apply.md)
+  - bug tracker (pgq_fixed three-stage root cause chain)
+
 ## Reference
 
 - [reference/](reference/)
