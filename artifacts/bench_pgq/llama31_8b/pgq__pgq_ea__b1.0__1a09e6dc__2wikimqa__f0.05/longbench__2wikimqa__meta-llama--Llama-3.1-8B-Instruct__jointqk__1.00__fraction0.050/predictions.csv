@@ -1,0 +1,21 @@
+task,predicted_answer,answer_prefix,compression_ratio,all_classes,question,answers,_id,language,max_new_tokens,dataset,length
+2wikimqa, Jacques Dutronc,Answer:,1.0,,"Question: Who is the spouse of the performer of song Et Moi, Et Moi, Et Moi?
+",['Françoise Hardy'],32092cc7b80094b9c8914c1f70000295aefc4a985747b0ed,en,52,2wikimqa,5091
+2wikimqa, Barbara Hale,Answer:,1.0,,"Question: Who is the spouse of the director of film Emergency Wedding?
+",['Ona Munson'],8d3cf7916a2f8a2762de13a9520b6350e46464fbf7f63dd5,en,52,2wikimqa,10444
+2wikimqa," Arthur Acheson, 1st Earl of Gosford",Answer:,1.0,,"Question: Who is Archibald Acheson, 4Th Earl Of Gosford's paternal grandfather?
+","['Archibald Acheson, 2nd Earl of Gosford']",40de6f6c353c080845a8ea644039e9ba83cd481d3745395b,en,52,2wikimqa,4383
+2wikimqa, Queen Yi Jiang,Answer:,1.0,,"Question: Who is the paternal grandmother of King Kang Of Zhou?
+",['Yi Jiang'],53f6acc70a61443a93c25c91ca7dc7f8780046d02e28c94a,en,52,2wikimqa,4142
+2wikimqa, Juan René Serrano,Answer:,1.0,,"Question: Was Dudley Russell or Juan René Serrano born first?
+",['Dudley Russell'],300ccba91f776e583d418d6d9ecc5e1bdca7bd80580cd36e,en,52,2wikimqa,4526
+2wikimqa, No Trees In The Street,Answer:,1.0,,"Question: Which film has the director who died later, True To The Navy or No Trees In The Street?
+",['No Trees In The Street'],435fae9b23d8b22e85a57cfd8ceb8541dea5b0c551acc3a9,en,52,2wikimqa,7162
+2wikimqa, Not specified in the passage.,Answer:,1.0,,"Question: What is the place of birth of the director of film Sweepstakes (Film)?
+","['Oklahoma City, Oklahoma']",7940c60a5ff2d81b62d118253577d1d891057ca45695e91a,en,52,2wikimqa,3277
+2wikimqa," Three film-festival awards: ""Best Cutting Edge Film"" at the 2008 San Diego Film Festival, ""Audience Choice -- Feature-Length Narrative Film"" at the 2008 Cinema City International Film Festival, and ""Special Jury Prize for Libertarian Ideals",Answer:,1.0,,"Question: Which award the director of film Lady Magdalene'S got?
+",['Prometheus Award'],29ec971fbdf0df2d0c41c497de945024db6159c0c30be307,en,52,2wikimqa,3529
+2wikimqa, After 1231,Answer:,1.0,,"Question: When did Thomas Of Galloway (Bastard)'s father die?
+",['1234'],8848d4bd1425f8bef31b6c279ec378bcbca14f10b702c4ea,en,52,2wikimqa,9182
+2wikimqa, Charlotte Amalie of Denmark,Answer:,1.0,,"Question: Who is the mother-in-law of Louise Of Mecklenburg-Güstrow?
+",['Charlotte Amalie of Hesse-Kassel'],5ff6349ea0b2ecb882f535ff3cec2f9c012d3468fb7b912e,en,52,2wikimqa,5695

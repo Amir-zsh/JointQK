@@ -1,0 +1,4625 @@
+max_new_tokens,compression_ratio,dataset,question,length,_id,answers,answer_prefix,task,language,predicted_answer,all_classes
+84,1.0,lcc,,5243,28ce5cf5e0beeb47248c6cba20ae17fa71d60d402770d464,['\t\t\t\tParticipant p = (Participant)m_Participants[i];'],"Next line of code:
+",lcc,csharp,:                                                                                   ,
+84,1.0,lcc,,1069,ca807f49d7c6f84dcae3df694bde685aa7f75a02e9d4f574,"['\t\t\tZ_.add_edge(e_u, e_v, **data.copy())']","Next line of code:
+",lcc,python,.                                                                                   ,
+84,1.0,lcc,,844,04429037d9380b6e9c3f7b2070992a5af10745895025113c,"[""        rfd, fd, cfilename   = open_tmp_file('rwseektest.wav')""]","Next line of code:
+",lcc,python,"  "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """"
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile of code:
+
+  Sndfile",
+84,1.0,lcc,,462,9bc1f81e1a4c4b44da11ffc093a0c9fecbe5f99e4eff3aa5,['            if e.text == language:'],"Next line of code:
+",lcc,python,,
+84,1.0,lcc,,570,a5da7e173afd5ba71e0185228a1df77238c2949ba3ea2935,['\t\t\t\t\tOLStyleValue styleValue = (OLStyleValue) value;'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,1229,3bd5a501fc0327fd7bcda8389c7d11b3a821c9b5ce5a93cc,['        longest = max(self.answers)'],"Next line of code:
+",lcc,python,"::
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+: 
+",
+84,1.0,lcc,,907,227b063979c62ee1de7436be168450b5a7712a7a637fa6d4,['                    mob.Target = new SR_NewRuneTarget(RuneAcc);'],"Next line of code:
+",lcc,csharp,,
+84,1.0,lcc,,1820,f652398c3e8be338b4a7873ba6fecc5a686204d99a1a8d10,['            for (int i = 0; i < chain.length; i++)'],"Next line of code:
+",lcc,java,,
+84,1.0,lcc,,1096,01b11dc980d93775ce16fd5e630cf5619f66f281ee12947b,"['            sp = new JESpace(name, path);']","Next line of code:
+",lcc,java,"  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+  jpos
+",
+84,1.0,lcc,,567,64d5f26d486a85e85284229e8d254f996cfafd844cd321c5,['\t\t\t\t\tpos = btnEnergizeAll.bottom();'],"Next line of code:
+",lcc,java, 																																																																																			,
+84,1.0,lcc,,1670,8ae06de3dd26783213ae72552d610c4f1518647b7898d383,"[""        length = int(environ['CONTENT_LENGTH'])""]","Next line of code:
+",lcc,python,:       ,
+84,1.0,lcc,,686,14de6afab15eabeb4fec480f9d6b4db78e93e0493851cc35,"['        mark = ""setRepeated(\'%s\');"" % status_id']","Next line of code:
+",lcc,python,'Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur Tur,
+84,1.0,lcc,,958,1712603d3736689b03586a52e0f51eedd1a2bccd03217fde,"['            return {""error"": False}']","Next line of code:
+",lcc,python, of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of,
+84,1.0,lcc,,778,e212994f82962f98d4e1be7a5678cfd25eacb4f645df2198,['\t\t\tIPermission result = a.Union (b);'],"Next line of code:
+",lcc,csharp,ZonePermissionZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZoneZone,
+84,1.0,lcc,,713,e6dca363f4644795057dce35d57cdbc53e1e84bea1699bbf,['        certs = []'],"Next line of code:
+",lcc,python,http/jav,
+84,1.0,lcc,,847,45be6133b10843a59b2ff2272116e322f7dd795025749020,['        User user = getUser(request);'],"Next line of code:
+",lcc,java,  Load < > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >,
+84,1.0,lcc,,1276,4b93f91719b36d7aee8a2f7f39b3991d464913e3bc3e77b4,"[""            self.__tmp_dir, 'datastream.%s.pipe' % uuid.uuid4().hex)""]","Next line of code:
+",lcc,python,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,957,54df7435e6cdeb9cf80f52a45f4c173229b57b7dfcc77ad7,['\t\t\t\tif(! option1) {'],"Next line of code:
+",lcc,csharp," 
+
+ 
+
+ 
+
+ 
+
+ 
+
+",
+84,1.0,lcc,,1570,e42bb143aca03ffdde352e012ca3991013aa4f1018e60c8f,['        if ((args == null) || (args.length == 0)) {'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,515,04233bb10cad37ee372ddcc1ca95b3e2a853d217fa90929e,['\t\t\t\tfirms = loadFromFile();'],"Next line of code:
+",lcc,java," of code:
+ of code:
+ of code:",
+84,1.0,lcc,,925,36799d0d8e06fa5c217eccd67db779ab9866845eb0713e74,['\t\tPreferencePage generalPage = new FieldEditorPreferencePage() {'],"Next line of code:
+",lcc,java,":
+:
+:
+",
+84,1.0,lcc,,538,82560c22f3648e5086523b10f22179edb1aebdc379fdfaa5,['                if (m_Owner.SpellTarget == null)'],"Next line of code:
+",lcc,csharp,  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng  Mobile  Eng,
+84,1.0,lcc,,4268,52b05f3e84a4fe67c9a1b15719fbecb75dda4932f22567e9,"['        for state, dict_ in states.items():']","Next line of code:
+",lcc,python,: : : : :,
+84,1.0,lcc,,1985,1e32291c11bc48e0917860b1de8446dde3fedecd450ef073,['\t\tfor(IField field : fields) { '],"Next line of code:
+",lcc,java,":
+:
+",
+84,1.0,lcc,,6502,d5dde130982bcbe6f095c65d1d5a928669bc3a458df26cc6,"[""    like ``r'/foo/?'`` in conjunction with using the decorator.""]","Next line of code:
+",lcc,python,":...
+...
+...
+",
+84,1.0,lcc,,777,5dbe65a9966abf6a6fdc04cf78e20977f8d24df06849e8e7,['\t\t\tif ((Controls.Count == 0) && (initialIndex != -1)) '],"Next line of code:
+",lcc,csharp,"Command: 
+  Multi:                                                                              ",
+84,1.0,lcc,,1225,43954d45633ac63acc4badb3892fdb276e080592cc147b1e,['    args = parser.parse_args()'],"Next line of code:
+",lcc,python,":
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:",
+84,1.0,lcc,,1845,9d639220f2ae9cbb3b86c56287371346450159efa5afc251,['                if (mod >= 156 && mod <= 160)'],"Next line of code:
+",lcc,csharp,                                                                                    ,
+84,1.0,lcc,,816,03873ecbb96288a84c3d9ea1f5a2a718188d2c8a0c5920ab,"[""        for plat_os in ['Windows', 'Linux', 'Linux 64', 'OS X']:""]","Next line of code:
+",lcc,python,"""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+""""""
+",
+84,1.0,lcc,,1101,63fdad7f1feacdf8cca4aaf57dae737d83c351d9ab66db8b,['\t\tif (projectID==null || issueTypeID==null) {'],"Next line of code:
+",lcc,java,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,861,a2ce4aeed86faf7c78539925675910ecdf08f4ca9f5603ee,['            foreach (ArgumentSyntax argumentSyntax in argumentSyntaxs) {'],"Next line of code:
+",lcc,csharp,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,2752,b55c3cd64c946848d39da7e77c7364582b5e7ab71a545f58,['        split_test = self._update_partition_id(0)'],"Next line of code:
+",lcc,python,:                                                                                   ,
+84,1.0,lcc,,1490,caded4c1338faaf5978525a343ec76e66b5546a6a35088a6,['            foreach (object o in longTag.Values) {'],"Next line of code:
+",lcc,csharp,  @  @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @,
+84,1.0,lcc,,1113,341005dfebe6821d4201177ffce38b1e3048f5a0d9c30463,['\t\t\t\t\t\tGraphNode cgn = graphNodes.get(cell);'],"Next line of code:
+",lcc,java,:  Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric Electric,
+84,1.0,lcc,,629,32d36e0536e57f991a066ab60778b32884747e7689f3c816,['        task = new ListenableFutureTask<>(callable);'],"Next line of code:
+",lcc,java,:  :  :  : ,
+84,1.0,lcc,,1035,1f9066ab085c69885da88c003a539d651c2835d2ed83fd83,['                else if (ke.getKeyCode() == KeyEvent.VK_DOWN) {'],"Next line of code:
+",lcc,java,"  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+  MainPanel
+",
+84,1.0,lcc,,534,88af654f6cc0799e1844ea6d4158729b1130dc62928ae169,"[""    prerequisite = NavigateToSibling('Details')""]","Next line of code:
+",lcc,python,"  cfeme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+",
+84,1.0,lcc,,482,08b681d309832c3aa506f61679aefcaed7ca5b6c115d2701,['\t\tfor (IJRecognitionListener listener : recognitionListeners) {'],"Next line of code:
+",lcc,java,  ,
+84,1.0,lcc,,655,1472d733364caca77c7f2605a8ceaee6c18fb02ebc460475,['                ScriptManager sm = ScriptManager.GetCurrent(Page);'],"Next line of code:
+",lcc,csharp,"Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design
+Clear Design",
+84,1.0,lcc,,475,2abe780e4777e159876fcba6fb9c21888d8a0782e7499c3e,"['\t\tdamageCooldown = compound.getInteger(""DamageCooldown"");']","Next line of code:
+",lcc,java," @  Tool
+ @  Trap
+ @  Trap
+ @  Trap
+@",
+84,1.0,lcc,,661,214bccc94127564a29c72827ff53ccb4c3bd880918d517fa,['        StringBuilder sb = new StringBuilder(32);'],"Next line of code:
+",lcc,java,"   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model
+   Free Col Model",
+84,1.0,lcc,,577,492de4fd744409d77007630f3cf7e7c49b13037cb2b2a8c6,"['    i = store.handle_indicators_create(t, {']","Next line of code:
+",lcc,python,"  cs
+  cs
+  cs
+  cs
+  cs
+",
+84,1.0,lcc,,701,a507514e59d02bec9d48f262b48dffcb180b6665ae945f96,"['        p = Person.objects.get(name=""owner"")']","Next line of code:
+",lcc,python,"  Unit
+  Unit
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+  Mongo
+",
+84,1.0,lcc,,1433,821b5076e7642f35d6db6b0af29ca2ff7694928b53b0dace,"['                    interact(self._plot_line, x_name=widget_x, y_name=widget_y)']","Next line of code:
+",lcc,python, * (given foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot foot,
+84,1.0,lcc,,513,33a191efb28d5b529c26b622495441d20e705cfb2dc5be9f,"['                if (!ShouldIgnoreChange(path, ignored))']","Next line of code:
+",lcc,csharp,"code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+",
+84,1.0,lcc,,837,6fac8d0b410c99d32f6421d53dcbd4534f8f4a65b4dcede9,"['\t\treturn read(key, computed);']","Next line of code:
+",lcc,java,  ,
+84,1.0,lcc,,1519,b581893ac400757aaad32eed292afd06559e04175e8d6fdf,"[""        cat = getToolByName(self.context, 'uid_catalog')""]","Next line of code:
+",lcc,python,"  u
+ub
+",
+84,1.0,lcc,,1528,b5474d9a2623627f5e344cff1193ab0629353b34b75b1c81,['\t\t\tset { m_ID = (ushort)value; }'],"Next line of code:
+",lcc,csharp,: : :,
+84,1.0,lcc,,1661,c357dc85d4b8de20bfeb7e4f0a5fb6c3f1e2ad3fba2c7691,"['                    channelUri = ChannelUri(scene, land);']","Next line of code:
+",lcc,csharp,: < ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll ll,
+84,1.0,lcc,,576,7c3bba0835a61180b3615e5a45405828fb9f896470cd8acb,"['\t\t\t\tMsgBox.Show(this,""Please fix data entry errors first."");']","Next line of code:
+",lcc,csharp,"FormPayPeriods
+PayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPayPay",
+84,1.0,lcc,,2765,d6baed6ebf26ec130b53d88863008a04aa5759c9dbf5f916,"['        lat, lon = _build_lat_lon_for_NAME_timeseries(column_headings)']","Next line of code:
+",lcc,python," """""" """""" """""" """""" """"""",
+84,1.0,lcc,,772,37c8cc83faf991e5dab1a2d463f96ea1e173fbf645387307,"[""    group_id = data_dict['id']""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,784,d2fab0055348069f0d8e88dc8cdb2f46840753245d44d77d,['\t\t\t\tString label = example.getValueAsString(predictionAttribute);'],"Next line of code:
+",lcc,java,"  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+  performance
+",
+84,1.0,lcc,,1172,39981401e38829b7087717c9452de413a3ec15cf21ca091f,['            var searchResultsArray = new SearchResults[segments.Length];'],"Next line of code:
+",lcc,csharp,"code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code​code​",
+84,1.0,lcc,,6474,d616bbc2ccc30cab16459d0300a1d8c933b33e1455e3aa84,['            char low = string.charAt(offset++);'],"Next line of code:
+",lcc,java,"
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+
+code:
+",
+84,1.0,lcc,,945,5d56dd41743ce710c9b0986b24ec730ba947774b15696336,['        if (GenericValidator.isBlankOrNull(studyFormName)) {'],"Next line of code:
+",lcc,java,  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L  L,
+84,1.0,lcc,,807,cb8ef7b164c1f9b4d27225f6b8e45ea33c8096c073d82e27,"['\t\t\t\t\tSendOrderTo(newConn, ""AuthenticationError"", message);']","Next line of code:
+",lcc,csharp,Open RA Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server Server,
+84,1.0,lcc,,833,6e13c44c01f4116cb114d1ed362252ac9e0da0ef7331a74b,['\t\tif(beans == null)'],"Next line of code:
+",lcc,java,"code:
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code: 
+code",
+84,1.0,lcc,,549,73fefc41fc5fa1c47966c4abc5dc1e78bb36629f5e868c89,"[""elif prnum == 'advanced':""]","Next line of code:
+",lcc,python,"
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+",
+84,1.0,lcc,,1174,5f7f8ad03839f70553f1bf1189d38d53af0f00c6db0c9584,['            int [] ret = new int[A.Dimensions.NumberOfDimensions]; '],"Next line of code:
+",lcc,csharp, HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  &  HY  & ,
+84,1.0,lcc,,1147,6f5d658cc2b84c64bf49c302dee4078f60fd158ed24b7b19,"[""  reportName = pD[ 'plotName' ]""]","Next line of code:
+",lcc,python,"  return
+  ",
+84,1.0,lcc,,985,10f9dbc73235c1d307666e6143b4217f1b7b644ae2fe93d6,['\t\t\tforeach (var rp in world.ActorsWithTrait<RallyPoint>())'],"Next line of code:
+",lcc,csharp,"Open RA
+Bot
+Base
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+Bot
+
+",
+84,1.0,lcc,,768,fc248cbd17650fa9a1b49a55fb76191e355a916d55809db3,['        List<PlanNodeList> nodeLists = new ArrayList<PlanNodeList>();'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,1012,8f007015b8b3b455a6fcd8f989241324f18ff10327811d5b,"['\t\t\tthis.comboBox1.Size = new System.Drawing.Size(224, 21);']","Next line of code:
+",lcc,csharp, . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .,
+84,1.0,lcc,,1031,d356cc0ece3ba9de9fcbb2613757dcabae2d8a589e1f370b,"['\t\t\tdcb.SetValues (baud_rate, parity, data_bits, bits, hs);']","Next line of code:
+",lcc,csharp,"
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+",
+84,1.0,lcc,,840,feedb243436593ce6db6b01f37eaf505c93f329ca6adb4ff,"['        page = self.get_page(self.user.get_profile().get_url(),']","Next line of code:
+",lcc,python,UserProfileModer,
+84,1.0,lcc,,555,320e62adbcd607acda753d0d1559c566d029796c177de00e,"['    options, args = parser.parse_known_args()']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1024,544c63cee98145e32800b86cdc53d87ba73f46da8aeafade,"['\t\t\tcurrentListEntry = self[""list""].getCurrent()']","Next line of code:
+",lcc,python,"Plugins:
+Plugins:
+Plugin:
+Plugin:
+Plugin:
+Plugin:
+Plugin:
+Plugin:
+Plugin:
+Plugin:
+Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:Plugin:",
+84,1.0,lcc,,1163,5c41dbe75be69a522492a261348f685fcc83189eb876ce02,['                int len = fCode.Length + 2;'],"Next line of code:
+",lcc,csharp,": 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+: 0
+",
+84,1.0,lcc,,840,cdd96b1a6cdd32b52402ed8afa5c640bc81a206da183fee0,['    if (results == null) {'],"Next line of code:
+",lcc,java,"  return
+  return
+  return
+  return
+  return
+ ",
+84,1.0,lcc,,819,f199ac4b782288ef2a374c11cfb7bee86753f53493876247,"['        y_points = np.arange(-89.12, +90.0, 42.847)']","Next line of code:
+",lcc,python,"  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+  as
+",
+84,1.0,lcc,,518,6cbff4b2ab9cd811f4d0b2d6ed54a5ae26c2c9ed95c4d5cb,['            if (currPacket != null)'],"Next line of code:
+",lcc,csharp,"CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE
+CANUE",
+84,1.0,lcc,,1319,6071885a8ddae41fc3b21de3b7edec8f485b65d210d0a2e3,"[""    elif color == 'yellow':""]","Next line of code:
+",lcc,python,: : : : : :,
+84,1.0,lcc,,743,90e9975c7f92d8ef21fcbe89fd1500b3a541124b7b4304fb,['            set { _numValues = value; }'],"Next line of code:
+",lcc,csharp,  com. esp................................................................................,
+84,1.0,lcc,,1467,e51a6d98c9314e0d0e73c15da39e443dc71aa90ae24eefe6,"['            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);']","Next line of code:
+",lcc,csharp," 
+
+ 
+
+",
+84,1.0,lcc,,831,e23602db74e35727f7f766eb0f92a05cdb9599280a144a07,"[""        elif hasattr( original, 'originalFunction' ):""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1652,ce9e73e7e622c7688ef392b99d6afaa87bea6b138e34fa82,['            final DataOutputStream out = new DataOutputStream(baos);'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,600,6a3563763220617ce12df989e13f3ad3d2a6e723fd3d119e,['                    for (int i = 0; i < ticker.length; i++)'],"Next line of code:
+",lcc,java,"Progress of code:
+Fr. of code:
+Fr. of code:
+Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:Fr. of code:",
+84,1.0,lcc,,655,83459d6f1f2adf3b906ee4a28eaf21c3a195f75ae100c64b,['            var item = Subject.GetItems().Single();'],"Next line of code:
+",lcc,csharp,"
+
+",
+84,1.0,lcc,,772,a35dec5733725ddbb50c8215f4db5a1bb8d03ea5bf6f87c7,['                if (_diff > 0)'],"Next line of code:
+",lcc,csharp,,
+84,1.0,lcc,,1863,c19772b78b722854250c2ccf8a287dc2802417dbeafa7d23,"[""                      'relative to data\\n'])""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1309,ce7af30933d25fa24c3982a8a49548083f6f94e48e102d6a,['                    i += ((b & 0x08) << 2);'],"Next line of code:
+",lcc,java,  /* M */ /* M */ /* M */ /* M */ /* M */ /* M */ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “ “,
+84,1.0,lcc,,824,09ae4ef8effb51b554602ffbe68a496389bb548ebc5983ad,['        course_key = CourseKey.from_string(self._course_key)'],"Next line of code:
+",lcc,python,  Course Fix End Rest Course Fix End Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest Rest,
+84,1.0,lcc,,803,56d619ed99235ddf5394f3518b191a845301a65eebac5d5e,['\t\tint min = -1;'],"Next line of code:
+",lcc,java,"on: met
+ met
+",
+84,1.0,lcc,,744,41849aea5e307f5199745185087b9ae2038c2a8673824a84,"[""        types = ['cert', 'key']""]","Next line of code:
+",lcc,python,       ,
+84,1.0,lcc,,1336,87a46bb8e4f77d817428047955d797ac5726abcbd031985c,"['            this.lblPrivacy.Location = new System.Drawing.Point(6, 26);']","Next line of code:
+",lcc,csharp, &  &  & ,
+84,1.0,lcc,,3043,0040aff29f9f6ccd4819e0793a5a66b9d75d882f56fae40c,['        for i in zip(self.loaded_plugins):'],"Next line of code:
+",lcc,python,"   code
+ ",
+84,1.0,lcc,,893,8a746e0f9e09ec54d8d1e7bf7ca7b8e16731fe8f4652e145,['    getRoomFullName.produce = lambda s: s.getRoom()'],"Next line of code:
+",lcc,python,"
+
+",
+84,1.0,lcc,,543,bf41ff7b860961e0d3143422090577f24d568a16dd294083,['                            throw new MessageWriterException(e);'],"Next line of code:
+",lcc,java,Platform Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth Connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth connect Mirth,
+84,1.0,lcc,,762,5e5cdb6218b379ec44de7c00d3f6ce7f79c90829d6cf905f,['\t\t       \t\t\tlayer = ScriptRuntime.toInt32(value);'],"Next line of code:
+",lcc,java,"  code:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+  js:
+",
+84,1.0,lcc,,1328,1d185bc0190b4d50ec508a59208f05925712f6455d6ece65,['        if (currentSession != null && currentSession.isOpened()) {'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,630,2728509e7278c4d21b0ffa379c7ac4c266c2cb3953c53b51,['\t\tfor(Emotion emotion : emotions)'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,1160,937eae55baa939e82bad4567e4b302435ea8891cfa090cc2,"[""                    'property1': 2, 'property2': 3}""]","Next line of code:
+",lcc,python,  < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <,
+84,1.0,lcc,,980,b3d7b8ae829a609d04350475dc3cbba8c1903ae29d44f33f,['    N1 = a/sqrt(1-eccSquared*sin(phi1Rad)*sin(phi1Rad))'],"Next line of code:
+",lcc,python,@U4,
+84,1.0,lcc,,651,43b09bf2cf11206d57ef722d796e2250d60d38db8c309917,['        form = ReportUserForm(request.POST)'],"Next line of code:
+",lcc,python,  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #,
+84,1.0,lcc,,4413,c87c42b130a11ba81e64078e5be1ddb51be6aa08d42fa60d,"[""    field_names = ['name', 'summary', 'branch', 'releasefileglob']""]","Next line of code:
+",lcc,python,:                                                                                   ,
+84,1.0,lcc,,511,6d015d2fedcdf18b400b44406bfa6c05a907c32559c2fac3,['\t\t\t\ttry { RtlApplyToControls(form.Controls); }'],"Next line of code:
+",lcc,csharp,  <  > ,
+84,1.0,lcc,,917,de844ece27c689ffd57823fb8131dd2a4050b2ce6d5802d8,['                temp >>= 8;'],"Next line of code:
+",lcc,java,"NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+NumberVariableDataType
+",
+84,1.0,lcc,,1382,0eae36deb9dbeb31e09db8bd01a91ef5b679925d700f9563,"[""                if flag == 'exclude_tags':""]","Next line of code:
+",lcc,python,ize',
+84,1.0,lcc,,545,d9e11801221dccea3ae87a56625d947443bb2bb387b8a83d,['                return new object[0];'],"Next line of code:
+",lcc,csharp,CorBaseCodeCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCorCor,
+84,1.0,lcc,,557,bfeb58c9afcb4b7dfc22c93238798de6b1c61704eb37134a,"[""        0x06: 'EOBD (Europe) ',""]","Next line of code:
+",lcc,python,"  O
+",
+84,1.0,lcc,,1595,fe11c4d3c4d9b1392973aed3ba28df9d9cf6a13123cc8e59,['\t\tloop = gobject.MainLoop()'],"Next line of code:
+",lcc,python,                                                                                    ,
+84,1.0,lcc,,1615,faf59e122b5cf0c3acab0447bcd6a53f208c972065c8414a,"['                this.AddRes(index, typeof(BlackPearl), 1044353, 1, 1044253);']","Next line of code:
+",lcc,csharp,  % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %,
+84,1.0,lcc,,1358,5cba5adbc6ed3521940b6a136fc48a061a432b5260ca8c1f,['        app_ctx = self._implicit_app_ctx_stack.pop()'],"Next line of code:
+",lcc,python,":
+:
+:
+",
+84,1.0,lcc,,2251,9621a523cfd2361541d82c5585397ca2326e223496d5585c,"['    response = _pubsub_consumer(session, cluster_id, query_wrapper)']","Next line of code:
+",lcc,python,::::::::,
+84,1.0,lcc,,1149,693b0b0207d00086cfcee5f5943068055d8630c9db62e018,['            if (resourceEntityForRelease != null) {'],"Next line of code:
+",lcc,java,":
+:
+:
+",
+84,1.0,lcc,,1057,6515bcd028819c4ca6bc104bc8610724275c7ed4d429f30c,['        dx = ray_trafo.range.meshgrid[1]'],"Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1751,73869275419cb7e29c3d7b53bed42f41e39223637ced7d1d,"['            logger.log(u""Proxified REGEX: "" + regx, logger.DEBUG)']","Next line of code:
+",lcc,python,:  ,
+84,1.0,lcc,,726,a1362f2667219e18121103e3f58abc48d5b819038a41374c,['\t\t\tif (type == FontSize.NotSet)'],"Next line of code:
+",lcc,csharp,  struct  [  struct  [  struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [ struct  [,
+84,1.0,lcc,,924,dc4f68ed20529e95f1739fef515a496692b2f641f11bc128,['\t\t\t\t\t\t|| (block2.Length > GetInputBlockSize()))'],"Next line of code:
+",lcc,csharp,  http                                         ,
+84,1.0,lcc,,537,05a84c831d09b24c15be892934f316b53ccabf77bfe3253f,['\t\t\tobj = (JObject)obj.Properties[0].Value;'],"Next line of code:
+",lcc,csharp,":
+:
+:
+:
+:
+:
+",
+84,1.0,lcc,,1282,74db7236c3c75feb5089de045fc0919ca9061c171999a049,['                for (int w = 0; w < width; w++) {'],"Next line of code:
+",lcc,java,global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global global,
+84,1.0,lcc,,761,815f132424cf8772d1a660e02d231ddd3309d07fe636e616,['    i1 = iso.get_default()'],"Next line of code:
+",lcc,python,: :,
+84,1.0,lcc,,1331,0ab3fa6fa37f02b5f789515e8bd2a7357fa959242a06e4e3,['        if (args.length < 2 || args.length > 3) {'],"Next line of code:
+",lcc,java,: # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #,
+84,1.0,lcc,,706,ec079a446c9b8d37501282c4d7ea9038eeec3621948ada9e,"[""                    {u'Timestamp': datetime.datetime(2015, 12, 31, 21, 29, 47,""]","Next line of code:
+",lcc,python,  History                                                                                  ,
+84,1.0,lcc,,519,2048127690b0643c5439f0746443d4a8223e39ac290d9891,['\t\t\tString downloadedJarFile = performDownload();'],"Next line of code:
+",lcc,java,"  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+  current line of code:
+",
+84,1.0,lcc,,469,704587a1d393bef058060b716bb0ae02a9df9635baed95b0,['\t\t\tif (context != IntPtr.Zero)'],"Next line of code:
+",lcc,csharp,Sd4OpenOpenOpenRAOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpenOpen,
+84,1.0,lcc,,985,846340ba2c3c023a2837435e9ce17bc793645f33a20dcb42,['        projected onto the *y* axis. :py:obj:`None` if singular.'],"Next line of code:
+",lcc,python,"fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit
+fit  fit  fit  fit  fit  fit  fit  fit  fit  fit  fit  fit  fit ",
+84,1.0,lcc,,703,1915494441abd4076b5a0f96dc9ffb2c41a828a4c1abde95,['        if (this == EMPTY) {'],"Next line of code:
+",lcc,java,  CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLinkInfo CmsLink,
+84,1.0,lcc,,4345,cf6d3d1f0f07aeb719a37db4e37a1cd437cb894df0b12bdd,['                  adminUser = getEucalyptusAdmin();'],"Next line of code:
+",lcc,java,// O E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E E,
+84,1.0,lcc,,666,2a81205ef1f5abf727ff63850ffd1162fadd475e92b2d3ca,['            add { _selectedFolderChanged += value; }'],"Next line of code:
+",lcc,csharp,"Clear Canvas
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+Client
+Clear
+
+Client",
+84,1.0,lcc,,616,b8a0388946b2d3e0cf2a7f1db681ccb8c70cc44275b2f173,['        ImportVmTemplateParameters parameters = createParameters();'],"Next line of code:
+",lcc,java,"  Full
+",
+84,1.0,lcc,,650,6261fc22209c7ae19b5098f7004853c527e546aedd74f793,['\t\t\tw10.TopAttach = ((uint)(1));'],"Next line of code:
+",lcc,csharp,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,1764,a5e1e43a793649afc91e7bd083f0d034f0df3e24509c448e,"[""            environ['%sCATEGORY' % POSTPROC_ENVIRO_ID] = \\""]","Next line of code:
+",lcc,python,: < : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,910,6b78cc0ec714622bb22d89aa972b1eae59e59788b357955a,['\t\t\treturn new ConstructorBuilder(mb);'],"Next line of code:
+",lcc,csharp,  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (  (,
+84,1.0,lcc,,1897,773a363f2c8a3fdcc084a85466fde2a1350769f67776f1f4,['      return (Builder) new Builder().MergeFrom(prototype);'],"Next line of code:
+",lcc,csharp,                                                                                    ,
+84,1.0,lcc,,1059,1354213b38f26ed15b8f898742ff5002cfb7db09baf32dd7,['                    vertices[x] = new Vector3f();'],"Next line of code:
+",lcc,java,  <  <  > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > > >,
+84,1.0,lcc,,1920,5b8e2643405d58c8009b6c2812341072d705748a64e8f971,['        if (CmsStringUtil.isNotEmptyOrWhitespaceOnly(showDateData)) {'],"Next line of code:
+",lcc,java,,
+84,1.0,lcc,,583,6f54b8bdeec79fa980ac72092ce615f8de384ea5d04ccc11,['\t\t\tyield return new WaitForEndOfFrame();'],"Next line of code:
+",lcc,csharp,  Material UI Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material Material,
+84,1.0,lcc,,638,9ee2a42b13526dd952de8a27bb5404cee70aa93dc9e35ee7,['        int h = GetBestHeight();'],"Next line of code:
+",lcc,csharp,Command:,
+84,1.0,lcc,,864,fee4dc71675158dd9374b556629af2d83cdc0503955dba84,"['                    lastUser = r[""CreatedBy""].ToString();']","Next line of code:
+",lcc,csharp,"TC
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+PET
+",
+84,1.0,lcc,,598,91b83a11b6dc2c86381251a96905d31244b8ac184fe12ef5,['\t\t\t\tdirections |= ScrollDirection.Right;'],"Next line of code:
+",lcc,csharp,":Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+:Widget
+",
+84,1.0,lcc,,1562,56926abd2bf7483455bb0fefd23ad8e304fab1e8b70b8eee,['            string[] CriteriaCodesUsedArray = CriteriaCodesUsed.ToArray();'],"Next line of code:
+",lcc,csharp,: : : :,
+84,1.0,lcc,,722,50f7d00750145f888361c63d85ebf5e9fb68a039385b8255,"['                stream.Read (buffer, 0, buffer.Length);']","Next line of code:
+",lcc,csharp,"  Active Lambda Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+  Application
+ ",
+84,1.0,lcc,,879,59b6354e9591524b4ada354f2fa122917bcd1253262c12f2,['        return not any(self._reqs.values())'],"Next line of code:
+",lcc,python,"# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+# Copyright
+",
+84,1.0,lcc,,1205,949612e418b169f935d6b0410ff5626ba21152c71a086f2d,['\t\t\tget { return Enabled && _numberOfImages > 2; }'],"Next line of code:
+",lcc,csharp,"Clear code:
+Clear code:
+Clear code:
+Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:Clear code:",
+84,1.0,lcc,,614,e2ce1e79b1ea6b76bdda716904c17e746e52a6a0261ef941,['\t\t\tget { return dataDir; }'],"Next line of code:
+",lcc,csharp,"  //  "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """,
+84,1.0,lcc,,733,cb3e34be4795caaf719f520787549681e8b00fbac71530a7,['            if (bugAnnotation instanceof PackageMemberAnnotation) {'],"Next line of code:
+",lcc,java,  Iterator  Iterator  Iterator  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector  Detector,
+84,1.0,lcc,,1914,c539b59ccd2559e5f2823b3d0c876ed3d71dad59f7a6e121,"['\t[TypeAlias( ""Server.Items.Pizza"" )]']","Next line of code:
+",lcc,csharp,"
+
+",
+84,1.0,lcc,,993,d8843d3a7c6577b304c94d48767a3f75337b2aeadd3c5f76,"['                        if (eFarm.MinionsHit >= Menu.GetSlider(""LaneClearECount""))']","Next line of code:
+",lcc,csharp,"  Flowers
+ Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers Flowers",
+84,1.0,lcc,,691,9812a3e53ee25cf9a764b1de80d781f37d829475a8bf8980,"['\t\treturn get(x, y, width, height, 0.0, 0.0, DEFAULT_FILL, anchor);']","Next line of code:
+",lcc,java,  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>  <fr>,
+84,1.0,lcc,,709,140b5a1cf9a62eb1f7eac54fcb8dec74b23e9ea6e4d3d93a,['        filexml = self._retr_file(filename)'],"Next line of code:
+",lcc,python,  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K  D  N  K,
+84,1.0,lcc,,559,377a5cd5de82ca79a2db39ae2f6c6eefe06766c9245639af,"[""        value = {'a': 'Awesome title', 'b': 'sub title', 'k': 'form'}""]","Next line of code:
+",lcc,python,assistant,
+84,1.0,lcc,,2245,3b38e1fde0c4d94fe262da07601e96359f818e86edae6271,"['                    new[] {new object[] {10L, ""E1""}});']","Next line of code:
+",lcc,csharp,"
+
+
+
+ 
+
+",
+84,1.0,lcc,,2793,87167f35efb4266c3e3919ffabd45083b35092d703ea2b45,['        c = self.copy()'],"Next line of code:
+",lcc,python,                                                                                                                                                                        ,
+84,1.0,lcc,,739,f1012042daf639a1e2d064433991b95b1734be709802fbc1,"['        view = self.browse(cr, SUPERUSER_ID, res_id, context=context)']","Next line of code:
+",lcc,python,": request:
+: translation:
+: view:
+",
+84,1.0,lcc,,980,79f8206b5d5b0bfc5beeb608d3ce99dca25c4d4a1db02f09,"['            value = BasicHTML.createHTMLView(c, text);']","Next line of code:
+",lcc,java,  @                                                                                  ,
+84,1.0,lcc,,633,d15c99c3eb39bc99358e7e6768ef9b03d171255c2c8c033a,"['    s = create(filename, content)']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,620,941de4a30042444c37ae61552e7f11d288717b818793b5d1,['\t\t\t\tmapping.loader = new HbmLoader();'],"Next line of code:
+",lcc,csharp,"code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,670,8beb1da6b11326207584621c562d0cde00dc7c7e21ffd3f0,['\t\t\twriter.WriteEncodedInt( (int) m_Members.Count );'],"Next line of code:
+",lcc,csharp,  //  code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code:   code,
+84,1.0,lcc,,2259,67ef14339142182591850f1edd39a2ecbd4e4b7e0f37c376,['        assert graphQueue.size() <= maxGraphs;'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+",
+84,1.0,lcc,,951,7b8b8a69f57173dd972113558b3540a67621319e219d30c4,"['                self.args[\'pytest\'] = ""py.test {}"".format(pytest)']","Next line of code:
+",lcc,python,cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme cfme,
+84,1.0,lcc,,810,f6536b39e8505ccb4c694576fea0f11053ae3a52c68fe5c6,['                if (phi) {'],"Next line of code:
+",lcc,java," of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of
+ of  of  of  of  of  of  of  of  of  of  of  of  of  of  of  of  of  of ",
+84,1.0,lcc,,587,eda13b1d2aeeeac450c99e7b1bd4ab5d92449eda79b54da5,['        if (mCallback != null) {'],"Next line of code:
+",lcc,java,  @      ,
+84,1.0,lcc,,854,93191c3c840c04430c2e0222e3643013a8af4e2b709e6f95,"['\t\t\t\tGump g = new Gump(0, 0);']","Next line of code:
+",lcc,csharp,line of code of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of,
+84,1.0,lcc,,609,588825a49d4fdd244fc2fb3cce5086b306490b945a3bc787,['] + models)'],"Next line of code:
+",lcc,python,  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In  In,
+84,1.0,lcc,,744,a94d83a5503d88913110cc5d278d085fdccea0e30d2e9d9b,"[""        user = '%s@%s' % (username, domain)""]","Next line of code:
+",lcc,python,. <  ,
+84,1.0,lcc,,2528,a80d3f058a72bdd5747b39d44c4b55204d02f090d3568cee,"['          - *fpath*: string, full or relative path to the file.']","Next line of code:
+",lcc,python,  <                                                                                  ,
+84,1.0,lcc,,873,924bc05657c826f5fa04974021bf21c5946ff1d3a39ea9ef,"[""    if not res['OK']:""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1604,e19ebd2a302575d8fb0c11be6536df7e0face2889546ed8d,['\t\t\tString path = uri.getPath();'],"Next line of code:
+",lcc,java,"::::
+::
+:",
+84,1.0,lcc,,958,6dad6c68d75d75e242d0bbeb5900a85521954edf3aeb5975,"['        gsp = yield self.setupGerritStatusPush(reviewCB=sampleReviewCB,']","Next line of code:
+",lcc,python,  #  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g  g,
+84,1.0,lcc,,629,0bad08e092a4b3c97228cda53b001b7ddfd62dc3a8be077b,['    self.category = atom.Category()'],"Next line of code:
+",lcc,python,"  Pass
+  Pass
+",
+84,1.0,lcc,,2339,0d5ebe09775314436fb1f120cb4c0d408be485ca49b27ab0,"['                Map<String, AnnotationMirror> r2) {']","Next line of code:
+",lcc,java,,
+84,1.0,lcc,,2052,6303ed98c58fa08f8639667add933df524657e812b3495b5,['        col = split.column()'],"Next line of code:
+",lcc,python,"
+
+
+
+",
+84,1.0,lcc,,1369,23b0090fa6618a3171db2086d8cc9478f03e22182380161d,['            if (_engine.Memory.Map.Cartridge.MapperNo == 16)'],"Next line of code:
+",lcc,csharp,":
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:;
+",
+84,1.0,lcc,,594,4d661a278930364d65e248d5f8bbbf7992b0f866443d527f,['            String[] sTDocUrls = m_oInspector.getTDocUrls();'],"Next line of code:
+",lcc,java,"Insert of Contents of Code:
+Insert of Contents of Code:
+Insert of Contents of Code:
+Insert of Contents of Code:
+Insert of Contents of Code:
+Insert of Contents of Code:
+Insert of Contents of Code:
+
+Insert of Contents of Code:
+
+Insert of Contents of Code:
+
+Insert of Content of Code:
+
+Insert of Content of Code:
+
+Insert of Content of Code:
+
+Insert of Content of Code:
+
+Insert of Content of Code:
+
+",
+84,1.0,lcc,,1340,972aa86922fe3fc5000647badc4783f41e4e10f292b5d31b,"['\t\tAdd(""Party Quest"", 70025); // Party Quest Scroll [30 Red Bears]']","Next line of code:
+",lcc,csharp,"Msg ("" [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [",
+84,1.0,lcc,,853,d9359fe4b11ff3d0cc4c2102fccceb75920f6435962b6b84,"['\t\t\tMeasure (0, 0);']","Next line of code:
+",lcc,csharp,"  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+  try
+
+",
+84,1.0,lcc,,846,795a770e3d8fd600446fa22b4ced986b2139cc631f903b24,"[""        return '%s -> %s' % (self.announcement, self.tweet_id)""]","Next line of code:
+",lcc,python,": "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """,
+84,1.0,lcc,,1773,9ff8464a2c0b3eaf3e56da2bde63d1a0b3109df20a251c6e,"[""lexers['php'] = PhpLexer(startinline=True)""]","Next line of code:
+",lcc,python,":
+",
+84,1.0,lcc,,1259,3a72959ac7abd9d2f988ade3c891be2582b4b66a6cc74678,"[""                 ORDER BY sdate, stime ''', (i,))""]","Next line of code:
+",lcc,python,"  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+  Code:
+",
+84,1.0,lcc,,896,d6e15d0ebb2aa304bba431f5e996732e5585011c1cec782a,['        last_snapshot = timestamp_to_rethinkdb(timestamp)'],"Next line of code:
+",lcc,python,                                                                                                                                                                        ,
+84,1.0,lcc,,1740,2c8143e18e8a59b4e401fca8446e57b31d54c7fc033009c7,"['\t\t\t\tMsg(""Welcome to the real world..."");']","Next line of code:
+",lcc,csharp,Msg ( Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er Er ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER ER,
+84,1.0,lcc,,2041,997526c4ebbb7938e65ea14362c83fde9d979401f5f5f445,['\t\tname\t- aname/ename/gname'],"Next line of code:
+",lcc,python,"
+
+
+
+ 
+
+",
+84,1.0,lcc,,793,1be8fdfd322b9ece97d70593dac71eecdd59539ab7ef69d7,['        self.start = time.time()'],"Next line of code:
+",lcc,python, (Ans) ) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans) ) (Ans,
+84,1.0,lcc,,690,6a8feeca0aea2095a4c5fc0c58f18f3456556c6af9b7374a,"['                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));']","Next line of code:
+",lcc,java,"Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver
+Resolver'",
+84,1.0,lcc,,918,fd3a1a817ea75abb6d8f7040fcfb3ee43dbfe07e4e6d9408,['    if (len(primary.keys()) > 0):'],"Next line of code:
+",lcc,python,  in  am ,
+84,1.0,lcc,,791,b6029cffa6f017e686e2303165fc1ebc437fad4e837e5e05,"[""            build_ext = self.get_finalized_command('build_ext')""]","Next line of code:
+",lcc,python,:,
+84,1.0,lcc,,3626,afaa47c3e50b88c722f2e7e2f9bb3b1204f8b80e185f355f,['\t\t\tfor (int j = 0; j < lazyPropertyNames.Length; j++)'],"Next line of code:
+",lcc,csharp,: : : : : :,
+84,1.0,lcc,,1274,9ac83f0cb7aff9cd52581d7e6d5bce356b4f5531fcc7b4f2,"[""        '-l', 'h_vmem=%dM' % request['job_max_vmem'],""]","Next line of code:
+",lcc,python, @s  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @  @ ,
+84,1.0,lcc,,1017,abeb767e6c37cee48470e6764ac480ad487fef3e3fc93bba,"['            return View(""Form"", new DelegateViewModel());']","Next line of code:
+",lcc,csharp,,
+84,1.0,lcc,,668,9db6b4d2545835b0eb906eb67dce37abd8a18390ff3dd44b,['                        var circle = (Circle) obj;'],"Next line of code:
+",lcc,csharp,"  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+",
+84,1.0,lcc,,545,58414c770f11b4a32f9d1c67426fd6d8e2028e408a27f131,"['                elif res[\'error_code\'] in [""606"", ""607"", ""608""]:']","Next line of code:
+",lcc,python,                                                    ,
+84,1.0,lcc,,747,f964e1772f2adb4100531633f6287a54c98f80ddd622f9d8,['\t\t\tif (path.Count > 0)'],"Next line of code:
+",lcc,csharp,  Har Har Har Har Har Har Har Har Har Har Har Har Har Har Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar Dar,
+84,1.0,lcc,,750,3cc6d50befc6ded615d39d3b18b791d8f06b80ca3b2642b3,"['                       self.logger.error(""%s failed"" % service_name)']","Next line of code:
+",lcc,python,c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c   c  ,
+84,1.0,lcc,,575,7630f3d4fd6c44654c13b705304c20adea2cf0798b4dc72c,['        long t = getMissionTime();'],"Next line of code:
+",lcc,java,  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y  Y,
+84,1.0,lcc,,2203,6cc90781be873e3f526e24b432fa2997332f4aef86d6a696,['            if (state != PpmState.ZERO)'],"Next line of code:
+",lcc,csharp, < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <,
+84,1.0,lcc,,1113,b6d055c89ca6a6c261a27807c672673ece45777ad9806d2e,"['                return new DicomAttributeSL(tag, bb);']","Next line of code:
+",lcc,csharp,                                                                                    ,
+84,1.0,lcc,,2057,5d7f05b8f84258ef580014f750f774d8eb4af59aa074f04a,['\t\t\tint sessionID = Convert.ToInt32(tFull[3]);'],"Next line of code:
+",lcc,csharp," 
+ 
+ 
+",
+84,1.0,lcc,,694,8ed6880ab3b5c6188940a9999bc369708c565891b8d871f2,"[""        o = self.file(b'abcdefghij')""]","Next line of code:
+",lcc,python,: ,
+84,1.0,lcc,,478,7a221b8009c1d73293e9a45c3c9dc18eb109dc4e8c6cef92,['    <td><?cs var:sdk.win64_bundle_bytes ?> bytes</td>'],"Next line of code:
+",lcc,csharp,": 
+: 
+: 
+",
+84,1.0,lcc,,565,728682005fc144f5d03a92ebb7f121b7ceb08648eff87ba8,['    ymin = csi_95[0]'],"Next line of code:
+",lcc,python," Load of code:
+ 
+
+",
+84,1.0,lcc,,2189,7e20f7645ae46306c1c075059d48f64e2003534e7b1502c4,"['        self._testUIDGIDSwitch(1, 0, 2, 1, [0, 2, 0, 1], [1, 0])']","Next line of code:
+",lcc,python,"
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist
+Twist.",
+84,1.0,lcc,,518,971fbab8c3ab0ce2be833fead765ea9d6620fe3529e6e4f2,"['\t\t\t\t\tdrawPressed3DBorder(g, x, y, controlSize, controlSize);']","Next line of code:
+",lcc,java,  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //  //,
+84,1.0,lcc,,685,397181750c46cc7bb5cfa79f1f6812770ddf55fc6dac89cd,"['  winner, _inferenceResult, _dist, _categoryDist = knn.infer(v[2])']","Next line of code:
+",lcc,python, ,
+84,1.0,lcc,,681,0eae7d0813189dfb61921a6690103cb83cdea076b845d152,['        final int index = (offset - headerSize()) / elementSize();'],"Next line of code:
+",lcc,java,"cell
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+",
+84,1.0,lcc,,1081,27f6b503096cf445095535f5a908b7e00038cf4f23a5d499,['            if (!String.IsNullOrEmpty(relativePath)) {'],"Next line of code:
+",lcc,csharp,"using N
+N
+N
+Parallel
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+",
+84,1.0,lcc,,884,6b8b92b2b253189141dc998a845e117ddb34a9ced10cda39,"['    return string.format(*args, **kwargs)']","Next line of code:
+",lcc,python,input:,
+84,1.0,lcc,,1437,2249fb5b605f86689474ffb501216d8475418e32ce63adab,['        if ((i != i7 ? 0 : 1) != 0) {'],"Next line of code:
+",lcc,java,"  "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """,
+84,1.0,lcc,,1300,a1c2bff96d6d3cb3e23f9ea2a0029d635c3ebc32eb87a05c,"['\t\t\t\tstr += s.ToString() + ""\\n"";']","Next line of code:
+",lcc,csharp,:  Mix  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition  Transition ,
+84,1.0,lcc,,5265,57cd1d16d832804a0b41e45c65ffbdf55dee0d169df79a8e,"['                    ExtraMissileNames = new[] { ""lucianrmissile"" },']","Next line of code:
+",lcc,csharp," 
+ 
+ 
+ 
+ 
+
+ 
+
+ 
+
+",
+84,1.0,lcc,,505,46847858f2d1579242f46d971b4229d6cb8d79b8a5dea86e,"['\t\tEmfUser user = new EmfUser(""admin@test.tenant"");']","Next line of code:
+",lcc,java,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,426,36ab3dcfde1587fd327a15d56d7d38fb65b8104458bbcd00,['        context = testlib.TestContext()'],"Next line of code:
+",lcc,python,,
+84,1.0,lcc,,753,dc7f3a684d9468c9631828995c836b9722e18b4999cdd713,['\t\t\tif (configDirectory == null)'],"Next line of code:
+",lcc,csharp,  / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / / /,
+84,1.0,lcc,,743,1fbe52a6ae333eb46f1ea6000375cec54d0c1377ea171db3,['\t\tinternal abstract bool IsColumnContained (DataColumn column);'],"Next line of code:
+",lcc,csharp,ConstraintName  (  ConstraintName     ConstraintName     ConstraintName     ConstraintName     ConstraintName     ConstraintName     ConstraintName                                         ,
+84,1.0,lcc,,519,ffafcf6803367046bcd6535efabfd55b6913ed04cf9c0e14,['        self.button_box = QtWidgets.QDialogButtonBox(Dialog)'],"Next line of code:
+",lcc,python,"of code:
+of code:
+of code:
+of code:
+
+of code",
+84,1.0,lcc,,986,cff5cce659d8bde6af869ff91a57f4b6445b88159e169708,['                TextView tv =(TextView) findViewById( R.id.status_msg );'],"Next line of code:
+",lcc,java,": flight:
+: flight:
+: flight:
+: flight:
+: flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+:flight:
+",
+84,1.0,lcc,,596,ae9e378a2b48e8a532bf970e581bc7ccc318cd5047ec916c,['\t\t\t\tvar r = s.CreateCriteria<Country>().List();'],"Next line of code:
+",lcc,csharp,  NH                                                                                  ,
+84,1.0,lcc,,1212,cb8b4b2b743ae5c5feb0a78bada007e175140164e40f5a42,['                for (int iBitIndex = 0; iBitIndex < 8; iBitIndex++)'],"Next line of code:
+",lcc,csharp,Marin Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live Live,
+84,1.0,lcc,,1639,97d6976069558160fcb06c6802085ee52a6ef637d5832a1a,['\t\treturn hasSpeedModule() ? 5 : 10;'],"Next line of code:
+",lcc,java,"Sent
+
+",
+84,1.0,lcc,,548,bf36c52efb42e2c0506f3cb765385becf6bf8e07977c4ec2,['            return new IHyperlinkDetector[0];'],"Next line of code:
+",lcc,java,"code:
+code: 
+ ",
+84,1.0,lcc,,1044,f2938d3f351d2aebd34b5c529253c96aa77b793e3442e486,['        self.aspectWidget = Object3DAspect(self)'],"Next line of code:
+",lcc,python,":  Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+Anchor
+",
+84,1.0,lcc,,886,782603f333c5ed114de335a7728c0c7c288c0ea45f48a9ee,['\t\t\t\tcase 3: // Use values'],"Next line of code:
+",lcc,csharp,Server.GServer.Server.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServer.GServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServerGServer,
+84,1.0,lcc,,764,cffa07171638f2df3007fc0e85a42300f465b867bac1df90,['                     String valueLabel = selectConverter.convert(value);'],"Next line of code:
+",lcc,java, <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  < ,
+84,1.0,lcc,,1027,c72913a89874d6308bd8a87c745a41178548b9df3cd7e0c0,['\t\t\t\tif (i!=j) {'],"Next line of code:
+",lcc,java,"Mesquit
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+Mest
+",
+84,1.0,lcc,,1177,7850286a4534f85c6c1e090310eb4027cb5b38c4f626ff33,"['                            foreach (KeyValuePair<int, int> unpricedLine in unpricedLines) {']","Next line of code:
+",lcc,csharp,"
+
+
+
+",
+84,1.0,lcc,,629,a93d814dbddd20576003b7d27ccabef85f5258c0f1c189bf,['\t\t\tget { throw new NotImplementedException (); }'],"Next line of code:
+",lcc,csharp,  <                                                                                  ,
+84,1.0,lcc,,1006,b8d674585c2854a71ff59d091611a1181f7327620a70524e,['        final Subject mockUser = EasyMock.createMock(Subject.class);'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+",
+84,1.0,lcc,,882,145cc36abdaa2c8860959982f54fca44c7cae309bc44bcf9,['\t\t\tVector2 max = viewport.ToVector2 ();'],"Next line of code:
+",lcc,csharp,public (copy (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (k (,
+84,1.0,lcc,,399,c69d4ae0425c1d742d8cad38e1238ffbf39d8f97b105df79,"[""__all__ = ['endpoint_key', 'endpoint_value', 'endpoint_stats']""]","Next line of code:
+",lcc,python, XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint XDR endpoint,
+84,1.0,lcc,,2031,cf8e0d5f2adf8762eb153e24cdc6edacca8bb1e84f6b7c14,"['\t\t\t\t    RemoveClient(i, m_workerSocketList, disconnect_client);']","Next line of code:
+",lcc,csharp,: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,768,a0064864baa8bd09ff6fc63712208d825b29b2d8f56ab567,['            for(Bucket bucket : list) {'],"Next line of code:
+",lcc,java,"Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+Portal
+",
+84,1.0,lcc,,1549,b8ddcb433aa1bfe07017e01e1c838c3c2d78b8b973eabc54,['  if bind_count > 0 or exec_count > 0:'],"Next line of code:
+",lcc,python,"%
+%
+",
+84,1.0,lcc,,722,7f21bbeb3cc4c97701a78291f4d98bf6819b5e05cca6641e,['    Returns a range query in JSON (full-calendar) format.'],"Next line of code:
+",lcc,python,  La  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la  la,
+84,1.0,lcc,,644,6a5c6418a11e7d5ca010f8f986194ae5efec73ff41f7c167,"['                        new VarNode(""score""), null/* c */,']","Next line of code:
+",lcc,java,,
+84,1.0,lcc,,558,2f9e87b359085e3741fab9367978273edee2f0b2e60fcfe8,['        self.object = self.get_object()'],"Next line of code:
+",lcc,python,"  #  ""
+""
+",
+84,1.0,lcc,,1633,d5131ee794bcf700f0f43d91cbdd4928e4078dee775d3bd7,['      get { return this.ResolvedAssembly.PublicKeyToken; }'],"Next line of code:
+",lcc,csharp,"
+",
+84,1.0,lcc,,1146,85a1c12ae7813d7b73cbbf458fd9262e032bd9cc88005aa1,['            var pseudoResiduals = new DenseVector(input);'],"Next line of code:
+",lcc,csharp, <  < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < < <,
+84,1.0,lcc,,685,463db0e034d463507a505f61f5addf4f1153492f465bc47f,['\t\t\treturn new Apfloat[] {sortedNumbers[left]};'],"Next line of code:
+",lcc,java,Main Statistics Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng Ng,
+84,1.0,lcc,,2596,25409067cd0b9bd6ffc59d2ab30579edc2ec8b0a47154def,['                sample_count[v] -= sample_count[edge.child]'],"Next line of code:
+",lcc,python,"
+\
+\
+\
+\
+
+",
+84,1.0,lcc,,630,40994fe53243d5f8fce4983fc820f09dbd61a083c8a53c8f,"['        es_mapping = ESMapping.from_json(index_name=self.enrich_index,']","Next line of code:
+",lcc,python,"  1
+",
+84,1.0,lcc,,690,944fd1f9c7ec90cdc70498975f2faf06111d7dfe2ae05e81,['\t\t\t\t\t\t\t\t\t\tvar bot = botNames.Random(Game.CosmeticRandom);'],"Next line of code:
+",lcc,csharp,"  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+  Open RA
+",
+84,1.0,lcc,,697,363a7940d934ec4a64df64a51b70cb62268340fa89d647f7,"['\t\t\t\treturn base.ToString() + ""\\n"" + _rootCause;']","Next line of code:
+",lcc,csharp,"using
+
+Win  Log ",
+84,1.0,lcc,,652,0a774cef85a83037bcd6fbf761f83707f105e2ee3118ef09,"[""        pad_low_and_high = struct.pack('!BB', pad_high, pad_low)""]","Next line of code:
+",lcc,python,assistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistantassistant,
+84,1.0,lcc,,936,adeed84f45c576f4e84e46a705dd8d968d64d0646a6ef56a,['            foreach (var child in cluster.Clusters.Concat(cluster.Nodes)) {'],"Next line of code:
+",lcc,csharp,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,2149,f498e75d306788f63949bcfcf05c9e4bb4e190034ff80488,['\tm_maxSlopeCosine = btCos(slopeRadians);'],"Next line of code:
+",lcc,csharp,"
+Compute",
+84,1.0,lcc,,1063,57e19c332b765589c06c6317e00c2f7c5f50bc38d1fac11c,['        if (initializers != null && !initializers.isEmpty()) {'],"Next line of code:
+",lcc,java,: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,484,3acf18da43544d1e056b344459d85b5599253c6ef78403fb,['\t\t\tif (nbttagcompound == null)'],"Next line of code:
+",lcc,java,FlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForgeFlForge,
+84,1.0,lcc,,715,65e83568eadd384a035b2d009ca4b6e8962b6a6b11a58326,['\t\t\t\tif (typeAttribute != null)'],"Next line of code:
+",lcc,csharp,"code
+code
+code
+code
+code
+code
+code
+code
+code
+code
+code",
+84,1.0,lcc,,643,5eb2fab7c77b669d9d20bb243cdb60fddafbb0a6170b9d88,"['\t\t\tAssert.AreEqual(handle, handle, ""Removes warning"");']","Next line of code:
+",lcc,csharp,Mono,
+84,1.0,lcc,,686,91bafdb949e83b9df31caa1198f61d205a6b734664bdeee5,"['\t\t\tInterfaceType interfaceType = new InterfaceType("""");']","Next line of code:
+",lcc,java,"   F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F
+  F",
+84,1.0,lcc,,1449,2ea1e8b1be13cbbb6a96058b7c5db07ae3e7e9bfca12207f,['\t\tif (postdominators == null) {'],"Next line of code:
+",lcc,java,":
+
+:
+
+ 
+
+",
+84,1.0,lcc,,1079,5a8b582269e533bdd34babfe47a607fb7faa5ba65cee7bc8,['            int min2 = wideLExtent[end][rightState];'],"Next line of code:
+",lcc,java,"  CKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+  TCKY
+",
+84,1.0,lcc,,2433,8e994637773ecb1aa1a46681e23f58b9b6e946d95aa0e329,"[""                'rsync', '-rLKpts', '--delete-excluded', '--inplace',""]","Next line of code:
+",lcc,python,"::
+::
+",
+84,1.0,lcc,,924,55b5cf622c6554fcf71e7f540ab814974112cbd9bdc49443,['\t\t\tprocess.IsRunningChanged -= DbgProcess_IsRunningChanged;'],"Next line of code:
+",lcc,csharp,"see
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de
+de",
+84,1.0,lcc,,2472,98f9620b662d7e8b7c7e7545d6c341f8a167b3d6925ee74a,"['\t\twriter.attribute( null, ""b"", String.valueOf( b ) );']","Next line of code:
+",lcc,java,":
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:",
+84,1.0,lcc,,839,68ec6af65d2a91e6853c589c87fadc19a538ca14d6f249ae,['\t\tif (aThat instanceof HibernateProxy) {'],"Next line of code:
+",lcc,java,Contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code contact model code,
+84,1.0,lcc,,801,ca3ae6a5d8c6865655de823a63f15080b5c10cc5843037df,['\t    if total_rej == 1:'],"Next line of code:
+",lcc,python,  # ,
+84,1.0,lcc,,10029,0a0acfe5a6238a45947c2e198dabe87dee8487c858569c30,"['        for pos, idx in enumerate(cdata):']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,746,bc922d0a7fcc0c037de90c7f575f1de8f8ac956e5c9e4e82,['        self.member_groups = self.user.get_member_groups(self.groups)'],"Next line of code:
+",lcc,python,"  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+  Community
+",
+84,1.0,lcc,,9203,9517e442464f24ead2a124310c2f1752d78474b38bd420f2,"['                    return fn(*arg, **kw)']","Next line of code:
+",lcc,python,Please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please,
+84,1.0,lcc,,801,b7096bf4313f6484e8f39bf9f0977db406f68e5dc24dcd54,"['            show_str = u\'<{tag_name} sources=""{sources}"" />\'.format(']","Next line of code:
+",lcc,python,"<json deitem> \
+<!iitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitemitem",
+84,1.0,lcc,,947,8662bf8b41808cda788f6de30f92e265f34051125e765056,"['                          for key, (old_value, new_value) in data_model_changes.items()]']","Next line of code:
+",lcc,python,:,
+84,1.0,lcc,,2841,eb53d2d7980f93f767d7f4ca69e7c363d7a2bdffbbb04b9c,['\t\t\telse if (Class != null && type == null)'],"Next line of code:
+",lcc,csharp,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+",
+84,1.0,lcc,,722,7176f682200a0adf4ae5cf5e13ef2ec7cb669d6f638cffd3,"['\t\t\tthis.objYLabel.Size = new System.Drawing.Size(200, 32);']","Next line of code:
+",lcc,csharp,"  //  "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """,
+84,1.0,lcc,,615,20b813f30f59822e04edffdae1cdbf1b533dbdd72c1cc321,"['        c = self.getNoPrefix(""mail/syncmail.5"")']","Next line of code:
+",lcc,python,"  }
+",
+84,1.0,lcc,,987,44bc927038ee4f263ad7e6209084767cae0e9109fe53fa72,['        if (termData == null) {'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,639,b8f2bccffdfaa6714889fe5bc5f0f10b12a66609c8c585d1,['\t\tif(player == null)'],"Next line of code:
+",lcc,java, @ F @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @ @,
+84,1.0,lcc,,569,db86b64c8c534e1f3bab91df60822f5e3fd18cea9415e467,"['            intrinsicCohesion += this.getRepresentativity(component, c);']","Next line of code:
+",lcc,java,Tools: Temp of Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code: Code:,
+84,1.0,lcc,,1095,e346c1259b04562f788d0e2865564ee2ec42aaada9b4e031,['                                if not (docformat in flags[flagname][version]):'],"Next line of code:
+",lcc,python,"In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+In
+",
+84,1.0,lcc,,2301,d2d2eb23f584337e252086c2162142cf3c5e40a39100b329,['\t\t\tArrayList comp = this.computerMgmt.getComputerCollection();'],"Next line of code:
+",lcc,csharp,"
+
+
+
+
+
+
+
+
+
+
+  <                                                                       ",
+84,1.0,lcc,,783,0467947f0aca59814dfee0185e479155997e02d24818a1ab,['    for (java.util.Date anExceptionDate : exceptionDates) {'],"Next line of code:
+",lcc,java,  I ,
+84,1.0,lcc,,1021,7a6b465ccf619db236b9ebaa5024b7f2602fd097e1f14af8,['\t\tsourceEventBinding.DataSource = new dfComponentMemberInfo()'],"Next line of code:
+",lcc,csharp,"  code:
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+  df
+",
+84,1.0,lcc,,2177,5eaaec0ad17e5ea95bb6b35275422001e3f763eea091799b,['            Gson gson = new Gson();'],"Next line of code:
+",lcc,java,Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco Cisco,
+84,1.0,lcc,,5167,9315cf46a7b8a5186358aa90329c4cf7aa7e8815f99ea810,"['\t\t\t\tsuper(id, path, width, height);']","Next line of code:
+",lcc,java,:::: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,669,0a5fee26c27c916f5e6a6d4e21655aac2bf96a3c71502cab,['        double value = (size - 1) * rnd.nextDouble();'],"Next line of code:
+",lcc,java,  < o & & & & & & & & & & & & & & & & & & & & & & &,
+84,1.0,lcc,,1128,aa0355191116e9da144d262dfbaa191cd76f4cdbf90c55e2,['                    la = LinkAnnotation()'],"Next line of code:
+",lcc,python,   <  < < >                                                                             ,
+84,1.0,lcc,,2537,36b953ee4b12b6a4faa25120b4dd3ff257e71cd2c3c9e231,"['            buffer.Append(""          .shrinktoft= "").Append(ShrinkToFit)']","Next line of code:
+",lcc,csharp,"Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+Sid
+",
+84,1.0,lcc,,1301,774fe32bf5c3e50a3060d52bef095025decb114d4ab2a37b,['\t\t\t\tvalue = ch - 0xFF60 + 0x8EA0;'],"Next line of code:
+",lcc,csharp,,
+84,1.0,lcc,,7935,1af3862e060454bfb42e00c39c490c31b97f3330caa0e1f1,"['    if obj.mnemonic in (""LD_A"", ""LEA""): dst = env.A[a]']","Next line of code:
+",lcc,python,:       Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction Instruction,
+84,1.0,lcc,,1068,ff129ecf1bae342708a06c6afdaf4c0c520b36db7f9fe934,['\t\t\tstream = location.openStream();'],"Next line of code:
+",lcc,java,  <jasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjasjas,
+84,1.0,lcc,,497,812a9c309ebcd63dc97a9d9c993e5afbcef9d934b3a428bf,['            return this == CREATIVE;'],"Next line of code:
+",lcc,java,"sur
+
+sur
+
+",
+84,1.0,lcc,,692,a179ca21c89046426dbe560130d12a91ef853ad8e707e8c2,"['\t\t\tSecurityIdentifier userSid = new SecurityIdentifier (""SY"");']","Next line of code:
+",lcc,csharp,  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test  Test,
+84,1.0,lcc,,864,fbaaf263e4f759d000390c802a4c3c1ccb343adcb8654c23,"['        for i, result in enumerate(results):']","Next line of code:
+",lcc,python,Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi Acoustapi,
+84,1.0,lcc,,2652,752a89a5b36c7b8f6f0e35bfd40db4c72421fcad3b20b85b,['        HashSet<string> currentRpcs = new HashSet<string>();'],"Next line of code:
+",lcc,csharp,":
+:
+ :
+ :
+ :
+",
+84,1.0,lcc,,551,4ba808cbdaf8b17ba189c38980dbfe9f2db8c50e68c78815,['        if (!Config.isKDEConnectInstalled) {'],"Next line of code:
+",lcc,java,:  :  : ,
+84,1.0,lcc,,906,887af1daa5b7038bf77928f7810b6046e0a6e79e65f0db63,['            ik = self.bz2ibz_k[k]'],"Next line of code:
+",lcc,python,````''``'',
+84,1.0,lcc,,675,641e1c881986075c2c1d4de3afcfdf28d45ea43407457b7d,['        CreateUtkastRequest utkastRequest = buildRequest(intygsTyp);'],"Next line of code:
+",lcc,java,,
+84,1.0,lcc,,2070,d2cc14959cc14d9e5f5c314ff857cbc70f1ff16fa1441fa2,['\t\t\t\tforeach (ILNode child in block.GetChildren()) {'],"Next line of code:
+",lcc,csharp,: : : :,
+84,1.0,lcc,,2058,73339a8013cf28c56a4c1187df921540e969f355e17c82b2,['\t    if (mConvertingToRagdoll) {'],"Next line of code:
+",lcc,csharp,":
+:
+:
+:
+:
+:
+:
+",
+84,1.0,lcc,,878,b1cefd5f19084d4e4a500f51ff0fd6a59f8c2c70e47b868c,"[""    _not_serialized_attrs_ = ['layer_type', 'top_type']""]","Next line of code:
+",lcc,python,"
+
+
+
+",
+84,1.0,lcc,,1083,fe08dcb281de4c3a0e2cca60ae83b079f30ce3924ae5131b,['            out[outOff + 3] = (byte)(num >>> 24);'],"Next line of code:
+",lcc,java," MediaTek
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+ G
+",
+84,1.0,lcc,,1124,e65940b61936a514284b1b107717706bb95a8df5df726f13,"['            super( source, new Predicate<PatternMatch>()']","Next line of code:
+",lcc,java," of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+ of code:
+",
+84,1.0,lcc,,954,acf5e37bfbe33cbb9516c325004620f2cae48ca166d4d0ad,"[""        elif key == 'TAUX':""]","Next line of code:
+",lcc,python,"
+
+",
+84,1.0,lcc,,769,c15dc271a99f31760a613bea95abc84961ad13d294310c3c,['            InternalFrame f = (InternalFrame)buttons.get(btn);'],"Next line of code:
+",lcc,java,  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma  Client  Ma,
+84,1.0,lcc,,866,2e4d03a695dc0527178e4eddff2b2c0651ddc6a0588d6cb5,"[""    elif sys.argv[1] == '--list':""]","Next line of code:
+",lcc,python,assistant,
+84,1.0,lcc,,1057,9a6eb97bf19cf92ba543d527e5650f3a6198498b114bcbf3,"['    move(out, Util.px2mm(offset.x, dpi), Util.px2mm(offset.y, dpi));']","Next line of code:
+",lcc,java,: I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job  I  Job,
+84,1.0,lcc,,666,f6cf9afee16a6f9eb253d2163fc5f2accb17108da85e51a3,['\t\t\t\t\tContentValues cv = new ContentValues();'],"Next line of code:
+",lcc,java,"  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit
+  edit",
+84,1.0,lcc,,459,2237275bf34eb140554aa5a5e98dc8bde6dd285b688c247c,['                else if (m_meth == AllocMethod.CoTaskMem)'],"Next line of code:
+",lcc,csharp,"Visual
+
+Visual
+
+ Visual",
+84,1.0,lcc,,2324,d9aa0fae1843d2d73e9ac2308f31a3760b5ff6be9bc4face,"[""LOGOUT_URL = '/accounts/logout/'""]","Next line of code:
+",lcc,python,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,1183,f928fa8a814e6601eba3952b11bcbc31cc18a3d2f086048f,['\t\t\tfor (var i = 0; i < numberToCancel; i++)'],"Next line of code:
+",lcc,csharp,Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod Open RA Mod,
+84,1.0,lcc,,886,a6ff01b3019b5f686be4e5365d4e5986aec163213a88b95e,"['        infoText += "" file"" if numberOfFiles==1 else "" files"" ']","Next line of code:
+",lcc,python,from import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import import,
+84,1.0,lcc,,2292,c954057ff94e553216187b97466689a94cf01d35b64c1d11,"[""        code = code.replace('%', '%%')""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,747,e3985a9e93ec883a946ded49a6c0d5a149f870a2551a4bae,['        result = self._planningExecutorClient.get_result()'],"Next line of code:
+",lcc,python,"
+
+yamlos
+
+yamlos
+
+yamlos
+
+yamlos
+
+yamlos",
+84,1.0,lcc,,1036,ae83375fd17d59ade51acb7d21f140c348517cad10d87283,"['\t\t\t\t\t\t\t\t\t+ chemical[ 0 ][ idx + reactorExtent ], hdiv0 );']","Next line of code:
+",lcc,csharp,  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A  A,
+84,1.0,lcc,,839,1b693ff15f56949b8dd6a9b75de17dd49f7f0b08bf33823d,['                if (pattern == null) {'],"Next line of code:
+",lcc,java,"quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+quest
+",
+84,1.0,lcc,,515,39bbeca7715c515fede070fff57d6f18c6608542a2b291d1,['            entity.cti_id = Convert.ToInt32(qs.Return.Rows[0][0]);'],"Next line of code:
+",lcc,csharp,"  s
+s",
+84,1.0,lcc,,1017,590b51d23289d047b57ac6677f20d8695fe1def2a0120e8d,['\t\t\tthrow new NotImplementedException();'],"Next line of code:
+",lcc,csharp,"
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  ",
+84,1.0,lcc,,1208,fec6e895c63341559f9f9bba6ca62f48771c6ee896904ae7,['        commands = list()'],"Next line of code:
+",lcc,python,"
+
+
+
+ 
+
+",
+84,1.0,lcc,,4935,c83f71189a57f9b8fbf6439c1c211939a9c292a33024b337,"['            component = self.store.update_item(component, editing_user)']","Next line of code:
+",lcc,python,":::
+:
+:
+:
+",
+84,1.0,lcc,,865,d130622298f175eb038e14cf3cab0d504c020de19bc3eab8,['        digest.update((byte) (TEXT_CODE & 0xff));'],"Next line of code:
+",lcc,java,: : : : :,
+84,1.0,lcc,,1045,6632f438b48e38612c7af5be064f73e8a4b86ead00fbda69,"[""    return aetypes.Range(dict['star'], dict['stop'])""]","Next line of code:
+",lcc,python,This AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE AE,
+84,1.0,lcc,,1053,6cde737d77f75e2d7bba19ebf78653bae352413d2a95770b,"['            if (!Enum.IsDefined(typeof(SampleDirection), sampleDirection))']","Next line of code:
+",lcc,csharp,CalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSyncCalendarSync,
+84,1.0,lcc,,586,716049fd0d1692b85479651b13974c96045e6d05f8fe7fe3,['                value = entry.get_active_text()'],"Next line of code:
+",lcc,python,"  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code
+  Try on code",
+84,1.0,lcc,,961,daa27a5d67ba9d011a6296ae7e7effeac588540b3e61d3e5,['            if (newLocationList.size() > 0)'],"Next line of code:
+",lcc,java,LegacyConfigPostLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacyLegacy,
+84,1.0,lcc,,744,a32e9a8e3ff6ea4c2599a33d5345c01decf2e4c9913e970a,['            lines = f.readlines()'],"Next line of code:
+",lcc,python,"Next line of code:
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code:
+
+Next line of code",
+84,1.0,lcc,,848,0101b11c0d92563f34753effab4ccc713d10d886c00ee990,"['            [In, MarshalAs(UnmanagedType.LPStruct)] Guid guidExtendedType,']","Next line of code:
+",lcc,csharp,#MFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExternAltMFExtern,
+84,1.0,lcc,,695,be8b544961199f01b0f2942229db2d1da0ff394e0ca9e9eb,['        ensureWriteAccess( directedAclKeys.getTarget() );'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,861,f8f3e51eaf0b5e82798c164612594b613eff07183067e54c,"[""        children = element.findall('*')""]","Next line of code:
+",lcc,python,"  Class of code:
+  Body of code:
+  Body of code:
+  Body of code:
+",
+84,1.0,lcc,,5441,64062f61594fcf5875068e83e34bbe4352d55f2ffc994594,['    elif node.nodeType == Node.DOCUMENT_TYPE_NODE:'],"Next line of code:
+",lcc,python,: ,
+84,1.0,lcc,,659,78238acd4e2f77afea6f7f0a6a7204254284924614d7e707,"['\t\t\t\t\t(EMSSceneSection) objectToTest, diagnostician, map);']","Next line of code:
+",lcc,java,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,2575,3478f59e50537de1932e70589d61d1ffd7f3cc98c321b79a,['\t\t\tif (decoder.getOffset() == endOffset)'],"Next line of code:
+",lcc,csharp,"
+
+
+
+ 
+
+",
+84,1.0,lcc,,673,d885bc25f6d6b7f2bed6c360c4182759018c010914bbd263,['        for(int i = 0; i< myWeapons.length; i++) {'],"Next line of code:
+",lcc,java,                                                                                    ,
+84,1.0,lcc,,819,b81d989e514c39c2fbe5246f88c81834d4b9daf9ea103acc,['        action.setAccount( AppMain.instance().getMyAccount() );'],"Next line of code:
+",lcc,java,: : : : : : :,
+84,1.0,lcc,,962,3577964dff527ef6068237089eaaf8be6c4ce4aa3ba45df8,"['        err = json.loads(r.data.decode(""utf-8""))']","Next line of code:
+",lcc,python,  <  < ,
+84,1.0,lcc,,849,653224ff195b272eec8557efa25225d29043896dba76e043,['\t\t\t\t\t\tresponse = service.MergeOrder(request);'],"Next line of code:
+",lcc,csharp,"Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear
+Clear",
+84,1.0,lcc,,1153,80bda6d99d3c518ff6465d159112864d8eed9a04c56b1d15,['    if len(reaction.metabolites) != 1:'],"Next line of code:
+",lcc,python,:                                                                                   ,
+84,1.0,lcc,,588,a8df204f2a859a703bf766e6567ed3d50e67fb8e91bc975b,"['        lang, proj, dir_path, filename = split_pootle_path(pootle_path)']","Next line of code:
+",lcc,python,:unit:,
+84,1.0,lcc,,519,8d8cddfebc329d8bed250acfd102274d7ccd8f8bf08e4b85,"[""                ('created', models.DateTimeField(auto_now_add=True, null=True)),""]","Next line of code:
+",lcc,python,"  code:
+      ",
+84,1.0,lcc,,720,f18f638df2a7be9849603948e255d240c5646454c2a0a5a0,['                    pinfo = self.ports[portnum]'],"Next line of code:
+",lcc,python,"pocontroller
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po
+po",
+84,1.0,lcc,,1401,e20af03f2ee467f621a8abf4253b8106ed16e82d2aeb0e8c,['    item = fromString(toString(item));'],"Next line of code:
+",lcc,java,                                                                                    ,
+84,1.0,lcc,,562,ab64e80497dc29027b566fe583c6e6936d54fd063307f698,['            return src.Map.Rules == MapRules.FeluccaRules;'],"Next line of code:
+",lcc,csharp,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,1060,23da8d9de20f882d02d5c855b1322a6bc6b13eebcf69be20,['        if (halfTradePeriodDate == null && takeOfferDate != null)'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,2508,bca3c4560f23f25e2f915056e3c74f7832b570be4c2e30fb,['\t\t\tif (a == null) a = LeadingAny(p.down);'],"Next line of code:
+",lcc,csharp,AWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAWAW,
+84,1.0,lcc,,5328,8e0bd228e7aa848a9bf8109d86ecaf76dcf9e5dee02fba5e,['\t\t\tbuff[4] = (byte)(address & 0x000000ff);'],"Next line of code:
+",lcc,csharp,wiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwiwi,
+84,1.0,lcc,,641,22de4bb8a2b770879cf742cb312eaec089c2f1c8e6caf97b,['\t\t\tif (order == SortOrder.DESCENDING)'],"Next line of code:
+",lcc,java,  #                                                                                  ,
+84,1.0,lcc,,677,85d7beeed9e180c5fcee6fa973932cd47b046a7c181b3368,['\t\t\t\t\tSendEmail( filePath );'],"Next line of code:
+",lcc,csharp,                                                                                    ,
+84,1.0,lcc,,480,ef2256036a1a6e12b496e5e9085b2f653cfd173eb485a40e,['\t\t\t\tIList list = session.CreateCriteria(typeof(Item))'],"Next line of code:
+",lcc,csharp,"NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+NHibernate
+",
+84,1.0,lcc,,1244,ccb175b81d17f841ce38c2caa311f192e142ac2649f954a2,"['            for (k++; i < N1 + N2 + N3; i++, k += 3)']","Next line of code:
+",lcc,csharp,                                                                                                                                                                        ,
+84,1.0,lcc,,641,2edf15bcbfcd4fcf56e4a6731116895a5ed5bb7b70ee804d,"[""        view = navigate_to(self, 'Add')""]","Next line of code:
+",lcc,python,"Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+Example:
+",
+84,1.0,lcc,,782,8abd7abbc3616f319f05d25be5a410bd9fc2bb508b68e3cb,"['\t\t\tOpenGL.BindBuffer( All.ElementArrayBuffer, _bufferId );']","Next line of code:
+",lcc,csharp,  ,
+84,1.0,lcc,,673,f8ded3af8ef3545db8175306e099fcfdecc9a38e3633b747,['\t\tself.feid = int(self.satfinder_scan_nims.value)'],"Next line of code:
+",lcc,python,":
+",
+84,1.0,lcc,,931,e183058d346d8baf870f97d2f9f4a343610cbd294e8bc9ff,['            else if (filterStr.length() == 0 || filterStr.length() > 255) {'],"Next line of code:
+",lcc,java,                                                                                                                                                                        ,
+84,1.0,lcc,,6006,0cc866de4a40f62e0dc2031e25487c87a06027728f76c5a9,"['                fout.Write(curr, 0, curr.Length);']","Next line of code:
+",lcc,csharp," 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+",
+84,1.0,lcc,,677,fdfc363818ce22cc623b576870180ec881f0a75f716cd8a8,"[""        s = lowlevel.SignalMessage('/a/b/c', 'foo.bar', 'baz')""]","Next line of code:
+",lcc,python,"  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+  Test
+",
+84,1.0,lcc,,1017,78fd6bbd4847ea904de30d888739147fe917202829362e1d,"['                except (KeyError, AttributeError):']","Next line of code:
+",lcc,python,"class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+class MASS object:
+",
+84,1.0,lcc,,1187,2be88ed1d82791123566d7fc244876523ea87a620301c93a,"['                ""1:21: Expected \\"">\\""."",']","Next line of code:
+",lcc,csharp,\Test#,
+84,1.0,lcc,,794,b68fb107dd4b16b9e62aee193e5d5452796850436d17aaef,['\t\treturn map.remove( key );'],"Next line of code:
+",lcc,java,":
+ ",
+84,1.0,lcc,,805,3eb19d43291f949e184ce7a5465a8640ad3cc4cd277ab5ce,['\t\t\t\t\t( m.Account as Server.Accounting.Account ).Username );'],"Next line of code:
+",lcc,csharp,"  code:
+  code:
+  code:
+  code:
+  code:",
+84,1.0,lcc,,686,774c2fcb277e8f0e9c0b13c51982a14cc5f1ec168baf9c7e,"[""        return {'action': action_message}""]","Next line of code:
+",lcc,python,  K                                                                                  ,
+84,1.0,lcc,,667,e0bcde61d9adb5375395d14f33e7ca8fe874d965c734b2ac,['\t\tif (orderInvestigationLiteVo == null)'],"Next line of code:
+",lcc,java,,
+84,1.0,lcc,,808,faeb4c1f5b91b0308378f17f35d5be9bb0bb461449205814,"['                pt = (POINT)c.ReadToStructure(0, typeof(POINT));']","Next line of code:
+",lcc,csharp,"  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+  Process:
+",
+84,1.0,lcc,,689,febfe4f9eeaaa6cc696611fb0204abdaa2ec61fd7fcb43fa,['        if not self.is_child_notebook():'],"Next line of code:
+",lcc,python,assistant,
+84,1.0,lcc,,1831,76752da4aab9b0f2980a363c45b8b6a846bcbfadac525fd1,['                    string name = nameArraySizeFragments[0];'],"Next line of code:
+",lcc,csharp,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,1469,47a5c3493dba4beb59cd884a00ee301ebbbc06f48b66fba5,['\t\t\t\tif (base_type == null)'],"Next line of code:
+",lcc,csharp,"
+
+
+
+",
+84,1.0,lcc,,578,42d7200767daef190a5abb124bd4a3751d552931e19200aa,"['                throw new Exception(""Could not find model: "" + args.Key);']","Next line of code:
+",lcc,csharp,"ROM
+Evidence
+ROM
+ROM
+ROM
+ROM
+ROM
+ROM
+ROM",
+84,1.0,lcc,,1264,f2d519e85b596a21571ccc0da4dcf8098c04163fb6b5b321,['        self.protocol = _openssl_versions[protocol]'],"Next line of code:
+",lcc,python,"
+
+
+
+",
+84,1.0,lcc,,1086,79bfd01dfd65567d16786ba83d96abf2c1f32aed45f161f0,['\t\t\tthis.label8 = new global::Gtk.Label ();'],"Next line of code:
+",lcc,csharp,":
+:
+:
+",
+84,1.0,lcc,,1188,8c19d95147fe4a3d515b456de624adfc662e5bf40c1c3bad,['                for notebook in notebooks.values():'],"Next line of code:
+",lcc,python,  _ _ _ _ _,
+84,1.0,lcc,,902,a4712b2e717d6693fc9b69d66fce23e4ec1069203a8569a4,"['    ""Move-Tab-to-left"": QKeySequence(Qt.CTRL + Qt.SHIFT + Qt.Key_9),']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,538,fa471400c4273aa3192c4acebefee0003fad434d98173787,['\t\tStringBuilder builder = new StringBuilder();'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,469,376650a8fc449c6f93baab1f5327f682bda670ea2bbdcc0b,['    IWorkbench workbench = PlatformUI.getWorkbench();'],"Next line of code:
+",lcc,java,  ,
+84,1.0,lcc,,692,c4cefa2a1ddbaac52ded7360c79296813666aad6d9e178b1,"['\t\t\tthis.butAttach.Location = new System.Drawing.Point(738, 2);']","Next line of code:
+",lcc,csharp,"Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent
+Open Dent  Open Dent ",
+84,1.0,lcc,,627,1425b06afee32d16a5355b9b1c74c573855e0bfe86164222,['        if (sb == null)'],"Next line of code:
+",lcc,java,:,
+84,1.0,lcc,,1867,5d5f9a55f0ca5e209dc65f2dc23ceaa77d3050df01057941,"['\t\t\tCheck (""HMACSHA512-L-RFC4231-TC1"", hmac, data, digest);']","Next line of code:
+",lcc,csharp," 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+",
+84,1.0,lcc,,737,0acfff98f8a07512b57bf9de46cc67617183784cdd9c686d,"['\t    current_sum += 4 + CDRSerializer.alignment(current_sum, 4);']","Next line of code:
+",lcc,java,"  Enum C
+  C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+  Enum C
+ ",
+84,1.0,lcc,,950,76a0bf2e534153ecd85f4baa149e185926fdf7267d6e1660,"['        java = regKey.OpenSubKey(""1.6"");']","Next line of code:
+",lcc,csharp,"Caucho
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+Cavouch
+",
+84,1.0,lcc,,1528,70b3e65a3e9eee500a87c090d97914f3b7614cd7d7d51635,"[""                comment = re.sub(r'%s' % self.ansible, '', l)""]","Next line of code:
+",lcc,python, of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of of,
+84,1.0,lcc,,994,e8d2fbeddaaa67221144399f1e48bc62deb18f5fd8c3c92a,"[""        modifier.vertex_group = modifier_json['vertex_group']""]","Next line of code:
+",lcc,python,"Pass line of code:
+Pass line of code:
+Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code:Pass line of code",
+84,1.0,lcc,,822,7b052378f063837f048563149af68758cefc4141ff2e4669,['            for(int i = 0; i < rankCounts.length; ++i)'],"Next line of code:
+",lcc,java,  Load line of code:,
+84,1.0,lcc,,466,7e369e49db979a11fae014da09f9aeaf1d365950a38b7333,['        for (val n : vertex.neighbors()) {'],"Next line of code:
+",lcc,java,"val
+val
+val
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+vertex
+",
+84,1.0,lcc,,615,0015062cf7e9262884bb54332e85c9529f05689017c95eff,['                    self.choice = int(self.choice) - 1'],"Next line of code:
+",lcc,python,"    Pydump
+    Pydump
+    Pydump
+    Pydump
+    Pydump
+    Pydump
+    Pydump
+    Pydump
+",
+84,1.0,lcc,,764,94f4579778d0f769443d95027663337643885b8b0b67cd03,"['            this.rptComboBox.Location = new System.Drawing.Point(92, 5);']","Next line of code:
+",lcc,csharp,: : : : :,
+84,1.0,lcc,,1056,01f0d043830d266acc4757da3d85f78ced040ba1063aa7fb,"['            \'Meta\': {\'ordering\': ""[\'ordering\']"", \'object_name\': \'Scan\'},']","Next line of code:
+",lcc,python,"':code':'
+':
+':
+':
+",
+84,1.0,lcc,,1110,cfb6b58b94ffae9a2bc26c67c46fbd41b8ceea666926fb64,"['                QName qname = new QName(targetNamespace, sdoTypeName);']","Next line of code:
+",lcc,java,                  ,
+84,1.0,lcc,,1956,7dd56f936af4445521f33f3902093e6fbc8fc6051abd5488,"[""        obj_emp = self.pool.get('hr.employee')""]","Next line of code:
+",lcc,python,class hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr hr,
+84,1.0,lcc,,2288,17cb34da8ac4cba50c3cd902f4bb130d217b32fbce400737,['            set { this.Enabled = value; }'],"Next line of code:
+",lcc,csharp,"Next line of code:
+Next line of code:
+Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code: Next line of code",
+84,1.0,lcc,,672,102833fe5a636f960b4e9762aced1a6f79de4abd212d5ced,"['            return String.Format(""{0} {1} ({2} controls, ID={3})"", ']","Next line of code:
+",lcc,csharp, <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  <  < ,
+84,1.0,lcc,,1991,25a88155c976a139f0f67418b062d4e28ff8b66c2718bc66,['\t\t\tif (valueObject.getCareContext().getBoId() == null)'],"Next line of code:
+",lcc,java,                                                                                    ,
+84,1.0,lcc,,688,ff8f7d496166e1a205f67ca69caa4f63247ff40c16b5e326,"['            [""cargo"", ""build""] + opts,']","Next line of code:
+",lcc,python,                                                                                    ,
+84,1.0,lcc,,1642,2248a8f904da25fd9ea3437cf9c3da1e73876f14aa5dfa87,['\t\t\tdouble estN = counts[3];'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,671,f54df722d8cb6050f8b9b79929415e488a47e64578808ae4,"['                var firstId = Module.RevParse(gitStash.Name + ""^"");']","Next line of code:
+",lcc,csharp,"GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+GitExt:
+",
+84,1.0,lcc,,594,0c30966965780fab171d0c89cad81d1c373553c851c2aba7,['    assert lattice.cbuffer.get_object(bm1_index).out_address != 0'],"Next line of code:
+",lcc,python,      ,
+84,1.0,lcc,,1028,2a2a9209a97ca8cd4029fb006e641c88c4b4df72c457a731,['        if (o == this) {'],"Next line of code:
+",lcc,java,: <                                                                                  ,
+84,1.0,lcc,,1364,985588e7dc66ac6d50e0fe4a6602f7b58eb5fef402be68fa,"['                        b}, callback, asyncState);']","Next line of code:
+",lcc,csharp,":
+:
+:
+:
+",
+84,1.0,lcc,,724,60c91ffa1d58e4c6d52c0ae275b009bc330e180493b0d2e3,['\t\t\t\t\tif (!(i == snrs.size() - 1)) {'],"Next line of code:
+",lcc,java, 1                                                                                  ,
+84,1.0,lcc,,642,7a60f7b18cb99dc78088418a1c233691053449386e7273eb,['\t\t\t\t\tEType = (EClassifier)value;'],"Next line of code:
+",lcc,csharp,"Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+Unity ECore
+",
+84,1.0,lcc,,626,cd81bc2e4c0a7dc1e4f6a340a63de44a5b0e7a055b43a7b3,"[""        log.log_strm = open(args.log_file, 'w')""]","Next line of code:
+",lcc,python,"  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+  First line of code:
+",
+84,1.0,lcc,,1650,467203b77592a0dbc3eb517669aab5cd995bdb6136767dd3,"[""        if ptype == 'BITS':""]","Next line of code:
+",lcc,python,"
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig
+sig",
+84,1.0,lcc,,3016,b20a8d2aec9be1407977fc8294fc849403fe93cc367f38d6,['          cursor = limit - v_3;'],"Next line of code:
+",lcc,java,"Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+",
+84,1.0,lcc,,583,e537367e5f1862611742bd63b5d29acacd7963cc58c3c0ac,['                if (cd == null) {'],"Next line of code:
+",lcc,java,"  Plugin
+  Spy
+  Handler
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM
+  LCM",
+84,1.0,lcc,,2179,71ce6181e5bc2ca033a59fff909ae4682cbb94f61145ba04,"['                return sorted(result), bool(extension.get_critical())']","Next line of code:
+",lcc,python,                                                                                    ,
+84,1.0,lcc,,1211,aa8714d821c58b0cafe396b92312a4fe03c223fb64a901a3,['\t\t\t\tstill_there = _slots.find (i->first) != _slots.end ();'],"Next line of code:
+",lcc,python,: :,
+84,1.0,lcc,,1192,b7aaf348eef474fc39a51484be57ea00820973ab5749b1cb,['    front_seq = unicode_to_utf16(X.begin)'],"Next line of code:
+",lcc,python,  --  --  -- -- --,
+84,1.0,lcc,,1264,ae0f2d60c0cb9d0cb36a55fcf60b29466a441974ac234dca,['\t\t\tint beg = la.pos; int col = la.col;'],"Next line of code:
+",lcc,csharp,:                                                                                   ,
+84,1.0,lcc,,813,d6b0b1ba478697a4988f5e3a441475444dd822738a3d6461,"[""            edi_doc['product_qty'] = line.product_uom_qty""]","Next line of code:
+",lcc,python, ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED  ED ,
+84,1.0,lcc,,603,5b2b4575bee8bc4223e1eed289165b7fcf597782d98e9033,['    \tServiceDescription description = getDefaultServiceDescription();'],"Next line of code:
+",lcc,java,"open
+                                                                                  ",
+84,1.0,lcc,,897,2bcc90a8e0d4c69a7f61f382e24a8ae2c11dc6eb28b58b0a,['                permissions = new ArrayList<>();'],"Next line of code:
+",lcc,java,* Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf Alf,
+84,1.0,lcc,,769,7293c0e9f7e75148f514aaf18ac8ea75262950e00b623dfd,"[""            subsystem='input', ID_INPUT_MOUSE=True, sys_name='mouse0'))""]","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,478,e172201bb15276d6c82301b6f3239ef78af9c9ab95ca59b2,['    device = Device(token=deviceToken)'],"Next line of code:
+",lcc,python,'round''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''' ',
+84,1.0,lcc,,1818,ea081b4223c2863932036461c4dda5fe46df221fbaf332de,"['        elif (index_elements[0] == ""Scatter""):']","Next line of code:
+",lcc,python,  #  line                                                                                ,
+84,1.0,lcc,,549,b293cf5f342371e0bf71c2612684f816f33409393283da9c,['            if (Keys.Count < 1)'],"Next line of code:
+",lcc,csharp,~\t\,
+84,1.0,lcc,,1943,e7cf53f84107ea1aeedbca65bba9b70350df8c2b9d1a949d,['        for (String device : devices) {'],"Next line of code:
+",lcc,java,:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture:capture,
+84,1.0,lcc,,1057,98f6d04d0820f21a99dd26399514e157795b7254b994a3ab,['    if (lastSeenVersion < Version.USER_NOTIFICATION) {'],"Next line of code:
+",lcc,java, *  *                                                                                 ,
+84,1.0,lcc,,1566,4bd2fd0f69e4de7c6c60f4067b514b23e77ab94af50551f3,['      if (split.length < 2 || split.length > 4)'],"Next line of code:
+",lcc,java,:,
+84,1.0,lcc,,1329,51cad9bbad6cbc55c69a6d0f523dbdfc409b670b50b64d77,"['            i = SCons.Node.FS.find_file(n, (source_dir,) + sub_path[0])']","Next line of code:
+",lcc,python, Declare Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner Scanner,
+84,1.0,lcc,,2860,992dbc69af1a3576bbb2ed62504f814872db7f713f6b9a74,['        ctx = Context()'],"Next line of code:
+",lcc,python,                                                                                    ,
+84,1.0,lcc,,1555,de56fbc358675175235c1b81f44c85afbdf421ee3d426fe4,['        if self.want.destination != self.have.destination:'],"Next line of code:
+",lcc,python,"
+ B  I   Monitor
+",
+84,1.0,lcc,,628,3149648eac16b892c2a3b92e78536acd7934268336fc2d34,"[""    cancel_button = Button('Cancel')""]","Next line of code:
+",lcc,python,"  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+  cfme
+",
+84,1.0,lcc,,740,79cd419a6f2198575f4b878105dcc71a5fbd4737594a98a5,"['            notifyListeners(new EventObject(this), EventStatusType.ERROR,']","Next line of code:
+",lcc,java,"   code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code",
+84,1.0,lcc,,1297,f7ee18c4d9156538d22f6663060cd388cce7b7fe2ff560d3,"['            {""thread_id"": ""dummy"", ""course_id"": unicode(self.course_id)},']","Next line of code:
+",lcc,python,:                                                                                   ,
+84,1.0,lcc,,917,970d266acb1e58959ce93048f35f32055064fc1053f60014,"['            ret = (embedManifestDllAction) ([target[0]],None,env)        ']","Next line of code:
+",lcc,python,"::s:s:os
+s:os
+s:os
+s:os
+s:os
+s:os
+s:os
+s:os
+s:os
+s:os",
+84,1.0,lcc,,1208,028fac90b8ce9bb8e36ca503af93a07b449aafbe6570e486,['            WorkspaceModifyOperation op = new WorkspaceModifyOperation() {'],"Next line of code:
+",lcc,java,"fix
+fix
+fix
+fix
+fix
+fix",
+84,1.0,lcc,,521,6a7e2d3329ea2bdb0c4bdac5aee494e87cdfc588799e3f78,"['\t\tif (super.init(smi, sdi))']","Next line of code:
+",lcc,java,  $                                                                                  ,
+84,1.0,lcc,,1349,6ed48ea127a5e3b151e2448bd64dd53c427087b78346f68e,"[""    assert f('+5..', last) == (d(2014,1,30, 22,21), now)""]","Next line of code:
+",lcc,python,":
+:",
+84,1.0,lcc,,1478,616a17b42a836d0cbc6def391f1ad2c62a6951e8da18f14c,"['            else if (smaxtime.Contains(""h""))']","Next line of code:
+",lcc,csharp,| { { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { | { |,
+84,1.0,lcc,,1232,659965fc4472dec4f8b056a906be656d08aac541f75950f4,"['        s, o = self._session_cmd_close(session, suspend_log_chk_cmd)']","Next line of code:
+",lcc,python, test  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code  code,
+84,1.0,lcc,,471,4607ba7831731a759293fdd8a639dc5c10d803e93d6bcba2,['        final Future<Boolean> pubf = service.submit(pub);'],"Next line of code:
+",lcc,java,"  @  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+  Pub
+ ",
+84,1.0,lcc,,1423,656e6b487418898304f2b9808ba22f80abf877b82fdba872,['            if (this.owner.getDecorator() instanceof FTDecorator) {'],"Next line of code:
+",lcc,java,"FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager
+FTManager",
+84,1.0,lcc,,701,527be9dcafaca936af7816ffc1b91056d113516e8acf4806,['\t\t\tif (value <= 0x7F)'],"Next line of code:
+",lcc,csharp, de                                                                                  ,
+84,1.0,lcc,,3874,c2347b59144779a0b7a159df894795eedab94a268ecd2b43,"[""        obj = CommandLoader(args=['aunpack'] + au_flags \\""]","Next line of code:
+",lcc,python,":
+:
+:
+:
+",
+84,1.0,lcc,,740,4f42b848b4da56a77422629e5f5b34775ae49475d94110cf,['\t\t[ExpectedException (typeof (ArgumentNullException))]'],"Next line of code:
+",lcc,csharp, <  <                                                                                 ,
+84,1.0,lcc,,668,af99b5be338dcd6ea99c715d5b5b5bdb923174f4a608472b,"[""        de = Locale.objects.get(code='de')""]","Next line of code:
+",lcc,python,"
+
+",
+84,1.0,lcc,,1807,835d60f6bb369f4f9e5e17b7af239e5a16e37bb40847519c,"['                userstate.texture = cmd.parameters[""texture""]']","Next line of code:
+",lcc,python,":
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+:
+",
+84,1.0,lcc,,799,67a6dc96ef742343a5472232bc814279dccd54c1055439e8,['        PlayerGroup group = player.getPlayerGroup2();'],"Next line of code:
+",lcc,java,"search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+search
+",
+84,1.0,lcc,,734,d8447e7d54fe3091a9199e7ab96ea24e60a7f9976caf7d82,['        r = [head]'],"Next line of code:
+",lcc,python,"highlight
+vl
+am
+ 
+ 
+",
+84,1.0,lcc,,630,01927bf90663c8e45781b1b5ddce62bfaf81ca7f023ef08b,"['        column, tree_model, tree_iter = self._setup_column(1, False)']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,1452,a9f806dacfe9f5d8c7b09f082dcb1b2d02bd3ec0647bbbed,['\t    if (parent instanceof Grid) {'],"Next line of code:
+",lcc,java,": 
+: 
+: 
+",
+84,1.0,lcc,,667,60f43ea884b0dda7f3dd9e6fee352e3b1f7715b7cbef50df,"['                XmlNodeList dnl = element.SelectNodes(""Dialog"");']","Next line of code:
+",lcc,csharp,"   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+   line of code:
+",
+84,1.0,lcc,,1143,e8fcbecdd8f66e30320eeb4325e3c774f6123213490f17da,['                        m_key[i] = new ExodusTomeAltar();'],"Next line of code:
+",lcc,csharp,                                                                                                                                                                        ,
+84,1.0,lcc,,755,131b0d4e1060ac70718be3c8613b7334215e78efea7deb46,['\t\tif(beans == null)'],"Next line of code:
+",lcc,java,"Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+Linked to code:
+",
+84,1.0,lcc,,994,5a5af80308308375d1df176501cc0cb6e044e09d4787ab3a,"['                new Version(1, new int[]{},']","Next line of code:
+",lcc,java,"Version:
+See:
+ISO:
+<>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+>
+",
+84,1.0,lcc,,2072,cad0e73b70c6604397a4ffceeee2f4696001601af1e061b6,"['\t\t\tbyte[] pb = kdf.Transform(pbMsg, p);']","Next line of code:
+",lcc,csharp, <                                                                                   ,
+84,1.0,lcc,,1100,b94c4100fcacf82ca0b3cf350411e8a6361c3aedbbb68172,"['\t\treturn requestManaExact(stack, player, cost, remove);']","Next line of code:
+",lcc,java,"Next line of code:
+Next line of code:
+Next line of code:",
+84,1.0,lcc,,684,d7f7bd8bf110178d86ce3ea9bb27e6f1f794f60c3fe3a478,['if DEBUG and len(sys.argv) > 1:'],"Next line of code:
+",lcc,python,assistant,
+84,1.0,lcc,,821,4673929404a475d693820dddae925a0b49797eeb5da4c706,"['\t\t\t\t\t\t"" expected {1})"", NextFrame.PixelCount, LightCount']","Next line of code:
+",lcc,csharp,  <  >                                                                                ,
+84,1.0,lcc,,813,9de1c2d790d0cfc4b8f31402e8be6b0d06aa0e2623207f6a,['        if ((this.userErrorMessage == null)) {'],"Next line of code:
+",lcc,java,"<p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p
+p   p   p   p   p   p   p   p   p   p   p   p   p   p   p   p  ",
+84,1.0,lcc,,1196,ea1234d3d85703f270dfcff3d2aedc39d8ebe2b1d2369a39,['            dc.index = p.readInt();'],"Next line of code:
+",lcc,java,"see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+see
+",
+84,1.0,lcc,,679,3a16af734adf48dc73f6e28cfaec11262bb343e3da134f90,['\t\t\t\t\t\tif (licence.isDomainSoftware()) {'],"Next line of code:
+",lcc,java,"
+
+
+
+",
+84,1.0,lcc,,1083,a85ec69aacbcbe8db663b015147d5e8f96ae3e1481e5036c,['            for (int x = 0; x < xSizeP; x++)'],"Next line of code:
+",lcc,csharp,"  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel
+  Overlay of Panel",
+84,1.0,lcc,,845,d87a8d45371d8a5b1d38f4ab97868fb93ab6a18b81e452ea,['\t\t\tint testInt2 = rand.nextInt(5000);'],"Next line of code:
+",lcc,java,  <  < ,
+84,1.0,lcc,,431,9ebf3a9f0f2f7e7496ccd13c44ec7354a4a0230fe1f15f47,['\t\t\t\treturn new int[0];'],"Next line of code:
+",lcc,java,"Mock of code:
+
+OC of code:
+
+OC of code:
+
+OC of code:",
+84,1.0,lcc,,745,42eff230c4b79230f8b478baf6961fc54e1bad443af197c3,"['            logging2(name + ""not found."");']","Next line of code:
+",lcc,java,  <  <  ,
+84,1.0,lcc,,2896,8d3d0541e92abe43d18a21fd5943d0fee67278670fbf48d8,"['                        16 + (~stactics_display_buffer.read(i) & 0x0f),']","Next line of code:
+",lcc,java,":
+:
+",
+84,1.0,lcc,,1895,fe60cba2f4bf6cfc13feac0963a3f83ff7a28080318e5bde,"['                                        .Distance(spell.From.To2D(), position.To2D(), true, true) <=']","Next line of code:
+",lcc,csharp,: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,1093,513f349427eab3898c563f007083539809e961ebeaa5b59d,['        final LinkedList<Node> path = new LinkedList<>();'],"Next line of code:
+",lcc,java,                                                                                                                                                                        ,
+84,1.0,lcc,,756,e1cfeee7b51ffa6e208f12e8fc7a842cb7e910013cd3b8fe,['                    if (pop[i] is PlaceBase)'],"Next line of code:
+",lcc,csharp,i4i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i i,
+84,1.0,lcc,,677,aebc1dbdefd0470032eb19b36673cec2767fbc28f3a13fd5,['        else if (!this.getFileId().equals(other.getFileId())) {'],"Next line of code:
+",lcc,java,  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K  K,
+84,1.0,lcc,,864,0e11139b864daa3a41696de69d95d0a294335165cb569f6a,['                        Mobile m = mobiles[i];'],"Next line of code:
+",lcc,csharp," // 
+",
+84,1.0,lcc,,964,1d26c663ec47ee3d35774aa3b47622ec574c5ea151b49857,['\t\t\t\twhile (HistoryCount >= WorldChat.CMOptions.HistoryBuffer)'],"Next line of code:
+",lcc,csharp,"line of code:
+line of code:
+line of code:
+line of code:",
+84,1.0,lcc,,882,b519f9921c8764941f3609154c5ff4b26d6c0630555f325d,"['    return mock.getAvailCompoIds(sClientSpaceId, sUserId);']","Next line of code:
+",lcc,java,":
+:
+:
+:
+",
+84,1.0,lcc,,526,3bd9b54a05c3a1d9fac2ee41a5e9f728a8b777e66409b700,['                            files[++index] = (String) mListView.getItemAtPosition(key);'],"Next line of code:
+",lcc,java, 1                                                                                  ,
+84,1.0,lcc,,598,12a85487bcc201bf5b2d1aed937af17781714f568e2f4f03,['        if (this.m instanceof IUpdatePlayerListBox) {'],"Next line of code:
+",lcc,java,"Spig Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network:
+Network: 
+",
+84,1.0,lcc,,3693,fbd2ce3fa32ecbd53cedd8e6e94c4011c99d452dc926cd2e,['                ll = z_index_dict[z_key][1]'],"Next line of code:
+",lcc,python,"assistant_script'+
+================================================",
+84,1.0,lcc,,625,952e4fb549d3a952e37556b53313cdbf932f75f456f15901,"['      return context.getString(resourceOne, name);']","Next line of code:
+",lcc,java,External Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity Identity,
+84,1.0,lcc,,635,d5aeb3ac7b9ce924600b49b84fc825d3230cb90e4711eb37,"['            env[""PATH""] = ""%s%s%s"" % (']","Next line of code:
+",lcc,python, Servonhosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthosthost,
+84,1.0,lcc,,530,94a45bef4dfbdc205ca29907ce87ecff9c3d6548141c05a7,"['            for path, manifest_tests in iteritems(type_paths):']","Next line of code:
+",lcc,python,"Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+Please
+",
+84,1.0,lcc,,651,8c9bb2b76a046b253799f5ca041ded912c0cd8fc4381f3c1,['        if (compiledScript != null) {'],"Next line of code:
+",lcc,java,"free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+free
+",
+84,1.0,lcc,,659,a1513f998bc527a864d8e16254a66a40d622fcb15412fae3,['            throw new NotSupportedException();'],"Next line of code:
+",lcc,csharp,"CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN
+CAN",
+84,1.0,lcc,,874,fb636e04ae087216fc1ed273e49b1e03ab82872bf4ab05e0,['      for i in range(energy.size):'],"Next line of code:
+",lcc,python,,
+84,1.0,lcc,,664,9516693902335ad7c898f1e9ec8d1799680dac2988c0259d,['\t\tif(caseInsensitive); // this is to avoid eclipse warning only.'],"Next line of code:
+",lcc,java,   EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO  CL  EO ,
+84,1.0,lcc,,498,1dba3395659d0bbbbc35a3da100e582c60c44de0cdd4c2e8,['        for (StackImpl stack : stacks) {'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,593,bac49e73188f1e4ebc882afd8cd6cc4798333341297fb191,['        ParameterElement ped = new ParameterElementImpl();'],"Next line of code:
+",lcc,java,                                                                                    ,
+84,1.0,lcc,,1713,a330393b411f537b7da68d95f8343c7628953903c26432d2,['\t\t\tif (kind == LNodeKind.Id && candidate.Name != pattern.Name)'],"Next line of code:
+",lcc,csharp,  $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $ $,
+84,1.0,lcc,,603,72337b5e2ebcaf24dc3e9b1e0609516992166e68a738bdea,['                    if (colisionList.Count > extendedWillHit)'],"Next line of code:
+",lcc,csharp,                                                                            ,
+84,1.0,lcc,,1735,caf4ee2315e7782e651f443c2b635e258cb5c7aea3ede55c,['\t\tcontextMenus = new ContextMenus();'],"Next line of code:
+",lcc,java,: : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :,
+84,1.0,lcc,,1046,cfdc68693b8867678092d17fdb043cc34839f37798d88a62,"['    return bool(re.search(pattern, frozen_output))']","Next line of code:
+",lcc,python,Please.,
+84,1.0,lcc,,1031,2bdd8408d0651a7c4efb3a83615391556c9a2af978875365,"[""            'subs': [(0, 0, {})]""]","Next line of code:
+",lcc,python,"  "" "" "" "" "" "" """,
+84,1.0,lcc,,4519,77bc1815b31202f2c431f0bd2c1ea65d6386dcbf74514e10,"[""    b, v = symbols('b, v', integer = True)""]","Next line of code:
+",lcc,python,":
+
+
+
+
+
+",
+84,1.0,lcc,,427,124c1846577ae2e5fcc64e558a68b1f71e80770b1c6f377f,['\t\t\tint argc = LuaDLL.lua_gettop(l);'],"Next line of code:
+",lcc,csharp,SL,
+84,1.0,lcc,,756,b64722de0a50cd03fec807399570eeb10ac2b39da7a8d5e3,"['                this.InitializeAdd(action, changedItems, startingIndex);']","Next line of code:
+",lcc,csharp,"  Code: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+  Notify: 
+",
+84,1.0,lcc,,1329,8a2fd200c0170fc660f3939cf1ac96106dc7e05cbcd739ea,['            int sizeAfter = getNamespaceResolverSize(desc);'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+:
+",
+84,1.0,lcc,,714,c6257bab33edefa6c3e6aa0a9b46d09d5375b9c450a0c307,['                    c.Campus = Token2Csv();'],"Next line of code:
+",lcc,csharp,,
+84,1.0,lcc,,2756,7535856a01a07c6c689fb46424b279e43fe483d635ef3bbc,"['Console.WriteLine (""\\tide.width: {0}"", ide.width);']","Next line of code:
+",lcc,csharp,"
+ 
+ 
+ 
+ 
+
+",
+84,1.0,lcc,,3107,ccd61a72c442c4312744465333f1834fbb9aa1fdbd7f909c,['                if ((l.status & VISITED2) != 0) {'],"Next line of code:
+",lcc,java,: : : :,
+84,1.0,lcc,,599,f0c18c81b769fb90470c8df8bae97ef061380d5b8dcb9b40,"['            ptr_of_this_method = ILIntepreter.Minus(__esp, 1);']","Next line of code:
+",lcc,csharp,"CLR.Type:
+CLR.Type:
+CLR Type:
+CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:CLR Type:",
+84,1.0,lcc,,620,6cd281e781038f9d58715d430ef4da8a82ec9cd5572bd6bb,['\t\t\tif(position == Position.INSIDE_LITERAL) {'],"Next line of code:
+",lcc,java,":
+:
+:
+:
+",
+84,1.0,lcc,,3277,94c4df74ebdbcfad6ff07c35a32605e7d576c977242ba25c,"['        currImageValue = self._getCurrentValue( driver, ""Image"")']","Next line of code:
+",lcc,python,"
+
+
+
+ 
+
+ 
+
+",
+84,1.0,lcc,,1912,5aa80682c87ae812a93e6bb27ac638d91789e7695186311c,['        if (self.f < 1) or (self.f > self.p - 1):'],"Next line of code:
+",lcc,python,"  "" "" "" "" "" """,
+84,1.0,lcc,,908,b607483b0c82f02c516bc92ffc69d9d3747ea0eaf71ca58a,['            if (disableTreeSelection) {'],"Next line of code:
+",lcc,java,"code:
+code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code: 
+  code:",
+84,1.0,lcc,,836,7c44f14dfd55d7192d94587a0e3d0cb5b2dd53c6dd46b6f6,"['                           (self.employee_id, from_date, to_date, code))']","Next line of code:
+",lcc,python,~hrp~~~,
+84,1.0,lcc,,1377,a4496fc9e2bf0797e31ad91e16fcbb8eef95cbc5986bb746,"[""        if config.MF =='Tinker':""]","Next line of code:
+",lcc,python,'cl'/''/''/''/'',
+84,1.0,lcc,,924,d18db499c41a15c135ce3f82d3cc62afdcd46c02c9a100e3,['        if (font == null) {'],"Next line of code:
+",lcc,java,"  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+  code
+",
+84,1.0,lcc,,800,837dcdc595cabd1df2ffe38aeec0464032bc96b95bb36f75,"['        for theta in np.arange(0,np.pi,theta_res):']","Next line of code:
+",lcc,python,"
+
+os
+
+",
+84,1.0,lcc,,471,a50aee631ed0face644834967b1fc81b37cc66c1782f1e1a,['\t\t\tif (window.Visibility == Visibility.Visible)'],"Next line of code:
+",lcc,csharp," partial
+                                        &#",
+84,1.0,lcc,,2054,7ca84608f996fd9789e4cbc658213c13482f990b4ea1c34e,"[""                        for n in xrange(params[0]['nbins'] + 1)]""]","Next line of code:
+",lcc,python,PlistDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDimDim,
+84,1.0,lcc,,630,e745ca2cc98ac1c0224978f820c9902c973ae8afb16c93ec,['            if (contact.setLastMessageTransmitted(query.getEnd())) {'],"Next line of code:
+",lcc,java," 
+
+ 
+
+",
+84,1.0,lcc,,756,0c4383dd82b695a9c0f842643d57d89b5f9deac30eb27285,"['                im1L = im1.convert(""L"", rgb2I)']","Next line of code:
+",lcc,python,"   #  \
+ ",
+84,1.0,lcc,,702,22e513a622143cc52cb34624fc06151012a9995c967df13c,['\t\t\tfor (int i = 1; i <= MAX_LOG; ++i) {'],"Next line of code:
+",lcc,java,"cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+cache
+spec
+main
+card
+ep
+ret
+",
+84,1.0,lcc,,952,5772539578239747ccdb82c5a9bc47b7df833cf9c67b1225,"['            return ""Block: %s"" % self[""type""].display']","Next line of code:
+",lcc,python,"
+
+ACE recovery <",
+84,1.0,lcc,,1211,8eee41f139373f09ef454c2f6997710fa102d97316c455fe,['\t\tif (socketAdapter != null) {'],"Next line of code:
+",lcc,java,"connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect
+connect",
+84,1.0,lcc,,1313,c4b5d72178219c00e3466b9a8a3483f56036128b3ffe4348,"[""        path = environ['PATH_INFO'] or '/'""]","Next line of code:
+",lcc,python,: : : : :,
+84,1.0,lcc,,1784,3f302be0d966385442a6296e30fa6c4cf6c4bd891c7e8b20,"['\t\tdatasetfile , field , parents = sys.argv[ 1: ]']","Next line of code:
+",lcc,python," "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" """,
+84,1.0,lcc,,976,218d7b3f8d5e93240d972dc518c5b9e0fe4372b38cd94b33,['            int random = Utility.Random(100);'],"Next line of code:
+",lcc,csharp,"# 
+",
+84,1.0,lcc,,2406,585e8ba1eb1b3be2a7a81d0eebb3178d8d03ec8aea535999,"['            entries[entry_name] = (entry_value, displayname, desc)']","Next line of code:
+",lcc,python, <                                                                                   ,
+84,1.0,lcc,,451,c8bb6c7b2115807916ef0d828a186d6e698ed8a7962bc728,['                    Label noneFound = new Label();'],"Next line of code:
+",lcc,csharp,Fog,
+84,1.0,lcc,,1411,211036deb12c17fbe2d6904e590bcf927cced0a233eb0c78,"['                object obj = this.ViewState[""SubmitText""];']","Next line of code:
+",lcc,csharp,:Ext.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field.Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field Field,
+84,1.0,lcc,,1502,374f798258a61ee74e40065b162fa268f1abb4cffaf4ed85,"['                int ti = 0, ci = 0, vi = 0;']","Next line of code:
+",lcc,java,"code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:
+code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:code:",
+84,1.0,lcc,,796,7ffdfbe9a1f219ca6e4ba947f389a17ae4f1378b03a7c921,"[""    exposedHeaders += f', {header}' if exposedHeaders else header""]","Next line of code:
+",lcc,python,assistant,
+84,1.0,lcc,,1070,07673406347dbc81c33565aadcb582257991cdab25eab669,['                    Driver d = idlePool.Peek();'],"Next line of code:
+",lcc,csharp,"MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL
+
+MySQL",
+84,1.0,lcc,,3675,b2e9852774a64a45a97fb402afdda4bca2ad6f026ab0a353,"['        var = (float(var), float(var))']","Next line of code:
+",lcc,python,,
+84,1.0,lcc,,755,733108e23bea8f0fe687224256eb5c0b58a30b29f6ce051d,"[""CREATED     = State('Start',     QUEST)""]","Next line of code:
+",lcc,python,"NPC
+Party
+Quest
+NPC
+NPC
+",
+84,1.0,lcc,,1143,9e42cec6ffd16ad23a4bdd0f6b04734f621a0d2df6c78eb4,['\t\t\t\t\tdouble? seconds1 = this.Seconds;'],"Next line of code:
+",lcc,csharp,PlayStructPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlayPlay,
+84,1.0,lcc,,661,4ec18b2c8f603cf68ea65e3606254e77895f2945bbc43537,['            _attributes = new List<AttributeInfo>();'],"Next line of code:
+",lcc,csharp,"
+
+",
+84,1.0,lcc,,1227,291eb52753b18a31b084cd6c13d64847dd010ab270cd7bff,"['        for l in (self.reactions, self.genes, self.metabolites):']","Next line of code:
+",lcc,python,: : : :,
+84,1.0,lcc,,778,f963d6d0a6afee2f2e97ceb0f221aca6ff419e9f3f0e1a2b,['\t\tif(beans == null)'],"Next line of code:
+",lcc,java,: : : :,
+84,1.0,lcc,,1861,e78664cfc18ba1345c5f345deba0b09a64d425e203bdff71,['\t\t\t\tcx = lines[selectedLine].getCenterX();'],"Next line of code:
+",lcc,java, <                                                                                   ,
+84,1.0,lcc,,730,ecfe82f294b057561aa2f9cd0122f2dbc5fb0dae134d8df8,"['                new LayoutAnimationController(set, 0.5f);']","Next line of code:
+",lcc,java,"  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+  android:
+",
+84,1.0,lcc,,803,0927453c4d51d5c9eef3799b0ae56d6daebdb8afabc59c38,['                if (PartnerInterestRow.RowState != DataRowState.Deleted)'],"Next line of code:
+",lcc,csharp,"  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+  Partner
+  Screen
+  Special
+",
+84,1.0,lcc,,569,86d39eb1a6f382a4d98e5d61ed62ae7c8942fd177b543add,['\t\tint[] \t\tscoresTmh \t= new int[length];'],"Next line of code:
+",lcc,java,"  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:
+  code:",

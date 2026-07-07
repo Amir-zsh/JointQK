@@ -1,0 +1,258 @@
+{
+  "baselines": {
+    "ec_qpca_unc_dz0.5": {
+      "f1": {
+        "2wikimqa": 51.36,
+        "lcc": 49.61,
+        "musique": 33.73
+      },
+      "mean_f1": 44.9,
+      "rate": 1.946650942119034,
+      "rate_per_task": {
+        "hotpotqa": 1.9273613119082758,
+        "multi_news": 1.942422489206463,
+        "musique": 1.9373727035778996,
+        "passage_retrieval_en": 1.954414168035017,
+        "qasper": 1.940312060507403,
+        "qmsum": 1.9457195213898169,
+        "repobench-p": 1.9909095215092332,
+        "triviaqa": 1.9263054172593645
+      }
+    },
+    "ec_r_sym_dz0.375": {
+      "f1": {
+        "2wikimqa": 51.03,
+        "lcc": 51.1,
+        "musique": 31.29
+      },
+      "mean_f1": 44.473333333333336,
+      "rate": 1.9473171304345347,
+      "rate_per_task": {
+        "hotpotqa": 1.92646760765238,
+        "multi_news": 1.9407620696725174,
+        "musique": 1.9357655025892975,
+        "passage_retrieval_en": 1.961859719424529,
+        "qasper": 1.9369111837369744,
+        "qmsum": 1.9476161009100914,
+        "repobench-p": 1.9891616793747398,
+        "triviaqa": 1.92232669320424
+      }
+    },
+    "full_precision": {
+      "f1": {
+        "2wikimqa": 50.99,
+        "lcc": 51.37,
+        "musique": 32.62
+      },
+      "mean_f1": 44.99333333333333,
+      "rate": null,
+      "rate_per_task": null
+    },
+    "jointqk_k2_v2": {
+      "f1": {
+        "2wikimqa": 49.25,
+        "lcc": 37.23,
+        "musique": 27.08
+      },
+      "mean_f1": 37.85333333333333,
+      "rate": null,
+      "rate_per_task": null
+    },
+    "turboquant_k2_v2": {
+      "f1": {
+        "2wikimqa": 44.64,
+        "lcc": 48.37,
+        "musique": 31.55
+      },
+      "mean_f1": 41.52,
+      "rate": 2.125,
+      "rate_per_task": null
+    }
+  },
+  "pgq": {
+    "ecu@b0.75": {
+      "bundle_sha8": "ce64bde2",
+      "f1": {
+        "2wikimqa": 41.12,
+        "lcc": 48.76,
+        "musique": 30.14
+      },
+      "mean_f1": 40.00666666666667
+    },
+    "ecu@b1.0": {
+      "bundle_sha8": "058af161",
+      "f1": {
+        "2wikimqa": 46.05,
+        "lcc": 45.6,
+        "musique": 32.1
+      },
+      "mean_f1": 41.25
+    },
+    "ecu@b1.5": {
+      "bundle_sha8": "4b7e8720",
+      "f1": {
+        "2wikimqa": 49.31,
+        "lcc": 47.59,
+        "musique": 32.17
+      },
+      "mean_f1": 43.02333333333333
+    },
+    "pgq_ea@b0.75": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 39.31,
+        "lcc": 39.24,
+        "musique": 26.87
+      },
+      "mean_f1": 35.14,
+      "overflow_frac": 0.0014984742807323452,
+      "rate_heldout": 0.7469431447506572,
+      "rung_hist": [
+        2027,
+        27151,
+        294559,
+        2105240,
+        5907864,
+        4491850,
+        1205629
+      ]
+    },
+    "pgq_ea@b1.0": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 47.65,
+        "lcc": 40.72,
+        "musique": 31.98
+      },
+      "mean_f1": 40.11666666666667,
+      "overflow_frac": 0.0011261261261261261,
+      "rate_heldout": 0.9964513471578926,
+      "rung_hist": [
+        18232,
+        217082,
+        1548505,
+        5271128,
+        5326075,
+        1454188,
+        199110
+      ]
+    },
+    "pgq_ea@b1.5": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 47.47,
+        "lcc": 46.13,
+        "musique": 32.3
+      },
+      "mean_f1": 41.96666666666667,
+      "overflow_frac": 0.0011261261261261261,
+      "rate_heldout": 1.4960263564776979,
+      "rung_hist": [
+        429270,
+        2717975,
+        6147675,
+        3836410,
+        808839,
+        86684,
+        7467
+      ]
+    },
+    "pgq_fixed@b1.5": {
+      "bundle_sha8": "efe38d4d",
+      "f1": {
+        "2wikimqa": 28.1,
+        "musique": 19.72
+      },
+      "mean_f1": 23.91,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.496063168717829,
+      "rung_hist": [
+        844543,
+        8267745,
+        3672049,
+        1249983
+      ]
+    },
+    "pgq_fixed_ea@b1.0": {
+      "bundle_sha8": "efe38d4d",
+      "f1": {
+        "2wikimqa": 25.38,
+        "musique": 17.35
+      },
+      "mean_f1": 21.365000000000002,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.9960632399717264,
+      "rung_hist": [
+        2456591,
+        10287060,
+        927560,
+        363109
+      ]
+    },
+    "pgq_pagerung@b1.0": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 41.11,
+        "lcc": 44.42,
+        "musique": 29.19
+      },
+      "mean_f1": 38.24,
+      "overflow_frac": 0.0011261261261261261,
+      "rate_heldout": 0.8202599142679521,
+      "rung_hist": [
+        0,
+        0,
+        0,
+        29056,
+        13827083,
+        177329,
+        852
+      ]
+    },
+    "pgq_plain@b1.0": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 44.77,
+        "lcc": 42.16,
+        "musique": 24.81
+      },
+      "mean_f1": 37.24666666666666,
+      "overflow_frac": 0.0011261261261261261,
+      "rate_heldout": 0.9964901659263309,
+      "rung_hist": [
+        0,
+        144,
+        380103,
+        7466912,
+        5824334,
+        349318,
+        13509
+      ]
+    },
+    "pgq_plain@b1.5": {
+      "bundle_sha8": "1a09e6dc",
+      "f1": {
+        "2wikimqa": 48.82,
+        "lcc": 48.57,
+        "musique": 34.54
+      },
+      "mean_f1": 43.97666666666667,
+      "overflow_frac": 0.0011261261261261261,
+      "rate_heldout": 1.4958444513624038,
+      "rung_hist": [
+        77,
+        1078308,
+        10081774,
+        2821446,
+        49414,
+        1938,
+        1363
+      ]
+    }
+  },
+  "tasks": [
+    "lcc",
+    "musique",
+    "2wikimqa"
+  ]
+}
