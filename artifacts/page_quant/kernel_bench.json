@@ -1,0 +1,26 @@
+[
+  {
+    "ctx": 8192,
+    "b_page": 2.0,
+    "rel_err": 0.022810114547610283,
+    "t_fused_ms": 0.3075723687205652,
+    "t_sdpa_bf16_ms": 0.06237179035612192,
+    "t_dequant_sdpa_ms": 0.09698110540976396,
+    "bytes_fp16_kv_MB": 33.554432,
+    "bytes_Kcomp_plus_Vfp16_MB": 18.874368,
+    "bytes_Konly_ratio": 8.0,
+    "traffic_ratio_end2end": 1.7777777777777777
+  },
+  {
+    "ctx": 65536,
+    "b_page": 2.0,
+    "rel_err": 0.004667000379413366,
+    "t_fused_ms": 1.2321352788380213,
+    "t_sdpa_bf16_ms": 0.23905280145506064,
+    "t_dequant_sdpa_ms": 0.5331425877178416,
+    "bytes_fp16_kv_MB": 268.435456,
+    "bytes_Kcomp_plus_Vfp16_MB": 150.994944,
+    "bytes_Konly_ratio": 8.0,
+    "traffic_ratio_end2end": 1.7777777777777777
+  }
+]
