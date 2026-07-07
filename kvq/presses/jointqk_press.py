@@ -147,7 +147,21 @@ class JointQKPress(BasePress):
         if self._try_load_cache():
             return
 
-        if self.quantize_k and self.k_method.startswith("ec_"):
+        if self.quantize_k and self.k_method.startswith("pgq_"):
+            # Paged per-token-precision K (page_quant study). Reuses the
+            # ec_bundle_path field (a bundle path either way; k_method
+            # disambiguates, and _cache_key already mtimes it). k_bits is the
+            # page budget in bits/coord (float allowed, e.g. 1.5).
+            if not self.ec_bundle_path:
+                raise ValueError(f"k_method={self.k_method!r} requires ec_bundle_path")
+            from kvq.compression.page_quant import load_pgq_compressors_from_bundle
+            self._k_compressors, pgq_meta = load_pgq_compressors_from_bundle(
+                self.ec_bundle_path, self.k_method, float(self.k_bits))
+            if not self.layer0_full_precision:
+                raise ValueError("pgq_* bundles assume layer0_full_precision=True")
+            self._n_layers = int(pgq_meta["n_layers"])
+            self._n_kv_heads = int(pgq_meta["n_kv_heads"])
+        elif self.quantize_k and self.k_method.startswith("ec_"):
             if not self.ec_bundle_path:
                 raise ValueError(f"k_method={self.k_method!r} requires ec_bundle_path")
             self._k_compressors, ec_meta = load_ec_compressors_from_bundle(self.ec_bundle_path)

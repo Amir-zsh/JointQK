@@ -1,0 +1,469 @@
+"""Paged per-token-precision K compressors (page_quant study).
+
+Two families, both operating on fixed-byte pages of PTOK tokens in the
+qpca_unc code domain (r = (k - mu) @ F; code-domain SE == Q-weighted key MSE):
+
+  PagedRDOCompressor      deadzone rung ladder + frozen-model entropy coding.
+                          Per-token rung chosen by per-page Lagrangian RDO,
+                          optionally distortion-weighted by an encoder-side
+                          importance omega_t = exp(tau*clamp(mu_q.k/sqrt(d)
+                          - median, +-c*ln2)). Decoder needs only the packed
+                          rung ids (id_bits/token) — omega costs no sideband.
+                          Modes: "rdo" (per-token rungs) and "pagerung" (one
+                          rung per page — the fixed-page token-uniform
+                          control).
+
+  FixedWidthPagedCompressor  saturating uniform grids at widths {0,1,2,4}
+                          bits/coord (b=0 reconstructs mu_k), per-coord scale
+                          = alpha_w * code_std. Exact R_t = w*d, greedy
+                          refinement fills the page budget. No entropy
+                          coding: decode is shift/mask — the fused-kernel
+                          target.
+
+Both live in kvq/ (not entropy_coding/) so press disk-cache pickles re-import
+cleanly (same reason as ec_roundtrip.py). Allocation runs in fp64 with
+first-index-wins argmin so a CPU/GPU pair is deterministic. Distortion is
+snap-aware: D uses the frozen-alphabet reconstruction the decoder actually
+produces, not the raw rounding (allocation must see OOD clipping).
+
+Rate accounting (charged against every page's budget):
+  header 96 bits + id_bits*ptok rung ids [+ 72*N_LANES rANS lane overhead for
+  the EC family]. Calibration constants (delta, alphabets, std, alpha) are
+  off-page, like every method's codebooks; per-vector data always in-page.
+"""
+from __future__ import annotations
+
+import math
+
+import torch
+
+from kvq.compression.ec_roundtrip import dz_round, dz_dequant
+
+PGQ_BUNDLE_VERSION = 2
+N_LANES = 4
+HEADER_BITS = 96
+LANE_OVERHEAD_BITS = 72  # per lane: u32 length + u32 final state + slack
+
+
+def snap_positions(idx: torch.Tensor, support_vals: torch.Tensor,
+                   support_lens: torch.Tensor) -> torch.Tensor:
+    """Nearest-alphabet positions (tie -> left), per coord.
+
+    idx (N, d) float; support_vals (d, V) ascending, +inf padded;
+    support_lens (d,) long. Returns positions (N, d) long. Exact replica of
+    _CoordModel.snap / SnappedDeadzoneECCompressor.snap_indices semantics.
+    """
+    n, d = idx.shape
+    cols = idx.t().contiguous()                       # (d, N)
+    pos = torch.searchsorted(support_vals, cols)      # (d, N)
+    maxpos = (support_lens - 1).clamp_min(0).unsqueeze(1)
+    pos = pos.clamp_max_(maxpos.expand_as(pos)).clamp_min_(0)
+    left = (pos - 1).clamp_min(0)
+    vr = support_vals.gather(1, pos)
+    vl = support_vals.gather(1, left)
+    choose_left = (idx.t() - vl) <= (vr - idx.t())    # tie -> left
+    pos = torch.where(choose_left & (pos > 0), left, pos)
+    single = (support_lens <= 1).unsqueeze(1)
+    pos = torch.where(single, torch.zeros_like(pos), pos)
+    return pos.t().contiguous()
+
+
+def _paged_lambda_assign(Dw64, R64, budgets, ptok, iters=40):
+    """Per-page bisection over lambda. Dw64/R64: (P, ptok, R) fp64 (padded
+    tokens carry zero D and zero R so they never affect sums). budgets (P,)
+    fp64. Returns (P, ptok) long assignment (first-index-wins argmin)."""
+    P = Dw64.shape[0]
+    lo = torch.zeros(P, 1, 1, dtype=torch.float64, device=Dw64.device)
+    hi = torch.full_like(lo, max(1.0, float(Dw64.max())) * 1e3)
+    rmin = R64.argmin(2)
+    fits_min = R64.gather(2, rmin.unsqueeze(2)).squeeze(2).sum(1) <= budgets
+    for _ in range(iters):
+        mid = 0.5 * (lo + hi)
+        a = (Dw64 + mid * R64).argmin(2)
+        rr = R64.gather(2, a.unsqueeze(2)).squeeze(2).sum(1)
+        over = (rr > budgets).view(P, 1, 1)
+        lo = torch.where(over, mid, lo)
+        hi = torch.where(over, hi, mid)
+    a = (Dw64 + hi * R64).argmin(2)
+    # pages where even the min-rate choice overflows: take min-rate (counted
+    # as overflow by the caller)
+    a = torch.where(fits_min.unsqueeze(1), a, rmin)
+    return a
+
+
+class _PagedBase:
+    def to(self, device):
+        for name, val in list(self.__dict__.items()):
+            if torch.is_tensor(val):
+                setattr(self, name, val.to(device))
+            elif isinstance(val, list) and val and torch.is_tensor(val[0]):
+                setattr(self, name, [t.to(device) for t in val])
+        self.device = device
+        return self
+
+    def _maybe_migrate(self, states):
+        if states.device != getattr(self, "device", states.device):
+            self.to(states.device)
+
+    def reset_stats(self):
+        self.pages_total = 0
+        self.pages_overflow = 0
+        self.bits_payload = 0.0
+        self.bits_side = 0.0
+        self.tokens_total = 0
+        self.rung_hist = [0] * self.n_rungs
+
+
+class PagedRDOCompressor(_PagedBase):
+    """EC family: deadzone rung ladder, per-page RDO, frozen-model rates."""
+
+    def __init__(self, forward_map, inverse_map, mu, mu_q, delta_base,
+                 m_grid, support_vals, support_lens, support_nlp,
+                 dz, b_page, ptok=64, mode="rdo",
+                 omega_tau=0.0, omega_clamp_bits=4.0):
+        self.forward_map = forward_map.float()
+        self.inverse_map = inverse_map.float()
+        self.mu = mu.float()
+        self.mu_q = mu_q.float()
+        self.delta_base = float(delta_base)
+        self.m_grid = [float(m) for m in m_grid]
+        self.n_rungs = len(self.m_grid)
+        # lists of (d, V_r) tensors, V_r per rung
+        self.support_vals = [v.float() for v in support_vals]
+        self.support_lens = [l.long() for l in support_lens]
+        self.support_nlp = [p.float() for p in support_nlp]
+        self.dz = float(dz)
+        self.b_page = float(b_page)
+        self.ptok = int(ptok)
+        self.mode = mode
+        self.omega_tau = float(omega_tau)
+        self.omega_clamp_bits = float(omega_clamp_bits)
+        self.id_bits = max(1, math.ceil(math.log2(max(2, self.n_rungs))))
+        self.device = mu.device
+        self.reset_stats()
+
+    def _side_bits(self, ntok):
+        return (HEADER_BITS + self.id_bits * ntok
+                + N_LANES * LANE_OVERHEAD_BITS)
+
+    @torch.no_grad()
+    def roundtrip(self, states: torch.Tensor) -> torch.Tensor:
+        self._maybe_migrate(states)
+        shape = states.shape
+        d = shape[-1]
+        k = states.reshape(-1, d).float()
+        T = k.shape[0]
+        dev = k.device
+
+        r = (k - self.mu) @ self.forward_map
+        R = self.n_rungs
+        Dmat = torch.empty(T, R, device=dev)
+        Rmat = torch.empty(T, R, device=dev)
+        vals_by_rung = []
+        for ri in range(R):
+            delta = self.delta_base * self.m_grid[ri]
+            idx = dz_round(r, torch.as_tensor(delta, device=dev), self.dz)
+            pos = snap_positions(idx, self.support_vals[ri],
+                                 self.support_lens[ri])
+            v = self.support_vals[ri].gather(
+                1, pos.t()).t()                       # snapped index values
+            dq = dz_dequant(v, torch.as_tensor(delta, device=dev), self.dz)
+            Dmat[:, ri] = (r - dq).square().sum(1)    # snap-aware distortion
+            Rmat[:, ri] = self.support_nlp[ri].gather(1, pos.t()).t().sum(1)
+            vals_by_rung.append(v)
+
+        ptok = self.ptok
+        P = (T + ptok - 1) // ptok
+        pad = P * ptok - T
+        ntok = torch.full((P,), float(ptok), dtype=torch.float64, device=dev)
+        if pad:
+            ntok[-1] = ptok - pad
+        page_bits = self.b_page * d * ntok
+        budgets = page_bits - torch.as_tensor(
+            [self._side_bits(int(n)) for n in ntok.tolist()],
+            dtype=torch.float64, device=dev)
+
+        if self.mode == "pagerung":
+            # one rung per page: finest whose frozen-model page cost fits
+            R64 = Rmat.double()
+            if pad:
+                R64 = torch.cat([R64, torch.zeros(pad, R, device=dev,
+                                                  dtype=torch.float64)])
+            page_cost = R64.reshape(P, ptok, R).sum(1)          # (P, R)
+            fits = page_cost <= budgets.unsqueeze(1)
+            first_fit = torch.where(
+                fits.any(1), fits.float().argmax(1),
+                torch.full((P,), R - 1, dtype=torch.long, device=dev))
+            assign_p = first_fit.unsqueeze(1).expand(P, ptok)
+            chosen_cost = page_cost.gather(1, first_fit.unsqueeze(1)).squeeze(1)
+            overflow = ~fits.any(1)
+        else:
+            if self.omega_tau > 0.0:
+                m_sig = (k @ self.mu_q) / math.sqrt(d)
+                c = self.omega_clamp_bits * math.log(2.0)
+                om = torch.exp((self.omega_tau * (m_sig - m_sig.median()))
+                               .clamp(-c, c))
+                Dw = Dmat * om.unsqueeze(1)
+            else:
+                Dw = Dmat
+            Dw64, R64 = Dw.double(), Rmat.double()
+            if pad:
+                z = torch.zeros(pad, R, dtype=torch.float64, device=dev)
+                Dw64 = torch.cat([Dw64, z])
+                R64 = torch.cat([R64, z.clone()])
+            assign_p = _paged_lambda_assign(
+                Dw64.reshape(P, ptok, R), R64.reshape(P, ptok, R),
+                budgets, ptok)
+            chosen_cost = R64.reshape(P, ptok, R).gather(
+                2, assign_p.unsqueeze(2)).squeeze(2).sum(1)
+            overflow = chosen_cost > budgets
+
+        assign = assign_p.reshape(-1)[:T]
+        # stats + honest rate telemetry
+        self.pages_total += P
+        self.pages_overflow += int(overflow.sum())
+        self.bits_payload += float(chosen_cost.sum())
+        self.bits_side += float(sum(self._side_bits(int(n))
+                                    for n in ntok.tolist()))
+        self.tokens_total += T
+        binc = torch.bincount(assign, minlength=R)
+        for ri in range(R):
+            self.rung_hist[ri] += int(binc[ri])
+
+        r_hat = torch.empty_like(r)
+        for ri in range(R):
+            msk = assign == ri
+            if msk.any():
+                delta = torch.as_tensor(self.delta_base * self.m_grid[ri],
+                                        device=dev)
+                r_hat[msk] = dz_dequant(vals_by_rung[ri][msk], delta, self.dz)
+        out = r_hat @ self.inverse_map + self.mu
+        return out.reshape(shape).to(states.dtype)
+
+
+class FixedWidthPagedCompressor(_PagedBase):
+    """No-rANS family: per-token width w in widths, saturating uniform grids,
+    per-coord scale alpha_w * code_std. Exact rates; greedy refinement fills
+    the page. Width 0 reconstructs r=0 (k_hat = mu_k)."""
+
+    def __init__(self, forward_map, inverse_map, mu, mu_q, code_std,
+                 widths, alphas, b_page, ptok=64,
+                 omega_tau=0.0, omega_clamp_bits=4.0):
+        self.forward_map = forward_map.float()
+        self.inverse_map = inverse_map.float()
+        self.mu = mu.float()
+        self.mu_q = mu_q.float()
+        self.code_std = code_std.float().clamp_min(1e-12)
+        self.widths = [int(w) for w in widths]
+        self.n_rungs = len(self.widths)
+        self.alphas = alphas.float()                  # (W,)
+        self.b_page = float(b_page)
+        self.ptok = int(ptok)
+        self.omega_tau = float(omega_tau)
+        self.omega_clamp_bits = float(omega_clamp_bits)
+        self.id_bits = max(1, math.ceil(math.log2(max(2, self.n_rungs))))
+        self.device = mu.device
+        self.reset_stats()
+
+    def _side_bits(self, ntok):
+        return HEADER_BITS + self.id_bits * ntok
+
+    def _cents_for(self, wi):
+        if not hasattr(self, "_cents"):
+            from kvq.compression.per_coord import unit_gaussian_centroids
+            self._cents = [unit_gaussian_centroids(w).sort().values
+                           if 0 < w < self.widths[-1] else torch.zeros(1)
+                           for w in self.widths]
+        c = self._cents[wi]
+        if c.device != self.code_std.device:
+            self._cents[wi] = c = c.to(self.code_std.device)
+        return c
+
+    def _quant_w(self, r, wi):
+        # Bulk widths use the project's Lloyd-Max Gaussian codebooks (zero
+        # level + std-scaled — crude uniform grids at <=2 bits clipped bulk
+        # coords and cost double-digit F1; see fixes_to_apply.md). The TOP
+        # width keeps a covering uniform grid: Lloyd-Max Gaussian levels stop
+        # at ~3.7 sigma, but sink coords run 3-5x past q999, and the top
+        # width is the tail escape (sequence positions 0-3 are forced here).
+        w = self.widths[wi]
+        if w == 0:
+            return torch.zeros_like(r)
+        if w == self.widths[-1]:
+            s = (self.alphas[wi] * self.code_std).unsqueeze(0)
+            lim = (1 << (w - 1)) - 1
+            idx = torch.round(r / s).clamp(-lim, lim)
+            return idx * s
+        cents = self._cents_for(wi)
+        sig = (self.code_std / 3.29).unsqueeze(0)     # q999 -> sigma approx
+        y = r / sig
+        pos = torch.bucketize(y, cents).clamp_max(cents.numel() - 1)
+        left = (pos - 1).clamp_min(0)
+        pick_left = (y - cents[left]) < (cents[pos] - y)
+        pos = torch.where(pick_left & (pos > 0), left, pos)
+        return cents[pos] * sig
+
+    @torch.no_grad()
+    def roundtrip(self, states: torch.Tensor) -> torch.Tensor:
+        self._maybe_migrate(states)
+        shape = states.shape
+        d = shape[-1]
+        k = states.reshape(-1, d).float()
+        T = k.shape[0]
+        dev = k.device
+        r = (k - self.mu) @ self.forward_map
+
+        W = self.n_rungs
+        Dmat = torch.empty(T, W, device=dev)
+        rhat_by_w = []
+        for wi in range(W):
+            dq = self._quant_w(r, wi)
+            Dmat[:, wi] = (r - dq).square().sum(1)
+            rhat_by_w.append(dq)
+        rates = torch.as_tensor([w * d for w in self.widths],
+                                dtype=torch.float64, device=dev)
+        Rmat = rates.unsqueeze(0).expand(T, W)
+
+        ptok = self.ptok
+        P = (T + ptok - 1) // ptok
+        pad = P * ptok - T
+        ntok = torch.full((P,), float(ptok), dtype=torch.float64, device=dev)
+        if pad:
+            ntok[-1] = ptok - pad
+        budgets = (self.b_page * d * ntok
+                   - torch.as_tensor([self._side_bits(int(n))
+                                      for n in ntok.tolist()],
+                                     dtype=torch.float64, device=dev))
+        if self.omega_tau > 0.0:
+            m_sig = (k @ self.mu_q) / math.sqrt(d)
+            c = self.omega_clamp_bits * math.log(2.0)
+            om = torch.exp((self.omega_tau * (m_sig - m_sig.median()))
+                           .clamp(-c, c))
+            Dw = Dmat * om.unsqueeze(1)
+        else:
+            Dw = Dmat
+        Dw64 = Dw.double()
+        R64 = Rmat.double().clone()
+        if pad:
+            z = torch.zeros(pad, W, dtype=torch.float64, device=dev)
+            Dw64 = torch.cat([Dw64, z])
+            R64 = torch.cat([R64, z.clone()])
+        Dp, Rp = Dw64.reshape(P, ptok, W), R64.reshape(P, ptok, W)
+        # Attention sinks (first 4 sequence positions) are 3-5x beyond q999:
+        # every narrow width clips them and the Lagrangian won't buy w_max at
+        # tight budgets, yet corrupting them poisons the softmax denominator
+        # globally (F1 collapse; see fixes_to_apply.md). Standard practice
+        # (KIVI keeps sinks high-precision): force w_max for positions 0-3.
+        # Position-based => decoder-derivable, zero sideband; page 0 pays.
+        nsink = min(4, T)
+        wmax = W - 1
+        sink_bits = float(Rp[0, :nsink, wmax].sum())
+        budgets = budgets.clone()
+        Dp = Dp.clone()
+        Dp[0, :nsink, :] = 0.0          # allocator ignores them below
+        Rp = Rp.clone()
+        Rp[0, :nsink, :] = 0.0
+        budgets[0] = budgets[0] - sink_bits
+        assign_p = _paged_lambda_assign(Dp, Rp, budgets, ptok)
+        assign_p[0, :nsink] = wmax
+
+        # greedy refinement: spend leftover bits on the best D-drop per bit
+        # (one token upgraded per page per round; 8 rounds converge in
+        # practice since the bisection already lands near the budget)
+        used = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2).sum(1)
+        left = budgets - used
+        for _ in range(8):
+            cur_d = Dp.gather(2, assign_p.unsqueeze(2)).squeeze(2)
+            cur_r = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2)
+            gain = cur_d.unsqueeze(2) - Dp
+            cost = Rp - cur_r.unsqueeze(2)
+            ok = (cost > 0) & (cost <= left.view(P, 1, 1)) & (gain > 0)
+            score = torch.where(ok, gain / cost, torch.zeros_like(gain))
+            best = score.view(P, -1).argmax(1)
+            best_score = score.view(P, -1).gather(
+                1, best.unsqueeze(1)).squeeze(1)
+            pi = torch.nonzero(best_score > 0).squeeze(1)
+            if pi.numel() == 0:
+                break
+            bt = (best[pi] // W).long()
+            bw = (best[pi] % W).long()
+            cur_w = assign_p[pi, bt]
+            ar = torch.arange(pi.numel(), device=dev)
+            old_r = Rp[pi, bt][ar, cur_w]
+            new_r = Rp[pi, bt][ar, bw]
+            assign_p[pi, bt] = bw
+            left[pi] -= (new_r - old_r)
+
+        assign = assign_p.reshape(-1)[:T]
+        used = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2).sum(1)
+        self.pages_total += P
+        self.pages_overflow += int((used > budgets).sum())
+        self.bits_payload += float(used.sum()) + sink_bits
+        self.bits_side += float(sum(self._side_bits(int(n))
+                                    for n in ntok.tolist()))
+        self.tokens_total += T
+        binc = torch.bincount(assign, minlength=W)
+        for wi in range(W):
+            self.rung_hist[wi] += int(binc[wi])
+
+        r_hat = torch.empty_like(r)
+        for wi in range(W):
+            msk = assign == wi
+            if msk.any():
+                r_hat[msk] = rhat_by_w[wi][msk]
+        out = r_hat @ self.inverse_map + self.mu
+        return out.reshape(shape).to(states.dtype)
+
+
+def load_pgq_compressors_from_bundle(path, k_method, b_page):
+    """Build per-(layer, head) compressors for layers 1..L-1 (layer-0 fp16).
+
+    k_method: pgq_ea | pgq_plain | pgq_fixed | pgq_fixed_ea | pgq_pagerung.
+    b_page: bits/coord page budget (the press's k_bits field, float ok).
+    """
+    blob = torch.load(path, map_location="cpu", weights_only=False)
+    if blob.get("pgq_version") != PGQ_BUNDLE_VERSION:
+        raise ValueError(f"pgq bundle version mismatch at {path}")
+    L, H = blob["n_layers"], blob["n_kv_heads"]
+    tau = float(blob["omega_tau"])
+    cb = float(blob["omega_clamp_bits"])
+    ptok = int(blob["ptok"])
+    comps = {}
+    for l in range(1, L):
+        for h in range(H):
+            args = dict(
+                forward_map=blob["forward"][l, h],
+                inverse_map=blob["inverse"][l, h],
+                mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h])
+            if k_method in ("pgq_fixed", "pgq_fixed_ea"):
+                comps[(l, h)] = FixedWidthPagedCompressor(
+                    code_std=blob["code_std"][l, h],
+                    widths=blob["widths"],
+                    alphas=blob["alphas"][l, h],
+                    b_page=b_page, ptok=ptok,
+                    omega_tau=tau if k_method == "pgq_fixed_ea" else 0.0,
+                    omega_clamp_bits=cb, **args)
+            else:
+                sv = [blob["support_vals"][ri][l, h]
+                      for ri in range(len(blob["m_grid"]))]
+                sl = [blob["support_lens"][ri][l, h]
+                      for ri in range(len(blob["m_grid"]))]
+                # -log2 p from stored (normalized, 0-padded) probs. Padded
+                # positions are unreachable (snap clamps to lens-1); give
+                # them a huge finite cost so any bug shows up as an exploded
+                # rate in telemetry rather than NaN in the bisection.
+                sn = [(-torch.log2(blob["support_probs"][ri][l, h]
+                                   .clamp_min(1e-12))).masked_fill(
+                          blob["support_probs"][ri][l, h] <= 0, 1e6)
+                      for ri in range(len(blob["m_grid"]))]
+                comps[(l, h)] = PagedRDOCompressor(
+                    delta_base=float(blob["delta_base"][l, h]),
+                    m_grid=blob["m_grid"], support_vals=sv,
+                    support_lens=sl, support_nlp=sn,
+                    dz=float(blob["dz"]), b_page=b_page, ptok=ptok,
+                    mode="pagerung" if k_method == "pgq_pagerung" else "rdo",
+                    omega_tau=tau if k_method == "pgq_ea" else 0.0,
+                    omega_clamp_bits=cb, **args)
+    meta = {k: v for k, v in blob.items() if not torch.is_tensor(v)
+            and not isinstance(v, list)}
+    return comps, meta
