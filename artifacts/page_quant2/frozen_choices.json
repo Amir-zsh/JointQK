@@ -1,0 +1,35 @@
+{
+  "bundle": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt",
+  "frozen_at": "2026-07-07 18:33:18",
+  "git_sha": "93ebd8f",
+  "mandatory_cells": [
+    "pgq_nd_uni:1",
+    "pgq_nd_uni:2",
+    "pgq_nd_rdo:1.0",
+    "pgq_nd_rdo:1.5",
+    "pgq_nd_ea:1.0",
+    "pgq_rvq_uni:2",
+    "pgq_rvq_rdo:1.5",
+    "pgq_rvq_rdo:1.0",
+    "pgq_rvq_rdo:0.75",
+    "pgq_rvq_ea:1.0"
+  ],
+  "per_arm": {},
+  "selection_rows_only": true,
+  "tau_by_rate": {
+    "0.75": 0.5,
+    "1": 0.5,
+    "1.5": 0.5
+  },
+  "theta": 0.25,
+  "addendum_bigpool_retrain": {
+    "registered_at": "2026-07-08 01:28:41",
+    "hypothesis": "RVQ arm is data-starved (overfit-gate fallbacks at stages 3-4 on 138k fit tokens), not representation-limited",
+    "change": "retrain RVQ codebooks + coord stats on ~60 sampled compact8 TRAIN rows (~700k tokens, leakage-clean); everything else identical; frozen tau/theta copied unchanged",
+    "f1_cells": [
+      "pgq_rvq_rdo:1.5",
+      "pgq_rvq_rdo:1.0"
+    ],
+    "interpretation": "lift >= 2pp -> gap was data; else gap is entropy-modeling, fundamental for no-EC at these rates"
+  }
+}

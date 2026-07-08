@@ -1,0 +1,21 @@
+length,max_new_tokens,language,predicted_answer,question,compression_ratio,dataset,answer_prefix,all_classes,_id,task,answers
+5091,52,en," The question is not answered in the provided text. However, the song ""Et Moi, Et Moi, Et Moi"" is mentioned in the context of the Eurovision Song Contest, where it was performed by the French singer Amina.","Question: Who is the spouse of the performer of song Et Moi, Et Moi, Et Moi?
+",1.0,2wikimqa,Answer:,,32092cc7b80094b9c8914c1f70000295aefc4a985747b0ed,2wikimqa,['Françoise Hardy']
+10444,52,en, The passage does not mention the director of the film Emergency Wedding or their spouse.,"Question: Who is the spouse of the director of film Emergency Wedding?
+",1.0,2wikimqa,Answer:,,8d3cf7916a2f8a2762de13a9520b6350e46464fbf7f63dd5,2wikimqa,['Ona Munson']
+4383,52,en," Arthur Acheson, 1st Earl of Gosford","Question: Who is Archibald Acheson, 4Th Earl Of Gosford's paternal grandfather?
+",1.0,2wikimqa,Answer:,,40de6f6c353c080845a8ea644039e9ba83cd481d3745395b,2wikimqa,"['Archibald Acheson, 2nd Earl of Gosford']"
+4142,52,en, There is no information in the provided passages about the paternal grandmother of King Kang Of Zhou.,"Question: Who is the paternal grandmother of King Kang Of Zhou?
+",1.0,2wikimqa,Answer:,,53f6acc70a61443a93c25c91ca7dc7f8780046d02e28c94a,2wikimqa,['Yi Jiang']
+4526,52,en, There is no information about Dudley Russell or Juan René Serrano in the provided text.,"Question: Was Dudley Russell or Juan René Serrano born first?
+",1.0,2wikimqa,Answer:,,300ccba91f776e583d418d6d9ecc5e1bdca7bd80580cd36e,2wikimqa,['Dudley Russell']
+7162,52,en, No Trees In The Street,"Question: Which film has the director who died later, True To The Navy or No Trees In The Street?
+",1.0,2wikimqa,Answer:,,435fae9b23d8b22e85a57cfd8ceb8541dea5b0c551acc3a9,2wikimqa,['No Trees In The Street']
+3277,52,en, There is no information about the director of the film Sweepstakes.,"Question: What is the place of birth of the director of film Sweepstakes (Film)?
+",1.0,2wikimqa,Answer:,,7940c60a5ff2d81b62d118253577d1d891057ca45695e91a,2wikimqa,"['Oklahoma City, Oklahoma']"
+3529,52,en, There is no information about the director of the film Lady Magdalene's in the provided text.,"Question: Which award the director of film Lady Magdalene'S got?
+",1.0,2wikimqa,Answer:,,29ec971fbdf0df2d0c41c497de945024db6159c0c30be307,2wikimqa,['Prometheus Award']
+9182,52,en," Thomas Of Galloway (Bastard)'s father, Thomas of Galloway, died in 1234.","Question: When did Thomas Of Galloway (Bastard)'s father die?
+",1.0,2wikimqa,Answer:,,8848d4bd1425f8bef31b6c279ec378bcbca14f10b702c4ea,2wikimqa,['1234']
+5695,52,en, Hedwig of Holstein-Gottorp,"Question: Who is the mother-in-law of Louise Of Mecklenburg-Güstrow?
+",1.0,2wikimqa,Answer:,,5ff6349ea0b2ecb882f535ff3cec2f9c012d3468fb7b912e,2wikimqa,['Charlotte Amalie of Hesse-Kassel']

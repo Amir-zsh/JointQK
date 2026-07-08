@@ -1,0 +1,35 @@
+dataset: longbench
+data_dir: qasper
+model: meta-llama/Llama-3.1-8B-Instruct
+device: null
+press_name: jointqk
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/bench_pgq/llama31_8b/pgq__pgq_rvq_rdo__b0.75__6b118c8a__qasper
+log_level: INFO
+model_kwargs: {}
+press_init_command: null
+press_kwargs:
+  cca_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt
+  v_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt
+  k_method: pgq_rvq_rdo
+  ec_bundle_path: /vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt
+  v_method: v_turboquant
+  k_bits: 0.75
+  v_bits: 2
+  compress_decode: false
+  layer0_full_precision: true
+  quantize_k: true
+  quantize_v: true
+seed: 42
+fp8: false

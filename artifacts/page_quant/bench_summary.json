@@ -41,32 +41,41 @@
     "full_precision": {
       "f1": {
         "2wikimqa": 50.99,
+        "hotpotqa": 60.71,
         "lcc": 51.37,
-        "musique": 32.62
+        "musique": 32.62,
+        "qasper": 46.3
       },
-      "mean_f1": 44.99333333333333,
+      "mean_f1": 48.398,
       "rate": null,
-      "rate_per_task": null
+      "rate_per_task": null,
+      "trio_mean_f1": 44.99333333333333
     },
     "jointqk_k2_v2": {
       "f1": {
         "2wikimqa": 49.25,
+        "hotpotqa": 58.89,
         "lcc": 37.23,
-        "musique": 27.08
+        "musique": 27.08,
+        "qasper": 42.64
       },
-      "mean_f1": 37.85333333333333,
+      "mean_f1": 43.018,
       "rate": null,
-      "rate_per_task": null
+      "rate_per_task": null,
+      "trio_mean_f1": 37.85333333333333
     },
     "turboquant_k2_v2": {
       "f1": {
         "2wikimqa": 44.64,
+        "hotpotqa": 61.29,
         "lcc": 48.37,
-        "musique": 31.55
+        "musique": 31.55,
+        "qasper": 42.79
       },
-      "mean_f1": 41.52,
+      "mean_f1": 45.727999999999994,
       "rate": 2.125,
-      "rate_per_task": null
+      "rate_per_task": null,
+      "trio_mean_f1": 41.52
     }
   },
   "pgq": {
@@ -74,28 +83,37 @@
       "bundle_sha8": "ce64bde2",
       "f1": {
         "2wikimqa": 41.12,
+        "hotpotqa": 54.79,
         "lcc": 48.76,
-        "musique": 30.14
+        "musique": 30.14,
+        "qasper": 43.98
       },
-      "mean_f1": 40.00666666666667
+      "mean_f1": 43.757999999999996,
+      "trio_mean_f1": 40.00666666666667
     },
     "ecu@b1.0": {
       "bundle_sha8": "058af161",
       "f1": {
         "2wikimqa": 46.05,
+        "hotpotqa": 57.28,
         "lcc": 45.6,
-        "musique": 32.1
+        "musique": 32.1,
+        "qasper": 45.07
       },
-      "mean_f1": 41.25
+      "mean_f1": 45.22,
+      "trio_mean_f1": 41.25
     },
     "ecu@b1.5": {
       "bundle_sha8": "4b7e8720",
       "f1": {
         "2wikimqa": 49.31,
+        "hotpotqa": 59.04,
         "lcc": 47.59,
-        "musique": 32.17
+        "musique": 32.17,
+        "qasper": 45.91
       },
-      "mean_f1": 43.02333333333333
+      "mean_f1": 46.804,
+      "trio_mean_f1": 43.02333333333333
     },
     "pgq_ea@b0.75": {
       "bundle_sha8": "1a09e6dc",
@@ -115,7 +133,8 @@
         5907864,
         4491850,
         1205629
-      ]
+      ],
+      "trio_mean_f1": 35.14
     },
     "pgq_ea@b1.0": {
       "bundle_sha8": "1a09e6dc",
@@ -135,7 +154,8 @@
         5326075,
         1454188,
         199110
-      ]
+      ],
+      "trio_mean_f1": 40.11666666666667
     },
     "pgq_ea@b1.5": {
       "bundle_sha8": "1a09e6dc",
@@ -155,7 +175,8 @@
         808839,
         86684,
         7467
-      ]
+      ],
+      "trio_mean_f1": 41.96666666666667
     },
     "pgq_fixed@b1.5": {
       "bundle_sha8": "efe38d4d",
@@ -171,7 +192,8 @@
         8267745,
         3672049,
         1249983
-      ]
+      ],
+      "trio_mean_f1": 23.91
     },
     "pgq_fixed_ea@b1.0": {
       "bundle_sha8": "efe38d4d",
@@ -187,7 +209,120 @@
         10287060,
         927560,
         363109
-      ]
+      ],
+      "trio_mean_f1": 21.365000000000002
+    },
+    "pgq_nd_ea@b1.0": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 19.95,
+        "hotpotqa": 30.5,
+        "lcc": 27.75,
+        "musique": 12.44,
+        "qasper": 24.6
+      },
+      "mean_f1": 23.048,
+      "trio_mean_f1": 20.046666666666667
+    },
+    "pgq_nd_eag@b1.0": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 19.95,
+        "hotpotqa": 28.56,
+        "lcc": 27.41,
+        "musique": 12.55,
+        "qasper": 26.68
+      },
+      "mean_f1": 23.03,
+      "trio_mean_f1": 19.97
+    },
+    "pgq_nd_rdo@b1.0": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 14.89,
+        "hotpotqa": 21.88,
+        "lcc": 28.83,
+        "musique": 6.18,
+        "qasper": 18.0
+      },
+      "mean_f1": 17.956,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.9926926456002143,
+      "rung_hist": [
+        2942617,
+        10181563,
+        900497,
+        1667,
+        40,
+        7936
+      ],
+      "trio_mean_f1": 16.633333333333333
+    },
+    "pgq_nd_rdo@b1.5": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 23.12,
+        "hotpotqa": 36.88,
+        "lcc": 32.91,
+        "musique": 15.14,
+        "qasper": 29.68
+      },
+      "mean_f1": 27.546,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4890041074309264,
+      "rung_hist": [
+        165786,
+        9151863,
+        4672979,
+        34837,
+        919,
+        7936
+      ],
+      "trio_mean_f1": 23.723333333333333
+    },
+    "pgq_nd_uni@b1": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 10.56,
+        "hotpotqa": 14.99,
+        "lcc": 23.13,
+        "musique": 2.97,
+        "qasper": 12.94
+      },
+      "mean_f1": 12.918000000000001,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.140727160275667,
+      "rung_hist": [
+        0,
+        14026384,
+        0,
+        0,
+        0,
+        7936
+      ],
+      "trio_mean_f1": 12.219999999999999
+    },
+    "pgq_nd_uni@b2": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 35.9,
+        "hotpotqa": 46.37,
+        "lcc": 38.4,
+        "musique": 19.76,
+        "qasper": 40.08
+      },
+      "mean_f1": 36.102,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1401616893444073,
+      "rung_hist": [
+        0,
+        0,
+        14026384,
+        0,
+        0,
+        7936
+      ],
+      "trio_mean_f1": 31.353333333333335
     },
     "pgq_pagerung@b1.0": {
       "bundle_sha8": "1a09e6dc",
@@ -207,7 +342,8 @@
         13827083,
         177329,
         852
-      ]
+      ],
+      "trio_mean_f1": 38.24
     },
     "pgq_plain@b1.0": {
       "bundle_sha8": "1a09e6dc",
@@ -227,7 +363,8 @@
         5824334,
         349318,
         13509
-      ]
+      ],
+      "trio_mean_f1": 37.24666666666666
     },
     "pgq_plain@b1.5": {
       "bundle_sha8": "1a09e6dc",
@@ -247,12 +384,111 @@
         49414,
         1938,
         1363
-      ]
+      ],
+      "trio_mean_f1": 43.97666666666667
+    },
+    "pgq_rvq_ea@b1.0": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 29.85,
+        "hotpotqa": 46.66,
+        "lcc": 32.06,
+        "musique": 23.57,
+        "qasper": 32.52
+      },
+      "mean_f1": 32.932,
+      "trio_mean_f1": 28.493333333333336
+    },
+    "pgq_rvq_rdo@b0.75": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 13.88,
+        "hotpotqa": 25.61,
+        "lcc": 28.79,
+        "musique": 12.4,
+        "qasper": 13.1
+      },
+      "mean_f1": 18.756,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.7460924362562632,
+      "rung_hist": [
+        77635,
+        11561527,
+        2385740,
+        1477,
+        7941
+      ],
+      "trio_mean_f1": 18.356666666666666
+    },
+    "pgq_rvq_rdo@b1.0": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 33.38,
+        "hotpotqa": 49.71,
+        "lcc": 33.19,
+        "musique": 20.84,
+        "qasper": 27.74
+      },
+      "mean_f1": 32.972,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.9960279069452599,
+      "rung_hist": [
+        28024,
+        4692469,
+        9270235,
+        35159,
+        8433
+      ],
+      "trio_mean_f1": 29.136666666666667
+    },
+    "pgq_rvq_rdo@b1.5": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 44.43,
+        "hotpotqa": 57.84,
+        "lcc": 39.14,
+        "musique": 26.83,
+        "qasper": 42.07
+      },
+      "mean_f1": 42.062,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4960493899953828,
+      "rung_hist": [
+        0,
+        39890,
+        4845137,
+        8927271,
+        222022
+      ],
+      "trio_mean_f1": 36.800000000000004
+    },
+    "pgq_rvq_uni@b2": {
+      "bundle_sha8": "6b118c8a",
+      "f1": {
+        "2wikimqa": 40.16,
+        "hotpotqa": 51.87,
+        "lcc": 34.39,
+        "musique": 22.13,
+        "qasper": 36.61
+      },
+      "mean_f1": 37.032,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.140727160275667,
+      "rung_hist": [
+        0,
+        0,
+        14026384,
+        0,
+        7936
+      ],
+      "trio_mean_f1": 32.22666666666667
     }
   },
   "tasks": [
     "lcc",
     "musique",
-    "2wikimqa"
+    "2wikimqa",
+    "qasper",
+    "hotpotqa"
   ]
 }

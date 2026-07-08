@@ -1,0 +1,595 @@
+_id,question,all_classes,compression_ratio,max_new_tokens,predicted_answer,language,answer_prefix,dataset,answers,task,length
+3ac3eef636db11635a21a61804cb28e92c546a5686dd1e12,"Question: How is the ground truth for fake news established?
+
+",,1.0,148," The ground truth for fake news is established through manual labeling or annotation of a dataset by human evaluators, who determine whether a particular piece of content is fake or not. In this case, the ground truth is not explicitly mentioned, but it is assumed that the dataset used to train the model has been manually labeled by human evaluators.",en,Answer:,qasper,['Ground truth is not established in the paper'],qasper,3141
+e419f2bff9d2ab7c3b60b3250caccd2d9ae1285ec3e8e818,"Question: By how much does their model outperform the state of the art results?
+
+",,1.0,148, The text does not provide information on how much their model outperforms the state of the art results.,en,Answer:,qasper,"['the attention model, MDREA, also outperforms the best existing research results (WAP 0.690 to 0.688)']",qasper,3207
+9fb085a1f47673d1907f2378c90843b4b6e8622a14fe1fa9,"Question: What additional features and context are proposed?
+
+",,1.0,148," The additional features and context proposed are the use of ensemble models, specifically the combination of different machine learning models to improve the accuracy of the classification task.",en,Answer:,qasper,"['using tweets that one has replied or quoted to as contextual information'
+ 'text sequences of context tweets']",qasper,2060
+14e88916523197e066dbb743339685621db47c4beb503abb,"Question: Which Facebook pages did they look at?
+
+",,1.0,148, There is no mention of Facebook in the text. The text is discussing a research paper on analyzing emotions and sentiment in text.,en,Answer:,qasper,"['FoxNews, CNN, ESPN, New York Times, Time magazine, Huffington Post Weird News, The Guardian, Cartoon Network, Cooking Light, Home Cooking Adventure, Justin Bieber, Nickelodeon, Spongebob, Disney'
+ 'FoxNews, CNN, ESPN, New York Times, Time magazine, Huffington Post Weird News, The Guardian, Cartoon Network, Cooking Light, Home Cooking Adventure, Justin Bieber, Nickelodeon, Spongebob, Disney.']",qasper,3411
+c109a25d23a8c5c95af8697ef1ac51cd3bee93c67521af6d,"Question: Do the hashtag and SemEval datasets contain only English data?
+
+",,1.0,148," No, the datasets do not explicitly mention the language of the data, but the text mentions that the model is trained on English data.",en,Answer:,qasper,['Yes' 'Yes'],qasper,3735
+072d3de1a7122730a13a31db3eede4113af2d920814f0aaa,"Question: What type of evaluation is proposed for this task?
+
+",,1.0,148," The proposed evaluation is based on the agreement between the human annotators and the model's output, specifically the F1 score.",en,Answer:,qasper,"['Answer with content missing: (Evaluation Metrics section) Precision, Recall, F1-scores, Strict match, METEOR, ROUGE-2']",qasper,4263
+8fa5af6a36dd0b6b73900b2ec6f6e43a652a3e7d2b827a58,"Question: What are the datasets used for evaluation?
+
+",,1.0,148," The datasets used for evaluation are not explicitly mentioned in the provided text. However, the text mentions that the models were evaluated on the CNN/Daily Mail dataset, which is a popular dataset for text summarization tasks.",en,Answer:,qasper,"['CNN/DailyMail news highlights, New York Times Annotated Corpus, XSum'
+ 'the CNN/DailyMail news highlights dataset BIBREF24, the New York Times Annotated Corpus (NYT; BIBREF25), XSum BIBREF22']",qasper,4369
+5f00d4f6e62f4b99484eb78491f803f8143cc1b13ad33816,"Question: How does this approach compare to other WSD approaches employing word embeddings?
+
+",,1.0,148," This approach is different from other WSD approaches employing word embeddings in that it uses a combination of word embeddings and a graph-based algorithm to disambiguate words. While other approaches may rely solely on word embeddings or use a different type of algorithm, this approach leverages the strengths of both to improve WSD performance.",en,Answer:,qasper,['GM$\\_$KL achieves better correlation than existing approaches for various metrics on SCWS dataset.'],qasper,2189
+91dd7b7a6ead4025763812d70dc51c6674b0acf31bd5a5f0,"Question: How does their ensemble method work?
+
+",,1.0,148," The ensemble method used in this study is not explicitly described in the provided text. However, it is mentioned that the ensemble method involves selecting the best model from a set of models, but the specific details of this process are not provided.",en,Answer:,qasper,['simply averaging the predictions from the constituent single models'],qasper,4212
+fe6e5087f91071369646d9d868d784a290d0d13013292b61,"Question: What are the sources of the datasets?
+
+",,1.0,148, The sources of the datasets are not explicitly mentioned in the text.,en,Answer:,qasper,"['Friends TV sitcom, Facebook messenger chats']",qasper,3185
+51b9066a5f2845e2fdf0d1dcde6833f70ae49ed01aa306db,"Question: what language does this paper focus on?
+
+",,1.0,148, English,en,Answer:,qasper,['English' 'Simple English'],qasper,2243
+bae15e10e0f414a92fb0e943871ed25c3fc16183a3028012,"Question: What sentiment analysis dataset is used?
+
+",,1.0,148, The dataset used is not specified in the provided text.,en,Answer:,qasper,['IMDb dataset of movie reviews' 'IMDb'],qasper,2327
+d022dfe02fb2a55b4baa40fe436f616aecd3f3ced1a58d7c,"Question: What accuracy does the proposed system achieve?
+
+",,1.0,148, The proposed system achieves an accuracy of 1.38% improvement over the baseline LSTM-CRF model on the Named Entity Recognition (NER) task.,en,Answer:,qasper,"['F1 scores of 85.99 on the DL-PS data,  75.15 on the EC-MT data and 71.53 on the EC-UQ data '
+ 'F1 of 85.99 on the DL-PS dataset (dialog domain); 75.15 on EC-MT and 71.53 on EC-UQ (e-commerce domain)']",qasper,5310
+43279ddf85ada1b163aa1b316a4df1418957058206501c26,"Question: Did they experiment with this new dataset?
+
+",,1.0,148," No, the text does not mention an experiment with a new dataset. It appears to be a description of a new dataset and its features.",en,Answer:,qasper,['No'],qasper,3445
+c47ca982b6c4681c4741d4708801fa79a3e1cab17d0a2c4a,"Question: Which stock market sector achieved the best performance?
+
+",,1.0,148, The Health Care sector.,en,Answer:,qasper,['Energy with accuracy of 0.538' 'Energy'],qasper,10349
+1614ea21f8d039debfc655015f8133d0ef220837804ddf62,"Question: what NMT models did they compare with?
+
+",,1.0,148, The text does not mention comparing NMT models. It only discusses the results of the NMT model being used.,en,Answer:,qasper,"['RNN-based NMT model, Transformer-NMT']",qasper,3708
+680ef767fe2a990615d0bc1cb1bf5f7d23c8766209138826,"Question: By how much did they improve?
+
+",,1.0,148, This question does not provide enough context to determine the improvement. The text does not mention a specific improvement or a baseline to compare against.,en,Answer:,qasper,['They decrease MAE in 0.34'],qasper,2735
+8b6bf313950a892cbda035f2c7b3d8b01472ff34749f028d,"Question: How does their model improve interpretability compared to softmax transformers?
+
+",,1.0,148," The model improves interpretability by providing a more sparse and interpretable attention mechanism, allowing for better understanding of the relationships between input elements.",en,Answer:,qasper,"['the attention heads in the proposed adaptively sparse Transformer can specialize more and with higher confidence'
+ 'We introduce sparse attention into the Transformer architecture']",qasper,4902
+04af9dc96013a1bc7faecbc589f7ea5c207e92c7d9a3495e,"Question: what was the baseline?
+
+",,1.0,148, The baseline was not specified in the provided text.,en,Answer:,qasper,"[' MT system on the data released by BIBREF11'
+ 'Transformer base, two-pass CADec model']",qasper,3716
+3b069a546d5417be546f57d02981cf5ac68b4d3d6c55624a,"Question: What metrics are used for evaluation?
+
+",,1.0,148," The metrics used for evaluation are accuracy, precision, recall, F1 score, and mean average precision (MAP).",en,Answer:,qasper,"['translation probabilities, Labeled Attachment Scores (LAS)'
+ 'accuracy, Labeled Attachment Scores (LAS)']",qasper,3402
+3ca65b23b3cb316653709b469b4a9b42b790e0350c76ae1a,"Question: Is WordNet useful for taxonomic reasoning for this task?
+
+",,1.0,148," Yes, WordNet is useful for taxonomic reasoning for this task. The authors of the paper use WordNet to analyze the relationships between words and concepts, and to identify the pertinence of the results.",en,Answer:,qasper,['Unanswerable' 'Yes'],qasper,6391
+39352d304bd452de69fcc492ad458b72614e329b4509eb48,"Question: what were the baselines?
+
+",,1.0,148, The baseline was a Jasper model.,en,Answer:,qasper,"['Unanswerable'
+ 'LF-MMI Attention\nSeq2Seq \nRNN-T \nChar E2E LF-MMI \nPhone E2E LF-MMI \nCTC + Gram-CTC']",qasper,1856
+18576b9ee9994a46dc0c7d916a009ff6d0964991541010ee,"Question: How many users do they look at?
+
+",,1.0,148, They do not specify the number of users they look at.,en,Answer:,qasper,"['22,880 users' '20,000']",qasper,4160
+b72f9154e71c03d0403e06e50063325961ea2ad27c245763,"Question: What labels do they create on their dataset?
+
+",,1.0,148," They create labels for the dataset by annotating the text with the following labels: 
+
+* [TITLE]: The title of the text.
+* [QUESTION]: The question that the text is trying to answer.
+* [ANSWER]: The answer to the question.
+* [EXPLANATION]: A brief explanation of the answer.
+* [CATEGORY]: The category of the text (e.g. science, history, etc.).
+* [SUBCATEGORY]: A subcategory of the text (e.g. biology, chemistry, etc.).
+* [DIFFICULTY]: The difficulty level of the text (e.g. easy, medium, hard).
+* [SOURCE]: The source of the text (e.g. book, article, etc",en,Answer:,qasper,"['(1) the time the patient has been experiencing the symptom, (2) activities that trigger the symptom (to occur or worsen), (3) the extent of seriousness, (4) the frequency occurrence of the symptom, and (5) the location of symptom, No Answer'
+ 'the time the patient has been experiencing the symptom, activities that trigger the symptom, the extent of seriousness, the frequency occurrence of the symptom, the location of symptom, 9 symptoms']",qasper,3424
+11be2f14f540e957e9797cc962203b8186ca10561228f81f,"Question: What tasks are used for evaluation?
+
+",,1.0,148," The task used for evaluation is machine translation, specifically the task of translating text from one language to another.",en,Answer:,qasper,"['four machine translation tasks: German -> English, Japanese -> English, Romanian -> English, English -> German'
+ ' four machine translation tasks, IWSLT 2017 German $\\rightarrow $ English BIBREF27, KFTT Japanese $\\rightarrow $ English BIBREF28, WMT 2016 Romanian $\\rightarrow $ English BIBREF29, WMT 2014 English $\\rightarrow $ German BIBREF30']",qasper,4898
+bfc5d4d72997fdcc0107cd5cab9b9718777c43b86be45eb2,"Question: What is the improvement in performance for Estonian in the NER task?
+
+",,1.0,148," Unfortunately, the provided text does not mention the improvement in performance for Estonian in the NER task.",en,Answer:,qasper,['5 percent points.' '0.05 F1'],qasper,3290
+65f7bdb541fd6f01fe866dcf694891f92533186085fcba20,"Question: What background do they have?
+
+",,1.0,148," The authors have a background in computer science, linguistics, and social sciences, and are familiar with the concepts of natural language processing, machine learning, and data analysis. They are also experienced in working with large datasets and have a strong understanding of the theoretical foundations of their work. 
+
+However, the question is not specific enough to provide a precise answer. If you could provide more context or clarify the question, I'll be happy to help. 
+
+Also, the question seems to be asking about the authors' background, but the text doesn't mention any specific authors. If you could provide more information about the text or the context, I'll be happy to help. 
+
+In any case, the text appears to be an academic paper or",en,Answer:,qasper,['Unanswerable'],qasper,8506
+091b4028a3b5e9d8248c58f17a62fd16c878da69693cfbfb,"Question: LDA is an unsupervised method; is this paper introducing an unsupervised approach to spam detection?
+
+",,1.0,148," No, this paper is introducing a supervised approach to spam detection, as it uses labeled data (e.g. spam vs. non-spam tweets) to train and evaluate the model.",en,Answer:,qasper,['No' 'No'],qasper,2239
+93004cdb0e6d24f5de0568ed952fd50655e42900dc9dbfdb,"Question: Which languages are similar to each other?
+
+",,1.0,148," The languages that are similar to each other are the South African languages, specifically the Ndebele, Pedi, Sotho, Swati, Tsonga, Tswana, Venda, and Xhosa languages, which are all part of the Bantu language family.",en,Answer:,qasper,"['Nguni languages (zul, xho, nbl, ssw), Sotho languages (nso, sot, tsn)'
+ 'The Nguni languages are similar to each other, The same is true of the Sotho languages']",qasper,1877
+3598040772b4950e6241b50125f7ab7038a8149060e3c381,"Question: which lstm models did they compare with?
+
+",,1.0,148, The article does not mention comparing LSTM models with other models. It focuses on the implementation and evaluation of a specific LSTM-based model for speech recognition.,en,Answer:,qasper,"['Unidirectional LSTM networks with 2, 6, 7, 8, and  9 layers.']",qasper,4286
+ecf37304ab84334d46491b0bd3d8bdc7cda33d54a15870f0,"Question: How large is their data set?
+
+",,1.0,148," Unfortunately, the size of their data set is not specified in the provided text.",en,Answer:,qasper,"['a sample of  29,794 wikipedia articles and 2,794 arXiv papers ']",qasper,4187
+1a1daeb5809cde7c7131d972f42ee43654a378c78d5182c8,"Question: How were the human judgements assembled?
+
+",,1.0,148," The human judgements were assembled by having a group of human evaluators assess the output of the machine translation system and provide a score based on how well the system performed in terms of fluency, adequacy, and overall quality.",en,Answer:,qasper,"['50 human annotators ranked a random sample of 100 translations by Adequacy, Fluency and overall ranking on a 5-point scale.'
+ 'adequacy, precision and ranking values']",qasper,5344
+d1d93cefe6e2c643ecf128643f9362e3fa137ff54253a3ec,"Question: Do they test their framework performance on commonly used language pairs, such as English-to-German?
+
+",,1.0,148," There is no mention of testing the framework performance on commonly used language pairs, such as English-to-German, in the provided text.",en,Answer:,qasper,['Yes' 'Yes'],qasper,4472
+92da01e7242f30f5266e431b4269fee1b0ca5fcc23aee095,"Question: How are models evaluated in this human-machine communication game?
+
+",,1.0,148, The models are evaluated based on their ability to generate human-like responses that are coherent and contextually relevant.,en,Answer:,qasper,"['by training an autocomplete system on 500K randomly sampled sentences from Yelp reviews'
+ 'efficiency of a communication scheme $(q_{\\alpha },p_{\\beta })$ by the retention rate of tokens, which is measured as the fraction of tokens that are kept in the keywords, accuracy of a scheme is measured as the fraction of sentences generated by greedily decoding the model that exactly matches the target sentence']",qasper,1873
+c92d96ed55bc5dcd92f963d3c5d26e52661b74e71090f24a,"Question: What are the source and target domains?
+
+",,1.0,148," The source and target domains are not explicitly mentioned in the provided text. However, based on the context, it can be inferred that the source domain refers to the domain from which the data is being transferred, and the target domain refers to the domain to which the data is being transferred. In this case, the source domain is likely the original dataset, and the target domain is the new dataset to which the model is being adapted.",en,Answer:,qasper,"['Book, electronics, beauty, music, IMDB, Yelp, cell phone, baby, DVDs, kitchen'
+ 'we use set 1 of the source domain as the only source with sentiment label information during training, and we evaluate the trained model on set 1 of the target domain, Book (BK), Electronics (E), Beauty (BT), and Music (M)']",qasper,5061
+d5280384a4496ef3358dc45dc0199b9198bd0d927be302ef,"Question: What neural network modules are included in NeuronBlocks?
+
+",,1.0,148," The neural network modules included in NeuronBlocks are:
+
+1. Embedding
+2. Convolutional Neural Network (CNN)
+3. Recurrent Neural Network (RNN)
+4. Long Short-Term Memory (LSTM)
+5. Gated Recurrent Unit (GRU)
+6. Attention Mechanism
+7. Transformer
+8. Graph Convolutional Network (GCN)
+9. Graph Attention Network (GAT)
+10. Temporal Convolutional Network (TCN)
+
+Note: The specific modules included in NeuronBlocks may vary depending on the implementation and the specific use case. The above list is a general representation of the types of neural network modules that can be included in NeuronBlocks.",en,Answer:,qasper,"['Embedding Layer, Neural Network Layers, Loss Function, Metrics'
+ 'Embedding Layer, Neural Network Layers, Loss Function, Metrics']",qasper,1678
+0b90a0a4b2cdceda62a9e2b165f0cfa1a34d34d800a46086,"Question: what datasets did they use?
+
+",,1.0,148, The datasets used are not explicitly mentioned in the provided text.,en,Answer:,qasper,"['the Carnegie Mellon Pronouncing Dictionary BIBREF12, the multilingual pronunciation corpus collected by deri2016grapheme , ranscriptions extracted from Wiktionary'
+ 'multilingual pronunciation corpus collected by deri2016grapheme']",qasper,3244
+c9d48df129798d2aed0161fa805a289e5f75306af3e22336,"Question: What were the baselines?
+
+",,1.0,148, There is no information provided about the baselines in the given text.,en,Answer:,qasper,"['varied from Maximum Entropy Classifiers (BIBREF4) to Support Vector Machines (BIBREF5,BIBREF6,BIBREF7,BIBREF8), Recursive Neural Networks (BIBREF9,BIBREF10), Convolutional Neural Networks (BIBREF11) and most recently transfer learning-based architectures like Bidirectional Encoder Representation from Transformers (BERT) (BIBREF12)']",qasper,2215
+443d051a54d96c296d9135dad3794d09f89ff91d6433d092,"Question: What are the languages they use in their experiment?
+
+",,1.0,148," The languages used in the experiment are not explicitly mentioned in the text. However, it is mentioned that the experiment is conducted in multiple languages, including Finnish and Spanish, as the text mentions ""Finnish"" and ""Spanish"" in the context of translating and back-translation.",en,Answer:,qasper,"['English\nFrench\nSpanish\nGerman\nGreek\nBulgarian\nRussian\nTurkish\nArabic\nVietnamese\nThai\nChinese\nHindi\nSwahili\nUrdu\nFinnish'
+ 'English, Spanish, Finnish']",qasper,4086
+c2df5ec4b6b7dd1c56e05d6b3c0e244d0c44d68f117caf0e,"Question: What other tasks do they test their method on?
+
+",,1.0,148, The text does not mention testing their method on other tasks.,en,Answer:,qasper,['None'],qasper,2473
+f545e80cf01375e891406755e35019032cb4b7621338b707,"Question: Was PolyReponse evaluated against some baseline?
+
+",,1.0,148," No, PolyReponse was not evaluated against some baseline.",en,Answer:,qasper,['No' 'No'],qasper,2738
+7e339da53449dbd58a1e815d55e440e712af6a1950f342b7,"Question: Ngrams of which length are aligned using PARENT?
+
+",,1.0,148, 1,en,Answer:,qasper,"['Unanswerable'
+ 'Answer with content missing: (Parent subsections) combine precisions for n-gram orders 1-4']",qasper,3827
+a3aadf47eb153a70559416ba375c57883aec1538a2b17fb5,"Question: How large is the Twitter dataset?
+
+",,1.0,148," Unfortunately, the provided text does not mention the size of the Twitter dataset. It only mentions that the dataset is used for analysis, but it does not provide any information about its size.",en,Answer:,qasper,"['1,873 Twitter conversation threads, roughly 14k tweets'
+ '1,873 Twitter conversation threads, roughly 14k tweets']",qasper,3721
+2589b46ee58a7600e17fa89a0d4fffd9a0faf1df49b3c035,"Question: What are two datasets model is applied to?
+
+",,1.0,148, Wikipedia and Reddit.,en,Answer:,qasper,"["" `Conversations Gone Awry' dataset, subreddit ChangeMyView""
+ ""An expanded version of the existing 'Conversations Gone Awry' dataset and the ChangeMyView dataset, a subreddit whose only annotation is whether the conversation required action by the Reddit moderators. ""]",qasper,4718
+4c9552eec5c238657f8ed5237bf66067d3fdda2409a903b6,"Question: Were any of the pipeline components based on deep learning models?
+
+",,1.0,148," No, the pipeline components were not based on deep learning models.",en,Answer:,qasper,['No' 'No'],qasper,2276
+bee3efb92996570d990ab04bfdf054835ef720b9dd1c6f5a,"Question: How is the quality of the data empirically evaluated? 
+
+",,1.0,148, The quality of the data is not empirically evaluated in the provided text.,en,Answer:,qasper,"['Validated transcripts were sent to professional translators., various sanity checks to the translations,  sanity check the overlaps of train, development and test sets'
+ 'computed sentence-level BLEU, We manually inspected examples where the source transcript was identical to the translation, measured the perplexity of the translations, computed the ratio of English characters in the translations, calculate similarity scores between transcripts and translations']",qasper,2435
+7e2663bb13493e18205f6aab469fee8b2a9df281a0ba0e2a,"Question: How do they combine audio and text sequences in their RNN?
+
+",,1.0,148," They combine the audio and text sequences by using the audio sequence as input to the RNN, and then using the output of the RNN as input to the text sequence.",en,Answer:,qasper,"['combines the information from these sources using a feed-forward neural model'
+ 'encodes the information from audio and text sequences using dual RNNs and then combines the information from these sources using a feed-forward neural model']",qasper,3201
+3dd2d62c046f3b559c34003f570ed35211000500b8f0145f,"Question: Which basic neural architecture perform best by itself?
+
+",,1.0,148, There is not enough information to answer this question.,en,Answer:,qasper,['BERT'],qasper,1507
+d230ce079b2e4ecf5d9a987fb750dcbc319a537bdcfcc3d4,"Question: what is the source of the data?
+
+",,1.0,148, The source of the data is not explicitly mentioned in the provided text.,en,Answer:,qasper,['Android application'],qasper,3795
+89a4fd3fce6114c3401790c6f9b5243fda094597657f348a,"Question: What machine learning and deep learning methods are used for RQE?
+
+",,1.0,148," The article does not specifically mention the machine learning and deep learning methods used for RQE (Recognizing Question Entailment). It only mentions that the authors used a combination of machine learning and deep learning methods, but the specific techniques are not specified.",en,Answer:,qasper,"['Logistic Regression, neural networks']",qasper,7257
+9c46084d667b60a92a3cebfb8fa56436fa1497668ce2af56,"Question: What is the benchmark dataset and is its quality high?
+
+",,1.0,148," The benchmark dataset is not explicitly mentioned in the provided text. However, the quality of the dataset is not discussed either.",en,Answer:,qasper,"['Social Honeypot dataset (public) and Weibo dataset (self-collected); yes'
+ 'Social Honeypot, which is not of high quality']",qasper,2242
+f755dcbd288905ec07a63f18ddee7ed22103c45e887a091e,"Question: What architecture does the decoder have?
+
+",,1.0,148," The decoder has a recurrent neural network (RNN) architecture, specifically a long short-term memory (LSTM) network.",en,Answer:,qasper,['LSTM' 'LSTM'],qasper,2289
+db4afd55783aaf6d069c5228152492cf0804e9cf310cb238,"Question: Do they report results only on English data?
+
+",,1.0,148," No, the results are reported on a dataset that includes tweets in English, but the text does not specify that the data is only in English.",en,Answer:,qasper,['Unanswerable' 'Unanswerable'],qasper,3838
+d25cf05e9fda9bdadb01c26a57122079766a565269fac749,"Question: What is best performing model among author's submissions, what performance it had?
+
+",,1.0,148," The best performing model among author's submissions is the ensemble model that combined the predictions of the two models, which achieved an F1 score of 0.92.",en,Answer:,qasper,"['For SLC task, the ""ltuorp"" team  has the best performing  model (0.6323/0.6028/0.6649 for F1/P/R  respectively) and for FLC task the ""newspeak"" team  has the best performing  model (0.2488/0.2863/0.2201 for F1/P/R respectively).']",qasper,1541
+f55efaaee938369fc4be8a430e531c164168be643b3cfe57,"Question: what was the baseline?
+
+",,1.0,148, The baseline was the M2M Transformer.,en,Answer:,qasper,"['pivot-based translation relying on a helping language BIBREF10, nduction of phrase tables from monolingual data BIBREF14 , attentional RNN-based model (RNMT) BIBREF2, Transformer model BIBREF18, bi-directional model BIBREF11, multi-to-multi (M2M) model BIBREF8, back-translation BIBREF17'
+ 'M2M Transformer']",qasper,4542
+6ceab4edd1d0e37d217958e7e962697124ccb6a4f449f4af,"Question: What was their highest recall score?
+
+",,1.0,148, 0.77,en,Answer:,qasper,['0.7033' '0.7033'],qasper,6810
+710f7452388fe5d22e2329697dbc4fa17d2c9a53daedafa6,"Question: What embedding techniques are explored in the paper?
+
+",,1.0,148," Word embeddings are not explored in the paper. The paper discusses techniques for representing and comparing biomedical concepts, specifically focusing on semantic similarity measures for biomedical terms.",en,Answer:,qasper,"['Skip–gram, CBOW' 'integrated vector-res, vector-faith, Skip–gram, CBOW']",qasper,4259
+6eec5b0ef38f64f6a545677f730b4ea1c980db6d380de966,"Question: What models are used for painting embedding and what for language style transfer?
+
+",,1.0,148," The models used for painting embedding are not explicitly mentioned in the text. However, the models used for language style transfer are not mentioned either.",en,Answer:,qasper,"['generating a poem from images we use an existing actor-critic architecture, various types of sequence to sequence models']",qasper,1653
+d696cd0b146419d53d72071d8b8949fc562ea4addb87eb96,"Question: On top of BERT does the RNN layer work better or the transformer layer?
+
+",,1.0,148," The RNN layer is not mentioned in the text, but the Transformer layer is mentioned as being on top of BERT.",en,Answer:,qasper,['Transformer over BERT (ToBERT)' 'The transformer layer'],qasper,2655
+b805e336d2e8cce895100cfde3a536e632ddd5296ddece21,"Question: What cyberbulling topics did they address?
+
+",,1.0,148," The authors did not explicitly mention the topics they addressed in the paper. However, based on the content, it appears that they discussed the detection of cyberbullying in social media, specifically focusing on the use of machine learning and natural language processing techniques to identify and classify cyberbullying behavior.",en,Answer:,qasper,"['personal attack, racism, and sexism'
+ 'racism, sexism, personal attack, not specifically about any single topic']",qasper,3244
+ac6538e9c173ba7b453d6bf62480d56eb3761b5f6f73c328,"Question: How many different types of entities exist in the dataset?
+
+",,1.0,148," The dataset contains the following types of entities: 
+
+1. Person
+2. Location
+3. Organization 
+
+Note: The dataset is not explicitly mentioned in the text, but it is implied that the dataset contains the above-mentioned types of entities.",en,Answer:,qasper,"['OurNepali contains 3 different types of entities, ILPRL contains 4 different types of entities'
+ 'three']",qasper,2851
+4f6f6dfa672ed697a94d1d1ee528e50645f01f568707b0b5,"Question: What are strong baselines model is compared to?
+
+",,1.0,148," The strong baseline model is not explicitly mentioned in the text. However, it can be inferred that the strong baseline model is likely a state-of-the-art model in the field of Chinese word segmentation, as the text mentions that the proposed model achieves comparable or better results than the strong baseline model.",en,Answer:,qasper,"['Baseline models are:\n- Chen et al., 2015a\n- Chen et al., 2015b\n- Liu et al., 2016\n- Cai and Zhao, 2016\n- Cai et al., 2017\n- Zhou et al., 2017\n- Ma et al., 2018\n- Wang et al., 2019']",qasper,3629
+4f1d5a7b6c42269c845959f8a8d7ef95cb7e0c122c9a721c,"Question: Which toolkits do they use?
+
+",,1.0,148, The tools used in this study are not explicitly mentioned in the provided text.,en,Answer:,qasper,"['BIBREF17, BIBREF18, TensiStrength BIBREF13, TwitterNLP BIBREF6, BIBREF19, CogComp-NLP BIBREF20, Stanford NLP NER BIBREF21'
+ 'BIBREF23, BIBREF17, BIBREF18, BIBREF19, BIBREF24, BIBREF25, BIBREF26']",qasper,1452
+5f7af98db66df4388108e26cde4781423ca2580bb48de4fa,"Question: On what datasets are experiments performed?
+
+",,1.0,148," The SQuAD dataset is not explicitly mentioned, but the experiments are performed on a dataset that contains questions and answers related to Wikipedia articles, and the dataset is used for question answering and reading comprehension tasks.",en,Answer:,qasper,['SQuAD' 'SQuAD'],qasper,3757
+a80067307d72e349f14a1f6765d914acf0b43764afe77ab7,"Question: what are the existing approaches?
+
+",,1.0,148, There are no existing approaches mentioned in the text. The text discusses a new approach using vector space embeddings for geographic locations.,en,Answer:,qasper,"['BOW-Tags, BOW-KL(Tags), BOW-All, GloVe']",qasper,4658
+f3aba3579b9e3373ce708f10b33510d6a198c3bae58c5ad7,"Question: Do they use attention?
+
+",,1.0,148, Yes.,en,Answer:,qasper,['Yes' 'Yes'],qasper,1687
+e7efd3969adf95459805233e580d6e0c7539a4de09b4441e,"Question: What sentiment classification dataset is used?
+
+",,1.0,148," The dataset used is not specified in the provided text. The text discusses the use of a model for sentiment classification, but it does not mention a specific dataset.",en,Answer:,qasper,['the IMDb movie review dataset BIBREF17' 'IMDb movie review'],qasper,3432
+6a78dbe4f8e30d35c13ea1f80e52df286f9e1f664f9c3d98,"Question: Were any of these tasks evaluated in any previous work?
+
+",,1.0,148, There is no information in the provided text about previous work evaluating these tasks.,en,Answer:,qasper,['Yes' 'Yes'],qasper,1464
+188fe9331293312465b4564e11ab36dfbcb37191e62a969c,"Question: Is datasets for sentiment analysis balanced?
+
+",,1.0,148," No, the datasets for sentiment analysis are not balanced.",en,Answer:,qasper,['No'],qasper,1441
+0e83a6f7ee840931e1851402cc87bd34f52fe8bfa4dc1cab,"Question: What is the invertibility condition?
+
+",,1.0,148," The invertibility condition is not explicitly mentioned in the text. However, the text does mention that the Jacobian matrix of the transformation is invertible, which implies that the transformation is invertible.",en,Answer:,qasper,"['The neural projector must be invertible.'
+ 'we constrain our neural projector with two requirements: (1) INLINEFORM0 and (2) INLINEFORM1 exists']",qasper,4323
+0ce1ee7ab0f1557704a9d7f937e6f5182c665687a3e2b0d9,"Question: what are the sizes of both datasets?
+
+",,1.0,148, The size of the dataset is not specified.,en,Answer:,qasper,"['training set has 89,042 sentence pairs, and the test set has 100 pairs, training set contains 296,402, 2,000 for development and 359 for testing'
+ 'WikiSmall  89 142 sentence pair and  WikiLarge 298 761 sentence pairs. ']",qasper,2266
+d17f6335089f3dd922f3d5400e3fc2ad1ca15202f4ac6467,"Question: what pretrained word embeddings were used?
+
+",,1.0,148, The paper does not mention the specific pre-trained word embeddings used.,en,Answer:,qasper,"['Pretrained word embeddings  were not used'
+ 'GloVe, Edinburgh embeddings BIBREF14, Emoji embeddings BIBREF16']",qasper,1771
+d3dac3676da5685f20bae39814f760368752f5bd8db93500,"Question: What were their results on the new dataset?
+
+",,1.0,148, The results on the new dataset were not provided in the given text.,en,Answer:,qasper,"['average recipe-level coherence scores of 1.78-1.82, human evaluators preferred personalized model outputs to baseline 63% of the time']",qasper,2666
+4eb3ad14a5fbb16b03f54ef42febd2f167f8b2a9f5a26343,"Question: What is the combination of rewards for reinforcement learning?
+
+",,1.0,148, The combination of rewards for reinforcement learning is the sum of the reward for the irony and the reward for the sentiment.,en,Answer:,qasper,"['irony accuracy, sentiment preservation'
+ ' irony accuracy and sentiment preservation']",qasper,4592
+3b83a9c5c4dc7fa170724ce8378a276b8cbef90a62b13603,"Question: What limitations do the authors demnostrate of their model?
+
+",,1.0,148," The authors demonstrate that their model has limitations in handling long sentences and complex grammar, as it relies on a pre-trained language model that is not designed to handle such cases.",en,Answer:,qasper,"['Since we do not have an end-to-end dataset, the generated English poem may not work well with Shakespeare style transfer'
+ 'we do not have an end-to-end dataset, the generated English poem may not work well with Shakespeare style transfer as shown in Figure FIGREF12 for ""Starry Night"" with a low average content score']",qasper,1651
+88d89e5b02c860bd1fdac17796e2b6048a6d2b86950c4c12,"Question: Which existing benchmarks did they compare to?
+
+",,1.0,148, They did not mention any existing benchmarks that they compared to.,en,Answer:,qasper,"['Affective Text, Fairy Tales, ISEAR'
+ ' Affective Text dataset, Fairy Tales dataset, ISEAR dataset']",qasper,3390
+3278efeb1fb7f569dfd6ef8627cdefb5955b93b612fe2902,"Question: How is the dataset of hashtags sourced?
+
+",,1.0,148, The dataset of hashtags is not explicitly mentioned in the provided text.,en,Answer:,qasper,"['1,268 randomly selected tweets in the Stanford Sentiment Analysis Dataset BIBREF36, all 12,594 unique English hashtags and their associated tweets from the same Stanford dataset'
+ 'Stanford Sentiment Analysis Dataset BIBREF36']",qasper,3756
+06feabc1e5ca23dbfd79cbb2ea42b436c85bf6ac6a8d4b14,"Question: what accents are present in the corpus?
+
+",,1.0,148, The text does not mention any accents present in the corpus.,en,Answer:,qasper,['Unanswerable' 'Unanswerable'],qasper,3794
+26eccf323630722b689e91abd27fbbae0da4097e74865c33,"Question: What can word subspace represent?
+
+",,1.0,148, A set of word vectors.,en,Answer:,qasper,"['Word vectors, usually in the context of others within the same class']",qasper,5151
+3bb91d7f22ae15ff9fc6475233052ad0981ad7e812f7eaa7,"Question: Is SemCor3.0 reflective of English language data in general?
+
+",,1.0,148," No, SemCor3.0 is a corpus of English texts that are biased towards technical and academic language, and may not be representative of English language data in general.",en,Answer:,qasper,['Yes' 'Unanswerable'],qasper,2000
+981e544c9c90888f266707622e41e2c06b1b9b8ce6af525f,"Question: What dataset did they use?
+
+",,1.0,148, The dataset used is not explicitly mentioned in the provided text.,en,Answer:,qasper,"[' high-quality datasets  from SemEval-2016 “Sentiment Analysis in Twitter” task'
+ ' SemEval-2016 “Sentiment Analysis in Twitter”']",qasper,2738
+168484fbdc83fc2e0c374e1d92ed08edca0c33669cd88a33,"Question: Do they use large or small BERT?
+
+",,1.0,148, small BERT,en,Answer:,qasper,['small BERT' 'small BERT'],qasper,1999
+a65a814bec0bd2085660d75fc5eeb39935a7cea44abab2b1,"Question: Are the automatically constructed datasets subject to quality control?
+
+",,1.0,148," No, the automatically constructed datasets are not subject to quality control. The article mentions that the datasets were created using a combination of automated and manual processes, but it does not mention any quality control measures being taken to ensure the accuracy or reliability of the datasets.",en,Answer:,qasper,['No' 'No'],qasper,6391
+f4aa62dcbb2bac20bc9ef1361ad811d6822f66df83f0930d,"Question: What was their performance on emotion detection?
+
+",,1.0,148," The text does not provide information on their performance on emotion detection. It appears to be a research paper discussing a method for detecting emotions in text using Facebook reactions, but it does not include any results or performance metrics.",en,Answer:,qasper,"[""Answer with content missing: (Table 3) Best author's model B-M average micro f-score is 0.409, 0.459, 0.411 on Affective, Fairy Tales and ISEAR datasets respectively. ""]",qasper,3410
+c276162e5903240b254238163922fb0ef59df8b8c706790f,"Question: What is the tagging scheme employed?
+
+",,1.0,148," The tagging scheme employed is a combination of the following:
+
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A maximum of one pun per sentence
+* A",en,Answer:,qasper,"['A new tagging scheme that tags the words before and after the pun as well as the pun words.'
+ 'a new tagging scheme consisting of three tags, namely { INLINEFORM0 }']",qasper,2974
+b69e327bf637183397c7d975df8e1c45fa1ad9866b71e6d1,"Question: Is Arabic one of the 11 languages in CoVost?
+
+",,1.0,148, No information is provided about Arabic being one of the 11 languages in CoVost.,en,Answer:,qasper,['No' 'No'],qasper,2413
+c509e3bda123ac08967781ad78a55a157b876e9d0aa97adc,"Question: What other sentence embeddings methods are evaluated?
+
+",,1.0,148," The other sentence embeddings methods that are mentioned in the text are InferSent, BERT, and RoBERTa. However, it is not clear if they are evaluated in the text. The text only mentions that the performance of InferSent is compared to BERT and RoBERTa, but it does not provide a detailed evaluation of these methods.",en,Answer:,qasper,"['GloVe, BERT, Universal Sentence Encoder, TF-IDF, InferSent'
+ 'Avg. GloVe embeddings, Avg. fast-text embeddings, Avg. BERT embeddings, BERT CLS-vector, InferSent - GloVe and Universal Sentence Encoder.']",qasper,3862
+76f663a13234c9da9f1d78c72b52d73ab37da0977e0001d8,"Question: What are method's improvements of F1 for NER task for English and Chinese datasets?
+
+",,1.0,148," The method improves F1 scores for NER tasks on both English and Chinese datasets by using a combination of character-based and word-based models, as well as a novel attention mechanism that focuses on the most informative characters in the input sequence. The method also uses a character-level language model to generate character embeddings, which are then used to initialize the word embeddings. The attention mechanism is designed to capture the dependencies between characters in the input sequence, and the character-level language model is used to capture the contextual information of the characters. The method is evaluated on both English and Chinese datasets, and the results show that it outperforms the state-of-the-art models on both datasets.",en,Answer:,qasper,"['English datasets including CoNLL2003 and OntoNotes5.0, our proposed method outperforms BERT-MRCBIBREF38 by +0.29 and +0.96 respectively, Chinese datasets, achieving F1 improvements by +0.97 and +2.36 on MSRA and OntoNotes4.0, respectively'
+ 'For English datasets including CoNLL2003 and OntoNotes5.0, our proposed method outperforms BERT-MRCBIBREF38 by +0.29 and +0.96 respectively., huge performance boosts on Chinese datasets, achieving F1 improvements by +0.97 and +2.36 on MSRA and OntoNotes4.0, respectively']",qasper,3586
+f028740d1aa46f5337578cc37bb55f6c8ac0864856b26096,"Question: What is te core component for KBQA?
+
+",,1.0,148," The core component for KBQA is the entity linking module, which is responsible for identifying and linking entities in the question to their corresponding entries in the knowledge base.",en,Answer:,qasper,"['answer questions by obtaining information from KB tuples '
+ 'hierarchical matching between questions and relations with residual learning']",qasper,4527
+78ec3790de7582388e6f9f2e428ddd2f6cccef851a8fcd57,"Question: What are the baseline models?
+
+",,1.0,148, The baseline models are not explicitly mentioned in the provided text.,en,Answer:,qasper,"['name-based Nearest-Neighbor model (NN), Encoder-Decoder baseline with ingredient attention (Enc-Dec)']",qasper,2655
+c6464e3b2dbf1c8412496fdef56cafcccd0ccb9dd1937886,"Question: Which methods are considered to find examples of biases and unwarranted inferences??
+
+",,1.0,148, The methods considered to find examples of biases and unwarranted inferences are manual analysis and the use of tools such as Louvain and the Gini-Simpson index.,en,Answer:,qasper,"['spot patterns by just looking at a collection of images, tag all descriptions with part-of-speech information, I applied Louvain clustering'
+ 'Looking for adjectives marking the noun ""baby"" and also looking for most-common adjectives related to certain nouns using POS-tagging']",qasper,2204
+aaaf5a6e22afc0f84ee63ab9e8dfe9484462ef105aa44ec6,"Question: What language do they explore?
+
+",,1.0,148, English.,en,Answer:,qasper,"['English, French, German '
+ 'French, English, Spanish, Italian, Portuguese, Hebrew, Arabic']",qasper,2285
+08034d93200eb0b2207fc07921f81e95f4a801c0961f3724,"Question: Do they report results only on English data?
+
+",,1.0,148," No, they do not report results only on English data.",en,Answer:,qasper,['Yes' 'Unanswerable'],qasper,6169
+36dd6c4714fb80bd70d4dc3805324eb2055fe272b85fa5c0,"Question: What summarization algorithms did the authors experiment with?
+
+",,1.0,148, The authors do not mention any specific summarization algorithms they experimented with.,en,Answer:,qasper,"['LSA, TextRank, LexRank and ILP-based summary.' 'LSA, TextRank, LexRank']",qasper,3045
+37555b3a43b9c65a02a522310fe737913a5863a33bf81c32,"Question: What was the previous state of the art for this task?
+
+",,1.0,148," The previous state of the art for this task was the use of logistic regression and decision trees, which were outperformed by the proposed model.",en,Answer:,qasper,['hLSTM' 'hLSTM'],qasper,3725
+c6bf18dbbe6ad2c777f3b2db9f35a1b23c9e3ec2d138b186,"Question: Which component is the least impactful?
+
+",,1.0,148, The component that is the least impactful is the question itself.,en,Answer:,qasper,['Based on table results provided changing directed to undirected edges had least impact - max abs difference of 0.33 points on all three datasets.'],qasper,4180
+d0c52dceef7d3b347e2f4543e601576d4d68324e7c543a6d,"Question: What is the corpus used for the task?
+
+",,1.0,148, The corpus used for the task is not explicitly mentioned in the provided text.,en,Answer:,qasper,"['DTA18, DTA19'
+ 'Diachronic Usage Relatedness (DURel) gold standard data set']",qasper,1908
+5acdda9ea1342cee04400bab5f4e3d23f394c14fa42f784d,"Question: Which 7 Indian languages do they experiment with?
+
+",,1.0,148," There is no mention of Indian languages in the text. The text does not mention any specific languages, let alone Indian languages. It appears to be discussing a research paper on speech recognition or language processing.",en,Answer:,qasper,"['Hindi, English, Kannada, Telugu, Assamese, Bengali and Malayalam'
+ 'Kannada, Hindi, Telugu, Malayalam, Bengali,  English and Assamese (in table, missing in text)']",qasper,2453
+7fc2e4d78ed71fd9cb767560f9f8f69124754bf212e2e3dc,"Question: What is the model performance on target language reading comprehension?
+
+",,1.0,148," The model achieves a competitive performance on target language reading comprehension, with a significant improvement over the baseline model.",en,Answer:,qasper,"['Table TABREF6, Table TABREF8'
+ 'when testing on English, the F1 score of the model training on Chinese (Zh) is 53.8,  F1 score is only 44.1 for the model training on Zh-En']",qasper,2492
+c3dc6e575eeee19145547b339ae1c7af914dfde59a652000,"Question: How big is the difference in performance between proposed model and baselines?
+
+",,1.0,148," The proposed model outperforms the baselines in terms of accuracy, with a noticeable difference in performance.",en,Answer:,qasper,['Metric difference between Aloha and best baseline score:\nHits@1/20: +0.061 (0.3642 vs 0.3032)\nMRR: +0.0572(0.5114 vs 0.4542)\nF1: -0.0484 (0.3901 vs 0.4385)\nBLEU: +0.0474 (0.2867 vs 0.2393)'],qasper,5151
+a8f155f6d0b86040e21fdb913b07c5fa675b82dbacc0674e,"Question: How much improvement is gained from Adversarial Reward Augmented Maximum Likelihood (ARAML)?
+
+",,1.0,148," Unfortunately, the provided text does not mention the specific improvement gained from Adversarial Reward Augmented Maximum Likelihood (ARAML). The text discusses the concept of ARAML and its application in a specific context, but it does not provide a quantitative measure of improvement.",en,Answer:,qasper,"['ARAM has achieved improvement over all baseline methods using reverese perplexity and  slef-BLEU metric.  The maximum reverse perplexity improvement 936,16 is gained for EMNLP2017  WMT  dataset and  48,44 for COCO dataset.'
+ 'Compared to the baselines, ARAML does not do better in terms of perplexity on COCO and EMNLP 2017 WMT datasets, but it does by up to 0.27 Self-BLEU points on COCO and 0.35 Self-BLEU on EMNLP 2017 WMT. In terms of Grammaticality and Relevance, it scores better than the baselines on up to 75.5% and 73% of the cases respectively.']",qasper,3796
+f7c52845824592155b90b879209bfaf82e6a8598c9cb9db0,"Question: What evidence do the authors present that the model can capture some biases in data annotation and collection?
+
+",,1.0,148," The authors present evidence that the model can capture some biases in data annotation and collection through the analysis of the results of the model's performance on the test data. Specifically, they mention that the model was able to identify biases in the data annotation and collection process, such as the fact that some classes were more imbalanced than others, and that the model was able to correct for these biases to some extent. They also mention that the model was able to identify and correct for biases in the data collection process, such as the fact that some data points were more likely to be mislabeled than others.",en,Answer:,qasper,['The authors showed few tweets where neither and implicit hatred content exist but the model was able to discriminate'],qasper,4119
+e48405471fa8e3af3ddf67e7e9deb109523dfab05dc9d659,"Question: Were other baselines tested to compare with the neural baseline?
+
+",,1.0,148," No, there is no mention of other baselines being tested in the provided text.",en,Answer:,qasper,"['SVM, No-Answer Baseline (NA) , Word Count Baseline, Human Performance'
+ 'No-Answer Baseline (NA), Word Count Baseline, Human Performance']",qasper,3855
+9c060535b14310dff1d863489d6ecd52f7ecffda0dcc9fcb,"Question: What is the size of the dataset?
+
+",,1.0,148, The size of the dataset is not explicitly mentioned in the provided text.,en,Answer:,qasper,"['Dataset contains 3606 total sentences and 79087 total entities.'
+ 'ILPRL contains 548 sentences, OurNepali contains 3606 sentences']",qasper,2843
+c624b6d8a5c2cbf6ad3c24de6e42d7b1b6504fe608ee3733,"Question: What are method improvements of F1 for paraphrase identification?
+
+",,1.0,148," The method improvements of F1 for paraphrase identification are as follows: 
+
+1. The model achieves a higher F1 score of 0.83 on the paraphrase identification task.
+2. The model uses a combination of BERT and a paraphrase identification dataset to improve the F1 score.
+3. The model uses a paraphrase identification algorithm that takes into account the context of the sentence to improve the F1 score.
+4. The model uses a paraphrase identification dataset that is specifically designed for the task to improve the F1 score.
+5. The model uses a paraphrase identification algorithm that is able to handle out-of-vocabulary words to improve the F1 score.
+
+Note: The question was not directly related to the provided",en,Answer:,qasper,"['Using DSC loss improves the F1 score by +0.58 for MRPC and +0.73 for QQP'
+ '+0.58']",qasper,3566
+7fb2af0c4759875dc623bdfa5024e13f06a9288f1930470a,"Question: What datasets are used?
+
+",,1.0,148, The datasets used are not explicitly mentioned in the provided text.,en,Answer:,qasper,"['Answer with content missing: (Whole Method and Results sections) The primary dataset we use is the ERP data collected and computed by Frank et al. (2015), and we also use behavioral data (eye-tracking data and self-paced reading times) from Frank et al. (2013) which were collected on the same set of 205 sentences.\nSelect:\n- ERP data collected and computed by Frank et al. (2015)\n- behavioral data (eye-tracking data and self-paced reading times) from Frank et al. (2013)'
+ 'the ERP data: BIBREF0']",qasper,1971
+ec83bdfec205fe7374404faa05fe5420a2a7922e251c573d,"Question: What data was presented to the subjects to elicit event-related responses?
+
+",,1.0,148," The data presented to the subjects to elicit event-related responses was not specified in the provided text. The text appears to be discussing a research paper on brain-computer interfaces and EEG signals, but it does not mention the specific data used to elicit event-related responses.",en,Answer:,qasper,"['7 phonemic/syllabic ( /iy/, /piy/, /tiy/, /diy/, /uw/, /m/, /n/ ) as well as 4 words(pat, pot, knew and gnaw)'
+ 'KARA ONE BIBREF17 , composed of multimodal data for stimulus-based, imagined and articulated speech state corresponding to 7 phonemic/syllabic ( /iy/, /piy/, /tiy/, /diy/, /uw/, /m/, /n/ ) as well as 4 words(pat, pot, knew and gnaw)']",qasper,2379
+57de270868df43af983000c70076588676aaf9bfb5fbfca5,"Question: Which baselines are used for evaluation?
+
+",,1.0,148," The baselines used for evaluation are Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL-SEN, Pointer-Gen-RL",en,Answer:,qasper,"['Pointer-Gen, Pointer-Gen+Pos, Pointer-Gen+Same-FT, Pointer-Gen+Pos-FT, Pointer-Gen+RL-ROUGE, Pointer-Gen+RL-SEN']",qasper,4085
+bd9de91e4f20f4d0e8cbd1d442c97022e5410cc9a814aa0e,"Question: What learning models are used on the dataset?
+
+",,1.0,148," The learning models used on the dataset are not explicitly mentioned in the provided text. However, the text does mention that the dataset is used to train and evaluate various machine learning models, including those that use word embeddings, recurrent neural networks, and convolutional neural networks.",en,Answer:,qasper,"['Naïve Bayes (NB), Logistic Regression (LR), Support Vector Machine (SVM), Random Forests (RF), Gradient Boosted Trees (GBT),  Convolutional Neural Networks (CNN), Recurrent Neural Networks (RNN)'
+ 'Naïve Bayes (NB), Logistic Regression (LR), Support Vector Machine (SVM), Random Forests (RF), Gradient Boosted Trees (GBT), CNN, RNN']",qasper,2074
+0d39f8e4a71796ad340444ae3e5fe23b51beb9f47247d8a1,"Question: What language model architectures are used?
+
+",,1.0,148, The Big Bird model is used.,en,Answer:,qasper,"['uni-directional model to augment the decoder'
+ 'bi-directional language model to augment the sequence to sequence encoder ,  uni-directional model to augment the decoder']",qasper,1914
+677dad703988e8f26b322211803fad38ffe9e58d1725f51a,"Question: How are weights dynamically adjusted?
+
+",,1.0,148," The weights are dynamically adjusted using the term (1-p), where p is the probability of the model output. This term is used to adjust the weights in the loss function, specifically in the calculation of the loss for the model's output.",en,Answer:,qasper,"['One can think $(1-p_{i1})$ as a weight associated with each example, which changes as training proceeds. The intuition of changing $p_{i1}$ to $(1-p_{i1}) p_{i1}$ is to push down the weight of easy examples. For easy examples whose probability are approaching 0 or 1, $(1-p_{i1}) p_{i1}$ makes the model attach significantly less focus to them. Figure FIGREF23 gives gives an explanation from the perspective in derivative: the derivative of $\\frac{(1-p)p}{1+(1-p)p}$ with respect to $p$ approaches 0 immediately after $p$ approaches 0, which means the model attends less to examples once they are correctly classified.'
+ 'associates each training example with a weight in proportion to $(1-p)$, and this weight dynamically changes as training proceeds']",qasper,3640
+aad6558e94d7056e2b8acd03fbdac6448c16b0bf28d1f033,"Question: What does an individual model consist of?
+
+",,1.0,148, An individual model consists of a generative model and a discriminative model.,en,Answer:,qasper,['Bayesian model of garg2012unsupervised as our base monolingual model'],qasper,3701
+4b9e15e7e39589f3a953e9e6637e00c28269be034f93c00b,"Question: How is non-standard pronunciation identified?
+
+",,1.0,148, Non-standard pronunciation is not identified in the provided text.,en,Answer:,qasper,"['Unanswerable'
+ 'Original transcription was labeled with additional labels in [] brackets with nonstandard pronunciation.']",qasper,3018
+b96a5e2e8d4b32aff5401e97c66942bf33f6c3c62a43609d,"Question: which languages are explored?
+
+",,1.0,148, The text does not explicitly mention the languages being explored.,en,Answer:,qasper,"['Bulgarian, Croatian, Czech, Danish, English, French, German, Indonesian, Italian, Norwegian, Persian, Polish, Portuguese, Slovenian, Spanish and Swedish'
+ 'Bulgarian, Croatian, Czech, Danish, English, French, German, Indonesian, Italian, Norwegian, Persian, Polish, Portuguese, Slovenian, Spanish , Swedish']",qasper,2697
+914ecea04fa73d3a61afe04a4dabd1dc5b80a0aa66784a9b,"Question: How effective is their NCEL approach overall?
+
+",,1.0,148," The authors' NCEL approach is effective overall, as it achieves state-of-the-art results on the benchmark dataset, outperforming the baseline models in terms of accuracy and F1-score. The approach is also able to handle out-of-vocabulary words and unseen entities, and it is robust to noise and variations in the input data. However, the authors note that their approach may not be as effective for very long or very short texts, and it may require additional training data to improve its performance on certain types of entities.",en,Answer:,qasper,['NCEL consistently outperforms various baselines with a favorable generalization ability'],qasper,4113
+757c3e92861be1ad45a06d157bb10fe162bd2163bc3baa6c,"Question: Is the data de-identified?
+
+",,1.0,148," No, the data is not de-identified. The text mentions that the data is from real-world medical conversations and that the model is trained on a dataset of de-identified medical conversations, but it does not explicitly state that the data is de-identified. However, it does mention that the data is ""de-identified"" in the context of the model's training data, but this is not the case for the data being used in the current experiment.",en,Answer:,qasper,['Yes' 'Yes'],qasper,4592
+1fc62062641bf85a160d7465aefb91870235e6c815b392cf,"Question: What was the baseline used?
+
+",,1.0,148, There is no information provided about the baseline used.,en,Answer:,qasper,['error detection system by Rei2016' 'error detection system by Rei2016'],qasper,2132
+e7860b94e9aedb1f9b1e5a8839cb1424486c3f2dd69ee124,"Question: where did they obtain the annotated clinical notes from?
+
+",,1.0,148," The answer is not provided in the text. The text does not mention obtaining annotated clinical notes. It discusses a project that aims to develop a system for extracting clinical information from clinical notes, but it does not provide information on where the annotated clinical notes were obtained.",en,Answer:,qasper,"['clinical notes from the CE task in 2010 i2b2/VA'
+ 'clinical notes from the CE task in 2010 i2b2/VA ']",qasper,3432
+ea4db579b5224fe0fa413ee436a5f4f56777dfa3e25d99d7,"Question: Why masking words in the decoder is helpful?
+
+",,1.0,148," Masking words in the decoder is helpful because it allows the model to predict the correct words in the input sequence, even if the input sequence is partially masked. This is particularly useful in tasks such as language translation, where the model needs to predict the correct words in the target language, given the input sequence in the source language. By masking words in the decoder, the model can learn to predict the correct words, even if the input sequence is partially missing or corrupted.",en,Answer:,qasper,"[""ecause this process is similar to the cloze task in BERT's pre-train process, therefore by using the ability of the contextual language model the decoder can generate more fluent and natural sequences.""]",qasper,3919
+f3b5a2a6642523c5347d7612ee64a3378c6592ea58a0857e,"Question: Which dataset do they use?
+
+",,1.0,148," The question does not specify which dataset they use. The text does not mention any specific dataset. 
+
+However, the text does mention that the authors are using a Twitter dataset for their research, but it does not specify the name of the dataset. 
+
+If you would like to know more about the research or the authors, please let me know and I can try to help you with that. 
+
+Alternatively, if you would like to know more about the Twitter dataset, I can try to help you with that as well. 
+
+Please let me know how I can assist you further. 
+
+(Also, I would like to note that the text does not mention any specific dataset, so I am making an educated guess based on the context of the",en,Answer:,qasper,"['Unanswerable' ' Paraphrase Database (PPDB) ,  book corpus'
+ 'Unanswerable']",qasper,1902
+10f50fd914b227d12f503b3ef4ac5fe772e70f44557c17b5,"Question: What features are used?
+
+",,1.0,148, TF-IDF features are used.,en,Answer:,qasper,['Unanswerable'],qasper,2108
+a49d38fea6e6ffd631d227f17753ce20624d17bd8a04ee03,"Question: How is the dataset annotated?
+
+",,1.0,148, The dataset is annotated with labels indicating whether a tweet is related to a specific topic or not.,en,Answer:,qasper,"['no evidence of depression, depressed mood, disturbed sleep, fatigue or loss of energy'
+ 'The annotations are based on evidence of depression and further annotated by the depressive symptom if there is evidence of depression']",qasper,1947
+591249c5522d87dcf4eeb6e1fc35bbf56a2290d23c83544d,"Question: Which eight NER tasks did they evaluate on?
+
+",,1.0,148, The question does not mention NER tasks. It seems to be a misplaced question. The text does not mention NER tasks at all. It appears to be discussing a research paper on a method for domain adaptation in natural language processing.,en,Answer:,qasper,"['BC5CDR-disease, NCBI-disease, BC5CDR-chem, BC4CHEMD, BC2GM, JNLPBA, LINNAEUS, Species-800'
+ 'BC5CDR-disease, NCBI-disease, BC5CDR-chem, BC4CHEMD, BC2GM, JNLPBA, LINNAEUS, Species-800']",qasper,2800
+c09598fc924dab440fb92fcd82dff116759ed11f5947b3c0,"Question: How was the training data translated?
+
+",,1.0,148, The training data was translated into Spanish.,en,Answer:,qasper,"['using the machine translation platform Apertium '
+ 'machine translation platform Apertium BIBREF5']",qasper,2423
+679cbfcf05ceb304bfbc0f4ea24597aeff90611a76a374a2,"Question: What model did they use for their system?
+
+",,1.0,148," They did not specify a particular model, but they used a machine learning approach to classify the text into different categories.",en,Answer:,qasper,['AllWords model by counting the frequencies of all the remaining words and training a multinomial Naive Bayes classifier'],qasper,4177
+2561836b391d69be52ba4d97583238407f2fa80afef9a15b,"Question: What baselines do they compare with?
+
+",,1.0,148, They compare with a baseline that uses a simple majority class baseline.,en,Answer:,qasper,"['They compare with the following models: by Pedersen (2017), by Pramanick and Das (2017), by Mikhalkova and Karyakin (2017),  by Vadehra (2017), Indurthi and Oota (2017), by Vechtomova (2017), by (Cai et al., 2018), and CRF.']",qasper,2991
+85a7083bae278e83df0fea37003937a9294638f488a18a83,"Question: In what language are the tweets?
+
+",,1.0,148, English.,en,Answer:,qasper,['English' 'English ' 'English'],qasper,2240
+c8ddf1d2e1192893ee5bf9e0ffdeb6762a7a2f719d299c28,"Question: How many layers does the UTCNN model have?
+
+",,1.0,148, The UTCNN model has 4 layers: 2 layers of dot product operations and 2 layers of convolution operations.,en,Answer:,qasper,['eight layers'],qasper,4487
+3f3d64d45cd4761fa7a9da94fbc4c41b27f3a7b856117638,"Question: what dataset is used in this paper?
+
+",,1.0,148, The dataset used in this paper is not explicitly mentioned.,en,Answer:,qasper,[' the same datasets as BIBREF7' 'same datasets as BIBREF7'],qasper,4661
+806667777a33e5aede1bd3a62cbb5562f99b2223f68b98fe,"Question: What are the clinical datasets used in the paper?
+
+",,1.0,148, There is no mention of clinical datasets in the provided text. The text discusses a paper about a study on anonymizing medical data using natural language processing techniques.,en,Answer:,qasper,"['MEDDOCAN, NUBes-PHI' 'MEDDOCAN, NUBes ']",qasper,4528
+ed98266f89745750cb92ebc16c941888f1b0291d405d14e2,"Question: What traditional linguistics features did they use?
+
+",,1.0,148, They used chi-squared tests and t-tests.,en,Answer:,qasper,['Unanswerable'],qasper,3543
+ede810c7fa069014dc1b6fe66c54079ce1fe81903c684600,"Question: What metrics are used to establish that this makes chatbots more knowledgeable and better at learning and conversation? 
+
+",,1.0,148," The metrics used to establish that this makes chatbots more knowledgeable and better at learning and conversation are not explicitly mentioned in the provided text. However, based on the context, it can be inferred that the metrics used are likely related to the performance of the chatbot in understanding and responding to user queries, as well as its ability to learn and improve over time.
+
+To provide a more specific answer, I would need more information about the metrics used in the study, such as:
+
+* Accuracy: How well does the chatbot understand and respond to user queries?
+* Recall: How well does the chatbot retrieve relevant information from its knowledge base?
+* Precision: How well does the chatbot filter out irrelevant information?
+* F1-score: A",en,Answer:,qasper,"['Coverage, Avg. MCC and avg. +ve F1 score'
+ 'strategy formulation ability, we introduce a measure called Coverage( INLINEFORM0 ), To evaluate the predictive performance, we use Avg. MCC and avg. +ve F1 score']",qasper,5869
+be6e56c9310a931e883d529da75b125058563bcf4d8d16d0,"Question: Do they employ their indexing-based method to create a sample of a QA Wikipedia dataset?
+
+",,1.0,148," No, the text does not mention employing an indexing-based method to create a sample of a QA Wikipedia dataset.",en,Answer:,qasper,['Yes' 'No'],qasper,1910
+78224546bfb859e5412a0d5ef1b030ea0b3844c9987c79ff,"Question: What experiments are conducted?
+
+",,1.0,148," The experiments conducted are human evaluation of the models' performance in generating irony, specifically in terms of the models' ability to generate irony in a way that is similar to human-written text.",en,Answer:,qasper,"['Irony Classifier, Sentiment Classifier for Irony, Sentiment Classifier for Non-irony, transformation from ironic sentences to non-ironic sentences']",qasper,4600
+34e4bb298d4e2c19c2fce8670a00196cddd9f361eeb09a9a,"Question: How does Gaussian-masked directional multi-head attention works?
+
+",,1.0,148," The Gaussian-masked directional multi-head attention is a mechanism used in the model to calculate the attention weights between the input and output sequences. It works by first calculating the similarity between the input and output sequences using a Gaussian function, which takes into account the distance between the elements in the sequences. The similarity is then used to calculate the attention weights, which are used to compute the weighted sum of the output elements. The weighted sum is then used as the output of the attention mechanism.
+
+In the context of the provided text, the Gaussian-masked directional multi-head attention is used to calculate the attention weights between the input and output sequences in the transformer model. The attention weights are calculated using the following formula:
+
+$A = softmax(QK^T",en,Answer:,qasper,"['pays attentions to adjacent characters and casts a localness relationship between the characters as a fixed Gaussian weight assuming the weight relies on the distance between characters'
+ 'Gaussian-masked directional attention can be described as a function to map queries and key-value pairs to the representation of input, Gaussian-masked directional attention expects to pay attention to the adjacent characters of each positions and cast the localness relationship between characters as a fix Gaussian weight for attention, Gaussian weight only relys on the distance between characters']",qasper,3612
+b80ef6cf65d0728f2a3a6c812d50121f97dc555c71d8871d,"Question: What types of social media did they consider?
+
+",,1.0,148, They did not specify the types of social media they considered.,en,Answer:,qasper,['Facebook status update messages' 'Facebook status update messages'],qasper,4005
+c6aff9577f2b48117cc4b4d11e8acfc1ffb55ec48717b69b,"Question: What are the network's baseline features?
+
+",,1.0,148," The baseline features are the word embeddings used in the network, which are pre-trained word vectors that capture semantic relationships between words.",en,Answer:,qasper,[' The features extracted from CNN.'],qasper,4855
+9c415874c0c9fba5d1111bf3d9cb379fcbeff17fcccb560a,"Question: Which hyperparameters were varied in the experiments on the four tasks?
+
+",,1.0,148," The hyperparameters that were varied in the experiments on the four tasks are not explicitly mentioned in the provided text. However, the text does mention that the authors experimented with different hyperparameters to find the optimal settings for their model.",en,Answer:,qasper,"['number of clusters, seed value in clustering, selection of word vectors, window size and dimension of embedding'
+ 'different number of clusters, different embeddings']",qasper,2753
+3b3fcd0ee773501a21c5eb6159746fa29bdc3498329525e5,"Question: How large is the corpus?
+
+",,1.0,148," The corpus is not explicitly stated to be of a specific size, but it is mentioned that it contains 53 case reports.",en,Answer:,qasper,"['8,275 sentences and 167,739 words in total'
+ 'The corpus comprises 8,275 sentences and 167,739 words in total.']",qasper,2669
+ca91b274c44baec976e7acbd926d7d823fd5a81e34dfcce1,"Question: Is it possible to convert a cloze-style questions to a naturally-looking questions?
+
+",,1.0,148," No, it is not possible to convert a cloze-style question to a naturally-looking question.",en,Answer:,qasper,['Unanswerable' 'Unanswerable'],qasper,2764
+eb64a6b64d9837a23cd1824be1986861b0b23d98ff1c52b1,"Question: What NLP tasks do they consider?
+
+",,1.0,148, Text classification and sentiment analysis.,en,Answer:,qasper,"['text classification for themes including sentiment, web-page, science, medical and healthcare']",qasper,3591
+0012658ce252037bf12bb47de21ea785b1ee2731e5bd809f,"Question: How larger are the training sets of these versions of ELMo compared to the previous ones?
+
+",,1.0,148," Unfortunately, the text does not provide information about the size of the training sets of the different versions of ELMo.",en,Answer:,qasper,['By 14 times.' 'up to 1.95 times larger'],qasper,3294
+547c0b203cd3f5e26ebf4709ca03599db12e8d1bb08bc1ba,"Question: How many sentences does the dataset contain?
+
+",,1.0,148, The dataset contains 10 sentences.,en,Answer:,qasper,['3606' '6946'],qasper,2835
+d999910bed46747299b4c315cc345dc978d979252f65d39e,"Question: Which models/frameworks do they compare to?
+
+",,1.0,148, They do not compare to any specific models/frameworks.,en,Answer:,qasper,"['MLP' 'Eusboost, MWMOTE']",qasper,2474
+b3d9af44008c13b316e929ad00b8eeea477fdbf5aa50eab7,"Question: Does their NER model learn NER from both text and images?
+
+",,1.0,148," No, their NER model does not learn NER from both text and images. It is a text-based NER model that uses multimodal information from images, but it does not incorporate visual information from images into the NER model itself. Instead, it uses the text description of the image to inform the NER model.",en,Answer:,qasper,['Yes' 'Yes'],qasper,3784
+2f457d7ab54cb1afc5be7e5171425354617f49b8f75d90fa,"Question: Do they evaluate only on English datasets?
+
+",,1.0,148, No information is provided about the language of the datasets used in the evaluation.,en,Answer:,qasper,['Yes' 'Unanswerable'],qasper,4320
+160075b535e7b0c17c873ce4ffc5bfc9735ba43fcff32757,"Question: What was their highest MRR score?
+
+",,1.0,148, 0.76,en,Answer:,qasper,['0.5115' '0.6103'],qasper,6810
+dd771b6e98a15ceb55e41e4c6e948e1ab1248d51111fb5c1,"Question: What datasets do they evaluate on?
+
+",,1.0,148," The paper does not explicitly mention the datasets they evaluate on. However, it mentions that they use the Wall Street Journal (WSJ) dataset for their experiments.",en,Answer:,qasper,[' Wall Street Journal (WSJ) portion of the Penn Treebank' 'Unanswerable'],qasper,4327
+f0f715a6867aa0e4b6ef1eab6827162fba00296faa55114e,"Question: How do the authors evidence the claim that many engineers find it a big overhead to choose from multiple frameworks, models and optimization techniques?
+
+",,1.0,148," The authors do not mention the claim that many engineers find it a big overhead to choose from multiple frameworks, models, and optimization techniques.",en,Answer:,qasper,['By conducting a survey among engineers' 'Unanswerable'],qasper,1692
+9de7829de79f59d8deeb2d8ecc1652d081394c258cbce691,"Question: On which benchmarks they achieve the state of the art?
+
+",,1.0,148, They achieve the state of the art on the SimpleQuestions and WebQuestions datasets.,en,Answer:,qasper,"['SimpleQuestions, WebQSP' 'WebQSP, SimpleQuestions']",qasper,4524
