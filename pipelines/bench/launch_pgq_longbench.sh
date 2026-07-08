@@ -27,7 +27,7 @@ JOBS_PER_GPU="${JOBS_PER_GPU:-1}"
 MAX_RETRIES="${MAX_RETRIES:-10}"
 FRACTION="${EVAL_FRACTION:-1.0}"
 CELLS=""
-TASKS_CSV="lcc,musique,2wikimqa"
+TASKS_CSV="${TASKS_CSV:-lcc,musique,2wikimqa,qasper,hotpotqa}"
 DRY_RUN=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -48,6 +48,7 @@ VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.p
 EXCLUDE_INDICES_FILE="${REPO_ROOT}/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json"
 EC_DIR="${REPO_ROOT}/artifacts/ec/llama31_8b"
 PGQ_BUNDLE="${REPO_ROOT}/artifacts/page_quant/pgq_bundle__qpca_unc__dz0.5__base1.5__compact8train18.pt"
+PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt}"
 OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/llama31_8b"
 LOG_DIR="${REPO_ROOT}/logs/bench_pgq_llama31_8b"
 
@@ -71,6 +72,11 @@ for cell in "${CELL_ARR[@]}"; do
         BUNDLE=$(ls "$EC_DIR"/ec_bundle__qpca_unc__b${rate_g}__dz0.5__compact8train*__uniform.pt 2>/dev/null | head -1 || true)
         [[ -n "$BUNDLE" ]] || { echo "ERROR: no ec_uniform bundle for b=$rate" >&2; exit 1; }
         K_METHOD="ec_qpca_unc"; K_BITS=2
+    elif [[ "$kind" == pgq_nd_* || "$kind" == pgq_rvq_* ]]; then
+        # pgq2 arms; for *_uni the value is the rung/stage index, else b/c
+        BUNDLE="$PGQ2_BUNDLE"
+        [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
+        K_METHOD="$kind"; K_BITS="$rate"
     else
         BUNDLE="$PGQ_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }

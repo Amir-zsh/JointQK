@@ -23,11 +23,15 @@ from kvq.io import save_json  # noqa: E402
 
 BENCH = REPO / "artifacts/bench_pgq/llama31_8b"
 EC_SUMMARY = REPO / "artifacts/ec/llama31_8b/bench_summary.json"
+V7 = REPO / "artifacts/stage1/downstream_v7/llama31_8b"
 HELDOUT = REPO / "artifacts/page_quant/pgq_heldout_report.json"
+HELDOUT2 = REPO / "artifacts/page_quant2/pgq2_heldout_report.json"
 OUT = REPO / "artifacts/page_quant/bench_summary.json"
-TASKS = ["lcc", "musique", "2wikimqa"]
+TRIO = ["lcc", "musique", "2wikimqa"]
+TASKS = ["lcc", "musique", "2wikimqa", "qasper", "hotpotqa"]
 BASELINES = ["full_precision", "turboquant_k2_v2", "jointqk_k2_v2",
              "ec_qpca_unc_dz0.5", "ec_r_sym_dz0.375"]
+V7_METHODS = {"full_precision", "turboquant_k2_v2", "jointqk_k2_v2"}
 
 
 def cell_f1(cell_dir: Path) -> float:
@@ -73,9 +77,15 @@ def main() -> None:
             print(f"WARNING: {head} missing tasks {missing}")
         got = [row["f1"][t] for t in TASKS if t in row["f1"]]
         row["mean_f1"] = sum(got) / len(got) if got else None
+        trio = [row["f1"][t] for t in TRIO if t in row["f1"]]
+        row["trio_mean_f1"] = sum(trio) / len(trio) if trio else None
 
+    hh = {}
     if HELDOUT.exists():
-        hh = json.loads(HELDOUT.read_text())["report"]
+        hh.update(json.loads(HELDOUT.read_text())["report"])
+    if HELDOUT2.exists():
+        hh.update(json.loads(HELDOUT2.read_text())["report"])
+    if hh:
         for head, row in rows.items():
             kind, rate = head.split("@b")
             norm = rate.rstrip("0").rstrip(".") if "." in rate else rate
@@ -91,33 +101,57 @@ def main() -> None:
         ec = json.loads(EC_SUMMARY.read_text())
         for m in BASELINES:
             if m in ec:
-                base[m] = ec[m]
+                base[m] = dict(ec[m])
+    # new tasks (qasper/hotpotqa): FP/TQ/JQ cells live in the v7 tree,
+    # never re-run; the EC summary only carries the trio
+    for m in V7_METHODS & set(base):
+        for t in TASKS:
+            if t in base[m]["f1"]:
+                continue
+            cell = V7 / f"{m}_{t}"
+            mjs = sorted(cell.glob("**/metrics.json"),
+                         key=lambda p: p.stat().st_mtime)
+            if mjs:
+                blob = json.loads(mjs[-1].read_text())
+                val = blob if isinstance(blob, (int, float)) else \
+                    next(v for v in blob.values()
+                         if isinstance(v, (int, float)))
+                base[m]["f1"][t] = float(val)
+        got = [base[m]["f1"][t] for t in TASKS if t in base[m]["f1"]]
+        base[m]["mean_f1"] = sum(got) / len(got)
+        trio = [base[m]["f1"][t] for t in TRIO if t in base[m]["f1"]]
+        base[m]["trio_mean_f1"] = sum(trio) / len(trio)
 
     out = {"pgq": rows, "baselines": base, "tasks": TASKS}
     save_json(OUT, out)
 
     fp = base.get("full_precision", {}).get("mean_f1")
-    print(f"{'method':28s} {'lcc':>7s} {'musique':>8s} {'2wiki':>7s} "
-          f"{'mean':>7s} {'rate':>7s} {'ovf%':>6s}")
+    hdr = " ".join(f"{t[:7]:>8s}" for t in TASKS)
+    print(f"{'method':24s} {hdr} {'mean5':>7s} {'trio':>7s} "
+          f"{'rate':>7s} {'ovf%':>6s}")
+
+    def prow(name, row):
+        f1 = row["f1"]
+        cols = " ".join(f"{f1[t]:8.2f}" if t in f1 else f"{'-':>8s}"
+                        for t in TASKS)
+        m5 = row.get("mean_f1")
+        tr = row.get("trio_mean_f1")
+        rate = row.get("rate_heldout", row.get("rate"))
+        ovf = row.get("overflow_frac")
+        print(f"{name:24s} {cols} "
+              + (f"{m5:7.2f} " if m5 is not None else f"{'-':>7s} ")
+              + (f"{tr:7.2f} " if tr is not None else f"{'-':>7s} ")
+              + (f"{float(rate):7.3f} " if isinstance(rate, (int, float))
+                 else f"{'-':>7s} ")
+              + (f"{100 * ovf:5.2f}%" if ovf is not None else f"{'-':>6s}"))
+
     for m in BASELINES:
         if m in base:
-            f1 = base[m]["f1"]
-            print(f"{m:28s} " + " ".join(
-                f"{f1.get(t, float('nan')):7.2f}" for t in TASKS)
-                + f"  {base[m]['mean_f1']:6.2f} "
-                + f"{str(base[m].get('rate', '-')):>7s}")
+            prow(m, base[m])
     for head in sorted(rows):
-        row = rows[head]
-        f1 = row["f1"]
-        rate = row.get("rate_heldout")
-        ovf = row.get("overflow_frac")
-        print(f"{head:28s} " + " ".join(
-            f"{f1.get(t, float('nan')):7.2f}" for t in TASKS)
-            + f"  {row['mean_f1'] if row['mean_f1'] is not None else float('nan'):6.2f} "
-            + (f"{rate:7.3f} " if rate is not None else f"{'-':>7s} ")
-            + (f"{100 * ovf:5.2f}%" if ovf is not None else f"{'-':>6s}"))
+        prow(head, rows[head])
     if fp is not None:
-        print(f"\nfull_precision mean = {fp:.2f}")
+        print(f"\nfull_precision 5-task mean = {fp:.2f}")
     print(f"-> {OUT}")
 
 

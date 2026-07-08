@@ -1,0 +1,1408 @@
+{
+ "config": {
+  "dataset": "longbench",
+  "max_tokens": 32000,
+  "min_tokens": 2000,
+  "model": "Qwen/Qwen3-8B",
+  "samples_per_task": 60,
+  "seed": 20260504,
+  "tasks": [
+   "qasper",
+   "hotpotqa",
+   "musique",
+   "qmsum",
+   "multi_news",
+   "triviaqa",
+   "passage_retrieval_en",
+   "repobench-p"
+  ],
+  "test_per_task": 10,
+  "train_per_task": 50
+ },
+ "num_rows": 480,
+ "num_test_rows": 80,
+ "num_train_rows": 400,
+ "purpose": "pgq2 big-fit codebook training: 40 compact8 TRAIN rows, disjoint from the EC fit/selection 26 (pre-registered addendum in frozen_choices.json)",
+ "rows": [
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "140 million"
+    ],
+    "length": 11685,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 17131,
+   "prompt_sha256": "182d8cf474cde45c8bc53311f3a4dd6729989dacbaac5ed1b1277d5f94aec562",
+   "row_index": 194,
+   "split": "train",
+   "split_index": 1,
+   "task": "hotpotqa",
+   "messages_sha256": "7bff72c7045f85e961fac12af3d4d3b2e14ddd5025b17d0eae3cf9fc3e49d5a7"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Polk County"
+    ],
+    "length": 10843,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 16438,
+   "prompt_sha256": "37a29821bfc29be701177110760f19fb9e68b63086d65efdde2b381d758342db",
+   "row_index": 100,
+   "split": "train",
+   "split_index": 2,
+   "task": "hotpotqa",
+   "messages_sha256": "b6aa975a66065451fe922774f753c1d6ded80f79afb63fd1b57082744a37d757"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "no"
+    ],
+    "length": 9537,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 13834,
+   "prompt_sha256": "5fabaea501fc5b506f88f82f35fa700fab2b0ac571ff384e47ca1458ee014aed",
+   "row_index": 55,
+   "split": "train",
+   "split_index": 3,
+   "task": "hotpotqa",
+   "messages_sha256": "9356254c7afe6cf1e128b016f26d0a6176d798c51c97ada60f28d27498809404"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "University"
+    ],
+    "length": 11738,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 16679,
+   "prompt_sha256": "a595b720e10362db0996e7c618a10dfcce580514705ba9b5197e439db820b6c6",
+   "row_index": 128,
+   "split": "train",
+   "split_index": 4,
+   "task": "hotpotqa",
+   "messages_sha256": "fa6ca0ae04ab3644d9d9f7e066d8c40076a325d53703c4cad0a35cffd539a166"
+  },
+  {
+   "config": "hotpotqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Ribosomes"
+    ],
+    "length": 11209,
+    "max_new_tokens": 52,
+    "task": "hotpotqa"
+   },
+   "prompt_length": 16614,
+   "prompt_sha256": "0a0245f8dfa05317955fe781b762a61897a921a5f5f9133329f6aafce39f7a58",
+   "row_index": 26,
+   "split": "train",
+   "split_index": 6,
+   "task": "hotpotqa",
+   "messages_sha256": "dd5c4f1518073c07623bc80ed6d323cd2a97e7fc7fd05e90a706886afd3ad08f"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Mass shootings in America aren't a gun problem, they're a mental health problem, according to Donald Trump. He told a rally in Nashville on Saturday that \"it's not the guns, it's the people. It's these sick people,\" the AP reports. \"Many states and many cities are closing their mental health facilities and closing them down, and they're closing them because they don't have the funding. And we have to start looking much stronger into mental health,\" he said. On NBC's Meet the Press on Sunday, Trump explained that gun control wouldn't help because \"they can be sick as hell and they\u2019re geniuses in a certain way. They are going to be able to break the system.\u201d He also told NBC that to avoid copycat killings, the media should have followed the local sheriff's advice and refused to name the gunman after the mass shooting in Oregon. At the Nashville rally, Trump spoke against \"gun-free zones,\" saying people \"would have been a hell of a lot better off\" if there had been \"teachers with guns in that room\" during the Oregon shooting, and said that since he has a handgun carry permit in New York, anyone who attacks him is in for a surprise, CNN reports. He brought up Charles Bronson's Death Wish, got the audience to chant the name of the movie, and said: \"Today you can\u2019t make that movie because it\u2019s not politically correct,\" reports the Guardian. (Jeb Bush took a lot of heat for saying \"Stuff happens\" after the Oregon shooting.)"
+    ],
+    "length": 2079,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 2547,
+   "prompt_sha256": "2cd918a859c51e487f373911d17aebd54d821649895c84b7afb5a85918d1b904",
+   "row_index": 123,
+   "split": "train",
+   "split_index": 0,
+   "task": "multi_news",
+   "messages_sha256": "9ae37d9b29589a72a753276004e80433e89122785123c9d5e602df0ab1e66202"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "The bad news about acetaminophen just keeps on coming: A new study finds that use of the drug during pregnancy is linked to \"ADHD-like behavioral problems\" in children, CNN reports. The Danish study looked at data from more than 64,000 children and found that those who had prenatal exposure to acetaminophen had a 13% higher risk of exhibiting ADHD-like behaviors, a 29% higher risk of being prescribed ADHD medication, and a 37% higher risk of receiving a diagnosis of hyperkinetic disorder, a severe form of ADHD, USA Today reports. The risk increased the later in pregnancy the drug was taken and the longer it was taken. Women who used acetaminophen for 20 weeks or longer had a 50% higher chance of their children being prescribed ADHD medication. But the authors did not find a cause-and-effect relationship, and they note that \"exhibiting ADHD-like behaviors\" is not the same as actually having ADHD. Right now, doctors consider acetaminophen the \"safest\" pain reliever for pregnant women, NBC News reports; the study author says pregnant women \"shouldn't worry at this point.\" What could account for the link? The authors think acetaminophen may interfere with key maternal hormones that impact fetal brain development. Another recent study also found that frequent acetaminophen use during pregnancy was linked with a 70% higher risk of behavioral problems in children."
+    ],
+    "length": 1951,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 2438,
+   "prompt_sha256": "40bf26e8bbe77dd482eac21903a9aced493d0f6833b07a451bd18c5a12ab651f",
+   "row_index": 57,
+   "split": "train",
+   "split_index": 1,
+   "task": "multi_news",
+   "messages_sha256": "13d51762b696c36cdeebeb3419efef65c444eefaf39891e6ca24c4166bf09ef4"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "At least eight people were arrested yesterday in Detroit for protesting water shutoffs in a city where almost 40% of residents live below the poverty line. Dozens picketed in front of a facility affiliated with the city's Water and Sewerage Department to try to stop what activists call a \u201chuman rights violation,\u201d reports Al Jazeera America. Police tell MLive that the individuals charged with misdemeanor disorderly conduct range in age from 58 to 70 and include members of the clergy. (Watch video of the protest and arrests here.) The Rev. Bill Wylie-Kellermann, one of the arrested protesters, tells the Detroit Free Press that police tried to \"move us forcibly, and we sat down. \u2026 We [were] here to appeal to the workers to stop shutting off the water.\" The coordinator of a local activist group says \"police officers should be arresting rapists and murderers instead of arresting peaceful people.\" A Detroit Police rep counters that protesters still have to follow rules: \"You cannot impede pedestrian or vehicle traffic.\" The Free Press counts 7,210 shutoffs in June, up from 7,556 in April and May combined, as part of what Al Jazeera reports is an effort to recover $175 million in unpaid bills. As of March, nearly half of the city's 323,900 DWSD accounts were delinquent; activists have asked the UN to intervene."
+    ],
+    "length": 1911,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 2413,
+   "prompt_sha256": "679c351ef0550799bc53d17ec6da3fb96251c7b6c775c2a384c2fce8cac2f092",
+   "row_index": 131,
+   "split": "train",
+   "split_index": 3,
+   "task": "multi_news",
+   "messages_sha256": "a6928abf7294b0ae4167120f64c3964237f005797d4a6aefb24d375689d8cf62"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Will Smith stars as Nicky, an established con man who takes on a new apprentice, Australian newcomer Margot Robbie's Jess, in Focus. They both love the con game, but who's playing who? Here's what critics are saying: Richard Corliss at Time is a fan. \"The mix of longtime star and minx on the rise is one tasty element in the success of a movie that approaches the modest goals and effortless allure of a 60-year-old Hitchcock,\" he writes. Smith \"takes a welcome break from glowering sci-fi roles\" and writer-directors Glenn Ficarra and John Requa \"deserve some credit in letting Will be Will in the star's first charm barrage since 2005's Hitch.\" Steven Rea at the Philadelphia Inquirer admits Smith \"shows some of the movie-star wattage that's been missing from his recent pics. He charms.\" There's also \"combustible chemistry\" between Smith and Robbie, but the movie just \"disappoints,\" Rea writes. \"Even if you're willing to forgive its sinkhole plotholes and farthest-fetched conceits, the film ... ultimately makes no sense.\" Betsy Sharkey, on the other hand, says this \"rom-com-con\" is \"an irresistible reminder of all the reasons we first fell for the Fresh Prince so many years ago.\" Writing at the Los Angeles Times, she notes the romantic role of Nicky fits Smith perfectly, while Robbie is \"more than holding her own\" as his match. \"The scams are Rubik's Cube complicated, but what keeps you guessing is whether the romantic connection between Jess and Nicky is real or just another con.\" But Mick LaSalle at the San Francisco Chronicle isn't convinced. In a review titled \"Will Smith just stole $12 from your pocket,\" he argues Focus is \"ridiculous in every detail. It's a movie with no truth that teaches nothing and shows nothing, that has only its audacity to recommend it.\" Nicky and Jess lack \"impact,\" partly because \"Smith is not a strong leading man,\" he says. Viewers are left \"waiting for the trick, which is not the same as being fooled.\""
+    ],
+    "length": 2254,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 2727,
+   "prompt_sha256": "d550d76c4d9fd0913bceeca29d5f8c180adbe82d96071eac0bc929e906d6f6f4",
+   "row_index": 159,
+   "split": "train",
+   "split_index": 5,
+   "task": "multi_news",
+   "messages_sha256": "721eda1311a1e4b02dcb3a412696f73f54416cf28f30033cd72fc68faf67a14c"
+  },
+  {
+   "config": "multi_news",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "A new study says one in seven US colon cancer patients is younger than 50\u2014raising questions about why more young people seem to be getting the disease and what can be done about it, reports HealthDay via the Philadelphia Inquirer. \"Colon cancer has traditionally been thought of as a disease of the elderly,\" says lead author Samantha Hendren. \"This study is really a wake-up call to the medical community that a relatively large number of colon cancers are occurring in people under 50.\" Using government data on almost 260,000 colon-cancer patients from 1998 to 2011, the study also says younger patients more often have advanced cancer and undergo surgery (72% compared to 63% of patients over 50). The young are also more likely to use radiation therapy (53% to 48%) and have a slight advantage in surviving for five years (68% to 67%). Younger people are more likely to have advanced colon cancer partly because they get tested after noticing symptoms (like colon blockage, bleeding, and anemia), while people over 50 are advised to begin screenings, says Hendren. \"Unfortunately, these symptoms are often ignored by the patient or doctor or ascribed to something like hemorrhoids,\" a scientist adds, per Reuters. Hendren's team conducted the study after noticing a rise in colon cancer among young people, Medical Daily reports, but that spike remains unexplained. Physical inactivity, obesity, smoking, and \"an effect in our environment\" are all possible causes, a Harvard professor says. More screenings for young people might help, but the yield would be low because under-50s are still less likely to get colon cancer. \"This would be a big and costly change,\" says Hendren, who recommends \"a lot of research\" be done first. (A new killer is expected to top cancer by 2050.)"
+    ],
+    "length": 2316,
+    "max_new_tokens": 532,
+    "task": "multi_news"
+   },
+   "prompt_length": 2841,
+   "prompt_sha256": "d2c99e388a0d78dd6f80d0ea19f5cd0bccb62ca7033ae7b1394d0b0371fb640a",
+   "row_index": 99,
+   "split": "train",
+   "split_index": 6,
+   "task": "multi_news",
+   "messages_sha256": "ded7bdb6d8cb9a9bdf79f8f8555d0fceea80591f33688b583c60a57fdc97d69f"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "22"
+    ],
+    "length": 11489,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16909,
+   "prompt_sha256": "f6d8b7bf30e2c03d60a145490ea24fd47b8d5331d896acd34a22ada50a9c6590",
+   "row_index": 84,
+   "split": "train",
+   "split_index": 0,
+   "task": "musique",
+   "messages_sha256": "9c3ed3fb546f8a0448a00662513f2a2167852399627b33f531c7ebc702cbc2f0"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "1 December 2010"
+    ],
+    "length": 11889,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 17676,
+   "prompt_sha256": "2dfc1f4a6137792b80610b7102caa40d7fa0bb83ca9e70febe7db4287554a86a",
+   "row_index": 89,
+   "split": "train",
+   "split_index": 1,
+   "task": "musique",
+   "messages_sha256": "8ab702739616842deba182cbe29970b052d53c4999b016d51d73f9f96922f091"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "ATS - 6 (Applications Technology Satellite - 6)",
+     "ATS-6"
+    ],
+    "length": 11213,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16761,
+   "prompt_sha256": "6dd64b9c2629651eb9e6a3209cb3bbdf49e48f148873f1023c4d15d648969b77",
+   "row_index": 9,
+   "split": "train",
+   "split_index": 3,
+   "task": "musique",
+   "messages_sha256": "bace8b5444c8141fe9bd4ff2ddac5e580f634b48df715f4bd263c9b70f8269cc"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Maria Bello"
+    ],
+    "length": 11054,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16486,
+   "prompt_sha256": "d1640c6dcaa662bfbf308c9d7bf5ecb3bf15fe5e77191e016ddd5a5edcc56ebd",
+   "row_index": 0,
+   "split": "train",
+   "split_index": 4,
+   "task": "musique",
+   "messages_sha256": "892c6e8201a48a642e58bdf4351ff9e23351dfcb6483f678c151742d1cdef1fb"
+  },
+  {
+   "config": "musique",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Casa Loma"
+    ],
+    "length": 11417,
+    "max_new_tokens": 52,
+    "task": "musique"
+   },
+   "prompt_length": 16958,
+   "prompt_sha256": "a39e69540736edc92e38d737a84e13b618557f075be83b5297ac448a3a7aff3d",
+   "row_index": 140,
+   "split": "train",
+   "split_index": 5,
+   "task": "musique",
+   "messages_sha256": "861312b3f46fafb315c864b3952597262be73979923701bda8baad9cf353da8e"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 1"
+    ],
+    "length": 10576,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 15263,
+   "prompt_sha256": "d6efabd989acffaa7a2cc7980dd6463be11ba71d4123121fc3b50aa2ff0b9382",
+   "row_index": 26,
+   "split": "train",
+   "split_index": 2,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "12aa0f8fc3e199ec62607ba645c8c2e3649039dee62592057e13f56371f3808e"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 3"
+    ],
+    "length": 10934,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 15255,
+   "prompt_sha256": "0b5c3e02475d385f24a68924c0486e51ec27afb75e46f7e43d6daaacabaf6eea",
+   "row_index": 19,
+   "split": "train",
+   "split_index": 3,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "7c391e71c1b14e082ad9f77f025448b70090bdfc6ebb0212d5b01c2deab67204"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 7"
+    ],
+    "length": 8751,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 12538,
+   "prompt_sha256": "e766e7562f0dc8f5952b60fc183d3448ef0f8328db747b3c468a6f63ef495c4f",
+   "row_index": 133,
+   "split": "train",
+   "split_index": 4,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "48dc3cfdd55966f9726ad95bc72afedd47095759961413e7664985b2c14cf2f3"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 22"
+    ],
+    "length": 9273,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 12942,
+   "prompt_sha256": "31691464257d656c78e3d9c7a58d06bdee03b57397797097191f04ffd91feff6",
+   "row_index": 10,
+   "split": "train",
+   "split_index": 5,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "d52159eea96567a3a2ae3131dc7744ae7d402937ec2e5ccadd476014f6cb3b00"
+  },
+  {
+   "config": "passage_retrieval_en",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Paragraph 24"
+    ],
+    "length": 8832,
+    "max_new_tokens": 52,
+    "task": "passage_retrieval_en"
+   },
+   "prompt_length": 12119,
+   "prompt_sha256": "74d505a794275f873f7bd853d27a1bddbd2174338e3fcd8aad0d67c263f0c3b8",
+   "row_index": 6,
+   "split": "train",
+   "split_index": 6,
+   "task": "passage_retrieval_en",
+   "messages_sha256": "4163e006435328ca91854726794e3d3d804284b7f206b12b43a161f4d2baebc1"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Yes",
+     "Yes"
+    ],
+    "length": 4457,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 6019,
+   "prompt_sha256": "80478440f46d380bf72905f06ea43659e076baa158b5270a431369f2a292c59e",
+   "row_index": 51,
+   "split": "train",
+   "split_index": 3,
+   "task": "qasper",
+   "messages_sha256": "9d96b79078ee99b53d7ee4711c79ac49686eedb3c7d524724e56d98f0ad3e27e"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "They use two independent convolutional and max-pooling layers on (1) a combination of the left context, the left entity and the middle context; and (2) a combination of the middle context, the right entity and the right context. They concatenated the two results after pooling to get the new context representation."
+    ],
+    "length": 2435,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 3473,
+   "prompt_sha256": "f98ed741f7ac9ded4aa0109097082ade25c72de47c94e8772d037df361644754",
+   "row_index": 82,
+   "split": "train",
+   "split_index": 4,
+   "task": "qasper",
+   "messages_sha256": "cde79fc12469f70c347ad80bb61a5f1a535da5599ccc565439d7d11aeb14ed79"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "ancient Chinese history records in several dynasties (about 1000BC-200BC) and articles written by celebrities of that era",
+     "Ancient Chinese history records in several dynasties and articles written by celebrities during 1000BC-200BC collected from the internet "
+    ],
+    "length": 3722,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 5267,
+   "prompt_sha256": "3e2ae7c351c34700e63eaa6e46367c388b18a6098c2ee63f3e57e2ae42cdefb4",
+   "row_index": 171,
+   "split": "train",
+   "split_index": 5,
+   "task": "qasper",
+   "messages_sha256": "4e508689d4383128aeb59ab50350174c359505901ddf2bc46af7164a6ed00d32"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Byte-Pair Encoding perplexity  (BPE PPL),\nBLEU-1,\nBLEU-4,\nROUGE-L,\npercentage of distinct unigram (D-1),\npercentage of distinct bigrams(D-2),\nuser matching accuracy(UMA),\nMean Reciprocal Rank(MRR)\nPairwise preference over baseline(PP)",
+     "BLEU-1/4 and ROUGE-L, likelihood of generated recipes using identical input specifications but conditioned on ten different user profiles, user matching accuracy (UMA), Mean Reciprocal Rank (MRR), neural scoring model from BIBREF33 to measure recipe-level coherence",
+     " Distinct-1/2, UMA = User Matching Accuracy, MRR\n= Mean Reciprocal Rank, PP = Pairwise preference over baseline (evaluated for 310 recipe pairs per model)"
+    ],
+    "length": 2673,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 4102,
+   "prompt_sha256": "bdda2e4c4be536f2f6486ca90974df3b6fb1d15ef3e0e0908b8a0488fcbfa013",
+   "row_index": 30,
+   "split": "train",
+   "split_index": 6,
+   "task": "qasper",
+   "messages_sha256": "34184caf1c7e52a70946e58f9cc7993f5e874a888e2fd1fcb986866598e4269e"
+  },
+  {
+   "config": "qasper",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Unanswerable",
+     "Unanswerable"
+    ],
+    "length": 3711,
+    "max_new_tokens": 148,
+    "task": "qasper"
+   },
+   "prompt_length": 5280,
+   "prompt_sha256": "853aa4a7be80cec1f73e70645caaecb8512d6654fb9bd5f23e945add22493c7b",
+   "row_index": 63,
+   "split": "train",
+   "split_index": 7,
+   "task": "qasper",
+   "messages_sha256": "308836a5f18882ba1970966de2e5b9b50ea5c19014c5f29c17929ee5eea54818"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "The opposition party claimed that the government had been providing financial support to companies such as Air Canada, which did not pay a single cent in tax nor did it use the money to reimburse customers. The minister explained that the government did not bias against any company, , and it was thought that it was very important to protect employees in every sector of the economy and across Canada.The fight against tax evasion was a priority for the government. The minister promised that they would continue to target companies that use tax evasion schemes."
+    ],
+    "length": 20281,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 25619,
+   "prompt_sha256": "3e40c87e60199284624786bc5e9c875b6cd8d58e57f8ccfb55efed70021a182e",
+   "row_index": 146,
+   "split": "train",
+   "split_index": 0,
+   "task": "qmsum",
+   "messages_sha256": "3c638a07c3d9b1e065f3a39a3e711cd707d97426cdad3cafd5ce61ea62eeef9c"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "The Project Manager thought the prototype was basically the same with the former one, and the thickness was not suitable for the target customers. Then the LCD screen might be covered when held by hands, so the users couldn't figure out what happened on the screen. Therefore from this perspective the screen was totally unusable, still needing marketing research."
+    ],
+    "length": 10667,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 15299,
+   "prompt_sha256": "eb25563ee1d91e07a86def687db34237db78e200802c55d6b22f9c0fde4dbb72",
+   "row_index": 3,
+   "split": "train",
+   "split_index": 3,
+   "task": "qmsum",
+   "messages_sha256": "d38f03960c20817fb43f6edf54669de7e26ceeccb9446e2acb3c92195f9cf71f"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Huw Irranca-Davies thought there would be capacity growth in the next two to three years to deliver the product. The confidence was constructed by the development of roll-out, in which the team was learning live time. Moreover, there was a separate fund into cycle meithrin to address the issue of the Welsh language."
+    ],
+    "length": 12342,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 16287,
+   "prompt_sha256": "5edc4ca01347523e6589a9f1957d1844440335c4c0f382dedd038255c6f3f005",
+   "row_index": 34,
+   "split": "train",
+   "split_index": 4,
+   "task": "qmsum",
+   "messages_sha256": "5c9f969f8a2147c53b5c1b106c3de238a2dbb5a8be5d3cee772fe191ec04de29"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Huw Irranca-Davies mentioned there were some economic issues and cultural issues to deal with, rather than the capacity problems."
+    ],
+    "length": 12339,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 16280,
+   "prompt_sha256": "2a71103fe751ca1948131af1fc5689dd30bc8e08b6455291d21b69c0bc615b56",
+   "row_index": 171,
+   "split": "train",
+   "split_index": 5,
+   "task": "qmsum",
+   "messages_sha256": "383dbcf15d44356a6b368c5c5f5e2025407e60951f6c14d0892996fbae30b582"
+  },
+  {
+   "config": "qmsum",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "He talks about something on the components design after having put up the specification properties. As for materials, he used to suggest using hard plastic in order to make the control hard and solid, but at this conference, he thinks that their target audience, young people, love soft colors and materials, like rubber. And he also suggests a shape of a double curved case. As for the buttons, he suggests simple push buttons, without difficult scroll things that makes the control more complex and expensive. And he suggests not using a speaker or a sensor or speech controlled device."
+    ],
+    "length": 11172,
+    "max_new_tokens": 532,
+    "task": "qmsum"
+   },
+   "prompt_length": 15667,
+   "prompt_sha256": "c857fb5bc5e328fd5c06ab8e6d115c68b00183dc7c0631609dade9d86e81761c",
+   "row_index": 142,
+   "split": "train",
+   "split_index": 6,
+   "task": "qmsum",
+   "messages_sha256": "c4129021b0dade582325ddea42ed9b33dea248a8f2f37ef47a4e1ffd8ec2ac06"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "            Toaster.getInstance().toast(R.string.unable_open_chat, Toast.LENGTH_SHORT);\r"
+    ],
+    "length": 7404,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 17907,
+   "prompt_sha256": "bfb7fd2e71b70606e2b1129f0eb2fb76cac1643cd8518e27664f7500755ebbfc",
+   "row_index": 223,
+   "split": "train",
+   "split_index": 1,
+   "task": "repobench-p",
+   "messages_sha256": "67d25e1e22e281ce8fb144ceb630a05189079b232cfde4b27abcddbfecc147df"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "                tablefmt = vtablefmt.vsv_unaligned"
+    ],
+    "length": 4956,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 13091,
+   "prompt_sha256": "2d0b9ee012a6fca205806671dcd847ca03ecdb29cd0eb3b02d674798cf574d66",
+   "row_index": 202,
+   "split": "train",
+   "split_index": 6,
+   "task": "repobench-p",
+   "messages_sha256": "a0acdfe7d50d3fd8994048c77150aecb09e57d1f46104770edfc8dc6696461f5"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "                    public void startNewOrderActivity(Order order, @StringRes int stringId) {"
+    ],
+    "length": 4161,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 10802,
+   "prompt_sha256": "ee8d8a5876abde0811814682a1c7a96e92c9f17b4d005d82fcce22195985ee8c",
+   "row_index": 458,
+   "split": "train",
+   "split_index": 7,
+   "task": "repobench-p",
+   "messages_sha256": "20e8f62f56d95f91ffaa3446604383f3a8899f768f85592774ec50f4ff4ff235"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "\t\telif type(obj) is CalcSheetAnalysis:"
+    ],
+    "length": 6601,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 20784,
+   "prompt_sha256": "c7f726752209979947f14114ccc480e1c98dad0a08d67282654b4407364c72e7",
+   "row_index": 380,
+   "split": "train",
+   "split_index": 8,
+   "task": "repobench-p",
+   "messages_sha256": "11afef15de5c09846e1bc5744fe711a1ebfa2d34832b46103a4509cbded7f36e"
+  },
+  {
+   "config": "repobench-p",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "        config_actor = ConfigActor(config_file, '')"
+    ],
+    "length": 4341,
+    "max_new_tokens": 84,
+    "task": "repobench-p"
+   },
+   "prompt_length": 13098,
+   "prompt_sha256": "447ba9be9aecc3a02bfee1236b53d849255872e5c6bac37487577d305c8635fa",
+   "row_index": 43,
+   "split": "train",
+   "split_index": 9,
+   "task": "repobench-p",
+   "messages_sha256": "8149256a5f790fb3e4f105a3cfab5ec13683e056b4cd3594cb3e2145516a33ad"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Almond tree",
+     "Luz (nut)",
+     "Amygdalus amara",
+     "Almond oil",
+     "Marcona almonds",
+     "Mandel (nut)",
+     "Badam",
+     "Almond Bitter Oil",
+     "Prunus dulcis",
+     "Almond trees",
+     "Amygdalus communis",
+     "Almendrado",
+     "Amygdalus dulcis",
+     "Marcona Almonds",
+     "Prunus amygdalus dulcis",
+     "Druparia amygdalus",
+     "Marcona almond",
+     "Marcona Almond",
+     "Prunus amygdalus",
+     "Almond extract",
+     "Amygdalus fragilis",
+     "Amygdalus sativa",
+     "Baadaam",
+     "Oil of bitter almond",
+     "Toasted Almond",
+     "Oleum amygdalae",
+     "Bitter almonds",
+     "Sweet almond oil",
+     "Almond",
+     "\u0644\u0648\u0632",
+     "Almonds",
+     "Oil of Bitter Almonds",
+     "Almond syrup",
+     "Bitter almond"
+    ],
+    "length": 12096,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 17644,
+   "prompt_sha256": "588db93eddfc2cd4412c44ef32ec9c6d4d97b94161c78035332b6a128042d776",
+   "row_index": 198,
+   "split": "train",
+   "split_index": 2,
+   "task": "triviaqa",
+   "messages_sha256": "7b3dd636c6a4042a4c07e09d99e5df5e6d01c5b2ba46c7e665eba4aff5452a11"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "The owl and the pussycat",
+     "The Owl And The Pussycat",
+     "The Owl and the Pussy Cat",
+     "Owl and the Pussy Cat",
+     "Goatlyboatly",
+     "Owl and the Pussycat",
+     "Goatly boatly",
+     "Owl and the pussycat",
+     "The Owl and the Pussycat",
+     "The Owl and the Pussy-Cat"
+    ],
+    "length": 10506,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 15756,
+   "prompt_sha256": "50268abbb1d753eebce196a7d6627a2b0ff41b3686eda9fb59545c22d678f8cd",
+   "row_index": 81,
+   "split": "train",
+   "split_index": 3,
+   "task": "triviaqa",
+   "messages_sha256": "6d33676a23a66d5309bf920f47a43d436e4e8b45f561314e30df4d0bc742ede2"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Goldtrail"
+    ],
+    "length": 6891,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 10107,
+   "prompt_sha256": "d90c2b166b4a6b8bab1e6bedd8f1d6db701323b400ea5d6ef81c27dac1cd84e7",
+   "row_index": 154,
+   "split": "train",
+   "split_index": 4,
+   "task": "triviaqa",
+   "messages_sha256": "4246236c1a909b620c8408d8e8c53b396c62972205791486a88dfadf442e1a1f"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Allmhaigh",
+     "Alloway"
+    ],
+    "length": 6329,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 9520,
+   "prompt_sha256": "64d65bdceea6563e6ecb636f03b63945cfd7688c309a0dcf40e6c362deaf3eeb",
+   "row_index": 46,
+   "split": "train",
+   "split_index": 5,
+   "task": "triviaqa",
+   "messages_sha256": "6addcea3f1b43f6e52ef87fa948134e0d60d49e220c7b3b6216199b89a039cba"
+  },
+  {
+   "config": "triviaqa",
+   "dataset": "longbench",
+   "metadata": {
+    "all_classes": null,
+    "answers": [
+     "Curling sheet",
+     "Curling",
+     "Chess on ice",
+     "Curling (sport)",
+     "Button (curling)",
+     "Curling rock",
+     "Curling rink",
+     "Curling shoes",
+     "Roaring game",
+     "The roaring game",
+     "Curling stone",
+     "Hammer (curling)",
+     "Sweeping (sport)",
+     "Curling broom",
+     "Free guard zone",
+     "History of curling"
+    ],
+    "length": 7701,
+    "max_new_tokens": 52,
+    "task": "triviaqa"
+   },
+   "prompt_length": 11537,
+   "prompt_sha256": "2bfecf11beae277baabbefa82e850d10f02805e66a5cc574f7d5ae8995147b8b",
+   "row_index": 114,
+   "split": "train",
+   "split_index": 6,
+   "task": "triviaqa",
+   "messages_sha256": "9e1a0e7f021d4de35d6056c9fae79bd0adb39e60f2c97a15cf301c270e42782c"
+  }
+ ],
+ "test_row_ids_by_task": {
+  "hotpotqa": [
+   50,
+   62,
+   192,
+   161,
+   172,
+   80,
+   166,
+   86,
+   141,
+   103
+  ],
+  "multi_news": [
+   10,
+   34,
+   184,
+   153,
+   156,
+   54,
+   130,
+   125,
+   175,
+   197
+  ],
+  "musique": [
+   79,
+   101,
+   90,
+   195,
+   168,
+   22,
+   40,
+   196,
+   39,
+   53
+  ],
+  "passage_retrieval_en": [
+   178,
+   0,
+   123,
+   117,
+   174,
+   20,
+   46,
+   33,
+   190,
+   74
+  ],
+  "qasper": [
+   124,
+   78,
+   13,
+   151,
+   128,
+   135,
+   164,
+   106,
+   36,
+   138
+  ],
+  "qmsum": [
+   79,
+   15,
+   85,
+   129,
+   105,
+   156,
+   128,
+   174,
+   136,
+   180
+  ],
+  "repobench-p": [
+   94,
+   110,
+   370,
+   22,
+   278,
+   62,
+   207,
+   264,
+   457,
+   123
+  ],
+  "triviaqa": [
+   199,
+   155,
+   168,
+   122,
+   119,
+   58,
+   108,
+   135,
+   190,
+   158
+  ]
+ },
+ "train_row_ids_by_task": {
+  "hotpotqa": [
+   154,
+   194,
+   100,
+   55,
+   128,
+   162,
+   26,
+   87,
+   41,
+   174,
+   47,
+   138,
+   0,
+   144,
+   56,
+   130,
+   136,
+   155,
+   169,
+   68,
+   48,
+   168,
+   27,
+   69,
+   45,
+   118,
+   40,
+   182,
+   6,
+   152,
+   30,
+   195,
+   133,
+   21,
+   124,
+   196,
+   131,
+   132,
+   188,
+   84,
+   170,
+   36,
+   5,
+   59,
+   97,
+   54,
+   90,
+   173,
+   12,
+   34
+  ],
+  "multi_news": [
+   123,
+   57,
+   163,
+   131,
+   180,
+   159,
+   99,
+   0,
+   124,
+   152,
+   63,
+   161,
+   191,
+   120,
+   128,
+   132,
+   122,
+   77,
+   50,
+   87,
+   118,
+   162,
+   105,
+   150,
+   113,
+   56,
+   47,
+   183,
+   136,
+   165,
+   185,
+   112,
+   45,
+   127,
+   93,
+   88,
+   53,
+   137,
+   100,
+   67,
+   64,
+   25,
+   145,
+   70,
+   102,
+   82,
+   115,
+   66,
+   6,
+   89
+  ],
+  "musique": [
+   84,
+   89,
+   60,
+   9,
+   0,
+   140,
+   143,
+   112,
+   190,
+   134,
+   118,
+   94,
+   129,
+   121,
+   86,
+   32,
+   174,
+   124,
+   76,
+   28,
+   8,
+   181,
+   23,
+   51,
+   177,
+   157,
+   191,
+   141,
+   183,
+   135,
+   36,
+   159,
+   31,
+   13,
+   38,
+   115,
+   50,
+   184,
+   152,
+   144,
+   82,
+   91,
+   137,
+   188,
+   104,
+   107,
+   116,
+   95,
+   109,
+   43
+  ],
+  "passage_retrieval_en": [
+   80,
+   36,
+   26,
+   19,
+   133,
+   10,
+   6,
+   29,
+   25,
+   181,
+   185,
+   182,
+   14,
+   50,
+   197,
+   55,
+   111,
+   188,
+   13,
+   112,
+   85,
+   115,
+   122,
+   11,
+   110,
+   40,
+   180,
+   187,
+   39,
+   98,
+   138,
+   114,
+   51,
+   48,
+   62,
+   97,
+   134,
+   103,
+   142,
+   8,
+   192,
+   172,
+   160,
+   68,
+   164,
+   84,
+   131,
+   116,
+   88,
+   183
+  ],
+  "qasper": [
+   43,
+   127,
+   32,
+   51,
+   82,
+   171,
+   30,
+   63,
+   113,
+   57,
+   77,
+   115,
+   168,
+   15,
+   19,
+   84,
+   173,
+   190,
+   152,
+   170,
+   119,
+   18,
+   98,
+   88,
+   109,
+   26,
+   126,
+   186,
+   62,
+   53,
+   80,
+   24,
+   54,
+   101,
+   93,
+   102,
+   76,
+   85,
+   75,
+   100,
+   132,
+   1,
+   45,
+   103,
+   155,
+   180,
+   86,
+   64,
+   25,
+   123
+  ],
+  "qmsum": [
+   146,
+   154,
+   5,
+   3,
+   34,
+   171,
+   142,
+   177,
+   131,
+   133,
+   7,
+   52,
+   195,
+   74,
+   28,
+   168,
+   117,
+   58,
+   2,
+   63,
+   61,
+   191,
+   90,
+   115,
+   165,
+   87,
+   190,
+   169,
+   70,
+   1,
+   172,
+   25,
+   50,
+   32,
+   175,
+   6,
+   101,
+   125,
+   112,
+   39,
+   155,
+   8,
+   163,
+   93,
+   35,
+   10,
+   71,
+   193,
+   36,
+   18
+  ],
+  "repobench-p": [
+   220,
+   223,
+   136,
+   230,
+   448,
+   484,
+   202,
+   458,
+   380,
+   43,
+   337,
+   418,
+   15,
+   139,
+   118,
+   227,
+   312,
+   12,
+   302,
+   472,
+   212,
+   260,
+   24,
+   198,
+   355,
+   125,
+   97,
+   251,
+   389,
+   288,
+   111,
+   394,
+   143,
+   261,
+   352,
+   460,
+   494,
+   105,
+   493,
+   204,
+   146,
+   10,
+   175,
+   78,
+   311,
+   4,
+   405,
+   402,
+   52,
+   307
+  ],
+  "triviaqa": [
+   144,
+   182,
+   198,
+   81,
+   154,
+   46,
+   114,
+   141,
+   147,
+   189,
+   47,
+   62,
+   84,
+   51,
+   26,
+   184,
+   11,
+   78,
+   37,
+   97,
+   8,
+   100,
+   76,
+   185,
+   2,
+   151,
+   22,
+   174,
+   74,
+   88,
+   159,
+   32,
+   80,
+   194,
+   102,
+   85,
+   9,
+   116,
+   15,
+   49,
+   179,
+   24,
+   28,
+   162,
+   161,
+   52,
+   12,
+   164,
+   86,
+   21
+  ]
+ }
+}
