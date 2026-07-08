@@ -44,11 +44,17 @@ This directory organises the project notes by role.
 
 ## Page-unit quantization (paged_quant branch)
 
+- [page_quant/final_report.md](page_quant/final_report.md)
+  - presentation-ready consolidated write-up (clear prose; start here)
+- [page_quant/final_report.html](page_quant/final_report.html)
+  - interactive HTML version (self-contained; rate-vs-F1 chart, mechanism stack)
 - [page_quant/plan.md](page_quant/plan.md)
   - plan assessment → recon → 3-critic adversarial review → design v3
 - [page_quant/report.md](page_quant/report.md)
   - per-token-precision fixed-byte pages: ω decomposition on F1, EC serving verdict
     (measured), fixed-width bug chain, kernel prototype
+- [page_quant/report2.md](page_quant/report2.md)
+  - pgq2: no-EC codec frontier mapped (EC fundamental at <=1.5 b/c; omega regime law)
 - [page_quant/fixes_to_apply.md](page_quant/fixes_to_apply.md)
   - bug tracker (pgq_fixed three-stage root cause chain)
 
