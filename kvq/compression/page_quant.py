@@ -40,6 +40,7 @@ import torch
 from kvq.compression.ec_roundtrip import dz_round, dz_dequant
 
 PGQ_BUNDLE_VERSION = 2
+PGQ2_BUNDLE_VERSION = 3
 N_LANES = 4
 HEADER_BITS = 96
 LANE_OVERHEAD_BITS = 72  # per lane: u32 length + u32 final state + slack
@@ -418,10 +419,15 @@ class FixedWidthPagedCompressor(_PagedBase):
 def load_pgq_compressors_from_bundle(path, k_method, b_page):
     """Build per-(layer, head) compressors for layers 1..L-1 (layer-0 fp16).
 
-    k_method: pgq_ea | pgq_plain | pgq_fixed | pgq_fixed_ea | pgq_pagerung.
-    b_page: bits/coord page budget (the press's k_bits field, float ok).
+    v2 methods: pgq_ea | pgq_plain | pgq_fixed | pgq_fixed_ea | pgq_pagerung.
+    v3 (pgq2) methods: pgq_nd_{uni,rdo,ea,eag} | pgq_rvq_{uni,rdo,ea,eag} —
+    routed to the norm-direction / residual-VQ families. For *_uni the
+    press's k_bits carries the RUNG INDEX (w or stage count, rate is fixed
+    by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
+    if k_method.startswith(("pgq_nd_", "pgq_rvq_")):
+        return _load_pgq2(blob, path, k_method, b_page)
     if blob.get("pgq_version") != PGQ_BUNDLE_VERSION:
         raise ValueError(f"pgq bundle version mismatch at {path}")
     L, H = blob["n_layers"], blob["n_kv_heads"]
@@ -466,4 +472,58 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
                     omega_clamp_bits=cb, **args)
     meta = {k: v for k, v in blob.items() if not torch.is_tensor(v)
             and not isinstance(v, list)}
+    return comps, meta
+
+
+def _load_pgq2(blob, path, k_method, k_bits):
+    """pgq2 loader: pgq_{nd,rvq}_{uni,rdo,ea,eag}. omega tau comes from the
+    bundle's frozen omega_tau_by_rate (patched in by select_pgq2_hparams
+    after the selection-row freeze); eag additionally applies gate_theta."""
+    from kvq.compression.norm_direction import NormDirectionPagedCompressor
+    from kvq.compression.rvq import ResidualVQPagedCompressor
+
+    if blob.get("pgq_version") != PGQ2_BUNDLE_VERSION:
+        raise ValueError(f"pgq2 bundle version mismatch at {path}")
+    fam, variant = k_method.split("_")[1], k_method.split("_")[2]
+    L, H = blob["n_layers"], blob["n_kv_heads"]
+    if variant == "uni":
+        b_page, uniform_sel = 8.0, int(k_bits)
+        mode = "uniform"
+    else:
+        b_page, uniform_sel = float(k_bits), None
+        mode = "rdo"
+    if variant in ("ea", "eag"):
+        taus = blob["omega_tau_by_rate"]
+        key = f"{b_page:g}"
+        if key not in taus:
+            raise ValueError(f"no frozen omega tau for rate {key} in {path}")
+        tau = float(taus[key])
+    else:
+        tau = 0.0
+    theta = float(blob["gate_theta"]) if variant == "eag" else 0.0
+
+    comps = {}
+    for l in range(1, L):
+        for h in range(H):
+            common = dict(
+                forward_map=blob["forward"][l, h],
+                inverse_map=blob["inverse"][l, h],
+                mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h],
+                b_page=b_page, ptok=int(blob["ptok"]), mode=mode,
+                omega_tau=tau,
+                omega_clamp_bits=float(blob["omega_clamp_bits"]),
+                gate_theta=theta,
+                head_m_spread=float(blob["head_m_spread"][l, h]))
+            if fam == "nd":
+                comps[(l, h)] = NormDirectionPagedCompressor(
+                    coord_std_dir=blob["coord_std_dir"][l, h],
+                    profiles=blob["nd_profiles"],
+                    uniform_rung=uniform_sel, **common)
+            else:
+                comps[(l, h)] = ResidualVQPagedCompressor(
+                    codebooks=[cb[l][h] for cb in blob["rvq_codebooks"]],
+                    perm=blob["rvq_perm"][l, h],
+                    uniform_stages=uniform_sel, **common)
+    meta = {k: v for k, v in blob.items()
+            if not torch.is_tensor(v) and not isinstance(v, list)}
     return comps, meta
