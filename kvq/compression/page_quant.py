@@ -41,6 +41,7 @@ from kvq.compression.ec_roundtrip import dz_round, dz_dequant
 
 PGQ_BUNDLE_VERSION = 2
 PGQ2_BUNDLE_VERSION = 3
+PGQ3_BUNDLE_VERSION = 4
 N_LANES = 4
 HEADER_BITS = 96
 LANE_OVERHEAD_BITS = 72  # per lane: u32 length + u32 final state + slack
@@ -67,6 +68,26 @@ def snap_positions(idx: torch.Tensor, support_vals: torch.Tensor,
     single = (support_lens <= 1).unsqueeze(1)
     pos = torch.where(single, torch.zeros_like(pos), pos)
     return pos.t().contiguous()
+
+
+def bit_reversal_perm(n: int) -> torch.Tensor:
+    """Index permutation by reversed bit order (n a power of 2)."""
+    bits = n.bit_length() - 1
+    return torch.tensor([int(f"{i:0{bits}b}"[::-1], 2) for i in range(n)],
+                        dtype=torch.long)
+
+
+def build_hadamard(d: int) -> torch.Tensor:
+    """Orthonormal Sylvester-Hadamard with bit-reversed rows (d a power of
+    2). Orthogonal in code space, so composing it after qpca_unc preserves
+    code-SE == Q-weighted key MSE exactly while mixing coordinate energy
+    (OSCAR amendment 1: isotropizes subvectors for E8/TCQ shared scales)."""
+    if d & (d - 1):
+        raise ValueError(f"d={d} is not a power of 2")
+    h = torch.ones(1, 1)
+    while h.shape[0] < d:
+        h = torch.cat([torch.cat([h, h], 1), torch.cat([h, -h], 1)], 0)
+    return h[bit_reversal_perm(d)] / math.sqrt(d)
 
 
 def _paged_lambda_assign(Dw64, R64, budgets, ptok, iters=40):
@@ -421,11 +442,15 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
 
     v2 methods: pgq_ea | pgq_plain | pgq_fixed | pgq_fixed_ea | pgq_pagerung.
     v3 (pgq2) methods: pgq_nd_{uni,rdo,ea,eag} | pgq_rvq_{uni,rdo,ea,eag} —
-    routed to the norm-direction / residual-VQ families. For *_uni the
+    routed to the norm-direction / residual-VQ families. v4 (pgq3) methods:
+    pgq_tcq_{uni,rdo,ea} | pgq_e8_{uni,rdo,ea} | pgq_oscar_uni — routed to
+    the trellis / E8-lattice / OSCAR-emulation families. For *_uni the
     press's k_bits carries the RUNG INDEX (w or stage count, rate is fixed
     by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
+    if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
+        return _load_pgq3(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_nd_", "pgq_rvq_")):
         return _load_pgq2(blob, path, k_method, b_page)
     if blob.get("pgq_version") != PGQ_BUNDLE_VERSION:
@@ -524,6 +549,72 @@ def _load_pgq2(blob, path, k_method, k_bits):
                     codebooks=[cb[l][h] for cb in blob["rvq_codebooks"]],
                     perm=blob["rvq_perm"][l, h],
                     uniform_stages=uniform_sel, **common)
+    meta = {k: v for k, v in blob.items()
+            if not torch.is_tensor(v) and not isinstance(v, list)}
+    return comps, meta
+
+
+def _load_pgq3(blob, path, k_method, k_bits):
+    """pgq3 loader: pgq_{tcq,e8}_{uni,rdo,ea} | pgq_oscar_uni. Frozen omega
+    tau comes from the bundle (fit carries the pgq2 frozen values forward;
+    no re-selection). oscar is single-rung: k_bits indexes oscar_widths."""
+    from kvq.compression.tcq import TCQPagedCompressor
+    from kvq.compression.e8 import E8PagedCompressor
+    from kvq.compression.oscar_arm import OscarArmCompressor
+
+    if blob.get("pgq_version") != PGQ3_BUNDLE_VERSION:
+        raise ValueError(f"pgq3 bundle version mismatch at {path}")
+    fam, variant = k_method.split("_")[1], k_method.split("_")[2]
+    L, H = blob["n_layers"], blob["n_kv_heads"]
+    if variant == "uni":
+        b_page, uniform_sel = 8.0, int(k_bits)
+        mode = "uniform"
+    else:
+        b_page, uniform_sel = float(k_bits), None
+        mode = "rdo"
+    if variant == "ea":
+        taus = blob["omega_tau_by_rate"]
+        key = f"{b_page:g}"
+        if key not in taus:
+            raise ValueError(f"no frozen omega tau for rate {key} in {path}")
+        tau = float(taus[key])
+    else:
+        tau = 0.0
+
+    comps = {}
+    for l in range(1, L):
+        for h in range(H):
+            if fam == "oscar":
+                comps[(l, h)] = OscarArmCompressor(
+                    forward_map=blob["oscar_mixer"],
+                    inverse_map=blob["oscar_mixer"].t().contiguous(),
+                    mu=torch.zeros(blob["head_dim"]),
+                    mu_q=blob["mu_q"][l, h],
+                    width=blob["oscar_widths"][uniform_sel],
+                    group_size=blob["oscar_group"],
+                    clip_q=blob["oscar_clip_q"],
+                    b_page=8.0, ptok=int(blob["ptok"]))
+                continue
+            common = dict(
+                forward_map=blob["forward"][l, h],
+                inverse_map=blob["inverse"][l, h],
+                mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h],
+                b_page=b_page, ptok=int(blob["ptok"]), mode=mode,
+                uniform_rung=uniform_sel, omega_tau=tau,
+                omega_clamp_bits=float(blob["omega_clamp_bits"]))
+            if fam == "tcq":
+                comps[(l, h)] = TCQPagedCompressor(
+                    tables=[t[l, h] for t in blob["tcq_tables"]],
+                    tcq_widths=blob["tcq_widths"],
+                    n_states=int(blob["tcq_states"]),
+                    sparse_ks=blob["sparse_ks"],
+                    mag_bits=int(blob["mag_bits"]),
+                    mixer=blob.get("tcq_mixer"), **common)
+            else:
+                comps[(l, h)] = E8PagedCompressor(
+                    profiles=blob["e8_profiles"][l, h],
+                    beta=float(blob["e8_beta"][l, h]),
+                    mixer=blob.get("e8_mixer"), **common)
     meta = {k: v for k, v in blob.items()
             if not torch.is_tensor(v) and not isinstance(v, list)}
     return comps, meta
