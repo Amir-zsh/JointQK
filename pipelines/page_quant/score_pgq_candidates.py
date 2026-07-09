@@ -81,6 +81,10 @@ def main() -> None:
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--rates", type=float, nargs="+", default=[1.5, 1.0])
     ap.add_argument("--modes", nargs="+", default=PGQ_MODES)
+    ap.add_argument("--bundle", default=str(PGQ_BUNDLE),
+                    help="pgq bundle the candidate modes load from "
+                         "(pgq3: artifacts/page_quant2/pgq3_bundle__*.pt)")
+    ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--q-cap", type=int, default=8192,
                     help="max queries per (l,h,row); full 4T queries x 18 "
                          "methods is a 4h pass — capped, seeded subsample")
@@ -95,7 +99,7 @@ def main() -> None:
     methods = {}
     for b in args.rates:
         for mode in args.modes:
-            comps, _ = load_pgq_compressors_from_bundle(PGQ_BUNDLE, mode, b)
+            comps, _ = load_pgq_compressors_from_bundle(args.bundle, mode, b)
             methods[f"{mode}@b{b:g}"] = comps
         ecb = (EC_DIR / f"ec_bundle__qpca_unc__b{b:g}__dz0.5__"
                         f"compact8train18__uniform.pt")
@@ -139,7 +143,7 @@ def main() -> None:
             report[name]["rate_heldout"] = (payload + side) / max(toks, 1) / 128
             report[name]["overflow_frac"] = over / max(pages, 1)
 
-    save_json(OUT, {"reference": {
+    save_json(Path(args.out), {"reference": {
         "tq_k2": {"top1": 0.4031, "top5": 0.9212, "k_mse": 0.5572,
                   "logit_err": 0.02329, "rate": 2.125,
                   "source": "phaseA_report.json (EC study, same rows)"},
@@ -160,7 +164,7 @@ def main() -> None:
               f"{r['k_mse']:9.4f} {r['logit_err']:10.5f} "
               + (f"{rate:7.3f}" if rate is not None else f"{'-':>7s}")
               + (f" {100 * ovf:5.2f}%" if ovf is not None else ""))
-    print(f"-> {OUT} ({time.time() - t0:.0f}s)")
+    print(f"-> {args.out} ({time.time() - t0:.0f}s)")
 
 
 if __name__ == "__main__":

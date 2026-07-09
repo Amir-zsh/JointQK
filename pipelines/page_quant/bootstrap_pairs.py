@@ -29,14 +29,17 @@ import pandas as pd  # noqa: E402
 from benchmarks.longbench.calculate_metrics import dataset2metric  # noqa: E402
 
 BENCH = REPO / "artifacts/bench_pgq/llama31_8b"
+CELL_GLOB = "pgq__{kind}__b{rate}__*__{task}"
 TASKS = ["lcc", "musique", "2wikimqa"]
 NBOOT = 10000
 SEED = 20260707
 
 
-def cell_predictions(method: str, task: str) -> pd.DataFrame:
+def cell_predictions(method: str, task: str, bench: Path = BENCH,
+                     cell_glob: str = CELL_GLOB) -> pd.DataFrame:
     kind, rate = method.split("@")
-    hits = sorted(BENCH.glob(f"pgq__{kind}__b{rate}__*__{task}"))
+    hits = sorted(bench.glob(cell_glob.format(kind=kind, rate=rate,
+                                              task=task)))
     hits = [h for h in hits if "__f0" not in h.name]
     assert len(hits) == 1, f"{method}/{task}: {len(hits)} cell dirs"
     csvs = [p for p in hits[0].glob("*/predictions.csv")
@@ -69,14 +72,24 @@ def main() -> None:
     ap.add_argument("--a", required=True, help="e.g. pgq_ea@1.0")
     ap.add_argument("--b", required=True, help="e.g. ecu@1.0")
     ap.add_argument("--tasks", nargs="+", default=TASKS)
+    ap.add_argument("--bench-root", default=str(BENCH),
+                    help="cell tree (eviction: artifacts/bench_evict/"
+                         "llama31_8b)")
+    ap.add_argument("--cell-glob", default=CELL_GLOB,
+                    help="cell-dir glob with {kind}/{rate}/{task} slots "
+                         "(eviction: 'evict__{kind}__r{rate}__{task}'; "
+                         "the method arg stays '<kind>@<rate>')")
     args = ap.parse_args()
     rng = np.random.default_rng(SEED)
+    bench = Path(args.bench_root)
 
     per_task_delta = {}
     boots = {}
     for task in args.tasks:
-        sa = row_scores(cell_predictions(args.a, task), task)
-        sb = row_scores(cell_predictions(args.b, task), task)
+        sa = row_scores(cell_predictions(args.a, task, bench,
+                                         args.cell_glob), task)
+        sb = row_scores(cell_predictions(args.b, task, bench,
+                                         args.cell_glob), task)
         ids = sa.index.intersection(sb.index)
         assert len(ids) == len(sa) == len(sb), \
             f"{task}: row sets differ ({len(sa)} vs {len(sb)}, join {len(ids)})"

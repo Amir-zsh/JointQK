@@ -49,6 +49,7 @@ EXCLUDE_INDICES_FILE="${REPO_ROOT}/artifacts/calibration_splits/longbench_compac
 EC_DIR="${REPO_ROOT}/artifacts/ec/llama31_8b"
 PGQ_BUNDLE="${REPO_ROOT}/artifacts/page_quant/pgq_bundle__qpca_unc__dz0.5__base1.5__compact8train18.pt"
 PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt}"
+PGQ3_BUNDLE="${PGQ3_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400.pt}"
 OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/llama31_8b"
 LOG_DIR="${REPO_ROOT}/logs/bench_pgq_llama31_8b"
 
@@ -75,6 +76,12 @@ for cell in "${CELL_ARR[@]}"; do
     elif [[ "$kind" == pgq_nd_* || "$kind" == pgq_rvq_* ]]; then
         # pgq2 arms; for *_uni the value is the rung/stage index, else b/c
         BUNDLE="$PGQ2_BUNDLE"
+        [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
+        K_METHOD="$kind"; K_BITS="$rate"
+    elif [[ "$kind" == pgq_tcq_* || "$kind" == pgq_e8_* || "$kind" == pgq_oscar_* ]]; then
+        # pgq3 arms (TCQ/E8/OSCAR); override PGQ3_BUNDLE for the scalar
+        # compander control (__scalarctl bundle, same k_methods)
+        BUNDLE="$PGQ3_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
     else

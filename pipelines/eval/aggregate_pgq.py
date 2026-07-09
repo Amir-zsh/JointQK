@@ -26,6 +26,7 @@ EC_SUMMARY = REPO / "artifacts/ec/llama31_8b/bench_summary.json"
 V7 = REPO / "artifacts/stage1/downstream_v7/llama31_8b"
 HELDOUT = REPO / "artifacts/page_quant/pgq_heldout_report.json"
 HELDOUT2 = REPO / "artifacts/page_quant2/pgq2_heldout_report.json"
+HELDOUT3 = REPO / "artifacts/page_quant2/pgq3_heldout_report.json"
 OUT = REPO / "artifacts/page_quant/bench_summary.json"
 TRIO = ["lcc", "musique", "2wikimqa"]
 TASKS = ["lcc", "musique", "2wikimqa", "qasper", "hotpotqa"]
@@ -85,6 +86,8 @@ def main() -> None:
         hh.update(json.loads(HELDOUT.read_text())["report"])
     if HELDOUT2.exists():
         hh.update(json.loads(HELDOUT2.read_text())["report"])
+    if HELDOUT3.exists():
+        hh.update(json.loads(HELDOUT3.read_text())["report"])
     if hh:
         for head, row in rows.items():
             kind, rate = head.split("@b")
