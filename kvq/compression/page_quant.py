@@ -449,6 +449,8 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
     by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
+    if k_method.startswith(("pgq_fold", "pgq_prof")):
+        return _load_pgq4(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
         return _load_pgq3(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_nd_", "pgq_rvq_")):
@@ -551,6 +553,102 @@ def _load_pgq2(blob, path, k_method, k_bits):
                     uniform_stages=uniform_sel, **common)
     meta = {k: v for k, v in blob.items()
             if not torch.is_tensor(v) and not isinstance(v, list)}
+    return comps, meta
+
+
+def _load_pgq4(blob, path, k_method, k_bits):
+    """pgq4 loader: pgq_{fold,prof}[mods]_{uni,rdo,ea,pgr}.
+
+    fam modifiers (concatenated after fold/prof): g = fp16 gain/token,
+    lm = Lloyd-Max LUT grid (qpca basis only), ob = OSCAR per-layer
+    U_Q.H.Pbr basis, rs = r_sym basis, px = prefix-truncation profiles,
+    rw = force last 4 prompt pages to the top rung (P7 ablation). For *_uni
+    k_bits is the RUNG INDEX; otherwise the page budget in bits/coord.
+    Frozen omega taus come from the bundle (carried, no re-selection)."""
+    from kvq.compression.pgq4_folded import (
+        PGQ4_BUNDLE_VERSION, WIDTH_LADDER, FoldedScalarPagedCompressor,
+    )
+
+    if blob.get("pgq_version") != PGQ4_BUNDLE_VERSION:
+        raise ValueError(f"pgq4 bundle version mismatch at {path}")
+    fam, variant = k_method.split("_")[1], k_method.split("_")[2]
+    family = "fold" if fam.startswith("fold") else "prof"
+    mods, rest = set(), fam[len(family):]
+    while rest:
+        for tok in ("lm", "ob", "rs", "px", "rw", "g"):
+            if rest.startswith(tok):
+                mods.add(tok)
+                rest = rest[len(tok):]
+                break
+        else:
+            raise ValueError(f"unknown pgq4 fam modifier in {k_method!r}")
+
+    basis = "oscar" if "ob" in mods else ("r_sym" if "rs" in mods
+                                          else "qpca_unc")
+    L, H = blob["n_layers"], blob["n_kv_heads"]
+    d = blob["head_dim"]
+    if variant == "uni":
+        b_page, uniform_sel, mode = 8.0, int(k_bits), "uniform"
+    elif variant == "pgr":
+        b_page, uniform_sel, mode = float(k_bits), None, "pagerung"
+    else:
+        b_page, uniform_sel, mode = float(k_bits), None, "rdo"
+    if variant in ("ea", "pgr"):
+        taus = blob["omega_tau_by_rate"]
+        key = f"{b_page:g}"
+        if key not in taus:
+            raise ValueError(f"no frozen omega tau for rate {key} in {path}")
+        tau = float(taus[key])
+    else:
+        tau = 0.0
+
+    bset = blob["bases"][basis]
+    stats = blob["stats"][basis]
+    blk = d // blob["prof_head"].shape[-1] if "prof_head" in blob else d
+    # family A keeps the registered {0,2,3,4}; family B may carry the
+    # amendment-A1 extended ladder (bundle field, default legacy)
+    if family == "prof":
+        ladder = tuple(blob.get("prof_width_ladder", WIDTH_LADDER))
+    else:
+        ladder = WIDTH_LADDER
+    n_pos = len(ladder) - 1
+
+    comps = {}
+    for l in range(1, L):
+        for h in range(H):
+            if bset["forward"].dim() == 3:                   # per-layer basis
+                fmap, imap = bset["forward"][l], bset["inverse"][l]
+            else:
+                fmap, imap = bset["forward"][l, h], bset["inverse"][l, h]
+            if family == "fold":
+                profiles = torch.tensor(
+                    [[w] * d for w in ladder], dtype=torch.long)
+            elif "px" in mods:
+                profiles = blob["px_profiles"].repeat_interleave(blk, dim=1)
+            elif blob["prof_share"] == "layer":
+                profiles = blob["prof_layer"][l].repeat_interleave(blk, dim=1)
+            else:
+                profiles = blob["prof_head"][l, h].repeat_interleave(
+                    blk, dim=1)
+            lm_cents = blob.get("lm_cents")
+            comps[(l, h)] = FoldedScalarPagedCompressor(
+                forward_map=fmap, inverse_map=imap,
+                mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h],
+                code_std=stats["code_std"][l, h],
+                profiles=profiles,
+                alphas=stats["alphas"][l, h][:n_pos],
+                sink_scale=stats["sink_scale"][l, h],
+                b_page=b_page,
+                grid="lm" if "lm" in mods else "uniform",
+                lm_cents=lm_cents[:n_pos - 1] if lm_cents else None,
+                gain="g" in mods,
+                ptok=int(blob["ptok"]), mode=mode,
+                uniform_rung=uniform_sel, omega_tau=tau,
+                omega_clamp_bits=float(blob["omega_clamp_bits"]),
+                force_recent_pages=4 if "rw" in mods else 0,
+                width_ladder=ladder)
+    meta = {k: v for k, v in blob.items()
+            if not torch.is_tensor(v) and not isinstance(v, (list, dict))}
     return comps, meta
 
 

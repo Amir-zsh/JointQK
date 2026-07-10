@@ -46,6 +46,14 @@ class JointQKPress(BasePress):
     quantize_k: bool = True
     quantize_v: bool = True
     compress_decode: bool = False
+    # Mode-B' (pgq4): chunked decode-token aging. decode_chunk > 0 switches
+    # compress_decode from per-token Mode B to OSCAR-style flushing: decode
+    # tokens buffer fp16; once more than decode_recent of them have
+    # accumulated, the oldest decode_chunk are compressed in one call (with
+    # start_pos so sink forcing stays position-true). Requires a pgq4
+    # k_method (compressors with supports_start_pos).
+    decode_chunk: int = 0
+    decode_recent: int = 0
     eps: float = 1e-6  # whitening regularization (matches Stage-1E default)
     # kvpress evaluate.py reads .compression_ratio for logging; quantization presses
     # don't reduce seq_len, so this is purely informational (bits-per-coord proxy).
@@ -262,7 +270,8 @@ class JointQKPress(BasePress):
         self._save_cache()
 
     def _quantize_layer(self, x: torch.Tensor, layer_idx: int,
-                        comps: dict, layer_cache: dict) -> torch.Tensor:
+                        comps: dict, layer_cache: dict,
+                        start_pos: int = 0) -> torch.Tensor:
         """Round-trip one layer's heads through their compressors.
 
         Layout: x is (B, n_heads, S, d). Uses the batched stack when
@@ -281,13 +290,19 @@ class JointQKPress(BasePress):
             return batched_roundtrip(x, *layer_cache[layer_idx])
         out = torch.empty_like(x)
         for h in range(n_heads):
-            out[:, h] = comps[(layer_idx, h)].to(x.device).roundtrip(x[:, h])
+            c = comps[(layer_idx, h)].to(x.device)
+            if getattr(c, "supports_start_pos", False):
+                out[:, h] = c.roundtrip(x[:, h], start_pos=start_pos)
+            else:
+                out[:, h] = c.roundtrip(x[:, h])
         return out
 
-    def _quantize_k(self, keys: torch.Tensor, layer_idx: int) -> torch.Tensor:
+    def _quantize_k(self, keys: torch.Tensor, layer_idx: int,
+                    start_pos: int = 0) -> torch.Tensor:
         if layer_idx == 0 and self.layer0_full_precision:
             return keys
-        return self._quantize_layer(keys, layer_idx, self._k_compressors, self._k_batched)
+        return self._quantize_layer(keys, layer_idx, self._k_compressors,
+                                    self._k_batched, start_pos)
 
     def _quantize_v(self, values: torch.Tensor, layer_idx: int) -> torch.Tensor:
         if layer_idx == 0 and self.layer0_full_precision:
@@ -313,19 +328,39 @@ class JointQKPress(BasePress):
         if not self.compress_decode:
             return super().forward_hook(module, args, kwargs, output)
 
-        # Mode B: handle prefill + per-step decode
+        # Mode B / Mode-B': handle prefill + per-step decode
         hidden_states = kwargs["hidden_states"]
         cache = kwargs["past_key_values"]
         cache_layer = cache.layers[module.layer_idx]
         q_len = hidden_states.shape[1]
+        L = module.layer_idx
 
         is_prefill = kwargs["cache_position"][-1] <= q_len
         keys, values = extract_keys_and_values(cache, module.layer_idx)
 
         if is_prefill:
             keys, values = self.compress(module, hidden_states, keys, values, output[1] if len(output) > 1 else None, kwargs)
+            if self.decode_chunk > 0:
+                if not hasattr(self, "_qlen"):
+                    self._qlen = {}
+                self._qlen[L] = keys.shape[2]
+        elif self.decode_chunk > 0:
+            # Mode-B': fp16 recent ring; age out in decode_chunk flushes
+            qlen = self._qlen.get(L, keys.shape[2])
+            for lo, hi in decode_flush_ranges(qlen, keys.shape[2],
+                                              self.decode_recent,
+                                              self.decode_chunk):
+                ck = keys[:, :, lo:hi, :]
+                cv = values[:, :, lo:hi, :]
+                ck = self._quantize_k(ck, L, start_pos=lo) \
+                    if self.quantize_k else ck
+                cv = self._quantize_v(cv, L) if self.quantize_v else cv
+                keys = torch.cat([keys[:, :, :lo], ck, keys[:, :, hi:]], 2)
+                values = torch.cat(
+                    [values[:, :, :lo], cv, values[:, :, hi:]], 2)
+                self._qlen[L] = hi
         else:
-            # Compress only the last token (the just-appended decode key/value)
+            # Mode B: compress only the last token (the just-appended one)
             new_k = keys[:, :, -1:, :]
             new_v = values[:, :, -1:, :]
             new_k_recon, new_v_recon = self.compress(module, hidden_states, new_k, new_v, None, kwargs)
@@ -335,3 +370,15 @@ class JointQKPress(BasePress):
         cache_layer.keys = keys
         cache_layer.values = values
         return output
+
+
+def decode_flush_ranges(qlen: int, total: int, recent: int,
+                        chunk: int) -> list[tuple[int, int]]:
+    """Mode-B' aging: given `qlen` already-quantized tokens out of `total`,
+    keep the newest `recent` tokens fp16 and return the [lo, hi) chunk-sized
+    ranges that have aged out and must be quantized now (oldest first)."""
+    out = []
+    while total - qlen - recent >= chunk:
+        out.append((qlen, qlen + chunk))
+        qlen += chunk
+    return out

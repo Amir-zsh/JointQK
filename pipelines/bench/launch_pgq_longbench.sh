@@ -50,6 +50,7 @@ EC_DIR="${REPO_ROOT}/artifacts/ec/llama31_8b"
 PGQ_BUNDLE="${REPO_ROOT}/artifacts/page_quant/pgq_bundle__qpca_unc__dz0.5__base1.5__compact8train18.pt"
 PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt}"
 PGQ3_BUNDLE="${PGQ3_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400.pt}"
+PGQ4_BUNDLE="${PGQ4_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt}"
 OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/llama31_8b"
 LOG_DIR="${REPO_ROOT}/logs/bench_pgq_llama31_8b"
 
@@ -68,6 +69,13 @@ sha8() { sha256sum "$1" | cut -c1-8; }
 IFS=',' read -ra CELL_ARR <<< "$CELLS"
 for cell in "${CELL_ARR[@]}"; do
     kind="${cell%%:*}"; rate="${cell##*:}"
+    # Mode-B' decode cells: "<kind>+d<W>:<rate>" — decode tokens buffer fp16
+    # and age out in chunks of 8 once more than W have accumulated
+    DEC_W=""
+    if [[ "$kind" == *"+d"* ]]; then
+        DEC_W="${kind##*+d}"
+        kind="${kind%%+*}"
+    fi
     if [[ "$kind" == "ecu" ]]; then
         rate_g="${rate%.0}"   # fit_ec_bundle names use b{b:g}: 1.0 -> b1
         BUNDLE=$(ls "$EC_DIR"/ec_bundle__qpca_unc__b${rate_g}__dz0.5__compact8train*__uniform.pt 2>/dev/null | head -1 || true)
@@ -76,6 +84,11 @@ for cell in "${CELL_ARR[@]}"; do
     elif [[ "$kind" == pgq_nd_* || "$kind" == pgq_rvq_* ]]; then
         # pgq2 arms; for *_uni the value is the rung/stage index, else b/c
         BUNDLE="$PGQ2_BUNDLE"
+        [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
+        K_METHOD="$kind"; K_BITS="$rate"
+    elif [[ "$kind" == pgq_fold* || "$kind" == pgq_prof* ]]; then
+        # pgq4 arms (folded-scalar / profile rungs, plan4)
+        BUNDLE="$PGQ4_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
     elif [[ "$kind" == pgq_tcq_* || "$kind" == pgq_e8_* || "$kind" == pgq_oscar_* ]]; then
@@ -92,29 +105,35 @@ for cell in "${CELL_ARR[@]}"; do
     SHA=$(sha8 "$BUNDLE")
     for task in "${TASKS[@]}"; do
         label="pgq__${kind}__b${rate}__${SHA}__${task}"
+        [[ -z "$DEC_W" ]] || label="pgq__${kind}_d${DEC_W}__b${rate}__${SHA}__${task}"
         [[ "$FRACTION" == "1.0" ]] || label="${label}__f${FRACTION}"
         BUNDLE="$BUNDLE" K_METHOD="$K_METHOD" K_BITS="$K_BITS" task="$task" \
         label="$label" CCA="$CCA" VST="$VST" FRACTION="$FRACTION" \
+        DEC_W="$DEC_W" \
         OUT_BASE="$OUT_BASE" EXCLUDE_INDICES_FILE="$EXCLUDE_INDICES_FILE" \
         .venv/bin/python - <<'PY' >> "$CMDS"
 import json, os
 e = os.environ
+kw = {
+    "cca_stats_path": e["CCA"],
+    "v_stats_path": e["VST"],
+    "k_method": e["K_METHOD"],
+    "ec_bundle_path": e["BUNDLE"],
+    "v_method": "v_turboquant",
+    "k_bits": float(e["K_BITS"]),
+    "v_bits": 2,
+    "compress_decode": False,
+    "layer0_full_precision": True,
+    "quantize_k": True,
+    "quantize_v": True,
+}
+if e.get("DEC_W"):
+    kw.update({"compress_decode": True, "decode_chunk": 8,
+               "decode_recent": int(e["DEC_W"])})
 print(json.dumps({
     "_label": e["label"],
     "press_name": "jointqk",
-    "press_kwargs": {
-        "cca_stats_path": e["CCA"],
-        "v_stats_path": e["VST"],
-        "k_method": e["K_METHOD"],
-        "ec_bundle_path": e["BUNDLE"],
-        "v_method": "v_turboquant",
-        "k_bits": float(e["K_BITS"]),
-        "v_bits": 2,
-        "compress_decode": False,
-        "layer0_full_precision": True,
-        "quantize_k": True,
-        "quantize_v": True,
-    },
+    "press_kwargs": kw,
     "dataset": "longbench",
     "data_dir": e["task"],
     "fraction": float(e["FRACTION"]),
