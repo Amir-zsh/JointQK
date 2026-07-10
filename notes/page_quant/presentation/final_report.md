@@ -13,9 +13,13 @@ interval behind it.
 **1. What to deploy.** Compress keys with the entropy-coded codec **once, at prefill**, and
 let the cache hold the reconstructed keys (the "Mode A" pattern — the same pattern every
 benchmark in this project already runs). This delivers essentially full-precision accuracy
-at 8× key-cache compression (44.90 vs 44.99 mean F1 at ~1.95 bits per coordinate), degrades
-gracefully down to 1.0 bits (41.25), and requires **no decompression machinery in the
-generation loop at all**. For cache tiers that live off-GPU — CPU offload, prefix caches,
+at a 1.95 bits-per-coordinate codec rate (44.90 vs 44.99 mean F1), degrades gracefully down
+to 1.0 bits (41.25), and requires **no decompression machinery in the generation loop at
+all**. Be precise about what is saved where: the hot GPU tensors stay fp16 (Mode A does
+**not** shrink the resident cache — see §8), while the 8–16× compression is realized
+wherever the coded pages are stored or shipped: CPU offload, prefix caches, stored
+sessions, cross-machine transfer. Shrinking the *resident* cache instead requires eviction
+or a fixed-width codec, at the measured F1 prices in §7–8. For cache tiers that live off-GPU — CPU offload, prefix caches,
 stored sessions — use entropy-coded pages too: they are decoded once on reload, where
 decode speed is irrelevant and the extra compression directly cuts transfer time.
 
@@ -42,6 +46,14 @@ The proposal: quantize the key cache in **page units** — blocks of 64 consecut
 matching how paged-attention servers and FlashAttention tiles already organize memory —
 and, inside each page, **spend unequal bits on unequal tokens**, using the calibrated query
 distribution to predict which tokens matter.
+
+A provenance note before the findings: the underlying codec — the qpca_unc basis with
+deadzone quantization and paged rANS — and its rate–quality curve come from the earlier
+**ec_k2v2 study** (`../../ec_k2v2_report.md`); this study did not improve that curve and
+does not claim to. What is new here is everything around the codec: the page format
+(proved free), per-token allocation (what makes fixed pages fillable), the importance
+regime law, sink hardening, the measured serving verdict, and the mapped-and-closed
+fixed-width frontier.
 
 Two separable claims live inside that idea:
 

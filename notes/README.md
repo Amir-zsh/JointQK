@@ -53,10 +53,13 @@ This directory organises the project notes by role.
 - [page_quant/report.md](page_quant/report.md)
   - per-token-precision fixed-byte pages: ω decomposition on F1, EC serving verdict
     (measured), fixed-width bug chain, kernel prototype
-- [page_quant/report2.md](page_quant/report2.md)
-  - pgq2: no-EC codec frontier mapped (EC fundamental at <=1.5 b/c; omega regime law)
+- [page_quant/README.md](page_quant/README.md) — **the navigator**: findings organized
+  by approach (basis / EC pages / omega / fixed-width door / selection / serving),
+  each with verdict, numbers, artifacts, open directions
+  - chronological records under `page_quant/studies/` (plan, plan3, report, report2,
+    report3), presentation docs under `page_quant/presentation/`
 - [page_quant/fixes_to_apply.md](page_quant/fixes_to_apply.md)
-  - bug tracker (pgq_fixed three-stage root cause chain)
+  - bug tracker (pgq_fixed three-stage chain; pgq3-1..5 gate-physics chain)
 
 ## Reference
 

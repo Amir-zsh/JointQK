@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Page-Unit KV Compression Works — Step by Step</title>
+<style>
+:root{
+  --bg:#F7F8F6; --card:#FFFFFF; --ink:#1B231F; --muted:#5A6660;
+  --line:#D8DED9; --accent:#0E7C66; --accent-soft:#0E7C6614;
+  --amber:#C2571A; --amber-soft:#C2571A14; --code:#EEF1EE;
+  --off:#3D5A80; --off-soft:#3D5A8014;
+  --shadow:0 1px 2px rgba(20,30,25,.06),0 6px 24px rgba(20,30,25,.05);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0F1512; --card:#161D19; --ink:#E5EAE6; --muted:#93A29A;
+  --line:#26302B; --accent:#34BD97; --accent-soft:#34BD9722;
+  --amber:#E0803F; --amber-soft:#E0803F22; --code:#1C2420;
+  --off:#7FA3CC; --off-soft:#7FA3CC22;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 28px rgba(0,0,0,.3);
+}}
+:root[data-theme="light"]{
+  --bg:#F7F8F6; --card:#FFFFFF; --ink:#1B231F; --muted:#5A6660;
+  --line:#D8DED9; --accent:#0E7C66; --accent-soft:#0E7C6614;
+  --amber:#C2571A; --amber-soft:#C2571A14; --code:#EEF1EE;
+  --off:#3D5A80; --off-soft:#3D5A8014;
+  --shadow:0 1px 2px rgba(20,30,25,.06),0 6px 24px rgba(20,30,25,.05);
+}
+:root[data-theme="dark"]{
+  --bg:#0F1512; --card:#161D19; --ink:#E5EAE6; --muted:#93A29A;
+  --line:#26302B; --accent:#34BD97; --accent-soft:#34BD9722;
+  --amber:#E0803F; --amber-soft:#E0803F22; --code:#1C2420;
+  --off:#7FA3CC; --off-soft:#7FA3CC22;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 28px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}
+  .reveal{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:17px/1.66 Charter,"Bitstream Charter",Cambria,Georgia,serif;
+  -webkit-font-smoothing:antialiased}
+nav{position:sticky;top:0;z-index:9;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .in{max-width:1140px;margin:0 auto;padding:10px 20px;display:flex;
+  gap:16px;align-items:center;overflow-x:auto;white-space:nowrap}
+nav a{color:var(--muted);text-decoration:none;font:600 11.5px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.07em;text-transform:uppercase;padding:6px 2px;border-bottom:2px solid transparent}
+nav a.on,nav a:hover{color:var(--accent);border-color:var(--accent)}
+nav a:focus-visible,button:focus-visible,input:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+main{max-width:1140px;margin:0 auto;padding:0 20px 90px}
+.col{max-width:940px;margin:0 auto}
+.col>p,.col li{max-width:74ch}
+header.hero{padding:60px 0 26px;border-bottom:1px solid var(--line)}
+.eyebrow{font:600 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-size:clamp(30px,4.2vw,42px);line-height:1.12;margin:0 0 14px;
+  letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:18px;max-width:72ch;margin:0}
+h2{font-size:25px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h3{font-size:18.5px;margin:24px 0 8px}
+section{padding:42px 0 10px}
+section+section{border-top:1px solid var(--line)}
+p{margin:0 0 15px}
+code{background:var(--code);padding:2px 6px;border-radius:4px;
+  font:500 13.5px/1.5 ui-monospace,Menlo,monospace}
+.step-eyebrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.step-eyebrow .no{font:700 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.12em;
+  color:var(--accent);text-transform:uppercase}
+.chip{font:700 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;
+  padding:4px 9px;border-radius:99px;text-transform:uppercase}
+.chip.once{background:var(--off-soft);color:var(--off)}
+.chip.prompt{background:var(--accent-soft);color:var(--accent)}
+.chip.never{background:var(--amber-soft);color:var(--amber)}
+.chip.cost{background:var(--code);color:var(--muted);text-transform:none;letter-spacing:0}
+.intuit{border-left:3px solid var(--accent);background:var(--accent-soft);
+  border-radius:0 8px 8px 0;padding:14px 18px;margin:16px 0;font-size:16px}
+.intuit b:first-child{font-variant:small-caps;letter-spacing:.04em}
+.mathcard{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:18px 22px 8px;margin:18px 0;box-shadow:var(--shadow);overflow-x:auto}
+.mathcard h4{margin:0 0 10px;font:700 11.5px/1 ui-monospace,Menlo,monospace;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.evi{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px;align-items:center}
+.evi .tag{font:700 10.5px/1.4 ui-monospace,Menlo,monospace;background:var(--code);
+  color:var(--muted);border-radius:6px;padding:5px 9px}
+.evi .tag b{color:var(--accent)}
+/* ---------- hand-set math ---------- */
+.mx,.eq{font-family:"STIX Two Text","STIX Two Math",Charter,"Times New Roman",serif}
+.mx{font-style:italic;white-space:nowrap}
+.mx .up,.eq .up{font-style:normal}
+.eq{display:block;text-align:center;font-size:1.18em;margin:14px auto 16px;
+  font-style:italic;line-height:1.9;overflow-x:auto;padding:2px 0}
+.eq .lbl{float:right;color:var(--muted);font-size:.72em;font-style:normal;
+  font-family:ui-monospace,Menlo,monospace}
+.frac{display:inline-flex;flex-direction:column;vertical-align:-0.9em;
+  text-align:center;margin:0 2px;line-height:1.25}
+.frac>span{padding:0 4px}
+.frac>span:first-child{border-bottom:1px solid currentColor}
+sup,sub{line-height:0}
+.norm::before{content:"‖"} .norm::after{content:"‖"}
+.big{font-size:1.35em;vertical-align:-.1em}
+/* ---------- pipeline strip ---------- */
+.pipe{display:flex;gap:0;align-items:stretch;overflow-x:auto;padding:8px 2px 14px;margin:24px 0 0}
+.pstage{flex:1 0 150px;max-width:220px;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);position:relative}
+.pstage+.pstage{margin-left:26px}
+.pstage+.pstage::before{content:"→";position:absolute;left:-22px;top:50%;
+  transform:translateY(-50%);color:var(--muted);font-size:18px}
+.pstage .t{font-weight:700;font-size:14.5px;margin:6px 0 4px}
+.pstage .d{color:var(--muted);font-size:12.5px;line-height:1.45}
+/* ---------- demo ---------- */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:20px;margin:20px 0;box-shadow:var(--shadow)}
+.demo .row{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:14px}
+.demo label{font:600 13px/1.4 ui-monospace,Menlo,monospace;color:var(--muted)}
+.demo input[type=range]{accent-color:var(--accent);width:180px;vertical-align:middle}
+.demo .tog{font:600 12.5px/1 ui-monospace,Menlo,monospace;border:1px solid var(--line);
+  background:var(--code);color:var(--ink);border-radius:99px;padding:7px 12px;cursor:pointer}
+.demo .tog.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.bars{display:grid;grid-template-columns:repeat(16,1fr);gap:6px;align-items:end;
+  height:150px;margin:10px 0 4px}
+.tk{position:relative;border-radius:4px 4px 0 0;background:var(--line);
+  display:flex;align-items:flex-end;justify-content:center}
+.tk i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--accent)}
+.tk.hot i{background:var(--amber)}
+.tk .w{position:absolute;top:-20px;font:700 11px/1 ui-monospace,monospace;color:var(--muted)}
+.blegend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);
+  font:500 12.5px/1.6 ui-monospace,Menlo,monospace;margin-top:8px}
+.blegend b{color:var(--ink)}
+.readout{font:600 13.5px/1.6 ui-monospace,Menlo,monospace;margin-top:8px}
+.readout .ok{color:var(--accent)} .readout .bad{color:var(--amber)}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:16px 0;
+  font-variant-numeric:tabular-nums}
+.twrap{overflow-x:auto}
+th{font:700 11.5px/1.4 ui-monospace,Menlo,monospace;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);text-align:left;
+  border-bottom:2px solid var(--line);padding:8px 12px 8px 0}
+td{border-bottom:1px solid var(--line);padding:9px 12px 9px 0;vertical-align:top}
+td.n{font-family:ui-monospace,Menlo,monospace;white-space:nowrap}
+.good{color:var(--accent);font-weight:700}.bad{color:var(--amber);font-weight:700}
+footer{color:var(--muted);font-size:13.5px;border-top:1px solid var(--line);
+  padding-top:22px;margin-top:50px}
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s,transform .5s}
+.reveal.vis{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<nav aria-label="steps"><div class="in">
+<a href="#s0">0 · Problem</a><a href="#s1">1 · Calibrate</a><a href="#s2">2 · Basis</a>
+<a href="#s3">3 · Importance</a><a href="#s4">4 · Pages + RDO</a><a href="#s5">5 · Sinks</a>
+<a href="#s6">6 · Entropy code</a><a href="#s7">7 · Serve</a><a href="#s8">8 · Evidence</a>
+</div></nav>
+<main>
+
+<header class="hero col">
+<p class="eyebrow">KV-Cache Key Compression · Method Walkthrough</p>
+<h1>How the method works, step by step</h1>
+<p class="sub">A from-scratch explanation of the page-unit KV compression pipeline:
+what each step does, the intuition behind it, and the math that makes it precise.
+No prior knowledge of this project assumed — only standard transformer attention.</p>
+<div class="pipe" aria-label="pipeline overview">
+  <div class="pstage"><span class="chip once">offline · once</span>
+    <div class="t">Calibrate</div><div class="d">watch the model read ~26 prompts; record query statistics</div></div>
+  <div class="pstage"><span class="chip once">offline · once</span>
+    <div class="t">Build basis</div><div class="d">rotate keys so error is measured the way attention measures it</div></div>
+  <div class="pstage"><span class="chip prompt">online · per prompt</span>
+    <div class="t">Compress at prefill</div><div class="d">pages, per-token bits, entropy code — once per prompt</div></div>
+  <div class="pstage"><span class="chip never">decode · never</span>
+    <div class="t">Generate</div><div class="d">the cache holds reconstructed keys; decoding reads plain tensors</div></div>
+</div>
+</header>
+
+<!-- ==================== STEP 0 ==================== -->
+<section id="s0" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 0 · The problem</span></div>
+<h2>Why the KV cache, and why keys are special</h2>
+<p>When a transformer generates text, every new token attends over all previous
+tokens. To avoid recomputing the past, the model caches two vectors per token per
+layer per head: a <b>key</b> <span class="mx">k</span> and a <b>value</b>
+<span class="mx">v</span>. At long context this cache dominates GPU memory — for an
+8-billion-parameter model at 128k context it reaches tens of gigabytes — and every
+generated token must read a large fraction of it. Shrinking the cache buys longer
+contexts, bigger batches, and faster decoding at once.</p>
+<div class="intuit"><b>Intuition.</b> Keys and values fail differently. A value error
+just blends into a weighted average. A key error changes <i>which tokens get attended
+to at all</i>, because keys sit inside the softmax. That is why this method is built
+around keys, and why every design choice below asks one question: <i>how does this
+error propagate into attention scores?</i></div>
+<div class="mathcard"><h4>Setup · attention in one line</h4>
+<p>For a decode query <span class="mx">q</span> (dimension <span class="mx">d</span> = 128
+per head) and cached keys <span class="mx">k<sub>1</sub> … k<sub>T</sub></span>, attention
+weights are</p>
+<span class="eq">a<sub>s</sub> <span class="up">=</span> softmax<sub>s</sub>
+<span class="up">(</span> q&thinsp;·&thinsp;k<sub>s</sub>
+<span class="up">/</span> <span class="up">√</span>d <span class="up">)</span>,
+&emsp; output <span class="up">=</span> <span class="big up">Σ</span><sub>s</sub>&thinsp;a<sub>s</sub>&thinsp;v<sub>s</sub>
+<span class="lbl">(1)</span></span>
+<p>Compressing a key replaces <span class="mx">k<sub>s</sub></span> by a reconstruction
+<span class="mx">k&#770;<sub>s</sub></span>. The damage that matters is not
+<span class="mx"><span class="norm">k−k&#770;</span><sup>2</sup></span> — it is the
+<b>logit error</b> <span class="mx">q·(k−k&#770;)/√d</span>, for the queries the model
+will actually ask.</p></div>
+</section>
+
+<!-- ==================== STEP 1 ==================== -->
+<section id="s1" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 1 · Calibrate</span>
+<span class="chip once">offline · once per model</span>
+<span class="chip cost">~30 min GPU, ~26 prompts, 200k tokens</span></div>
+<h2>Learn where queries point</h2>
+<p>Before compressing anything, run the model on a small calibration corpus and
+record, for every (layer, head) pair, the queries and keys it produces. From these we
+keep only three summary statistics per (layer, head) — nothing about the calibration
+texts themselves survives.</p>
+<div class="intuit"><b>Intuition.</b> Queries are not arbitrary vectors: each head asks
+questions from a narrow, stable cone of directions. If we know that cone, we know which
+components of a key the model will ever "read" — and which components can be stored
+coarsely because no query will ever look at them.</div>
+<div class="mathcard"><h4>Definitions · the three calibration statistics</h4>
+<p>With <span class="mx">N</span> calibration queries <span class="mx">q<sub>i</sub></span>
+per (layer, head) — pooled across the head's query group under grouped-query attention —
+we estimate the <b>mean query</b>, the <b>query second moment</b>, and the
+<b>key mean</b>:</p>
+<span class="eq">μ&#772;<sub>q</sub> <span class="up">=</span>
+<span class="frac"><span>1</span><span>N</span></span>
+<span class="big up">Σ</span><sub>i</sub>&thinsp;q<sub>i</sub>, &emsp;
+Σ<sub>Q</sub> <span class="up">=</span>
+<span class="frac"><span>1</span><span>N</span></span>
+<span class="big up">Σ</span><sub>i</sub>&thinsp;q<sub>i</sub>&thinsp;q<sub>i</sub><sup>⊤</sup>, &emsp;
+μ<sub>k</sub> <span class="up">=</span>
+<span class="frac"><span>1</span><span>N</span></span>
+<span class="big up">Σ</span><sub>i</sub>&thinsp;k<sub>i</sub>
+<span class="lbl">(2)</span></span>
+<p><span class="mx">Σ<sub>Q</sub></span> is a <span class="mx">d×d</span> matrix whose
+eigenvectors are the directions queries actually use, weighted by how much energy they
+carry. It is the single most important object in the whole method: for any direction
+<span class="mx">u</span>, <span class="mx">u<sup>⊤</sup>Σ<sub>Q</sub>u</span> is the
+average squared query magnitude along <span class="mx">u</span>.</p></div>
+<div class="evi"><span class="tag">robustness: <b>8k tokens of calibration suffice</b>; corpus choice moves results little</span>
+<span class="tag">independently validated: OSCAR (2026) proves Σ<sub>Q</sub> is the optimal rotation target</span></div>
+</section>
+
+<!-- ==================== STEP 2 ==================== -->
+<section id="s2" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 2 · The basis</span>
+<span class="chip once">offline · once per model</span>
+<span class="chip cost">eigendecomposition, seconds; one d×d matrix pair per (layer, head)</span></div>
+<h2>Rotate keys so plain squared error <i>is</i> attention error</h2>
+<p>Scalar quantizers measure error coordinate by coordinate — implicitly, plain
+Euclidean error. But step 0 said the error that matters is query-weighted. The fix is a
+change of basis chosen so those two become <em>the same number</em>.</p>
+<div class="intuit"><b>Intuition.</b> Imagine stretching space so that directions
+queries care about become long (errors there look big) and ignored directions shrink
+(errors there look small). After that stretch, a dumb quantizer minimizing ordinary
+squared error is automatically minimizing attention damage. The transform bakes the
+"what matters" knowledge into the geometry, so everything downstream can stay simple.</div>
+<div class="mathcard"><h4>Construction · the whitened query-PCA pair (F, G)</h4>
+<p>The logit distortion a key error causes, averaged over calibration queries, is a
+quadratic form in <span class="mx">Σ<sub>Q</sub></span>:</p>
+<span class="eq"><span class="up">𝔼</span><sub>q</sub>&thinsp;
+<span class="up">|</span>q·(k−k&#770;)<span class="up">|</span><sup>2</sup>
+<span class="up">=</span> (k−k&#770;)<sup>⊤</sup>&thinsp;Σ<sub>Q</sub>&thinsp;(k−k&#770;)
+<span class="lbl">(3)</span></span>
+<p>Choose an invertible <b>forward map</b> <span class="mx">F</span> (encode) and its
+inverse <span class="mx">G <span class="up">=</span> F<sup>−1</sup></span> (decode),
+built from the eigendecomposition of <span class="mx">Σ<sub>Q</sub></span> and scaled so
+the decode map <b>whitens</b> the query moment:</p>
+<span class="eq">r <span class="up">=</span> (k − μ<sub>k</sub>)&thinsp;F,
+&emsp; k&#770; <span class="up">=</span> r&#770;&thinsp;G + μ<sub>k</sub>,
+&emsp; <span class="up">with</span> &emsp;
+G&thinsp;Σ<sub>Q</sub>&thinsp;G<sup>⊤</sup> <span class="up">=</span> I
+<span class="lbl">(4)</span></span>
+<p>Substituting (4) into (3) gives the identity the whole codec rests on:</p>
+<span class="eq"><span class="norm">r − r&#770;</span><sup>2</sup>
+<span class="up">=</span> (k−k&#770;)<sup>⊤</sup>Σ<sub>Q</sub>(k−k&#770;)
+<span class="lbl">(5)</span></span>
+<p>Plain squared error in code space (left) <em>equals</em> expected attention-logit
+distortion (right). Every quantizer, allocator, and rate–distortion decision below can
+therefore work with ordinary squared error and still be optimizing the right thing.</p></div>
+<div class="evi"><span class="tag">why not plain PCA on keys? attention-aware target beats the raw <b>K</b><sup>⊤</sup><b>K</b> target <b>70.0 vs 31.1</b> (OSCAR ablation) — same premise, independent proof</span>
+<span class="tag">a <i>learned</i> transform was trained as a control (248 heads, no overfit) — it made things <b>worse</b>: the basis was never the bottleneck</span></div>
+</section>
+
+<!-- ==================== STEP 3 ==================== -->
+<section id="s3" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 3 · Importance</span>
+<span class="chip prompt">online · per token at prefill</span>
+<span class="chip cost">one dot product per key; zero bits transmitted</span></div>
+<h2>Predict which tokens attention will read</h2>
+<p>Within any 64-token window, attention mass is extremely uneven — the top 8 tokens
+typically carry ~43% of it. Equal bits per token wastes budget on tokens nobody will
+look at. So each token gets an <b>importance weight</b> computed from its key alone.</p>
+<div class="intuit"><b>Intuition — with a twist.</b> The obvious signal ("how big is
+this key in query-space?", <span class="mx">k<sup>⊤</sup>Σ<sub>Q</sub>k</span>) turns
+out to point <em>the wrong way</em>: rank correlation −0.78 with real attention.
+High-energy keys are logit <i>repellers</i> — tokens the model pushes deep into
+negative scores, where softmax gradients vanish and quantization error is nearly free.
+What works is the humble <b>mean-logit</b> signal: does this key score high against the
+<i>average</i> query? That predicts attended tokens at +0.73…+0.82 and transfers
+across tasks.</div>
+<div class="mathcard"><h4>Definition · the ω weight</h4>
+<p>Per token <span class="mx">t</span>, compute the calibrated mean logit and pass it
+through a clamped exponential centred on the current context's median:</p>
+<span class="eq">m<sub>t</sub> <span class="up">=</span>
+<span class="frac"><span>μ&#772;<sub>q</sub><sup>⊤</sup>&thinsp;k<sub>t</sub></span><span><span class="up">√</span>d</span></span>,
+&emsp; ω<sub>t</sub> <span class="up">=</span> <span class="up">exp</span>
+<span class="up">(</span> τ · <span class="up">clip</span>(m<sub>t</sub> −
+<span class="up">median</span><sub>t</sub>&thinsp;m<sub>t</sub>,&thinsp; ±c·<span class="up">ln</span>2) <span class="up">)</span>
+<span class="lbl">(6)</span></span>
+<p>with temperature <span class="mx">τ</span> = 0.5 and clamp <span class="mx">c</span> = 4
+bits, both frozen on held-out calibration rows before any benchmark was run.
+<span class="mx">ω<sub>t</sub></span> multiplies the token's distortion in step 4 —
+it steers the allocator and costs <b>zero bits</b>, because the decoder only ever sees
+the resulting precision choices, never ω itself.</p>
+<p><b>Regime law</b> (measured, three quantizer families): ω is worth <b>+3…+4 F1</b>
+when the precision ladder is coarse (the allocator would otherwise starve attended
+tokens), neutral when the ladder is fine, and mildly harmful on out-of-distribution
+code — apply it when the rate is tight, skip it when it isn't.</p></div>
+<div class="evi"><span class="tag">unweighted allocation actively <b>hurts</b> attended tokens (they look expensive) — ω is the correction, not a bonus</span>
+<span class="tag">same signal drives page <i>selection</i> for offloaded tiers: <b>+2.5 F1 SIG</b> over structure-matched controls</span></div>
+</section>
+
+<!-- ==================== STEP 4 ==================== -->
+<section id="s4" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 4 · Pages + allocation</span>
+<span class="chip prompt">online · per prompt at prefill</span>
+<span class="chip cost">closed-form per page; &lt;0.1% of prefill compute</span></div>
+<h2>Fixed-byte pages, unequal tokens inside</h2>
+<p>Keys are grouped into <b>pages of 64 consecutive tokens</b> — the block size paged
+attention servers already use — and every page compresses to the <em>same</em> byte
+size, so a serving allocator can treat pages as fixed-size blocks. Inside the page,
+tokens receive <em>different</em> precision: each token picks a "rung" from a small
+ladder (evict · coarse · … · fine), and a 2–3-bit rung label per token tells the
+decoder what was chosen.</p>
+<div class="intuit"><b>Intuition.</b> A page is a knapsack. Each token wants bits;
+the page has a fixed budget; ω says whose distortion hurts most. The optimizer finds
+the single "exchange rate" λ between bits and damage at which the page budget exactly
+clears — expensive-but-unimportant tokens drop to coarse rungs, attended tokens climb
+to fine ones. Per-token choice is also what makes fixed pages <i>fillable</i>:
+uniform precision strands ~18% of the byte budget; per-token allocation fills 99.6%.</div>
+<div class="mathcard"><h4>Formulation · per-page Lagrangian rate–distortion</h4>
+<p>Token <span class="mx">t</span> at rung <span class="mx">j</span> costs
+<span class="mx">R<sub>j</sub></span> bits and incurs code-space distortion
+<span class="mx">D<sub>t</sub>(j) <span class="up">=</span>
+<span class="norm">r<sub>t</sub> − r&#770;<sub>t</sub><sup>(j)</sup></span><sup>2</sup></span>
+(computed against the <em>actual</em> reconstruction — quantize, decode, measure).
+The page solves</p>
+<span class="eq"><span class="up">min</span><sub>j<sub>1</sub>…j<sub>64</sub></sub>
+<span class="big up">Σ</span><sub>t</sub>&thinsp;ω<sub>t</sub>&thinsp;D<sub>t</sub>(j<sub>t</sub>)
+&emsp; <span class="up">s.t.</span> &emsp;
+<span class="big up">Σ</span><sub>t</sub>&thinsp;R<sub>j<sub>t</sub></sub>
+<span class="up">≤</span> B<sub>page</sub>
+<span class="lbl">(7)</span></span>
+<p>Relax with a multiplier <span class="mx">λ ≥ 0</span>; the coupled problem splits
+into 64 independent one-liners,</p>
+<span class="eq">j<sub>t</sub>(λ) <span class="up">=</span>
+<span class="up">arg&thinsp;min</span><sub>j</sub>
+<span class="up">[</span>&thinsp;ω<sub>t</sub>&thinsp;D<sub>t</sub>(j) +
+λ&thinsp;R<sub>j</sub>&thinsp;<span class="up">]</span>
+<span class="lbl">(8)</span></span>
+<p>and λ is found by bisection (about 40 halvings in float64) until the budget
+constraint in (7) is met exactly. The budget <span class="mx">B<sub>page</sub></span>
+already has the side information subtracted: page header, the per-token rung labels,
+and per-token norms where the family uses them — <b>every bit the decoder needs is
+charged</b>, nothing rides for free.</p></div>
+
+<div class="demo" id="rdodemo">
+<h3 style="margin-top:0">Try it: one page, one λ, sixteen tokens</h3>
+<p style="color:var(--muted);font-size:14.5px;max-width:74ch">Bar height = precision
+rung chosen for each token (0 = evicted). Amber bars are the attended tokens (high ω).
+Drag the budget down and watch the optimizer protect them — then turn ω off and watch
+it starve exactly those tokens. Coarsen the ladder to see why ω matters most there.</p>
+<div class="row">
+<label>page budget <input type="range" id="bud" min="4" max="28" value="12"> <span id="budv" class="mx"></span></label>
+<button class="tog on" id="omtog" aria-pressed="true">ω weighting: ON</button>
+<button class="tog" id="ladtog" aria-pressed="false">ladder: fine</button>
+</div>
+<div class="bars" id="bars"></div>
+<div class="blegend"><span><b style="color:var(--amber)">■</b> attended (ω high)</span>
+<span><b style="color:var(--accent)">■</b> background token</span><span>number = rung width (bits/coord)</span></div>
+<div class="readout" id="rdout"></div>
+</div>
+<div class="evi"><span class="tag">fixed pages vs free bitstream at 1.5 b/c: <b>statistical tie</b> on every task — the serving format is free</span></div>
+</section>
+
+<!-- ==================== STEP 5 ==================== -->
+<section id="s5" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 5 · Sinks</span>
+<span class="chip prompt">online · positions 0–3 of every sequence</span>
+<span class="chip cost">forced max precision; position-derivable, zero extra labels</span></div>
+<h2>The four tokens you must never damage</h2>
+<p>The first few tokens of a sequence — the <b>attention sinks</b> — absorb 19–84% of
+attention mass per head. They are also statistical outliers: their norms sit 2.7–5.4×
+beyond the 99.9th percentile of ordinary keys, and their <em>directions</em> are
+outliers too. Every quantizer tuned on "typical" keys destroys them, and every
+accuracy proxy fails to notice until generation collapses into whitespace.</p>
+<div class="intuit"><b>Intuition.</b> Sinks are the softmax's pressure valve: the model
+parks probability mass there when it wants to attend to nothing. Corrupt a sink and
+that parked mass floods everywhere else — a global failure caused by four tokens.
+Since their positions are always 0–3, protecting them needs no signalling at all:
+both encoder and decoder simply know.</div>
+<div class="mathcard"><h4>Rules · three hard-won invariants</h4>
+<p><b>(i) Force the top rung</b> for positions 0–3 and debit their cost from page 0's
+budget before the optimizer runs. <b>(ii) Every quantization grid must contain an exact
+zero level</b> — grids without one inflate every key's norm coherently, and softmax
+amplifies coherent bias (F1 → ~0 while per-token metrics look fine). <b>(iii) Scale
+handling must be absolute, not data-fit</b> for sinks: e.g. an absolute mid-tread grid
+on unit directions,</p>
+<span class="eq">u&#770;<sub>c</sub> <span class="up">=</span>
+<span class="frac"><span><span class="up">round</span>(127&thinsp;u<sub>c</sub>)</span><span>127</span></span>,
+&emsp; c <span class="up">=</span> 1…d
+<span class="lbl">(9)</span></span>
+<p>which is outlier-proof because unit-vector coordinates are already bounded in
+[−1, 1] — no fitted scale exists for an outlier to break.</p></div>
+<div class="evi"><span class="tag">failure physics measured: q999-fitted scales clipped sinks → sink mass <b>0.84 → 0.007</b> → whitespace generation</span>
+<span class="tag">independently confirmed: OSCAR's BF16 sink window is a <b>requirement</b> — removing it in our emulation corrupts sinks on Llama</span></div>
+</section>
+
+<!-- ==================== STEP 6 ==================== -->
+<section id="s6" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 6 · Entropy coding</span>
+<span class="chip prompt">online · encode once at prefill</span>
+<span class="chip cost">encode &lt;0.1% of prefill; decode only on tier loads</span></div>
+<h2>Where the last 4 F1 points live</h2>
+<p>Within each rung, coordinates are quantized by a <b>deadzone scalar quantizer</b>
+and the resulting symbol stream is compressed with a <b>range coder (rANS)</b> whose
+probability tables are frozen from calibration. This is the one component that cannot
+be replaced by anything cheaper — we know, because we tried the entire alternative
+class and measured the gap.</p>
+<div class="intuit"><b>Intuition.</b> After the whitening of step 2, most coordinates
+of most tokens are tiny — nearly zero. An entropy coder charges what a symbol is
+worth: "zero, again" costs a fraction of a bit, while rare large values pay full
+price. Fixed-width codes must pay the same bits for every coordinate regardless.
+That density-adaptation is worth 4+ F1 points at 1.5 bits/coord, and no fixed-width
+mechanism we built — trellis codes, E8 lattices, sparse top-K coding, learned bases —
+recovers it.</div>
+<div class="mathcard"><h4>Definitions · deadzone quantizer + achieved rate</h4>
+<p>With step size Δ and a widened zero bin (deadzone), encode and decode are</p>
+<span class="eq">s<sub>c</sub> <span class="up">=</span> <span class="up">sign</span>(r<sub>c</sub>)&thinsp;·&thinsp;
+<span class="up">max</span><span class="up">(</span>0,&thinsp;
+<span class="up">⌊</span> |r<sub>c</sub>|<span class="up">/</span>Δ − θ + 1 <span class="up">⌋</span><span class="up">)</span>,
+&emsp; r&#770;<sub>c</sub> <span class="up">=</span> <span class="up">sign</span>(s<sub>c</sub>)&thinsp;(|s<sub>c</sub>| + θ − ½)&thinsp;Δ
+<span class="lbl">(10)</span></span>
+<p>The coder stores symbol <span class="mx">s</span> in
+<span class="mx">−log<sub>2</sub>&thinsp;p(s)</span> bits against the frozen calibration
+model <span class="mx">p</span>, so the page's payload approaches the empirical entropy
+<span class="mx">H(s)</span>. All rates reported anywhere in this project are
+<b>held-out and all-in</b>: probability tables frozen on calibration data, evaluated on
+unseen prompts, with headers, rung labels, and coder state all charged.</p></div>
+<div class="evi"><span class="tag">the no-EC frontier is mapped and closed: best random-access codec <b>42.6 vs EC 46.8</b> at 1.5 b/c; 5× training data moved it 0.6 — the gap is the entropy model itself</span></div>
+</section>
+
+<!-- ==================== STEP 7 ==================== -->
+<section id="s7" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 7 · Serving</span>
+<span class="chip never">decode path · zero added cost</span></div>
+<h2>Mode A: compress once, decode never</h2>
+<p>The final piece is <em>where</em> compression sits in the serving stack — and the
+answer is what makes the whole design deployable despite entropy coding being serial
+and slow to decode.</p>
+<div class="intuit"><b>Intuition.</b> A resident compressed cache must re-decode the
+<i>entire context for every generated token</i>: at 64k context that is ~2 billion
+symbols per token — measured at ~1.8 seconds against a ~5 ms attention budget. Hopeless,
+and unfixable, because entropy streams cannot be random-accessed mid-page. So don't
+decode at decode time: compress at prefill, immediately reconstruct, and let the cache
+hold the <b>reconstructions</b>. Generation touches ordinary fp16 tensors; the quality
+effect of compression is fully present (the keys are the quantized ones); the cost of
+decompression is zero.</div>
+<div class="mathcard"><h4>Straight talk · where memory is and is NOT saved</h4>
+<p><b>Mode A does not shrink the hot GPU cache.</b> The resident tensors are ordinary
+fp16 — the reconstruction <span class="mx">k&#770;</span> occupies exactly as many bytes
+as <span class="mx">k</span> did. What Mode A buys on the hot tier is <i>quality
+isolation</i> (F1 measures pure codec damage) and <i>zero decode cost</i>. The memory
+wins live elsewhere:</p>
+<div class="twrap"><table>
+<tr><th>tier</th><th>what is stored</th><th>resident bytes</th><th>codec work</th><th>quality</th></tr>
+<tr><td><b>GPU-resident, Mode A</b></td><td>reconstructed fp16 <span class="mx">k&#770;</span></td>
+<td class="n bad">unchanged (16 b/c)</td>
+<td class="n">encode once at prefill</td><td class="n">≈FP at 1.95 b/c codec rate</td></tr>
+<tr><td><b>off-GPU (cold): offload, prefix cache, sessions</b></td><td>entropy-coded pages</td>
+<td class="n good">1.0–1.5 b/c → 10–16×</td>
+<td class="n">decode once on reload, PCIe-bound</td><td class="n">same as Mode A on reload</td></tr>
+<tr><td>GPU-resident, eviction (step 3's ω or in-context scorers)</td><td>fewer fp16 pages</td>
+<td class="n good">÷(1−ratio), e.g. 2× at 0.50</td>
+<td class="n">none</td><td class="n">EA −1.4 / ω −5.1 vs FP at 0.50</td></tr>
+<tr><td>GPU-resident, fixed-width codec (TurboQuant / RVQ / OSCAR-INT2 class)</td>
+<td>packed integer codes</td><td class="n good">2.1 b/c → ~7.5×</td>
+<td class="n">dequantize inside the kernel (random access — this is why no-EC matters)</td>
+<td class="n">45.7 @2.125 · 42.6 @1.5 — the measured F1 price</td></tr>
+</table></div>
+<p><b>Decision rule.</b> Binding constraint = hot-tier bytes → eviction and/or a
+fixed-width codec (accepting its measured F1 cost; OSCAR's fused-kernel design is the
+port target). Binding constraint = quality + off-GPU bandwidth/storage → Mode A + EC
+pages is strictly best. The study's contribution is that this table is now
+<i>measured</i>, so the choice is an engineering decision, not a bet.</p></div>
+</section>
+
+<!-- ==================== STEP 8 ==================== -->
+<section id="s8" class="col reveal">
+<div class="step-eyebrow"><span class="no">Step 8 · Evidence</span></div>
+<h2>Why we believe each choice</h2>
+<p>Every step above survived a pre-registered benchmark with row-paired bootstrap
+confidence intervals, and most survived an attempt to replace them with something
+cheaper. The short version:</p>
+<div class="twrap"><table>
+<tr><th>claim</th><th>evidence</th><th>verdict</th></tr>
+<tr><td>Σ<sub>Q</sub> is the right target (steps 1–2)</td>
+<td class="n">project benchmarks + OSCAR ablation 70.0 vs 31.1</td><td class="good">confirmed twice</td></tr>
+<tr><td>ω helps when ladders are coarse (step 3)</td>
+<td class="n">+2.9…+3.7 F1, SIG, three quantizer families</td><td class="good">regime law</td></tr>
+<tr><td>fixed 64-token pages are free (step 4)</td>
+<td class="n">43.98 vs 43.02, ties on every task</td><td class="good">adopted</td></tr>
+<tr><td>sink rules are mandatory (step 5)</td>
+<td class="n">every violation reproduces F1 collapse; OSCAR replicates</td><td class="good">invariant</td></tr>
+<tr><td>entropy coding is irreplaceable ≤1.5 b/c (step 6)</td>
+<td class="n">TCQ, E8, sparse-K, learned basis all screened below the VQ incumbent, which sits −4.2 below EC</td><td class="bad">door closed</td></tr>
+<tr><td>Mode A dodges decode cost (step 7)</td>
+<td class="n">measured 1.8 s/token resident vs 0 added in Mode A</td><td class="good">deployed pattern</td></tr>
+</table></div>
+<p style="color:var(--muted)">Full write-ups: <code>notes/page_quant/final_report.md</code>
+(presentation), <code>report.md</code> / <code>report2.md</code> / <code>report3.md</code>
+(technical records), <code>plan3.md</code> (pre-registration).</p>
+</section>
+
+<footer class="col">
+Method explainer · Llama-3.1-8B-Instruct reference numbers · every figure has a
+per-cell artifact and CI on disk · branch <code>paged_quant</code>
+</footer>
+</main>
+
+<script>
+(function(){
+// ---------- RDO demo ----------
+var NT=16, D=128;
+// token profile: energy (code-space norm^2, arbitrary units) and attended flag
+var toks=[]; var seed=7;
+function rnd(){seed=(seed*1103515245+12345)%2147483648;return seed/2147483648;}
+for(var i=0;i<NT;i++){
+  var hot=(i===3||i===9||i===12);
+  toks.push({hot:hot, energy:(hot?2.2+rnd():0.6+1.8*rnd()), om:1});
+}
+var FINE=[0,1,2,3,4], COARSE=[0,2,4];
+var state={bud:12, om:true, fine:true};
+function dist(t,w){ return t.energy*Math.pow(4,-w); }        // 6 dB/bit model
+function rate(w){ return w===0?0:16+D*w; }                    // norm+payload
+function omega(t,med){ return state.om?Math.exp(0.5*Math.max(-2.77,Math.min(2.77,(t.hot?1.2:-0.3)-med))):1; }
+function alloc(){
+  var lad=state.fine?FINE:COARSE;
+  var B=state.bud*D*NT/8;                                     // bud is bits/coord*8? map: slider 4..28 -> 0.5..3.5 b/c
+  B=(state.bud/8)*D*NT;
+  var med=0;
+  var lo=0,hi=1e4,as=null;
+  for(var it=0;it<48;it++){
+    var lam=(lo+hi)/2, used=0; as=[];
+    for(var i=0;i<NT;i++){
+      var t=toks[i],best=0,bv=1e18;
+      for(var j=0;j<lad.length;j++){
+        var v=omega(t,med)*dist(t,lad[j])+lam*rate(lad[j]);
+        if(v<bv-1e-12){bv=v;best=lad[j];}
+      }
+      as.push(best); used+=rate(best);
+    }
+    if(used>B) lo=lam; else hi=lam;
+  }
+  var used=0,wd=0;
+  for(var i=0;i<NT;i++){used+=rate(as[i]);wd+=dist(toks[i],as[i])*(toks[i].hot?3:1);}
+  return {as:as,used:used,B:B,wd:wd};
+}
+function render(){
+  var r=alloc(), el=document.getElementById('bars'); el.innerHTML='';
+  for(var i=0;i<NT;i++){
+    var d=document.createElement('div'); d.className='tk'+(toks[i].hot?' hot':'');
+    var b=document.createElement('i'); b.style.height=(8+r.as[i]/4*130)+'px';
+    var w=document.createElement('span'); w.className='w'; w.textContent=r.as[i];
+    d.appendChild(b); d.appendChild(w); el.appendChild(d);
+  }
+  document.getElementById('budv').textContent=(state.bud/8).toFixed(2)+' bits/coord';
+  var hotw=r.as.filter(function(_,i){return toks[i].hot;});
+  var starved=hotw.some(function(w){return w<=1;});
+  document.getElementById('rdout').innerHTML=
+    'budget used: '+Math.round(100*r.used/r.B)+'% &nbsp;·&nbsp; attended-token rungs: '
+    +'<span class="'+(starved?'bad':'ok')+'">['+hotw.join(', ')+']</span>'
+    +(starved?' — starved!':' — protected');
+}
+document.getElementById('bud').addEventListener('input',function(e){state.bud=+e.target.value;render();});
+document.getElementById('omtog').addEventListener('click',function(){
+  state.om=!state.om; this.classList.toggle('on',state.om);
+  this.setAttribute('aria-pressed',state.om);
+  this.textContent='ω weighting: '+(state.om?'ON':'OFF'); render();});
+document.getElementById('ladtog').addEventListener('click',function(){
+  state.fine=!state.fine; this.classList.toggle('on',!state.fine);
+  this.setAttribute('aria-pressed',!state.fine);
+  this.textContent='ladder: '+(state.fine?'fine':'coarse'); render();});
+render();
+// ---------- scrollspy + reveal ----------
+var links=[].slice.call(document.querySelectorAll('nav a'));
+var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+var spy=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){
+    links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id);});}});
+},{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(function(s){ if(s) spy.observe(s); });
+var rev=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('vis');rev.unobserve(e.target);}});
+},{threshold:.06});
+[].forEach.call(document.querySelectorAll('.reveal'),function(n){rev.observe(n);});
+})();
+</script>
+</body>
+</html>

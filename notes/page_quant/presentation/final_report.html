@@ -239,6 +239,11 @@ This door is closed by measurement, with the exact bar to clear recorded.</p></d
 <p class="lead">The proposal: quantize keys in 64-token pages — the unit paged-attention
 servers already use — and, inside each page, give more precision to the tokens that
 future queries will actually attend, predicted from the calibrated query distribution.</p>
+<p><em>Provenance:</em> the codec itself (qpca_unc basis, deadzone quantizer, paged rANS)
+and its rate–quality curve come from the earlier <strong>ec_k2v2 study</strong>; this study
+did not improve that curve. What is new here is everything around the codec: the page
+format, per-token allocation, the importance regime law, sink hardening, the serving
+verdict, and the closed fixed-width frontier.</p>
 <p>Two separable claims live inside it: a <strong>format</strong> claim (fixed-byte pages
 are the right container) and an <strong>allocation</strong> claim (importance-driven
 per-token precision beats uniform treatment). Both proved true. The decisive economics
