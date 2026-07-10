@@ -67,7 +67,12 @@ FRACS = [0.05, 0.10, 0.25, 0.50]
 GATE_LAYERS = range(8, 32)
 GATE_MARGIN = 10.0            # recall points @25%, pre-registered
 SEED = 20260708
-STATIC_SCORERS = ["omega_max", "omega_mean", "quest_mu", "incontext_mu"]
+# DEPLOYABLE = valid OmegaPagePress score_modes (calibration stats only).
+# incontext_mu uses the row's own realized queries — measurement-only: it
+# informs the claim ladder but can never be frozen as the press mode or
+# serve as the quest-gate baseline.
+DEPLOYABLE_SCORERS = ["omega_max", "omega_mean", "quest_mu"]
+STATIC_SCORERS = DEPLOYABLE_SCORERS + ["incontext_mu"]
 ALL_SCORERS = STATIC_SCORERS + ["quest_true", "oracle", "random_page"]
 
 
@@ -105,15 +110,27 @@ def page_scores(k, q, mu_q, rng):
 
 
 def recall_at(scores, page_mass, frac):
-    """Keep ceil(frac * n_pages) pages: page 0 + last page always, the rest
-    by score. Returns captured-mass fraction."""
+    """Contested-mass recall. Pages 0 (sink) and last (recent) are always
+    kept, and sinks alone hold 19-84% of raw attention mass — leaving them
+    in the metric floors every scorer near ~85%+ and voids the budget-line
+    sanity check (observed: random@50% = 89.3 raw). They are therefore
+    excluded from BOTH numerator and denominator: measured is the scorer's
+    capture of the mass actually in play. n_keep still counts the two
+    forced pages, matching the press's budget accounting."""
     n_pages = scores.shape[0]
     n_keep = max(2, math.ceil(frac * n_pages))
-    forced = torch.tensor([0, n_pages - 1], device=scores.device)
+    if n_pages <= 2:
+        return 1.0
+    n_free = min(n_keep - 2, n_pages - 2)
+    if n_free <= 0:
+        return 0.0
     s = scores.clone()
-    s[forced] = torch.inf
-    keep = s.topk(min(n_keep, n_pages)).indices
-    return float(page_mass[keep].sum() / page_mass.sum().clamp_min(1e-12))
+    s[0] = -torch.inf
+    s[n_pages - 1] = -torch.inf
+    keep = s.topk(n_free).indices
+    contested = (page_mass.sum() - page_mass[0]
+                 - page_mass[-1]).clamp_min(1e-12)
+    return float(page_mass[keep].sum() / contested)
 
 
 def main():
@@ -204,21 +221,25 @@ def main():
 
     # frozen decision rules (selection rows only, BEFORE any F1)
     sel25 = {s: summary["selection"][s]["recall@25%"]
-             for s in STATIC_SCORERS}
+             for s in DEPLOYABLE_SCORERS}
     score_mode = max(sel25, key=sel25.get)
-    best_static_gate = max(mean100(gate_rows[s]) for s in STATIC_SCORERS)
+    best_static_gate = max(mean100(gate_rows[s]) for s in DEPLOYABLE_SCORERS)
     quest_gate_val = mean100(gate_rows["quest_true"])
     quest_gate_fired = quest_gate_val > best_static_gate + GATE_MARGIN
 
     out = {
         "meta": {"ptok": PTOK, "n_queries": N_QUERIES, "seed": SEED,
                  "fracs": FRACS, "gate_layers": [8, 31],
-                 "gate_margin": GATE_MARGIN},
+                 "gate_margin": GATE_MARGIN,
+                 "recall_basis": "contested (sink+recent pages excluded "
+                                 "from num+denom; raw basis floored at "
+                                 "~89% by sink mass — see recall_at)"},
         "summary": summary,
         "frozen": {
             "score_mode": score_mode,
             "score_mode_rule": "argmax selection recall@25% among "
-                               + ",".join(STATIC_SCORERS),
+                               + ",".join(DEPLOYABLE_SCORERS)
+                               + " (incontext_mu measurement-only)",
             "quest_gate_fired": bool(quest_gate_fired),
             "quest_true_at25_layers8_31": quest_gate_val,
             "best_static_at25_layers8_31": best_static_gate,

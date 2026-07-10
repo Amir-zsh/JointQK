@@ -66,13 +66,16 @@ class OmegaPagePress(ScorerPress):
         if pad:
             keys = torch.nn.functional.pad(keys, (0, 0, 0, pad),
                                            value=0.0)
-        kp = keys.reshape(b, h, n_pages, ps, d)
+        kp = keys.reshape(b, h, n_pages, ps, d).float()  # bf16 caches: score in fp32
         if self.score_mode == "random_page":
             g = torch.Generator().manual_seed(self.seed + layer)
             return (torch.rand(n_pages, generator=g).to(keys.device)
                     .expand(b, h, n_pages).clone())
         mu = self._mu(layer, keys.device)              # (H, d)
         if self.score_mode == "quest_mu":
+            if pad:                                    # pad zeros must not
+                kp = kp.clone()                        # shape the last box
+                kp[:, :, -1, ps - pad:] = kp[:, :, -1, :1]
             kmin = kp.min(3).values                    # (B, H, P, d)
             kmax = kp.max(3).values
             mu_ = mu.view(1, h, 1, d)

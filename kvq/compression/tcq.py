@@ -64,26 +64,25 @@ def fit_warped_lm_tables(u: torch.Tensor, n_levels: int, p: float,
     c = sign(u)|u|^p so p>1 packs resolution into the tails.
     """
     d = u.shape[1]
-    out = torch.empty(d, n_levels)
-    for j in range(d):
-        s = _compand(u[:, j], p).double().sort().values
-        cent = torch.quantile(s, torch.linspace(0, 1, n_levels + 2)[1:-1]
-                              .double())
-        for _ in range(iters):
-            idx = torch.bucketize(s, (cent[1:] + cent[:-1]) / 2)
-            sums = torch.zeros(n_levels, dtype=s.dtype).scatter_add_(
-                0, idx, s)
-            cnts = torch.zeros(n_levels, dtype=s.dtype).scatter_add_(
-                0, idx, torch.ones_like(s))
-            new = torch.where(cnts > 0, sums / cnts.clamp_min(1), cent)
-            if (new - cent).abs().max() < 1e-6 * (s.std() + 1e-12):
-                cent = new
-                break
-            cent = new
-        lv = _expand(cent.float(), p).sort().values
-        lv[lv.abs().argmin()] = 0.0
-        out[j] = lv
-    return out
+    # Batched over coords: (d, N) against (d, V) — bin means of ordered
+    # intervals stay sorted, so searchsorted midpoints are valid every iter.
+    c = _compand(u, p).double().t().contiguous()          # (d, N)
+    qs = torch.linspace(0, 1, n_levels + 2, device=c.device)[1:-1].double()
+    cent = torch.quantile(c, qs, dim=1).t().contiguous()  # (d, V)
+    ones = torch.ones_like(c)
+    tol = 1e-6 * (c.std(dim=1, keepdim=True) + 1e-12)     # (d, 1)
+    for _ in range(iters):
+        idx = torch.searchsorted((cent[:, 1:] + cent[:, :-1]) / 2, c)
+        sums = torch.zeros_like(cent).scatter_add_(1, idx, c)
+        cnts = torch.zeros_like(cent).scatter_add_(1, idx, ones)
+        new = torch.where(cnts > 0, sums / cnts.clamp_min(1), cent)
+        done = (new - cent).abs().amax(dim=1, keepdim=True) < tol
+        cent = new
+        if bool(done.all()):
+            break
+    lv = _expand(cent.float(), p).sort(dim=1).values
+    lv[torch.arange(d, device=lv.device), lv.abs().argmin(dim=1)] = 0.0
+    return lv.cpu()
 
 
 def _subset_stats(u: torch.Tensor, table: torch.Tensor):
@@ -248,8 +247,15 @@ class TCQPagedCompressor(_PagedBase):
         dev = k.device
 
         r = (k - self.mu) @ self.forward_map
-        n16 = r.norm(dim=1).to(torch.float16).float()
-        u = r / n16.clamp_min(1e-8).unsqueeze(1)
+        # Transmit the RAW-domain norm (second gate sweep: code-domain
+        # renorm left raw normR at 0.98-1.05 through the non-orthogonal
+        # inverse map). Decoder: k_hat = mu + n16 * w/||w||, w = u_hat @ G.
+        # In code domain that is r_hat = n16 * u_hat / ||u_hat @ G|| — one
+        # extra per-rung row-norm, priced exactly; raw normR = 1 by
+        # construction.
+        n16 = (k - self.mu).norm(dim=1).to(torch.float16).float()
+        ncode = r.norm(dim=1)
+        u = r / ncode.clamp_min(1e-8).unsqueeze(1)
 
         # sink bypass: absolute 8-bit [-1,1] direction grid + fp16 norm,
         # charged to page 0 (rvq.py pattern; position-derivable, zero
@@ -261,19 +267,31 @@ class TCQPagedCompressor(_PagedBase):
         R = self.n_rungs
         Dmat = torch.empty(T, R, device=dev)
         Dmat[:, 0] = r.square().sum(1)                 # eviction
+        # Decoded directions come back systematically short (sparse-K zeros
+        # most coords; coarse tables underfit tails) — shrunken bulk logits
+        # reallocate softmax mass onto the exactly-kept sinks (first pgq3
+        # gate sweep). The raw-norm decode above fixes the scale; here each
+        # rung's ACTUAL reconstruction r_hat = n16 * u_hat / ||u_hat @ G||
+        # is materialized so Dmat prices the exact snap. All-zero rows give
+        # r_hat = 0 (priced as eviction; RDO then prefers the cheap rung).
+        def _scaled(uh):
+            g = (uh @ self.inverse_map).norm(dim=1)
+            return uh * (n16 / g.clamp_min(1e-8)).unsqueeze(1)
+
         um = u @ self.mixer if self.mixer is not None else u
-        uhat_by_rung = [None]
+        rhat_by_rung = [None]
         for wi in range(len(self.tcq_widths)):
             uh = tcq_viterbi(um, self.tables[wi], self.n_states)
             if self.mixer is not None:
                 uh = uh @ self.mixer.t()               # back to raw direction
-            uhat_by_rung.append(uh)
-            Dmat[:, 1 + wi] = (r - uh * n16.unsqueeze(1)).square().sum(1)
+            rh = _scaled(uh)
+            rhat_by_rung.append(rh)
+            Dmat[:, 1 + wi] = (r - rh).square().sum(1)
         for ki, kk in enumerate(self.sparse_ks):
-            uh = sparse_k_quantize(u, kk, self.mag_bits)
-            uhat_by_rung.append(uh)
+            rh = _scaled(sparse_k_quantize(u, kk, self.mag_bits))
+            rhat_by_rung.append(rh)
             Dmat[:, 1 + len(self.tcq_widths) + ki] = \
-                (r - uh * n16.unsqueeze(1)).square().sum(1)
+                (r - rh).square().sum(1)
         Rrow = self.rate_bits.to(dev)
 
         ptok = self.ptok
@@ -339,7 +357,10 @@ class TCQPagedCompressor(_PagedBase):
             msk = assign == ri
             msk[:nsink] = False
             if msk.any():
-                r_hat[msk] = uhat_by_rung[ri][msk] * n16[msk].unsqueeze(1)
-        r_hat[:nsink] = u_sink * n16[:nsink].unsqueeze(1)
+                r_hat[msk] = rhat_by_rung[ri][msk]
+        if nsink:
+            g = (u_sink @ self.inverse_map).norm(dim=1)
+            r_hat[:nsink] = u_sink * (n16[:nsink]
+                                      / g.clamp_min(1e-8)).unsqueeze(1)
         out = r_hat @ self.inverse_map + self.mu
         return out.reshape(shape).to(states.dtype)

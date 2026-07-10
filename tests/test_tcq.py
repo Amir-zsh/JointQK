@@ -96,6 +96,7 @@ def test_uniform_reconstruction_matches_manual():
     n16 = r.norm(dim=1).to(torch.float16).float()
     u = r / n16.clamp_min(1e-8).unsqueeze(1)
     uh = tcq_viterbi(u, c.tables[1], N_STATES)      # rung 2 = width 2
+    uh = uh / uh.norm(dim=1, keepdim=True).clamp_min(1e-8)  # decoder renorm
     manual = (uh * n16.unsqueeze(1)) @ c.inverse_map + c.mu
     assert torch.allclose(out[4:], manual[4:], atol=1e-4)
 
@@ -218,5 +219,7 @@ def test_mixed_domain_roundtrip_energy_consistent():
     n16 = r.norm(dim=1).to(torch.float16).float()
     u = r / n16.clamp_min(1e-8).unsqueeze(1)
     uh_m = tcq_viterbi(u @ h, c.tables[1], N_STATES)
-    manual = ((uh_m @ h.t()) * n16.unsqueeze(1)) @ c.inverse_map + c.mu
+    uh_r = uh_m @ h.t()
+    uh_r = uh_r / uh_r.norm(dim=1, keepdim=True).clamp_min(1e-8)
+    manual = (uh_r * n16.unsqueeze(1)) @ c.inverse_map + c.mu
     assert torch.allclose(out[4:], manual[4:], atol=1e-4)

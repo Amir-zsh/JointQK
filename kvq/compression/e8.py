@@ -79,6 +79,28 @@ def voronoi_roundtrip(y: torch.Tensor, m: int) -> torch.Tensor:
     return y_hat.to(y.dtype)
 
 
+def quant_profile(x_sub: torch.Tensor, profile: torch.Tensor) -> torch.Tensor:
+    """x_sub (T, d/8, 8) in beta-units -> quantized, per-subvector m.
+
+    Boundary cosets of E8 / 2^m*E8 can decode to a FAR equivalent of
+    the nearest lattice point (at m=1 every coset is +-symmetric, so a
+    sign can flip across the region) — a wrap costing more than zeroing
+    the subvector. Index 0 always decodes to exactly 0, so the encoder
+    keeps the better of {wrapped codeword, 0} per subvector: still a
+    valid index stream, and rung distortion <= eviction structurally."""
+    out = torch.zeros_like(x_sub)
+    for m in profile.unique().tolist():
+        if m <= 0:
+            continue
+        cols = profile == m
+        x = x_sub[:, cols]
+        y_hat = voronoi_roundtrip(e8_nearest(x), int(m))
+        keep = ((x - y_hat).square().sum(-1)
+                <= x.square().sum(-1)).unsqueeze(-1)
+        out[:, cols] = torch.where(keep, y_hat, torch.zeros_like(y_hat))
+    return out
+
+
 class E8PagedCompressor(_PagedBase):
     """mode: "uniform" (single rung, no ids) | "rdo" (per-token rung)."""
 
@@ -97,10 +119,13 @@ class E8PagedCompressor(_PagedBase):
             raise ValueError(f"head_dim {d} not divisible by 8")
         if int(self.profiles.shape[1]) != d // 8:
             raise ValueError("profile length != d/8")
-        # lattice rungs + the fp16 escape/sink rung appended last
+        # lattice rungs (norm 16b + 8*sum(m); the all-zero profile is a true
+        # evict rung at 0 bits) + the fp16 escape/sink rung appended last
         self.n_rungs = int(self.profiles.shape[0]) + 1
+        psum = self.profiles.sum(1).double()
         self.rate_bits = torch.cat([
-            8.0 * self.profiles.sum(1).double(),
+            torch.where(psum > 0, 16.0 + 8.0 * psum,
+                        torch.zeros_like(psum)),
             torch.tensor([16.0 * d]).double()])
         self.b_page = float(b_page)
         self.ptok = int(ptok)
@@ -119,25 +144,7 @@ class E8PagedCompressor(_PagedBase):
 
     def _quant_profile(self, x_sub: torch.Tensor,
                        profile: torch.Tensor) -> torch.Tensor:
-        """x_sub (T, d/8, 8) in beta-units -> quantized, per-subvector m.
-
-        Boundary cosets of E8 / 2^m*E8 can decode to a FAR equivalent of
-        the nearest lattice point (at m=1 every coset is +-symmetric, so a
-        sign can flip across the region) — a wrap costing more than zeroing
-        the subvector. Index 0 always decodes to exactly 0, so the encoder
-        keeps the better of {wrapped codeword, 0} per subvector: still a
-        valid index stream, and rung distortion <= eviction structurally."""
-        out = torch.zeros_like(x_sub)
-        for m in profile.unique().tolist():
-            if m <= 0:
-                continue
-            cols = profile == m
-            x = x_sub[:, cols]
-            y_hat = voronoi_roundtrip(e8_nearest(x), int(m))
-            keep = ((x - y_hat).square().sum(-1)
-                    <= x.square().sum(-1)).unsqueeze(-1)
-            out[:, cols] = torch.where(keep, y_hat, torch.zeros_like(y_hat))
-        return out
+        return quant_profile(x_sub, profile)
 
     @torch.no_grad()
     def roundtrip(self, states: torch.Tensor) -> torch.Tensor:
@@ -149,20 +156,33 @@ class E8PagedCompressor(_PagedBase):
         dev = k.device
 
         r = (k - self.mu) @ self.forward_map
-        rm = r @ self.mixer if self.mixer is not None else r
-        x_sub = (rm / self.beta).reshape(T, d // 8, 8)
+        # Norm+direction structure (third gate design): the raw-domain norm
+        # is transmitted (16b, in every lattice rung's rate) and the E8
+        # code carries only the unit direction — wrap-guard shrinkage then
+        # cannot touch the scale (decode: r_hat = n16 * u_hat/||u_hat @ G||,
+        # raw normR = 1 by construction). The LS-gain approach is gone: it
+        # is a shrinkage estimator and made G3 worse (second gate sweep).
+        n16 = (k - self.mu).norm(dim=1).to(torch.float16).float()
+        u = r / r.norm(dim=1, keepdim=True).clamp_min(1e-8)
+        um = u @ self.mixer if self.mixer is not None else u
+        x_sub = (um / self.beta).reshape(T, d // 8, 8)
+
+        def _scaled(uh_m):
+            uh = uh_m @ self.mixer.t() if self.mixer is not None else uh_m
+            g = (uh @ self.inverse_map).norm(dim=1)
+            return uh * (n16 / g.clamp_min(1e-8)).unsqueeze(1)
 
         R = self.n_rungs
         Dmat = torch.empty(T, R, device=dev)
-        rmhat_by_rung = []
+        rhat_by_rung = []
         for ri in range(R - 1):
-            rh = (self._quant_profile(x_sub, self.profiles[ri])
-                  .reshape(T, d) * self.beta)
-            rmhat_by_rung.append(rh)
-            Dmat[:, ri] = (rm - rh).square().sum(1)
-        rm16 = rm.to(torch.float16).float()            # escape rung
-        rmhat_by_rung.append(rm16)
-        Dmat[:, R - 1] = (rm - rm16).square().sum(1)
+            rh = _scaled(self._quant_profile(x_sub, self.profiles[ri])
+                         .reshape(T, d) * self.beta)
+            rhat_by_rung.append(rh)
+            Dmat[:, ri] = (r - rh).square().sum(1)
+        r16 = r.to(torch.float16).float()              # escape rung, exact
+        rhat_by_rung.append(r16)
+        Dmat[:, R - 1] = (r - r16).square().sum(1)
         Rrow = self.rate_bits.to(dev)
 
         ptok = self.ptok
@@ -225,11 +245,10 @@ class E8PagedCompressor(_PagedBase):
         for ri in range(R):
             self.rung_hist[ri] += int(binc[ri])
 
-        rm_hat = torch.empty_like(rm)
+        r_hat = torch.empty_like(r)
         for ri in range(R):
             msk = assign == ri
             if msk.any():
-                rm_hat[msk] = rmhat_by_rung[ri][msk]
-        r_hat = rm_hat @ self.mixer.t() if self.mixer is not None else rm_hat
+                r_hat[msk] = rhat_by_rung[ri][msk]
         out = r_hat @ self.inverse_map + self.mu
         return out.reshape(shape).to(states.dtype)

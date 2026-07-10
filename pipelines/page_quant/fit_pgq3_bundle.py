@@ -120,6 +120,9 @@ def main() -> None:
     ap.add_argument("--skip-eval", action="store_true")
     ap.add_argument("--skip-freeze", action="store_true",
                     help="reuse an existing frozen_choices_pgq3.json")
+    ap.add_argument("--transform-override", default=None,
+                    help="linear_pair .pt with per-head forward/inverse "
+                         "(family d); bundle tag gains __lin")
     args = ap.parse_args()
     dev = torch.device(args.device)
     ensure_dir(OUT_DIR)
@@ -132,6 +135,12 @@ def main() -> None:
     assert d == D_HEAD
     mu_q, mu_k = load_mu_from_fit_stats(roles["fit"])
     F, Finv = build_basis("qpca_unc", cca, mu_k, None)
+    if args.transform_override:
+        ov = torch.load(args.transform_override, map_location="cpu",
+                        weights_only=False)
+        F, Finv = ov["forward"].float(), ov["inverse"].float()
+        print(f"[fit] transform override <- {args.transform_override}",
+              flush=True)
     hada = build_hadamard(d)
     if args.pool == "train400":
         fit_pool = BigPool(bigpool_rows(args.pool_rows, gen))
@@ -228,19 +237,22 @@ def main() -> None:
                     nlev = 2 ** (w + 1) if states_out > 1 else 2 ** w
                     tcq_tabs[wi][l, h] = fit_warped_lm_tables(
                         ut.cpu(), nlev, warp_p)
-                rm = r @ hd
-                sub = rm.reshape(-1, d // 8, 8)
-                snorm = sub.norm(dim=2)
+                # E8 codes the UNIT direction (norm+direction redesign):
+                # beta/profiles fit on mixed unit dirs, not raw code rows
+                um_sub = (u @ hd).reshape(-1, d // 8, 8)
+                snorm = um_sub.norm(dim=2)
                 # beta so the m=2 Voronoi inradius (2*sqrt(2)) covers q999
                 e8_beta[l, h] = float(snorm.reshape(-1).quantile(0.999)
                                       / (2.0 * math.sqrt(2.0)))
                 e8_prof[l, h] = water_fill_profiles(
-                    sub.square().mean((0, 2)).cpu())
+                    um_sub.square().mean((0, 2)).cpu())
             print(f"[fit{tag_suffix}] layer {l}/{L-1} "
                   f"({time.time()-t0:.0f}s)", flush=True)
 
-        tag = ("compact8train18" if args.pool == "fit18"
-               else f"compact8train{args.pool_rows}r400") + tag_suffix
+        tag = (("compact8train18" if args.pool == "fit18"
+                else f"compact8train{args.pool_rows}r400")
+               + ("__lin" if args.transform_override else "")
+               + tag_suffix)
         out_path = OUT_DIR / f"pgq3_bundle__qpca_unc__{tag}.pt"
         blob = {
             "pgq_version": PGQ3_BUNDLE_VERSION,

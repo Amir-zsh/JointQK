@@ -88,9 +88,13 @@ def test_voronoi_wraps_outside_region():
 
 
 def test_rate_ladder_and_escape():
+    # lattice rungs carry the 16b raw norm; the all-zero profile is a true
+    # evict rung at 0 bits; escape rung has no norm sideband (exact fp16 r)
     c = make_comp()
-    assert c.rate_bits.tolist() == [0.0, 8.0 * NSUB, 8.0 * (2 + 1 + 1 + 1),
-                                    16.0 * NSUB, 16.0 * D]
+    assert c.rate_bits.tolist() == [0.0,
+                                    16.0 + 8.0 * NSUB,
+                                    16.0 + 8.0 * (2 + 1 + 1 + 1),
+                                    16.0 + 16.0 * NSUB, 16.0 * D]
     assert c.n_rungs == PROFILES.shape[0] + 1
 
 
@@ -166,16 +170,36 @@ def make_oscar(width=2, group=D, clip_q=0.96):
 
 
 def test_oscar_rate_charged_honestly():
+    # windows off: pure bulk-rate contract (2.25 b/c at d=128, one group)
     c = make_oscar(width=2, group=D)
+    c.sink_tokens = 0
+    c.recent_tokens = 0
     g = torch.Generator().manual_seed(9)
     x = torch.randn(1, 2 * PTOK, D, generator=g)
     c.roundtrip(x)
     T = 2 * PTOK
     assert abs(c.bits_payload - T * (2 * D + SCALE_ZERO_BITS)) < 1e-6
     assert c.bits_side == 2 * HEADER_BITS
-    # b/c = width + 32/group_size (2.25 at production d=128, one group)
     assert abs(c.bits_payload / (T * D)
                - (2 + SCALE_ZERO_BITS / D)) < 1e-9
+
+
+def test_oscar_windows_fp16_and_charged():
+    # published (S0, W) protection: fp16 passthrough, 16 b/c charged
+    c = make_oscar(width=2, group=D)
+    c.sink_tokens = 64
+    c.recent_tokens = 256
+    g = torch.Generator().manual_seed(10)
+    T = 6 * PTOK   # 384: 64 sink + 64 bulk + 256 recent
+    x = torch.randn(1, T, D, generator=g)
+    out = c.roundtrip(x).squeeze(0)
+    r = x.squeeze(0) @ c.forward_map
+    ref = (r.to(torch.float16).float() @ c.inverse_map)
+    assert torch.allclose(out[:64], ref[:64], atol=1e-3)
+    assert torch.allclose(out[-256:], ref[-256:], atol=1e-3)
+    n_bulk = T - 320
+    want = n_bulk * (2 * D + SCALE_ZERO_BITS) + 320 * 16 * D
+    assert abs(c.bits_payload - want) < 1e-6
 
 
 def test_oscar_constant_group_is_exact():
