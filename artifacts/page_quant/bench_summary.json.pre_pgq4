@@ -115,18 +115,6 @@
       "mean_f1": 46.804,
       "trio_mean_f1": 43.02333333333333
     },
-    "ecu@b2.0": {
-      "bundle_sha8": "b8259cd9",
-      "f1": {
-        "2wikimqa": 49.1,
-        "hotpotqa": 59.57,
-        "lcc": 49.76,
-        "musique": 33.1,
-        "qasper": 44.55
-      },
-      "mean_f1": 47.215999999999994,
-      "trio_mean_f1": 43.98666666666667
-    },
     "pgq_ea@b0.75": {
       "bundle_sha8": "1a09e6dc",
       "f1": {
@@ -336,23 +324,6 @@
       ],
       "trio_mean_f1": 31.353333333333335
     },
-    "pgq_oscar_uni@b0": {
-      "bundle_sha8": "7503e673",
-      "f1": {
-        "2wikimqa": 46.61,
-        "hotpotqa": 54.39,
-        "lcc": 50.19,
-        "musique": 29.27,
-        "qasper": 43.5
-      },
-      "mean_f1": 44.792,
-      "overflow_frac": 0.0,
-      "rate_heldout": 2.8837868881427813,
-      "rung_hist": [
-        14034320
-      ],
-      "trio_mean_f1": 42.02333333333333
-    },
     "pgq_pagerung@b1.0": {
       "bundle_sha8": "1a09e6dc",
       "f1": {
@@ -415,66 +386,6 @@
         1363
       ],
       "trio_mean_f1": 43.97666666666667
-    },
-    "pgq_proflm_ea@b2.0": {
-      "bundle_sha8": "ff390304",
-      "f1": {
-        "2wikimqa": 50.01,
-        "hotpotqa": 59.3,
-        "lcc": 38.22,
-        "musique": 32.47,
-        "qasper": 43.71
-      },
-      "mean_f1": 44.742,
-      "trio_mean_f1": 40.23333333333333
-    },
-    "pgq_proflm_rdo@b2.0": {
-      "bundle_sha8": "ff390304",
-      "f1": {
-        "2wikimqa": 44.99,
-        "hotpotqa": 60.86,
-        "lcc": 40.16,
-        "musique": 29.13,
-        "qasper": 44.51
-      },
-      "mean_f1": 43.93,
-      "trio_mean_f1": 38.093333333333334
-    },
-    "pgq_proflm_rdo@b2.5": {
-      "bundle_sha8": "ff390304",
-      "f1": {
-        "2wikimqa": 48.97,
-        "hotpotqa": 59.51,
-        "lcc": 42.88,
-        "musique": 30.72,
-        "qasper": 45.13
-      },
-      "mean_f1": 45.442,
-      "trio_mean_f1": 40.85666666666666
-    },
-    "pgq_proflmrw_ea@b2.0": {
-      "bundle_sha8": "ff390304",
-      "f1": {
-        "2wikimqa": 48.0,
-        "hotpotqa": 57.64,
-        "lcc": 48.1,
-        "musique": 32.28,
-        "qasper": 43.86
-      },
-      "mean_f1": 45.976,
-      "trio_mean_f1": 42.79333333333333
-    },
-    "pgq_proflmrw_rdo@b2.0": {
-      "bundle_sha8": "ff390304",
-      "f1": {
-        "2wikimqa": 45.11,
-        "hotpotqa": 60.34,
-        "lcc": 50.05,
-        "musique": 30.97,
-        "qasper": 42.92
-      },
-      "mean_f1": 45.878,
-      "trio_mean_f1": 42.04333333333333
     },
     "pgq_rvq_ea@b1.0": {
       "bundle_sha8": "6b118c8a",
@@ -550,18 +461,6 @@
         222022
       ],
       "trio_mean_f1": 36.800000000000004
-    },
-    "pgq_rvq_rdo@b2.0": {
-      "bundle_sha8": "6b118c8a",
-      "f1": {
-        "2wikimqa": 47.66,
-        "hotpotqa": 57.31,
-        "lcc": 43.76,
-        "musique": 29.15,
-        "qasper": 46.56
-      },
-      "mean_f1": 44.888,
-      "trio_mean_f1": 40.19
     },
     "pgq_rvq_uni@b2": {
       "bundle_sha8": "6b118c8a",

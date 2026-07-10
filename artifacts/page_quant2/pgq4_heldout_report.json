@@ -1,0 +1,40 @@
+{
+  "bundle": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt",
+  "report": {
+    "pgq_proflmrw_ea@b2": {
+      "norm_ratio_med": 0.9772228598594666,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1287873138848195,
+      "rung_hist": [
+        1,
+        128030,
+        3652005,
+        1545473,
+        2957323,
+        3963947,
+        1286650,
+        492955
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.023846913129091263
+    },
+    "pgq_proflmrw_rdo@b2": {
+      "norm_ratio_med": 0.979094922542572,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1288197344082223,
+      "rung_hist": [
+        0,
+        57239,
+        2568552,
+        2145766,
+        4466207,
+        3338940,
+        996947,
+        452733
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.026378273963928223
+    }
+  },
+  "sha8": "ff390304"
+}

@@ -1,0 +1,43 @@
+{
+  "frozen_at": "2026-07-10T00:20:00",
+  "rule": "P2 freeze per plan4: all choices from selection-row screening only; no F1 data existed at freeze time",
+  "choices": {
+    "family": "prof (B, water-filled block-width profiles)",
+    "grid": "lm",
+    "gain": false,
+    "basis": "qpca_unc per-(layer,head)",
+    "prof_share": "layer",
+    "prof_width_ladder": [0, 2, 3, 4, 6],
+    "profile_selection": "measured per-block distortion (A2), targets [0,128,192,224,256,288,320,768] bits/token",
+    "omega_rule": "pgq_proflm_ea at the tightest admitted rate (2.0), tau=0.5 carried from pgq2, clamp 4 bits"
+  },
+  "admitted": {
+    "pgq_proflm_rdo@2.0": {"logit_err": 0.00272, "bar": 0.00274, "ratio_vs_rvq": 1.143},
+    "pgq_proflm_rdo@2.5": {"logit_err": 0.00183, "bar": 0.00233, "ratio_vs_rvq": 0.902}
+  },
+  "closed_by_screening": {
+    "rate_1.5": {"pgq_proflm_rdo": 0.00483, "bar": 0.00466, "note": "1.19x rvq; consistent with the pgq3 effective-dimension closure at low rate"},
+    "family_A_fold": {"best@2.0": 0.01368, "note": "uniform width per token wastes bits on low-energy qpca coords; gain variant WORSE (raw-norm rescale through non-orthogonal inverse distorts Q-weighted direction)"},
+    "family_C_pagerung": {"@2.0": 0.02184, "note": "page-granularity allocation insufficient at an INT ladder"},
+    "family_D_bases": {"oscar@2.0": 0.01599, "r_sym@2.0": 0.02009, "note": "no promotion (rule: within 3% of qpca_unc; both ~6x off)"},
+    "px_prefix_profiles": {"@2.0_lm": 0.00378, "note": "water-filled tuples dominate prefix truncation at every rate"},
+    "omega_on_proxy": {"proflm_ea@2.0": 0.00311, "note": "omega hurts the unweighted proxy at every rate (regime-law-consistent); F1 test at 2.0 per registered omega_rule"}
+  },
+  "bundle": {
+    "path": "artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt",
+    "sha8": "ff390304",
+    "note": "pre-A1 screening JSONs (phaseA_pgq4.json, _lm, _bases) reference sha8 c97c7207; post-A1 pre-A2 (_w6) references 2173126c; the frozen bundle is ff390304 (A2)"
+  },
+  "references": {
+    "rvq_bars_from": "artifacts/page_quant/phaseA_pgq4_refs.json",
+    "rvq_logit_err": {"1.5": 0.00405, "2": 0.00238, "2.5": 0.00203},
+    "rvq_note": "rvq ladder saturates at realized 2.163 b/c at nominal 2.5",
+    "ecu": {"1.5": 0.00318, "2": 0.00155, "2.5": 0.00075},
+    "screening_files": ["phaseA_pgq4.json", "phaseA_pgq4_refs.json", "phaseA_pgq4_bases.json", "phaseA_pgq4_lm.json", "phaseA_pgq4_w6.json", "phaseA_pgq4_a2.json"]
+  },
+  "w1_arms": [
+    "pgq_proflm_rdo:2.0", "pgq_proflm_rdo:2.5", "pgq_proflm_ea:2.0",
+    "ecu:2.0", "pgq_rvq_rdo:2.0", "pgq_oscar_uni:0"
+  ],
+  "amendments_applied": ["A1 (width ladder {0,2,3,4,6})", "A2 (measured-distortion tuples, dense targets)"]
+}
