@@ -18,7 +18,9 @@ results (with CIs) → verdict → artifacts → open directions.
 ## Chronological records (`studies/`)
 
 `plan.md` (pgq1 design v1→v3) · `report.md` (pgq1) · `report2.md` (pgq2) ·
-`plan3.md` (pgq3 pre-registration + OSCAR amendments) · `report3.md` (pgq3).
+`plan3.md` (pgq3 pre-registration + OSCAR amendments) · `report3.md` (pgq3) ·
+`plan4.md` (pgq4 pre-registration + A1/A2) · `report4.md` (pgq4: profile rungs
++ recency window tie EC at 2 b/c, SIG over rvq, kernel-ready format).
 Bug ledger: [`fixes_to_apply.md`](fixes_to_apply.md) (root-caused chains, pgq_fixed +
 pgq3-1..5).
 
