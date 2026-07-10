@@ -1,0 +1,103 @@
+{
+  "baselines": {
+    "full_precision": {
+      "f1": {
+        "2wikimqa": 50.99,
+        "hotpotqa": 60.71,
+        "lcc": 51.37,
+        "musique": 32.62,
+        "qasper": 46.3
+      },
+      "mean_f1": 48.398,
+      "rate": null,
+      "rate_per_task": null,
+      "trio_mean_f1": 44.99333333333333
+    }
+  },
+  "evict": {
+    "expected_attention@r0.50": {
+      "f1": {
+        "2wikimqa": 51.6,
+        "hotpotqa": 56.59,
+        "lcc": 46.05,
+        "musique": 35.95,
+        "qasper": 44.72
+      },
+      "mean_f1": 46.982,
+      "trio_mean_f1": 44.53333333333333
+    },
+    "knorm@r0.50": {
+      "f1": {
+        "2wikimqa": 43.71,
+        "hotpotqa": 55.1,
+        "lcc": 28.86,
+        "musique": 25.43,
+        "qasper": 39.16
+      },
+      "mean_f1": 38.452,
+      "trio_mean_f1": 32.666666666666664
+    },
+    "omega_page_omega_mean__20874ee3@r0.50": {
+      "f1": {
+        "2wikimqa": 44.63,
+        "hotpotqa": 57.94,
+        "lcc": 48.15,
+        "musique": 27.74,
+        "qasper": 38.18
+      },
+      "mean_f1": 43.327999999999996,
+      "trio_mean_f1": 40.17333333333333
+    },
+    "omega_page_random_page__20874ee3@r0.50": {
+      "f1": {
+        "2wikimqa": 40.44,
+        "hotpotqa": 49.6,
+        "lcc": 49.12,
+        "musique": 27.74,
+        "qasper": 38.28
+      },
+      "mean_f1": 41.036,
+      "trio_mean_f1": 39.1
+    },
+    "random@r0.50": {
+      "f1": {
+        "2wikimqa": 7.75,
+        "hotpotqa": 4.23,
+        "lcc": 9.25,
+        "musique": 2.79,
+        "qasper": 8.29
+      },
+      "mean_f1": 6.462000000000001,
+      "trio_mean_f1": 6.596666666666667
+    },
+    "snapkv@r0.50": {
+      "f1": {
+        "2wikimqa": 49.85,
+        "hotpotqa": 58.04,
+        "lcc": 50.26,
+        "musique": 29.64,
+        "qasper": 40.5
+      },
+      "mean_f1": 45.658,
+      "trio_mean_f1": 43.25
+    },
+    "streaming_llm@r0.50": {
+      "f1": {
+        "2wikimqa": 37.3,
+        "hotpotqa": 48.73,
+        "lcc": 46.38,
+        "musique": 25.1,
+        "qasper": 37.46
+      },
+      "mean_f1": 38.994,
+      "trio_mean_f1": 36.26
+    }
+  },
+  "tasks": [
+    "lcc",
+    "musique",
+    "2wikimqa",
+    "qasper",
+    "hotpotqa"
+  ]
+}

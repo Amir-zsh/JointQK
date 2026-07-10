@@ -1,0 +1,119 @@
+{
+  "bundle": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400__lin.pt",
+  "report": {
+    "pgq_e8_rdo@b1": {
+      "norm_ratio_med": 0.850469708442688,
+      "overflow_frac": 0.009009009009009009,
+      "rate_heldout": 0.9773526255636183,
+      "rung_hist": [
+        6956859,
+        51604,
+        125941,
+        308493,
+        626182,
+        1667851,
+        4275212,
+        22178
+      ],
+      "sink_code_relerr_med": 0.14939530193805695,
+      "sink_mass_shift_med": 0.47841256856918335
+    },
+    "pgq_e8_rdo@b1.5": {
+      "norm_ratio_med": 0.9157025814056396,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.460286604552269,
+      "rung_hist": [
+        4180456,
+        43018,
+        100769,
+        267540,
+        603832,
+        1872898,
+        6882080,
+        83727
+      ],
+      "sink_code_relerr_med": 0.14939530193805695,
+      "sink_mass_shift_med": 0.460149884223938
+    },
+    "pgq_e8_uni@b3": {
+      "norm_ratio_med": 0.9557835459709167,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.8953216115921541,
+      "rung_hist": [
+        0,
+        0,
+        0,
+        14026384,
+        0,
+        0,
+        0,
+        7936
+      ],
+      "sink_code_relerr_med": 0.14939530193805695,
+      "sink_mass_shift_med": 0.478988379240036
+    },
+    "pgq_oscar_uni@b0": {
+      "norm_ratio_med": 1.0510414838790894,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.8837868881427813,
+      "rung_hist": [
+        14034320
+      ],
+      "sink_code_relerr_med": 3.102295522694476e-05,
+      "sink_mass_shift_med": -0.09351734817028046
+    },
+    "pgq_oscar_uni@b1": {
+      "norm_ratio_med": 0.9847525954246521,
+      "overflow_frac": 0.0,
+      "rate_heldout": 3.8385492136419863,
+      "rung_hist": [
+        14034320
+      ],
+      "sink_code_relerr_med": 3.102295522694476e-05,
+      "sink_mass_shift_med": -0.02064063400030136
+    },
+    "pgq_tcq_rdo@b1": {
+      "norm_ratio_med": 0.9503297209739685,
+      "overflow_frac": 0.0,
+      "rate_heldout": 0.9889997431296992,
+      "rung_hist": [
+        2475147,
+        11229544,
+        165560,
+        82627,
+        81442
+      ],
+      "sink_code_relerr_med": 0.11238660663366318,
+      "sink_mass_shift_med": 0.20833896100521088
+    },
+    "pgq_tcq_rdo@b1.5": {
+      "norm_ratio_med": 0.9990761280059814,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4872363872991352,
+      "rung_hist": [
+        114981,
+        9861237,
+        3306095,
+        680657,
+        71350
+      ],
+      "sink_code_relerr_med": 0.11238660663366318,
+      "sink_mass_shift_med": 0.13991913199424744
+    },
+    "pgq_tcq_uni@b2": {
+      "norm_ratio_med": 0.9999608397483826,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1401616893444073,
+      "rung_hist": [
+        0,
+        0,
+        14026384,
+        0,
+        7936
+      ],
+      "sink_code_relerr_med": 0.11238660663366318,
+      "sink_mass_shift_med": 0.08940586447715759
+    }
+  },
+  "sha8": "ec665b14"
+}

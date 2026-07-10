@@ -1,0 +1,28 @@
+dataset: longbench
+data_dir: lcc
+model: meta-llama/Llama-3.1-8B-Instruct
+device: null
+press_name: omega_page
+compression_ratio: 0.5
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/bench_evict/llama31_8b/evict__omega_page_random_page__20874ee3__r0.50__lcc
+log_level: INFO
+model_kwargs: {}
+press_init_command: OmegaPagePress(compression_ratio=0.5, omega_stats_path='/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/omega_stats_llama31_8b.pt',
+  score_mode='random_page', page_size=64, n_sink_pages=1, n_recent_pages=1, seed=20260708)
+press_kwargs:
+  omega_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/omega_stats_llama31_8b.pt
+  score_mode: random_page
+  page_size: 64
+seed: 42
+fp8: false

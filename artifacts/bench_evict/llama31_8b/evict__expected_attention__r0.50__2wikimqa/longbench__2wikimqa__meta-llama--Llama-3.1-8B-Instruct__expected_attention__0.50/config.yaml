@@ -1,0 +1,26 @@
+dataset: longbench
+data_dir: 2wikimqa
+model: meta-llama/Llama-3.1-8B-Instruct
+device: null
+press_name: expected_attention
+compression_ratio: 0.5
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/bench_evict/llama31_8b/evict__expected_attention__r0.50__2wikimqa
+log_level: INFO
+model_kwargs: {}
+press_init_command: AdaKVPress(press=ExpectedAttentionPress(compression_ratio=0.5,
+  n_future_positions=512, n_sink=4, use_covariance=True, use_vnorm=True, epsilon=0.01),
+  alpha_safeguard=0.2)
+press_kwargs: null
+seed: 42
+fp8: false

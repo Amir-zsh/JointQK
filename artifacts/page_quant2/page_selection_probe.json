@@ -1,0 +1,116 @@
+{
+  "frozen": {
+    "best_static_at25_layers8_31": 43.80181250453461,
+    "quest_gate_fired": false,
+    "quest_true_at25_layers8_31": 42.73397076467518,
+    "score_mode": "omega_mean",
+    "score_mode_rule": "argmax selection recall@25% among omega_max,omega_mean,quest_mu (incontext_mu measurement-only)"
+  },
+  "meta": {
+    "fracs": [
+      0.05,
+      0.1,
+      0.25,
+      0.5
+    ],
+    "gate_layers": [
+      8,
+      31
+    ],
+    "gate_margin": 10.0,
+    "n_queries": 512,
+    "ptok": 64,
+    "recall_basis": "contested (sink+recent pages excluded from num+denom; raw basis floored at ~89% by sink mass \u2014 see recall_at)",
+    "seed": 20260708
+  },
+  "summary": {
+    "posthoc": {
+      "incontext_mu": {
+        "recall@10%": 26.94684642671247,
+        "recall@25%": 53.2735802002892,
+        "recall@5%": 13.905672455001222,
+        "recall@50%": 77.09593057572361
+      },
+      "omega_max": {
+        "recall@10%": 17.924605001806864,
+        "recall@25%": 41.22140012325979,
+        "recall@5%": 8.420787683984775,
+        "recall@50%": 67.3196881729108
+      },
+      "omega_mean": {
+        "recall@10%": 20.198818618057405,
+        "recall@25%": 43.282601028125015,
+        "recall@5%": 9.890420785266405,
+        "recall@50%": 68.2638015928528
+      },
+      "oracle": {
+        "recall@10%": 29.774187889916483,
+        "recall@25%": 56.42356932243352,
+        "recall@5%": 15.850303491943025,
+        "recall@50%": 79.50179537618033
+      },
+      "quest_mu": {
+        "recall@10%": 18.336760755521947,
+        "recall@25%": 41.83861469869973,
+        "recall@5%": 8.67349990519635,
+        "recall@50%": 67.75885048192195
+      },
+      "quest_true": {
+        "recall@10%": 20.85163799466275,
+        "recall@25%": 45.874871168866434,
+        "recall@5%": 10.033204874727295,
+        "recall@50%": 71.70701885635975
+      },
+      "random_page": {
+        "recall@10%": 8.49312283482837,
+        "recall@25%": 24.111105176439928,
+        "recall@5%": 3.5665886304125327,
+        "recall@50%": 49.27010790154498
+      }
+    },
+    "selection": {
+      "incontext_mu": {
+        "recall@10%": 25.546514733333982,
+        "recall@25%": 50.047808305750934,
+        "recall@5%": 13.13148459537901,
+        "recall@50%": 74.94417546136725
+      },
+      "omega_max": {
+        "recall@10%": 17.427528970086225,
+        "recall@25%": 40.74705524234882,
+        "recall@5%": 7.746170704335635,
+        "recall@50%": 67.33102615351879
+      },
+      "omega_mean": {
+        "recall@10%": 20.58926399031113,
+        "recall@25%": 44.32311388213308,
+        "recall@5%": 9.677763297522981,
+        "recall@50%": 69.32599730939874
+      },
+      "oracle": {
+        "recall@10%": 27.862803324786647,
+        "recall@25%": 53.02448647487308,
+        "recall@5%": 14.64717323720951,
+        "recall@50%": 77.1244422712874
+      },
+      "quest_mu": {
+        "recall@10%": 17.579436081559248,
+        "recall@25%": 40.58909706823948,
+        "recall@5%": 7.825712222467935,
+        "recall@50%": 66.60989994453567
+      },
+      "quest_true": {
+        "recall@10%": 19.054904768633985,
+        "recall@25%": 42.91718052700162,
+        "recall@5%": 8.606841233220972,
+        "recall@50%": 68.95081245700919
+      },
+      "random_page": {
+        "recall@10%": 8.35413028638164,
+        "recall@25%": 23.752245934109293,
+        "recall@5%": 3.344853731059336,
+        "recall@50%": 49.15866655252513
+      }
+    }
+  }
+}

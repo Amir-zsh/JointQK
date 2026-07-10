@@ -1,0 +1,42 @@
+{
+  "bundles": {
+    "main": {
+      "path": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400__lin.pt",
+      "sha8": "ec665b14"
+    },
+    "scalarctl": {
+      "path": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400__lin__scalarctl.pt",
+      "sha8": "ab883da7"
+    }
+  },
+  "choices": {
+    "sparse_k": 8,
+    "tcq_mixing": true,
+    "tcq_states": 8,
+    "warp_p": 1.0
+  },
+  "probe_layers": [
+    1,
+    8,
+    16,
+    24,
+    31
+  ],
+  "rule": "sequential greedy on probe-layer selection-row direction MSE (width-2 rung); sparse-K by MSE*rate",
+  "selection_log": {
+    "K=16": 0.3201146841849681,
+    "K=8": 0.2868357837526679,
+    "mix=False": 0.0011570198145366048,
+    "mix=True": 0.000783615580799934,
+    "p=1.0": 0.000783615580799934,
+    "p=1.5": 0.0009318583701309498,
+    "p=2.0": 0.0011630021988618792,
+    "states=4": 0.000783615580799934,
+    "states=8": 0.000783615580799934
+  },
+  "tau_by_rate": {
+    "0.75": 0.5,
+    "1": 0.5,
+    "1.5": 0.5
+  }
+}
