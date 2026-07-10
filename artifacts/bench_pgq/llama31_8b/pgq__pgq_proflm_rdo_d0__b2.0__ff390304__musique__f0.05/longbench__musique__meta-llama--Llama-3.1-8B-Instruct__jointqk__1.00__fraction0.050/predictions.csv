@@ -1,0 +1,17 @@
+max_new_tokens,answers,dataset,answer_prefix,task,language,predicted_answer,all_classes,_id,length,question,compression_ratio
+52,['Casa Loma'],musique,Answer:,musique,en, There is no information about a castle in the city where the performers of Spirit If.. became a band.,,f9a50652b4e5d7000c42ae27b2477a54d2a88cfceec0ec3b,10449,"Question: What is the name of the castle in the city where the performers of Spirit If.. became a band?
+",1.0
+52,['Food Safety Modernization Act (FSMA)'],musique,Answer:,musique,en, FDA,,865a174ebe32ad81f573feb122198c1f16e6f2fd6c3fdda5,12201,"Question: The food safety system of the agency that has the authority to decide if a drug is marketed otc or prescription is known as?
+",1.0
+52,['Jennifer Connelly'],musique,Answer:,musique,en, Jennifer Connelly,,afd66c76fbcbd6fd65cfccf021882c773e57478071afaa65,11579,"Question: Who is the spouse of the person who voices Jarvis in the Avengers Age of Ultron?
+",1.0
+52,['2005'],musique,Answer:,musique,en, 2005,,38da792d05c3f8c7220c951b8d66f7400debb80114932a80,12238,"Question: In what year was Twilight Princess from the game series on which The Legend of Neil was based originally planned for release?
+",1.0
+52,['1970s'],musique,Answer:,musique,en, 2008,,046a6c5856736e4dc6f532658038afabde83e9c71507832f,11691,"Question: When did the place of birth of the performer of Mother-in-Law elect its first black Mayor?
+",1.0
+52,['Fort Davis'],musique,Answer:,musique,en, Texas,,442e302cee202c213a085d6aa1caf87e3aebf6b954c690b0,11714,"Question: What is the highest city in the state where Dell ranks sixth by revenue?
+",1.0
+52,"['Clatskanie' 'Clatskanie, Oregon']",musique,Answer:,musique,en, Yakima,,c44fa02fb87c848c0ab4d0a254787e29540715ef86fff95a,11417,"Question: What city was the author of What We Talk About When We Talk About love born in?
+",1.0
+52,['Lacey Chabert'],musique,Answer:,musique,en, Nia Long,,45b3ff5fd17fddc64c647566139dadd2693cf4488c0e6ec7,12181,"Question: Who did the original voice of the character played by mila kunis in the cleveland show?
+",1.0
