@@ -90,3 +90,18 @@
   norm+direction (lattice codes the unit direction; +16b/rung, all-zero rung = free
   evict); LS gains removed.
 - **Verification:** 30 tcq/e8 tests green on the new contracts; third gate sweep pending.
+
+## pgq5-1: Mode-B' `_qlen` staleness across kvpress cache crops
+- **Root cause:** kvpress `_remove_answer_from_cache` crops the cache back to the
+  context length between questions; `JointQKPress.forward_hook`'s Mode-B' branch kept
+  the per-layer `_qlen` bookkeeping from before the crop. A stale larger `_qlen` marks
+  the next question's fresh tokens as already-quantized, so `decode_flush_ranges`
+  never returns them — they stay fp16 forever (silent quality inflation in any
+  multi-question or repeated-generation cell).
+- **Fix:** clamp `qlen` to `cache_position[0]` (= cache length before this step's
+  append) at the top of the Mode-B' branch. Normal decode is unaffected
+  (`_qlen ≤ cache_position[0]` always holds there); after a crop the clamp restores
+  the true quantized-prefix length.
+- **Verification:** `test_qlen_clamp_after_cache_crop` (stale `_qlen=150`, crop to
+  100, 12 new tokens → flush (100,108), bookkeeping 108) green; full test_pgq4 suite
+  11/11 green.
