@@ -41,11 +41,46 @@ from kvq.compression.ec_roundtrip import BUNDLE_VERSION, dz_round  # noqa: E402
 from pipelines.calibration.analyze_bases import regularize_batch  # noqa: E402
 
 EPS = 1e-4
-RUN_ID = "ec_calib_compact8_train_llama31_8b"
+# Per-model calibration paths. Consumers that need a non-default model call
+# set_model_tag() BEFORE touching RawPool/raw_path (they read these globals at
+# call time); `from`-imported constants are rebound only in this module, so
+# cross-module callers should access them as attributes after switching.
+MODEL_PATHS = {
+    "llama31_8b": {
+        "run_id": "ec_calib_compact8_train_llama31_8b",
+        "roles": "artifacts/calibration_splits/ec_compact8_train_26/roles.json",
+        "cca_stats": "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt",
+        "out_dir": "artifacts/ec/llama31_8b",
+        "stats_dir": "artifacts/calibration/ec_calib_compact8_train_llama31_8b/02_stats",
+    },
+    "qwen3_8b": {
+        "run_id": "longbench_compact8_qkv_qwen3_8b",
+        "roles": "artifacts/calibration_splits/pgq5_qwen_compact8_16/roles.json",
+        "cca_stats": "artifacts/bases/qpca_qwen3_8b_longbench_compact8_n400.pt",
+        "out_dir": "artifacts/ec/qwen3_8b",
+        "stats_dir": "artifacts/calibration/longbench_compact8_qkv_qwen3_8b/02_stats",
+    },
+}
+MODEL_TAG = "llama31_8b"
+
+
+def set_model_tag(tag: str) -> dict:
+    global MODEL_TAG, RUN_ID, RAW_ROOT, ROLES, CCA_STATS, OUT_DIR
+    p = MODEL_PATHS[tag]
+    MODEL_TAG = tag
+    RUN_ID = p["run_id"]
+    RAW_ROOT = REPO / "artifacts/calibration" / RUN_ID / "01_raw"
+    ROLES = REPO / p["roles"]
+    CCA_STATS = REPO / p["cca_stats"]
+    OUT_DIR = REPO / p["out_dir"]
+    return p
+
+
+RUN_ID = MODEL_PATHS["llama31_8b"]["run_id"]
 RAW_ROOT = REPO / "artifacts/calibration" / RUN_ID / "01_raw"
-ROLES = REPO / "artifacts/calibration_splits/ec_compact8_train_26/roles.json"
-CCA_STATS = REPO / "artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
-OUT_DIR = REPO / "artifacts/ec/llama31_8b"
+ROLES = REPO / MODEL_PATHS["llama31_8b"]["roles"]
+CCA_STATS = REPO / MODEL_PATHS["llama31_8b"]["cca_stats"]
+OUT_DIR = REPO / MODEL_PATHS["llama31_8b"]["out_dir"]
 
 
 def raw_path(config: str, row_index: int) -> Path:

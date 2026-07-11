@@ -51,12 +51,14 @@ import time  # noqa: E402
 
 import torch  # noqa: E402
 
+import pipelines.ec.fit_ec_bundle as ecb  # noqa: E402
 from pipelines.ec.fit_ec_bundle import (  # noqa: E402
-    CCA_STATS, ROLES, RawPool, build_basis,
+    RawPool, build_basis,
 )
 from pipelines.page_quant.fit_pgq2_bundle import (  # noqa: E402
     BigPool, bigpool_rows,
 )
+import pipelines.page_quant.phase1_empirics as ph1  # noqa: E402
 from pipelines.page_quant.phase1_empirics import (  # noqa: E402
     load_mu_from_fit_stats,
 )
@@ -198,33 +200,52 @@ def main() -> None:
     ap.add_argument("--skip-fit", action="store_true",
                     help="reuse the existing bundle; only run --eval-modes")
     ap.add_argument("--pgq2-bundle", default=str(PGQ2_BUNDLE))
+    ap.add_argument("--model-tag", default="llama31_8b",
+                    choices=list(ecb.MODEL_PATHS))
+    ap.add_argument("--heldout-out", default=None,
+                    help="override the held-out report filename (pgq6 gate "
+                         "runs must not clobber the canonical pgq4 report)")
     args = ap.parse_args()
     dev = torch.device(args.device)
     ensure_dir(OUT_DIR)
     t0 = time.time()
     gen = torch.Generator().manual_seed(SEED)
+    qwen = args.model_tag != "llama31_8b"
+    if qwen:
+        ph1.set_model_tag(args.model_tag)
 
-    roles = json.loads(ROLES.read_text())
-    cca = torch.load(CCA_STATS, map_location="cpu", weights_only=False)
+    roles = json.loads(ecb.ROLES.read_text())
+    cca = torch.load(ecb.CCA_STATS, map_location="cpu", weights_only=False)
     L, Hkv, d, _ = cca["sigma_q"].shape
     assert d == D_HEAD
     mu_q, mu_k = load_mu_from_fit_stats(roles["fit"])
-    fit_pool = BigPool(bigpool_rows(args.pool_rows, gen))
+    # Llama fits on the 40-row big pool; Qwen has exactly the 16 surviving
+    # compact8 train raws, so its fit pool IS the 12 fit-role rows.
+    fit_pool = (RawPool(roles["fit"]) if qwen
+                else BigPool(bigpool_rows(args.pool_rows, gen)))
     sel_pool = RawPool(roles["selection"])
 
-    tag = f"compact8train{args.pool_rows}r400"
-    out_path = OUT_DIR / f"pgq4_bundle__3bases__{tag}.pt"
+    if qwen:
+        tag = f"{args.model_tag}_compact8train{len(roles['fit'])}"
+        out_path = OUT_DIR / f"pgq5_bundle__qpca_unc__{tag}.pt"
+    else:
+        tag = f"compact8train{args.pool_rows}r400"
+        out_path = OUT_DIR / f"pgq4_bundle__3bases__{tag}.pt"
 
     if not args.skip_fit:
         Fq, Gq = build_basis("qpca_unc", cca, mu_k, None)
-        Fr, Gr = build_basis("r_sym", cca, mu_k, None)
-        Ro = oscar_layer_rotations(cca)
-        bases = {
-            "qpca_unc": {"forward": Fq, "inverse": Gq},
-            "r_sym": {"forward": Fr, "inverse": Gr},
-            "oscar": {"forward": Ro,
-                      "inverse": Ro.transpose(1, 2).contiguous()},
-        }
+        if qwen:
+            # 3-basis ablation closed by pgq4; Qwen refits qpca_unc only.
+            bases = {"qpca_unc": {"forward": Fq, "inverse": Gq}}
+        else:
+            Fr, Gr = build_basis("r_sym", cca, mu_k, None)
+            Ro = oscar_layer_rotations(cca)
+            bases = {
+                "qpca_unc": {"forward": Fq, "inverse": Gq},
+                "r_sym": {"forward": Fr, "inverse": Gr},
+                "oscar": {"forward": Ro,
+                          "inverse": Ro.transpose(1, 2).contiguous()},
+            }
         stats = {b: {"code_std": torch.ones(L, Hkv, d),
                      "alphas": torch.full((L, Hkv, len(WIDTHS_POS)), 0.5),
                      "sink_scale": torch.ones(L, Hkv, d)}
@@ -316,7 +337,7 @@ def main() -> None:
 
         blob = {
             "pgq_version": PGQ4_BUNDLE_VERSION,
-            "model_tag": "llama31_8b", "ptok": PTOK,
+            "model_tag": args.model_tag, "ptok": PTOK,
             "n_layers": L, "n_kv_heads": Hkv, "head_dim": d,
             "mu": mu_k, "mu_q": mu_q,
             "bases": bases, "stats": stats,
@@ -331,10 +352,10 @@ def main() -> None:
                 "pgq2 frozen constant carried to the pgq4 ladder rates; "
                 "no re-selection (plan4 sec.1)"),
             "omega_clamp_bits": 4.0,
-            "fit_rows": args.pool_rows,
+            "fit_rows": len(roles["fit"]) if qwen else args.pool_rows,
             "selection_rows": roles["selection"],
-            "cca_stats_path": str(CCA_STATS),
-            "cca_stats_mtime": int(CCA_STATS.stat().st_mtime),
+            "cca_stats_path": str(ecb.CCA_STATS),
+            "cca_stats_mtime": int(ecb.CCA_STATS.stat().st_mtime),
         }
         torch.save(blob, out_path)
         sha8 = hashlib.sha256(out_path.read_bytes()).hexdigest()[:8]
@@ -412,7 +433,9 @@ def main() -> None:
               f"sinkCE={r['sink_code_relerr_med']:.3f} "
               f"normR={r['norm_ratio_med']:.3f} "
               f"({time.time() - t0:.0f}s)", flush=True)
-    save_json(OUT_DIR / "pgq4_heldout_report.json",
+    rep_name = args.heldout_out or ("pgq5_heldout_report.json" if qwen
+                                    else "pgq4_heldout_report.json")
+    save_json(OUT_DIR / rep_name,
               {"bundle": str(out_path), "sha8": sha8, "report": report})
 
 

@@ -28,12 +28,29 @@ import time  # noqa: E402
 
 import torch  # noqa: E402
 
-from pipelines.ec.fit_ec_bundle import ROLES, RawPool  # noqa: E402
+import pipelines.ec.fit_ec_bundle as ecmod  # noqa: E402
+from pipelines.ec.fit_ec_bundle import RawPool  # noqa: E402
 from kvq.compression.ec_roundtrip import load_ec_compressors_from_bundle  # noqa: E402
 from kvq.compression.page_quant import load_pgq_compressors_from_bundle  # noqa: E402
 from kvq.io import save_json  # noqa: E402
 
 EC_DIR = REPO / "artifacts/ec/llama31_8b"
+
+
+class _TQAsPgq:
+    """Adapt score_ec_candidates.TQKeyRoundtrip to the pgq comp interface
+    ((1, T, d) roundtrip) so the TQ-K2 proxy is scored through the identical
+    harness on both models (G-P4' ratio-transfer gate, plan5)."""
+
+    def __init__(self, tqrt):
+        self.tqrt = tqrt
+
+    def to(self, dev):
+        self.tqrt.to(dev)
+        return self
+
+    def roundtrip(self, k):
+        return self.tqrt.roundtrip(k.squeeze(0)).unsqueeze(0)
 PGQ_BUNDLE = REPO / ("artifacts/page_quant/"
                      "pgq_bundle__qpca_unc__dz0.5__base1.5__compact8train18.pt")
 OUT = REPO / "artifacts/page_quant/phaseA_pgq.json"
@@ -88,26 +105,44 @@ def main() -> None:
     ap.add_argument("--q-cap", type=int, default=8192,
                     help="max queries per (l,h,row); full 4T queries x 18 "
                          "methods is a 4h pass — capped, seeded subsample")
+    ap.add_argument("--model-tag", default="llama31_8b",
+                    choices=list(ecmod.MODEL_PATHS))
+    ap.add_argument("--with-tq", action="store_true",
+                    help="add the TurboQuant K-side proxy arm (k_bits=2, "
+                         "press-identical construction) for G-P4'")
     args = ap.parse_args()
     dev = torch.device(args.device)
     t0 = time.time()
 
-    roles = json.loads(ROLES.read_text())
+    if args.model_tag != "llama31_8b":
+        ecmod.set_model_tag(args.model_tag)
+    roles = json.loads(ecmod.ROLES.read_text())
     pool = RawPool(roles["selection"])
     rng = torch.Generator().manual_seed(20260707)
+
+    blob_meta = torch.load(args.bundle, map_location="cpu",
+                           weights_only=False)
+    L = int(blob_meta.get("n_layers", 32))
+    Hkv = int(blob_meta.get("n_kv_heads", 8))
+    d_head = int(blob_meta.get("head_dim", 128))
+    del blob_meta
 
     methods = {}
     for b in args.rates:
         for mode in args.modes:
             comps, _ = load_pgq_compressors_from_bundle(args.bundle, mode, b)
             methods[f"{mode}@b{b:g}"] = comps
-        ecb = (EC_DIR / f"ec_bundle__qpca_unc__b{b:g}__dz0.5__"
-                        f"compact8train18__uniform.pt")
-        if ecb.exists():
-            comps, _ = load_ec_compressors_from_bundle(ecb)
+        ec_path = (EC_DIR / f"ec_bundle__qpca_unc__b{b:g}__dz0.5__"
+                            f"compact8train18__uniform.pt")
+        if args.model_tag == "llama31_8b" and ec_path.exists():
+            comps, _ = load_ec_compressors_from_bundle(ec_path)
             methods[f"ecu@b{b:g}"] = comps
-
-    L, Hkv = 32, 8
+    if args.with_tq:
+        from pipelines.ec.score_ec_candidates import TQKeyRoundtrip
+        tq_layers = {l: _TQAsPgq(TQKeyRoundtrip(d_head, 2, l, L))
+                     for l in range(1, L)}
+        methods["tq_k2"] = {(l, h): tq_layers[l]
+                            for l in range(1, L) for h in range(Hkv)}
     accs = {name: zero_acc() for name in methods}
     for l in range(1, L):
         for h in range(Hkv):

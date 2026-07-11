@@ -345,8 +345,14 @@ class JointQKPress(BasePress):
                     self._qlen = {}
                 self._qlen[L] = keys.shape[2]
         elif self.decode_chunk > 0:
-            # Mode-B': fp16 recent ring; age out in decode_chunk flushes
-            qlen = self._qlen.get(L, keys.shape[2])
+            # Mode-B': fp16 recent ring; age out in decode_chunk flushes.
+            # Clamp to cache_position[0] (= cache length before this step's
+            # append): kvpress _remove_answer_from_cache crops the cache
+            # between questions, and a stale larger _qlen would mark the next
+            # question's fresh tokens as already-quantized — leaving them
+            # fp16 forever (silent quality cheating).
+            qlen = min(self._qlen.get(L, keys.shape[2]),
+                       int(kwargs["cache_position"][0]))
             for lo, hi in decode_flush_ranges(qlen, keys.shape[2],
                                               self.decode_recent,
                                               self.decode_chunk):

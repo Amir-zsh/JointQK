@@ -226,6 +226,19 @@ def test_loader_routing(tmp_path):
         (1, 0)]
     assert c.gain and c.omega_tau == 0.5
 
+    # pgq5 Qwen bundles carry qpca_unc ONLY (3-basis ablation closed by pgq4)
+    slim = dict(blob)
+    slim["bases"] = {"qpca_unc": blob["bases"]["qpca_unc"]}
+    slim["stats"] = {"qpca_unc": blob["stats"]["qpca_unc"]}
+    p2 = tmp_path / "pgq5_test.pt"
+    torch.save(slim, p2)
+    comps, _ = load_pgq_compressors_from_bundle(str(p2), "pgq_proflmrw_rdo",
+                                                2.0)
+    c = comps[(1, 0)]
+    assert c.force_recent_pages == 4
+    out = c.roundtrip(torch.randn(20, d))
+    assert out.shape == (20, d)
+
 
 def test_decode_flush_ranges():
     from kvq.presses.jointqk_press import decode_flush_ranges
@@ -240,3 +253,42 @@ def test_decode_flush_ranges():
     # multiple chunks aged out at once (e.g. after a long stall)
     assert decode_flush_ranges(qlen=100, total=160, recent=32, chunk=8) == \
         [(100, 108), (108, 116), (116, 124)]
+
+
+def test_qlen_clamp_after_cache_crop():
+    """kvpress _remove_answer_from_cache crops the cache between questions;
+    a stale larger _qlen must clamp to cache_position[0] or the next
+    question's tokens are marked already-quantized and silently stay fp16."""
+    from kvq.presses.jointqk_press import JointQKPress
+
+    press = object.__new__(JointQKPress)
+    press.compress_decode = True
+    press.decode_chunk = 8
+    press.decode_recent = 0
+    press.quantize_k = False   # identity path: only bookkeeping under test
+    press.quantize_v = False
+    press._qlen = {0: 150}     # stale: cache was cropped back to 100
+
+    class _Layer:
+        pass
+
+    class _Cache:
+        pass
+
+    class _Module:
+        layer_idx = 0
+
+    layer = _Layer()
+    # crop back to T0=100, then 12 new question tokens appended
+    layer.keys = torch.randn(1, 2, 112, 16)
+    layer.values = torch.randn(1, 2, 112, 16)
+    cache = _Cache()
+    cache.layers = [layer]
+    kwargs = {
+        "hidden_states": torch.zeros(1, 12, 16),
+        "past_key_values": cache,
+        "cache_position": torch.arange(100, 112),
+    }
+    press.forward_hook(_Module(), (), kwargs, (None,))
+    # qlen must clamp 150 -> 100; ranges (100,108) flush, bookkeeping -> 108
+    assert press._qlen[0] == 108

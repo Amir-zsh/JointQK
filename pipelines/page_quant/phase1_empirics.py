@@ -56,6 +56,17 @@ EC_RAW = REPO / "artifacts/calibration/ec_calib_compact8_train_llama31_8b/01_raw
 EC_STATS = REPO / "artifacts/calibration/ec_calib_compact8_train_llama31_8b/02_stats"
 OUT_DIR = REPO / "artifacts/page_quant/phase1"
 
+
+def set_model_tag(tag: str) -> None:
+    """Rebind this module's calibration paths (and fit_ec_bundle's) for a
+    non-default model. Must run before load_mu_from_fit_stats / RawPool use."""
+    global CCA_STATS, ROLES, EC_RAW, EC_STATS
+    import pipelines.ec.fit_ec_bundle as ecb
+    p = ecb.set_model_tag(tag)
+    CCA_STATS, ROLES = ecb.CCA_STATS, ecb.ROLES
+    EC_RAW = ecb.RAW_ROOT
+    EC_STATS = REPO / p["stats_dir"]
+
 SEED = 20260707
 D = 128
 PTOK = 64

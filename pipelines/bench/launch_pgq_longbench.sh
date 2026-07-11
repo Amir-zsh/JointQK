@@ -1,7 +1,8 @@
 #!/bin/bash
 # page_quant bench: the decomposition chain on lcc / musique / 2wikimqa,
-# Llama-3.1-8B, v7-identical protocol (fraction=1.0, compact8 exclusions,
-# layer0 fp16, Mode A, V = v_turboquant @ 2 bits).
+# v7-identical protocol (fraction=1.0, compact8 exclusions, layer0 fp16,
+# Mode A, V = v_turboquant @ 2 bits). --model-tag llama31_8b (default) or
+# qwen3_8b selects MODEL/CCA/VST/bundle/output roots (pgq5).
 #
 # Cells are "<kind>:<rate>" pairs:
 #   ecu:1.0        ec_uniform control (qpca_unc uniform-step EC bundle @ that
@@ -28,6 +29,7 @@ MAX_RETRIES="${MAX_RETRIES:-10}"
 FRACTION="${EVAL_FRACTION:-1.0}"
 CELLS=""
 TASKS_CSV="${TASKS_CSV:-lcc,musique,2wikimqa,qasper,hotpotqa}"
+MODEL_TAG="${MODEL_TAG:-llama31_8b}"
 DRY_RUN=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -36,23 +38,36 @@ while [[ $# -gt 0 ]]; do
         --gpus) GPUS="$2"; shift 2 ;;
         --fraction) FRACTION="$2"; shift 2 ;;
         --jobs-per-gpu) JOBS_PER_GPU="$2"; shift 2 ;;
+        --model-tag) MODEL_TAG="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
 [[ -n "$CELLS" ]] || { echo "ERROR: --cells required" >&2; exit 1; }
 
-MODEL="meta-llama/Llama-3.1-8B-Instruct"
-CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
-VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
+case "$MODEL_TAG" in
+    llama31_8b)
+        MODEL="meta-llama/Llama-3.1-8B-Instruct"
+        CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
+        VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
+        PGQ4_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt"
+        ;;
+    qwen3_8b)
+        MODEL="Qwen/Qwen3-8B"
+        CCA="${REPO_ROOT}/artifacts/bases/qpca_qwen3_8b_longbench_compact8_n400.pt"
+        VST="${REPO_ROOT}/artifacts/v_bases/v_stats_longbench_compact8_n400.pt"
+        PGQ4_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq5_bundle__qpca_unc__qwen3_8b_compact8train12.pt"
+        ;;
+    *) echo "Unknown --model-tag: $MODEL_TAG" >&2; exit 1 ;;
+esac
 EXCLUDE_INDICES_FILE="${REPO_ROOT}/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json"
-EC_DIR="${REPO_ROOT}/artifacts/ec/llama31_8b"
+EC_DIR="${REPO_ROOT}/artifacts/ec/${MODEL_TAG}"
 PGQ_BUNDLE="${REPO_ROOT}/artifacts/page_quant/pgq_bundle__qpca_unc__dz0.5__base1.5__compact8train18.pt"
 PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt}"
 PGQ3_BUNDLE="${PGQ3_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400.pt}"
-PGQ4_BUNDLE="${PGQ4_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt}"
-OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/llama31_8b"
-LOG_DIR="${REPO_ROOT}/logs/bench_pgq_llama31_8b"
+PGQ4_BUNDLE="${PGQ4_BUNDLE:-$PGQ4_BUNDLE_DEFAULT}"
+OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/${MODEL_TAG}"
+LOG_DIR="${REPO_ROOT}/logs/bench_pgq_${MODEL_TAG}"
 
 for f in "$CCA" "$VST" "$EXCLUDE_INDICES_FILE"; do
     [[ -f "$f" ]] || { echo "ERROR: missing $f" >&2; exit 1; }
@@ -86,8 +101,9 @@ for cell in "${CELL_ARR[@]}"; do
         BUNDLE="$PGQ2_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
-    elif [[ "$kind" == pgq_fold* || "$kind" == pgq_prof* ]]; then
-        # pgq4 arms (folded-scalar / profile rungs, plan4)
+    elif [[ "$kind" == pgq_fold* || "$kind" == pgq_prof* || "$kind" == pgq_mrg* ]]; then
+        # pgq4 arms (folded-scalar / profile rungs, plan4) + pgq6 merge arms
+        # (same bundle: clustering is runtime, no refit)
         BUNDLE="$PGQ4_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
