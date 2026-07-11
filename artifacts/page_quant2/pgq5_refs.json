@@ -1,0 +1,37 @@
+{
+ "source": "artifacts/bench/qwen3_8b (downstream_v7 sweep, May 2026)",
+ "protocol": "v7-compat: fraction 1.0, layer0_full_precision true, exclude compact8_60_seed20260504 train, 500 rows/task",
+ "tasks": [
+  "lcc",
+  "musique",
+  "2wikimqa",
+  "qasper",
+  "hotpotqa"
+ ],
+ "methods": {
+  "full_precision": {
+   "lcc": 64.81,
+   "musique": 33.47,
+   "2wikimqa": 48.43,
+   "qasper": 43.06,
+   "hotpotqa": 63.75,
+   "mean5": 50.704
+  },
+  "turboquant_k2_v2": {
+   "lcc": 50.29,
+   "musique": 27.51,
+   "2wikimqa": 40.72,
+   "qasper": 37.65,
+   "hotpotqa": 54.47,
+   "mean5": 42.128
+  },
+  "turboquant_k2_v3": {
+   "lcc": 51.56,
+   "musique": 28.92,
+   "2wikimqa": 42.66,
+   "qasper": 39.29,
+   "hotpotqa": 55.88,
+   "mean5": 43.662
+  }
+ }
+}

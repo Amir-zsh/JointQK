@@ -1,0 +1,37 @@
+{
+  "candidates": {
+    "pgq_proflm_rdo@b2": {
+      "k_mse": 0.3669387100156041,
+      "logit_err": 0.0026152055500560617,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.9999889933145416,
+      "top1": 0.6455866132463728,
+      "top5": 0.8864545549665178
+    },
+    "tq_k2": {
+      "k_mse": 0.6247237572645288,
+      "logit_err": 0.016294959909841145,
+      "top1": 0.39297670636858256,
+      "top5": 0.6572636195591518
+    }
+  },
+  "reference": {
+    "ec_qpca_unc_dz0.5@1.95": {
+      "note": "see phaseA_report.json"
+    },
+    "jq_k2": {
+      "k_mse": 0.2597,
+      "logit_err": 0.00207,
+      "top1": 0.5596,
+      "top5": 0.9836
+    },
+    "tq_k2": {
+      "k_mse": 0.5572,
+      "logit_err": 0.02329,
+      "rate": 2.125,
+      "source": "phaseA_report.json (EC study, same rows)",
+      "top1": 0.4031,
+      "top5": 0.9212
+    }
+  }
+}

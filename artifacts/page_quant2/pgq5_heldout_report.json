@@ -1,0 +1,57 @@
+{
+  "bundle": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq5_bundle__qpca_unc__qwen3_8b_compact8train12.pt",
+  "report": {
+    "pgq_proflm_rdo@b2": {
+      "norm_ratio_med": 0.9760796427726746,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.9999889933145416,
+      "rung_hist": [
+        0,
+        301246,
+        3154381,
+        2334482,
+        5360114,
+        2339653,
+        1937611,
+        7513
+      ],
+      "sink_code_relerr_med": 0.0033689530100673437,
+      "sink_mass_shift_med": 0.014376301318407059
+    },
+    "pgq_proflm_rdo@b2.5": {
+      "norm_ratio_med": 0.9875524044036865,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.497366398512126,
+      "rung_hist": [
+        0,
+        14330,
+        35349,
+        155729,
+        237267,
+        5095089,
+        9735781,
+        161455
+      ],
+      "sink_code_relerr_med": 0.0033689530100673437,
+      "sink_mass_shift_med": 0.008825075812637806
+    },
+    "pgq_proflmrw_rdo@b2": {
+      "norm_ratio_med": 0.9765968322753906,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.063621447257291,
+      "rung_hist": [
+        0,
+        295835,
+        3103229,
+        2299571,
+        5274822,
+        2306667,
+        1904241,
+        250635
+      ],
+      "sink_code_relerr_med": 0.0033689530100673437,
+      "sink_mass_shift_med": 0.012990383431315422
+    }
+  },
+  "sha8": "cd6a3d41"
+}
