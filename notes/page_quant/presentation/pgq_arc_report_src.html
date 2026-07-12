@@ -138,15 +138,17 @@ will still get the full story.</p>
 
 <h3>1.1 · What the KV cache is and why it is the bottleneck</h3>
 <p>A transformer generates text one token at a time. To produce token
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>t</mi><mrow><mo>&#x0002B;</mo></mrow><mn>1</mn></mrow></math>, every attention layer compares the current <em>query</em> vector
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>q</mi></mrow></math> against the <em>key</em> vector <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>k</mi><mi>i</mi></msub></mrow></math> of every previous token <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>i</mi></mrow></math>, turns
+\(t{+}1\), every attention layer compares the current <em>query</em> vector
+\(q\) against the <em>key</em> vector \(k_i\) of every previous token \(i\), turns
 the comparison scores into weights with a softmax, and averages the previous tokens'
-<em>value</em> vectors <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>v</mi><mi>i</mi></msub></mrow></math> with those weights:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>z</mi><mi>i</mi></msub><mo>&#x0003D;</mo><mfrac><mrow><mi>q</mi><mo>&#x000B7;</mo><msub><mi>k</mi><mi>i</mi></msub></mrow><mrow><msqrt><mrow><mi>d</mi></mrow></msqrt></mrow></mfrac><mo>&#x0002C;</mo><mspace width="2em" /><msub><mi>a</mi><mi>i</mi></msub><mo>&#x0003D;</mo><mfrac><mrow><msup><mi>e</mi><mrow><msub><mi>z</mi><mi>i</mi></msub></mrow></msup></mrow><mrow><msub><mo>&#x02211;</mo><mi>j</mi></msub><msup><mi>e</mi><mrow><msub><mi>z</mi><mi>j</mi></msub></mrow></msup></mrow></mfrac><mo>&#x0002C;</mo><mspace width="2em" /><mtext>output</mtext><mo>&#x0003D;</mo><munder><mo>&#x02211;</mo><mi>i</mi></munder><msub><mi>a</mi><mi>i</mi></msub><msub><mi>v</mi><mi>i</mi></msub><mo>&#x0002E;</mo></mrow></math></div>
-<p>To avoid recomputing them, every past token's <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>k</mi><mi>i</mi></msub></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>v</mi><mi>i</mi></msub></mrow></math> are kept in
+<em>value</em> vectors \(v_i\) with those weights:</p>
+\[ z_i = \frac{q \cdot k_i}{\sqrt{d}}, \qquad
+   a_i = \frac{e^{z_i}}{\sum_j e^{z_j}}, \qquad
+   \text{output} = \sum_i a_i v_i . \]
+<p>To avoid recomputing them, every past token's \(k_i\) and \(v_i\) are kept in
 GPU memory — the <b>KV cache</b>. It is big: for Qwen3-8B (36 layers, 8 KV heads,
-head dimension <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>d</mi><mo>&#x0003D;</mo><mn>128</mn></mrow></math>), each token costs
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mn>2</mn><mo>&#x000D7;</mo><mn>36</mn><mo>&#x000D7;</mo><mn>8</mn><mo>&#x000D7;</mo><mn>128</mn></mrow></math> numbers ≈ 144&nbsp;KiB in fp16 — about
+head dimension \(d = 128\)), each token costs
+\(2 \times 36 \times 8 \times 128\) numbers ≈ 144&nbsp;KiB in fp16 — about
 <b>18&nbsp;GB at a 128k-token context</b>. Worse, generating <em>each single
 token</em> requires reading the entire cache once. Long-context decoding is
 therefore <em>memory-bandwidth-bound</em>: the GPU spends its time moving cache
@@ -155,10 +157,11 @@ larger batches) and speed (fewer bytes per step) simultaneously.</p>
 
 <h3>1.2 · What compression must preserve</h3>
 <p>We compress keys by storing a compact code and reconstructing an approximation
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mi>i</mi></msub></mrow></math> when needed. The right question is not "is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mi>i</mi></msub></mrow></math> close to
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>k</mi><mi>i</mi></msub></mrow></math>?" but "are the <em>attention scores</em> that future queries compute
+\(\hat k_i\) when needed. The right question is not "is \(\hat k_i\) close to
+\(k_i\)?" but "are the <em>attention scores</em> that future queries compute
 preserved?" — because the scores are all the model ever sees of the keys. The error
-that matters is the <b>logit error</b> <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>q</mi><mo>&#x000B7;</mo><msub><mi>k</mi><mi>i</mi></msub><mo>&#x02212;</mo><mi>q</mi><mo>&#x000B7;</mo><msub><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mi>i</mi></msub><mo>&#x0003D;</mo><mi>q</mi><mo>&#x000B7;</mo><mo stretchy="false">&#x00028;</mo><msub><mi>k</mi><mi>i</mi></msub><mo>&#x02212;</mo><msub><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mi>i</mi></msub><mo stretchy="false">&#x00029;</mo></mrow></math>, and it must be small <em>for the queries this layer and
+that matters is the <b>logit error</b> \(q \cdot k_i - q \cdot \hat k_i =
+q\cdot(k_i - \hat k_i)\), and it must be small <em>for the queries this layer and
 head actually produce</em>, not for arbitrary vectors. Section 3 turns this into a
 precise, measurable objective. (Values are compressed too, but in all experiments
 here the V-side is pinned to a standard 2-bit baseline so that K-side comparisons
@@ -198,17 +201,17 @@ extends it one axis further: the page may also store <em>fewer rows than tokens<
 <h3>1.5 · Notation and the budget convention</h3>
 <div class="card"><div class="tblwrap"><table class="defs">
 <tr><th>symbol</th><th>meaning</th></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>d</mi><mo>&#x0003D;</mo><mn>128</mn></mrow></math></td><td>head dimension (per KV head)</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>n</mi><mo>&#x0003D;</mo><mn>64</mn></mrow></math></td><td>tokens per page (<code>ptok</code>)</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>k</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mi>q</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mi>v</mi></mrow></math></td><td>key / query / value vectors of one (layer, KV-head); row vectors</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mo stretchy="false">[</mo><msup><mi>q</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>q</mi><mo stretchy="false">]</mo></mrow></math></td><td>query second moment (uncentered), per (layer, KV-head)</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BC;</mi><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mo stretchy="false">[</mo><mi>k</mi><mo stretchy="false">]</mo></mrow></math></td><td>key mean, per (layer, KV-head)</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>F</mi><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mi>G</mi><mo>&#x0003D;</mo><msup><mi>F</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup></mrow></math></td><td>forward / inverse basis maps; codes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi><mo>&#x0003D;</mo><mo stretchy="false">&#x00028;</mo><mi>k</mi><mo>&#x02212;</mo><mi>&#x003BC;</mi><mo stretchy="false">&#x00029;</mo><mi>F</mi></mrow></math>, reconstruction <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover><mspace width="0.167em" /><mi>G</mi><mo>&#x0002B;</mo><mi>&#x003BC;</mi></mrow></math></td></tr>
+<tr><td>\(d = 128\)</td><td>head dimension (per KV head)</td></tr>
+<tr><td>\(n = 64\)</td><td>tokens per page (<code>ptok</code>)</td></tr>
+<tr><td>\(k,\ q,\ v\)</td><td>key / query / value vectors of one (layer, KV-head); row vectors</td></tr>
+<tr><td>\(\Sigma_Q = \mathbb{E}[q^{\top} q]\)</td><td>query second moment (uncentered), per (layer, KV-head)</td></tr>
+<tr><td>\(\mu = \mathbb{E}[k]\)</td><td>key mean, per (layer, KV-head)</td></tr>
+<tr><td>\(F,\ G = F^{-1}\)</td><td>forward / inverse basis maps; codes \(r = (k-\mu)F\), reconstruction \(\hat k = \hat r\,G + \mu\)</td></tr>
 <tr><td>rung / profile</td><td>one of ≤ 8 per-coordinate width patterns a token can be encoded with (3-bit id)</td></tr>
-<tr><td><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>b</mi></mrow></math> (b/c)</td><td>the budget: bits per coordinate per original token, <b>all-in</b></td></tr>
+<tr><td>\(b\) (b/c)</td><td>the budget: bits per coordinate per original token, <b>all-in</b></td></tr>
 </table></div>
 <p style="margin:.4em 0 0;font-size:.93rem"><b>All-in accounting.</b> A page at
-budget <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>b</mi></mrow></math> may use at most <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>B</mi><mo>&#x0003D;</mo><mi>b</mi><mo>&#x000B7;</mo><mi>d</mi><mo>&#x000B7;</mo><mi>n</mi></mrow></math> bits <em>including
+budget \(b\) may use at most \(B = b \cdot d \cdot n\) bits <em>including
 everything</em>: payload, the 96-bit page header, every 3-bit rung id, and the full
 cost of any escape or forced-precision token. Reported rates are measured from
 encoder telemetry, not nominal settings (e.g. the shipping config is nominally 2.0
@@ -301,16 +304,20 @@ attention score. So before compressing anything we measure, per (layer, KV-head)
 <em>where queries point</em> — and we weight all reconstruction error by that.</p>
 <p>Concretely, we run a calibration corpus (≈ 400 long prompts; 12 sufficed for the
 Qwen refit) through the model once and pool, per (layer, KV-head):</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mspace width="negativethinmathspace" /><mrow><mo stretchy="true" fence="true" form="prefix">[</mo><msup><mi>q</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>q</mi><mo stretchy="true" fence="true" form="postfix">]</mo></mrow><mo>&#x0002C;</mo><mspace width="2em" /><msub><mi>&#x003A3;</mi><mi>K</mi></msub><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mspace width="negativethinmathspace" /><mrow><mo stretchy="true" fence="true" form="prefix">[</mo><msup><mi>k</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>k</mi><mo stretchy="true" fence="true" form="postfix">]</mo></mrow><mo>&#x0002C;</mo><mspace width="2em" /><mi>&#x003BC;</mi><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mo stretchy="false">[</mo><mi>k</mi><mo stretchy="false">]</mo><mo>&#x0002C;</mo><mspace width="2em" /><msub><mi>&#x003BC;</mi><mi>q</mi></msub><mo>&#x0003D;</mo><mi>&#x1D53C;</mi><mo stretchy="false">[</mo><mi>q</mi><mo stretchy="false">]</mo><mo>&#x0002C;</mo></mrow></math></div>
+\[ \Sigma_Q = \mathbb{E}\!\left[q^{\top} q\right], \qquad
+   \Sigma_K = \mathbb{E}\!\left[k^{\top} k\right], \qquad
+   \mu = \mathbb{E}[k], \qquad \mu_q = \mathbb{E}[q], \]
 <p>with queries taken exactly as the attention kernel sees them (after rotary
 position encoding), and — because these models use grouped-query attention — all
 query heads in a KV-head's group pooled together. The second moments are
-<em>uncentered</em>: attention uses raw <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>q</mi><mo>&#x000B7;</mo><mi>k</mi></mrow></math>, so the statistics must too.</p>
-<p><b>Why <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003A3;</mi><mi>Q</mi></msub></mrow></math> is exactly the right weight.</b> For a key reconstruction
-error <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>e</mi><mo>&#x0003D;</mo><mi>k</mi><mo>&#x02212;</mo><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover></mrow></math> (a row vector), the squared logit error averaged over the
+<em>uncentered</em>: attention uses raw \(q \cdot k\), so the statistics must too.</p>
+<p><b>Why \(\Sigma_Q\) is exactly the right weight.</b> For a key reconstruction
+error \(e = k - \hat k\) (a row vector), the squared logit error averaged over the
 query distribution is:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>&#x1D53C;</mi><mi>q</mi></msub><mspace width="negativethinmathspace" /><mrow><mo stretchy="true" fence="true" form="prefix">[</mo><mo stretchy="false">&#x00028;</mo><mi>q</mi><mo>&#x000B7;</mo><mi>e</mi><msup><mo stretchy="false">&#x00029;</mo><mn>2</mn></msup><mo stretchy="true" fence="true" form="postfix">]</mo></mrow><mo>&#x0003D;</mo><msub><mi>&#x1D53C;</mi><mi>q</mi></msub><mspace width="negativethinmathspace" /><mrow><mo stretchy="true" fence="true" form="prefix">[</mo><mi>e</mi><mspace width="0.167em" /><msup><mi>q</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>q</mi><mspace width="0.167em" /><msup><mi>e</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo stretchy="true" fence="true" form="postfix">]</mo></mrow><mo>&#x0003D;</mo><mi>e</mi><mspace width="0.167em" /><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mspace width="0.167em" /><msup><mi>e</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0002E;</mo></mrow></math></div>
-<p>No approximation — this is an identity. The quantity <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>e</mi><mspace width="0.167em" /><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mspace width="0.167em" /><msup><mi>e</mi><mrow><mo>&#x022A4;</mo></mrow></msup></mrow></math>,
+\[ \mathbb{E}_q\!\left[(q \cdot e)^2\right]
+   = \mathbb{E}_q\!\left[e\, q^{\top} q\, e^{\top}\right]
+   = e\, \Sigma_Q\, e^{\top}. \]
+<p>No approximation — this is an identity. The quantity \(e\,\Sigma_Q\,e^{\top}\),
 which we call the <b>Q-weighted error</b> or <em>logit error</em> when aggregated,
 is the single objective every component below optimizes and the screening metric
 every design decision was judged on. Screening always ran on held-out rows, scoring
@@ -329,21 +336,26 @@ with 2 bits, or zero. The construction below (query-weighted PCA, "QPCA") achiev
 (a) exactly and (b) empirically very strongly.</p>
 <p><b>Construction</b> (per layer and KV-head, offline). Eigendecompose the query
 moment and form a whitener:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mo>&#x0003D;</mo><mi>U</mi><mi>&#x0039B;</mi><msup><mi>U</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0002C;</mo><mspace width="2em" /><mi>W</mi><mo>&#x0003D;</mo><msup><mi>&#x0039B;</mi><mrow><mn>1</mn><mo>&#x0002F;</mo><mn>2</mn></mrow></msup><mspace width="0.167em" /><msup><mi>U</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mspace width="1em" /><mo>&#x021D2;</mo><mspace width="1em" /><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mo>&#x0003D;</mo><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>W</mi><mo>&#x0002E;</mo></mrow></math></div>
+\[ \Sigma_Q = U \Lambda U^{\top}, \qquad W = \Lambda^{1/2}\, U^{\top}
+   \quad\Rightarrow\quad \Sigma_Q = W^{\top} W . \]
 <p>Push the key energy through the whitener and diagonalize it:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>M</mi><mo>&#x0003D;</mo><mi>W</mi><mspace width="0.167em" /><msub><mi>&#x003A3;</mi><mi>K</mi></msub><mspace width="0.167em" /><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0003D;</mo><mi>V</mi><mi>D</mi><msup><mi>V</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0002C;</mo><mspace width="2em" /><mi>F</mi><mo>&#x0003D;</mo><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>V</mi><mtext>&#x000A0;</mtext><mtext>&#x000A0;</mtext><mo stretchy="false">&#x00028;</mo><mtext>forward</mtext><mo stretchy="false">&#x00029;</mo><mo>&#x0002C;</mo><mspace width="2em" /><mi>G</mi><mo>&#x0003D;</mo><msup><mi>F</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup><mtext>&#x000A0;</mtext><mtext>&#x000A0;</mtext><mo stretchy="false">&#x00028;</mo><mtext>inverse</mtext><mo stretchy="false">&#x00029;</mo><mo>&#x0002E;</mo></mrow></math></div>
-<p>Keys are encoded as <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi><mo>&#x0003D;</mo><mo stretchy="false">&#x00028;</mo><mi>k</mi><mo>&#x02212;</mo><mi>&#x003BC;</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mi>F</mi></mrow></math> and reconstructed as
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover><mspace width="0.167em" /><mi>G</mi><mo>&#x0002B;</mo><mi>&#x003BC;</mi></mrow></math>. Two properties do all the work:</p>
+\[ M = W\, \Sigma_K\, W^{\top} = V D V^{\top}, \qquad
+   F = W^{\top} V \ \ (\text{forward}), \qquad G = F^{-1} \ \ (\text{inverse}). \]
+<p>Keys are encoded as \(r = (k - \mu)\,F\) and reconstructed as
+\(\hat k = \hat r\, G + \mu\). Two properties do all the work:</p>
 <ul>
-<li><b>Isometry.</b> Let <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003B5;</mi><mo>&#x0003D;</mo><mi>r</mi><mo>&#x02212;</mo><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover></mrow></math> be the error in code space,
-so the key error is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>e</mi><mo>&#x0003D;</mo><mi>&#x003B5;</mi><mspace width="0.167em" /><mi>G</mi></mrow></math>. Then
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>e</mi><mspace width="0.167em" /><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mspace width="0.167em" /><msup><mi>e</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0003D;</mo><mi>&#x003B5;</mi><mspace width="0.167em" /><mi>G</mi><mspace width="0.167em" /><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>W</mi><mspace width="0.167em" /><msup><mi>G</mi><mrow><mo>&#x022A4;</mo></mrow></msup><msup><mi>&#x003B5;</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0003D;</mo><mi>&#x003B5;</mi><mspace width="0.167em" /><msup><mi>V</mi><mrow><mo>&#x022A4;</mo></mrow></msup><msup><mi>W</mi><mrow><mo>&#x02212;</mo><mo>&#x022A4;</mo></mrow></msup><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>W</mi><mspace width="0.167em" /><msup><mi>W</mi><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup><mi>V</mi><mspace width="0.167em" /><msup><mi>&#x003B5;</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0003D;</mo><mo>&#x02016;</mo><mi>&#x003B5;</mi><msup><mo>&#x02016;</mo><mn>2</mn></msup><mo>&#x0002C;</mo></mrow></math></div>
-using <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>G</mi><mo>&#x0003D;</mo><mo stretchy="false">&#x00028;</mo><msup><mi>W</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>V</mi><msup><mo stretchy="false">&#x00029;</mo><mrow><mo>&#x02212;</mo><mn>1</mn></mrow></msup><mo>&#x0003D;</mo><msup><mi>V</mi><mrow><mo>&#x022A4;</mo></mrow></msup><msup><mi>W</mi><mrow><mo>&#x02212;</mo><mo>&#x022A4;</mo></mrow></msup></mrow></math> and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>V</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mi>V</mi><mo>&#x0003D;</mo><mi>I</mi></mrow></math>. Plain
+<li><b>Isometry.</b> Let \(\varepsilon = r - \hat r\) be the error in code space,
+so the key error is \(e = \varepsilon\, G\). Then
+\[ e\, \Sigma_Q\, e^{\top}
+ = \varepsilon\, G\, W^{\top} W\, G^{\top} \varepsilon^{\top}
+ = \varepsilon\, V^{\top} W^{-\top} W^{\top} W\, W^{-1} V\, \varepsilon^{\top}
+ = \lVert \varepsilon \rVert^2 , \]
+using \(G = (W^{\top}V)^{-1} = V^{\top} W^{-\top}\) and \(V^{\top}V = I\). Plain
 squared error <em>in code space</em> equals query-weighted error in key space,
 exactly. Every distortion the allocator computes from here on is a simple sum of
 squares — no matrices, no weights — yet it is always the attention-relevant
 quantity.</li>
-<li><b>Energy compaction.</b> The diagonal of <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>D</mi></mrow></math> sorts coordinates by
+<li><b>Energy compaction.</b> The diagonal of \(D\) sorts coordinates by
 query-weighted key energy. Measured spectra are heavily front-loaded: most energy
 sits in a small fraction of the 128 coordinates. This is what makes "give the tail
 0 bits" a good trade rather than an act of vandalism.</li>
@@ -376,21 +388,21 @@ compromise: precompute at most 8 good width patterns and let each token pick one
 with a 3-bit id.</p>
 <p>Mechanics. The 128 coordinates are grouped into 4 blocks of 32 (widths change
 only at block boundaries — this is a kernel constraint: fixed strides and byte
-alignment per block). Allowed widths are <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>w</mi><mo>&#x02208;</mo><mo stretchy="false">&#x0007B;</mo><mn>0</mn><mo>&#x0002C;</mo><mn>2</mn><mo>&#x0002C;</mo><mn>3</mn><mo>&#x0002C;</mo><mn>4</mn><mo>&#x0002C;</mo><mn>6</mn><mo stretchy="false">&#x0007D;</mo></mrow></math> bits per
+alignment per block). Allowed widths are \(w \in \{0, 2, 3, 4, 6\}\) bits per
 coordinate. A <b>profile</b> is a monotone non-increasing width 4-tuple, e.g.
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mn>4</mn><mo>&#x0002C;</mo><mn>3</mn><mo>&#x0002C;</mo><mn>2</mn><mo>&#x0002C;</mo><mn>0</mn><mo stretchy="false">&#x00029;</mo></mrow></math> = 4 bits for coordinates 1–32, 3 bits for 33–64, 2 bits for 65–96,
-nothing for the tail. Its rate is exact: <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi><mo>&#x0003D;</mo><mn>32</mn><mspace width="0.167em" /><mo stretchy="false">&#x00028;</mo><msub><mi>w</mi><mn>1</mn></msub><mo>&#x0002B;</mo><msub><mi>w</mi><mn>2</mn></msub><mo>&#x0002B;</mo><msub><mi>w</mi><mn>3</mn></msub><mo>&#x0002B;</mo><msub><mi>w</mi><mn>4</mn></msub><mo stretchy="false">&#x00029;</mo></mrow></math> bits per
+\((4,3,2,0)\) = 4 bits for coordinates 1–32, 3 bits for 33–64, 2 bits for 65–96,
+nothing for the tail. Its rate is exact: \(R = 32\,(w_1+w_2+w_3+w_4)\) bits per
 token.</p>
 <p>For each rate target in a fixed ladder, the profile is chosen by <em>measured</em>
 water-filling on the calibration fit pool: quantize the pool's codes at every
 (block, width) combination, record the actual per-block distortion
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover accent="true"><mi>D</mi><mo>&#x0005E;</mo></mover><mi>b</mi></msub><mo stretchy="false">&#x00028;</mo><mi>w</mi><mo stretchy="false">&#x00029;</mo></mrow></math> — including clipping and grid snap, not a Gaussian formula — and
+\(\hat D_b(w)\) — including clipping and grid snap, not a Gaussian formula — and
 keep</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mtext>profile</mtext><mo stretchy="false">&#x00028;</mo><mi>T</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><msub><mo movablelimits="true">argmin</mo><mrow><mstyle scriptlevel="1"><mtable><mtr><mtd><mi>t</mi><mtext>&#x000A0;</mtext><mtext>monotone</mtext></mtd></mtr><mtr><mtd><mtext>cost</mtext><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mo>&#x02264;</mo><mspace width="0.167em" /><mi>T</mi></mtd></mtr></mtable></mstyle></mrow></msub><mtext>&#x000A0;</mtext><munderover><mo>&#x02211;</mo><mrow><mi>b</mi><mo>&#x0003D;</mo><mn>1</mn></mrow><mrow><mn>4</mn></mrow></munderover><msub><mover accent="true"><mi>D</mi><mo>&#x0005E;</mo></mover><mi>b</mi></msub><mo stretchy="false">&#x00028;</mo><msub><mi>t</mi><mi>b</mi></msub><mo stretchy="false">&#x00029;</mo><mo>&#x0002E;</mo></mrow></math></div>
+\[ \text{profile}(T)\;=\;\operatorname*{argmin}_{\substack{t\ \text{monotone}\\ \text{cost}(t)\, \le\, T}}\ \sum_{b=1}^{4} \hat D_b(t_b). \]
 <p>"Water-filling" is the shape this produces: bits flow to the blocks where the
 next bit buys the most distortion reduction, until marginal value equalizes across
-blocks. (An earlier version used the textbook <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mn>4</mn><mrow><mo>&#x02212;</mo><mi>w</mi></mrow></msup></mrow></math> Gaussian decay model
-instead of measured <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover accent="true"><mi>D</mi><mo>&#x0005E;</mo></mover><mi>b</mi></msub></mrow></math>; replacing it with measurement was worth a
+blocks. (An earlier version used the textbook \(4^{-w}\) Gaussian decay model
+instead of measured \(\hat D_b\); replacing it with measurement was worth a
 meaningful chunk of the final margin.) One more freeze-time decision: whether all
 KV-heads in a layer can share one profile ladder. The rule (frozen in advance) was
 "share if the pooled penalty is under 3%" — on Llama sharing costs 1.9% (shared per
@@ -398,30 +410,31 @@ layer), on Qwen 6.2% (kept per head). Same rule, different outcome; the format
 supports both.</p>
 
 <h3 id="rdo">5.2 · Encode time: the per-page RDO</h3>
-<p><b>The problem, precisely.</b> A page holds <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>n</mi><mo>&#x0003D;</mo><mn>64</mn></mrow></math> tokens. For each token
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>t</mi></mrow></math> and each rung <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003C1;</mi></mrow></math>, the encoder computes — by actually quantizing, so
+<p><b>The problem, precisely.</b> A page holds \(n = 64\) tokens. For each token
+\(t\) and each rung \(\rho\), the encoder computes — by actually quantizing, so
 overload and grid snap are priced in — the code-space distortion</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi></mrow></msub><mo>&#x0003D;</mo><mo>&#x02016;</mo><msub><mi>r</mi><mi>t</mi></msub><mo>&#x02212;</mo><msubsup><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover><mi>t</mi><mrow><mo stretchy="false">&#x00028;</mo><mi>&#x003C1;</mi><mo stretchy="false">&#x00029;</mo></mrow></msubsup><msup><mo>&#x02016;</mo><mn>2</mn></msup><mo>&#x0002C;</mo></mrow></math></div>
+\[ D_{t,\rho} = \lVert r_t - \hat r_t^{(\rho)} \rVert^2 , \]
 <p>which by the §4 isometry <em>is</em> the expected squared logit damage to token
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>t</mi></mrow></math>. Each rung has exact rate <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>R</mi><mi>&#x003C1;</mi></msub></mrow></math> (its profile bits). The page must fit
-its all-in budget, so the free payload is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>B</mi><mo>&#x0003D;</mo><mi>b</mi><mspace width="0.167em" /><mi>d</mi><mspace width="0.167em" /><mi>n</mi></mrow></math> minus side bits (96-bit
+\(t\). Each rung has exact rate \(R_\rho\) (its profile bits). The page must fit
+its all-in budget, so the free payload is \(B = b\,d\,n\) minus side bits (96-bit
 header + 3 bits × 64 rung ids) minus forced costs (sink escape, recency window —
 §6). The optimization problem is:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mo>min</mo><mrow><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mn>1</mn><mo stretchy="false">&#x00029;</mo><mo>&#x0002C;</mo><mo>&#x02026;</mo><mo>&#x0002C;</mo><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>n</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mtext>&#x000A0;</mtext><munderover><mo>&#x02211;</mo><mrow><mi>t</mi><mo>&#x0003D;</mo><mn>1</mn></mrow><mrow><mi>n</mi></mrow></munderover><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mspace width="2em" /><mtext>s.t.</mtext><mspace width="2em" /><munderover><mo>&#x02211;</mo><mrow><mi>t</mi><mo>&#x0003D;</mo><mn>1</mn></mrow><mrow><mi>n</mi></mrow></munderover><msub><mi>R</mi><mrow><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mspace width="0.278em" /><mo>&#x02264;</mo><mspace width="0.278em" /><mi>B</mi><mo>&#x0002E;</mo></mrow></math></div>
-<p>This is a (multiple-choice knapsack) combinatorial problem — <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mn>8</mn><mrow><mn>64</mn></mrow></msup></mrow></math>
+\[ \min_{\rho(1),\dots,\rho(n)}\ \sum_{t=1}^{n} D_{t,\rho(t)}
+   \qquad \text{s.t.} \qquad \sum_{t=1}^{n} R_{\rho(t)} \;\le\; B . \]
+<p>This is a (multiple-choice knapsack) combinatorial problem — \(8^{64}\)
 assignments — but it has a classical, essentially exact solution.</p>
 <p><b>Step 1: Lagrangian relaxation decouples the tokens.</b> Introduce a price
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi><mo>&#x02265;</mo><mn>0</mn></mrow></math> per bit and move the constraint into the objective:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>L</mi><mo stretchy="false">&#x00028;</mo><mi>&#x003BB;</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><munder><mo>&#x02211;</mo><mrow><mi>t</mi></mrow></munder><mo minsize="1.623em" maxsize="1.623em">[</mo><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mo>&#x0002B;</mo><mi>&#x003BB;</mi><mspace width="0.167em" /><msub><mi>R</mi><mrow><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mo minsize="1.623em" maxsize="1.623em">]</mo><mo>&#x0002E;</mo></mrow></math></div>
+\(\lambda \ge 0\) per bit and move the constraint into the objective:</p>
+\[ L(\lambda) \;=\; \sum_{t} \Big[ D_{t,\rho(t)} + \lambda\, R_{\rho(t)} \Big] . \]
 <p>The sum is separable — each token minimizes its own term independently:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msup><mi>&#x003C1;</mi><mrow><mi>&#x003BB;</mi></mrow></msup><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><msub><mo movablelimits="true">argmin</mo><mrow><mi>&#x003C1;</mi></mrow></msub><mtext>&#x000A0;</mtext><mo minsize="1.623em" maxsize="1.623em">(</mo><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi></mrow></msub><mo>&#x0002B;</mo><mi>&#x003BB;</mi><msub><mi>R</mi><mrow><mi>&#x003C1;</mi></mrow></msub><mo minsize="1.623em" maxsize="1.623em">)</mo><mo>&#x0002E;</mo></mrow></math></div>
-<p>Read <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi></mrow></math> as the <b>exchange rate between bits and distortion</b>: a rung
+\[ \rho^{\lambda}(t) \;=\; \operatorname*{argmin}_{\rho}\ \Big( D_{t,\rho} + \lambda R_{\rho} \Big). \]
+<p>Read \(\lambda\) as the <b>exchange rate between bits and distortion</b>: a rung
 one step higher is worth taking only if the distortion it removes exceeds
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi></mrow></math> times the extra bits it costs. At <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> bits are free and
-every token takes the top rung; as <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi><mo>&#x02192;</mo><mo>&#x0221E;</mo></mrow></math> every token drops to the
+\(\lambda\) times the extra bits it costs. At \(\lambda = 0\) bits are free and
+every token takes the top rung; as \(\lambda \to \infty\) every token drops to the
 cheapest rung. Crucially, total spent rate
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mo>&#x02211;</mo><mi>t</mi></msub><msub><mi>R</mi><mrow><msup><mi>&#x003C1;</mi><mrow><mi>&#x003BB;</mi></mrow></msup><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub></mrow></math> is non-increasing in <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi></mrow></math> — which turns
-"find the right <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi></mrow></math>" into a one-dimensional search.</p>
+\(\sum_t R_{\rho^{\lambda}(t)}\) is non-increasing in \(\lambda\) — which turns
+"find the right \(\lambda\)" into a one-dimensional search.</p>
 <p><b>Step 2: bisection finds the page's price.</b></p>
 <pre class="algo">for each page:                                  # all pages solved in parallel, fp64
   lo, hi = 0, λ_max                             # invariant: rate(lo) > B ≥ rate(hi)
@@ -440,13 +453,14 @@ only ever lands on each token's lower convex hull of (rate, distortion) points, 
 bisection stops just under the budget — typically leaving a few dozen spare bits.
 A cleanup pass runs up to 8 rounds; in each round, each page upgrades the single
 token with the best ratio</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mfrac><mrow><mi>&#x00394;</mi><mi>D</mi></mrow><mrow><mi>&#x00394;</mi><mi>R</mi></mrow></mfrac><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><mfrac><mrow><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub><mo>&#x02212;</mo><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><msup><mi>&#x003C1;</mi><mi>&#x02032;</mi></msup></mrow></msub></mrow><mrow><msub><mi>R</mi><mrow><msup><mi>&#x003C1;</mi><mi>&#x02032;</mi></msup></mrow></msub><mo>&#x02212;</mo><msub><mi>R</mi><mrow><mi>&#x003C1;</mi><mo stretchy="false">&#x00028;</mo><mi>t</mi><mo stretchy="false">&#x00029;</mo></mrow></msub></mrow></mfrac></mrow></math></div>
+\[ \frac{\Delta D}{\Delta R} \;=\;
+   \frac{D_{t,\rho(t)} - D_{t,\rho'}}{R_{\rho'} - R_{\rho(t)}} \]
 <p>among upgrades that still fit. This closes the integrality gap in practice:
 realized rates in the held-out gates are exact to four decimals (e.g. 2.0000,
 1.4960) with zero overflow.</p>
 
 <h4>A worked example</h4>
-<p>Three tokens, four rungs with rates <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi><mo>&#x0003D;</mo><mo stretchy="false">&#x00028;</mo><mn>0</mn><mo>&#x0002C;</mo><mn>64</mn><mo>&#x0002C;</mo><mn>160</mn><mo>&#x0002C;</mo><mn>288</mn><mo stretchy="false">&#x00029;</mo></mrow></math> bits. Token A is
+<p>Three tokens, four rungs with rates \(R = (0, 64, 160, 288)\) bits. Token A is
 high-energy and hard to code (a rare token the head cares about), token B is
 typical, token C sits in a redundant run. The measured distortions:</p>
 <div class="tblwrap"><table>
@@ -455,10 +469,10 @@ typical, token C sits in a redundant run. The measured distortions:</p>
 <tr><td>B (typical)</td><td>400</td><td>90</td><td>25</td><td>6</td></tr>
 <tr><td>C (redundant)</td><td>40</td><td>8</td><td>2.5</td><td>0.8</td></tr>
 </table></div>
-<p>At a cheap bit price <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi><mo>&#x0003D;</mo><mn>0.1</mn></mrow></math>, the per-token costs
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>D</mi><mo>&#x0002B;</mo><mi>&#x003BB;</mi><mi>R</mi></mrow></math> are minimized at rung 3 for A (cost 40.8), rung 3 for B (34.8),
+<p>At a cheap bit price \(\lambda = 0.1\), the per-token costs
+\(D + \lambda R\) are minimized at rung 3 for A (cost 40.8), rung 3 for B (34.8),
 but only rung 1 for C (14.4 — its distortion is already tiny, more bits aren't
-worth it): total 640 bits. Raise the price to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BB;</mi><mo>&#x0003D;</mo><mn>0.5</mn></mrow></math> and A drops to
+worth it): total 640 bits. Raise the price to \(\lambda = 0.5\) and A drops to
 rung 2 (140), B to rung 2 (105), and C all the way to rung 0 (40 — evicted to the
 mean): total 320 bits. If the page budget were 400 bits, bisection would settle
 between these prices, and refinement would then push C back up to rung 1 with the
@@ -467,7 +481,7 @@ its bits longest</b> — no heuristic ranks tokens; the price mechanism does it.
 
 <h4>What rung 0 means — and its limits</h4>
 <p>Rung 0 (all widths zero) reconstructs the token at the calibration mean:
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mn>0</mn><mo>&#x021D2;</mo><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mi>&#x003BC;</mi></mrow></math>. The token still exists — it occupies a
+\(\hat r = 0 \Rightarrow \hat k = \mu\). The token still exists — it occupies a
 softmax slot and costs its 3-bit id — but carries no token-specific information.
 This is <em>soft eviction</em>, discovered by the optimizer whenever a token's
 information isn't worth its bits. It is also the point where width allocation hits
@@ -503,13 +517,14 @@ collapsing redundant neighbors to free bits for the survivors.</figcaption>
 </figure>
 
 <h3>5.3 · Optional importance weighting (and why it ships disabled)</h3>
-<p>The distortion can be weighted per token, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi></mrow></msub><mo>&#x02192;</mo><msub><mi>&#x003C9;</mi><mi>t</mi></msub><msub><mi>D</mi><mrow><mi>t</mi><mo>&#x0002C;</mo><mi>&#x003C1;</mi></mrow></msub></mrow></math>, making the allocator protect tokens with high predicted attention.
-The format constraint is that <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003C9;</mi><mi>t</mi></msub></mrow></math> must be computable from information
+<p>The distortion can be weighted per token, \(D_{t,\rho} \to \omega_t
+D_{t,\rho}\), making the allocator protect tokens with high predicted attention.
+The format constraint is that \(\omega_t\) must be computable from information
 available at <em>decode</em> time too (the "phase-symmetric" signal policy — see
-§9.7): the shipping <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003C9;</mi></mrow></math> uses only the calibration mean query direction,
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003C9;</mi><mi>t</mi></msub><mo>&#x0003D;</mo><mi>exp</mi><mo stretchy="false">&#x00028;</mo><mi>&#x003C4;</mi><mspace width="0.167em" /><mo stretchy="false">&#x00028;</mo><msub><mi>&#x003BC;</mi><mi>q</mi></msub><mo>&#x000B7;</mo><msub><mi>k</mi><mi>t</mi></msub><mo>&#x0002F;</mo><msqrt><mi>d</mi></msqrt><mo>&#x02212;</mo><mtext>median</mtext><mo stretchy="false">&#x00029;</mo><mo stretchy="false">&#x00029;</mo></mrow></math>, clamped to
-±4 bits of effect. Measured at F1, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003C9;</mi></mrow></math> is a wash on these benchmarks
-(+0.81 [−0.51, +2.12] pooled), so the shipping config runs with <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003C4;</mi><mo>&#x0003D;</mo><mn>0</mn></mrow></math> — the
+§9.7): the shipping \(\omega\) uses only the calibration mean query direction,
+\(\omega_t = \exp(\tau\,(\mu_q \cdot k_t/\sqrt d - \text{median}))\), clamped to
+±4 bits of effect. Measured at F1, \(\omega\) is a wash on these benchmarks
+(+0.81 [−0.51, +2.12] pooled), so the shipping config runs with \(\tau = 0\) — the
 un-weighted RDO. It matters here mostly as evidence: even a <em>cheating</em>
 importance signal fails to beat the plain optimizer (§9.7).</p>
 
@@ -517,14 +532,14 @@ importance signal fails to beat the plain optimizer (§9.7).</p>
 
 <h3>6.1 · Lloyd-Max grids</h3>
 <p><b>Intuition.</b> Once a coordinate has a width, say 3 bits, we must place its
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mn>2</mn><mn>3</mn></msup></mrow></math> representable levels. Uniformly spaced levels are wrong for bell-shaped
+\(2^3\) representable levels. Uniformly spaced levels are wrong for bell-shaped
 data: they waste levels in the rare tails and starve the dense center. The
 Lloyd-Max construction places levels to minimize expected squared error for a known
 distribution — each level sits at the centroid of the data that snaps to it.</p>
 <p>Rotated coordinates are near-Gaussian with calibrated per-coordinate scale
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003C3;</mi><mi>j</mi></msub></mrow></math>, so each width <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>w</mi></mrow></math> uses precomputed <em>unit-Gaussian</em> Lloyd-Max
-levels <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>w</mi></msub><mo stretchy="false">[</mo><mo>&#x000B7;</mo><mo stretchy="false">]</mo></mrow></math>, shared everywhere and scaled at decode by <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003C3;</mi><mi>j</mi></msub></mrow></math>:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mover accent="true"><mi>r</mi><mo>&#x0005E;</mo></mover><mi>j</mi></msub><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><msub><mi>&#x003C3;</mi><mi>j</mi></msub><mo>&#x000B7;</mo><msub><mi>c</mi><mi>w</mi></msub><mspace width="negativethinmathspace" /><mo minsize="1.2em" maxsize="1.2em">[</mo><mspace width="0.167em" /><mtext>nearest</mtext><mo stretchy="false">&#x00028;</mo><msub><mi>r</mi><mi>j</mi></msub><mo>&#x0002F;</mo><msub><mi>&#x003C3;</mi><mi>j</mi></msub><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mo minsize="1.2em" maxsize="1.2em">]</mo><mo>&#x0002C;</mo></mrow></math></div>
+\(\sigma_j\), so each width \(w\) uses precomputed <em>unit-Gaussian</em> Lloyd-Max
+levels \(c_w[\cdot]\), shared everywhere and scaled at decode by \(\sigma_j\):</p>
+\[ \hat r_j \;=\; \sigma_j \cdot c_w\!\big[\,\text{nearest}(r_j / \sigma_j)\,\big], \]
 <p>with the near-zero level forced to exactly 0 (so dead coordinates and rung-0
 blocks reconstruct exactly, and integer code 0 means "nothing"). Two exceptions:
 the top width stays a <em>covering uniform</em> grid — its job is bounding
@@ -562,21 +577,24 @@ routing tokens to a full-precision tier.</p>
 
 <h2 id="serve">7 · Serving: the fold identity</h2>
 <p><b>Intuition.</b> A naive decoder would reconstruct every cached key —
-multiply by <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>G</mi></mrow></math>, scale, add <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BC;</mi></mrow></math> — every step. But all of those are
+multiply by \(G\), scale, add \(\mu\) — every step. But all of those are
 <em>calibration constants</em>, identical for every token in a head. So instead of
 undoing the transform once per cached token, apply it once per step to the
 <em>one new query</em>, and let the kernel dot the transformed query directly
 against raw integer codes.</p>
-<p>The stored reconstruction is <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mo stretchy="false">&#x00028;</mo><mi>s</mi><mo>&#x02299;</mo><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mi>G</mi><mo>&#x0002B;</mo><mi>&#x003BC;</mi></mrow></math>, where
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover></mrow></math> are the integer LUT codes, <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>s</mi></mrow></math> the static per-coordinate scales
-(<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003C3;</mi><mi>j</mi></msub></mrow></math> times grid constants), and <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x02299;</mo></mrow></math> elementwise product. Then for
-any query <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>q</mi></mrow></math>:</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mi>q</mi><mo>&#x000B7;</mo><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><mi>q</mi><mspace width="0.167em" /><mo minsize="1.2em" maxsize="1.2em">(</mo><mo stretchy="false">&#x00028;</mo><mi>s</mi><mo>&#x02299;</mo><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover><mo stretchy="false">&#x00029;</mo><mspace width="0.167em" /><mi>G</mi><msup><mo minsize="1.2em" maxsize="1.2em">)</mo><mrow><mo>&#x022A4;</mo></mrow></msup><mo>&#x0002B;</mo><mi>q</mi><mo>&#x000B7;</mo><mi>&#x003BC;</mi><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><mo stretchy="false">&#x00028;</mo><mi>q</mi><mspace width="0.167em" /><msup><mi>G</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo stretchy="false">&#x00029;</mo><mo>&#x000B7;</mo><mo stretchy="false">&#x00028;</mo><mi>s</mi><mo>&#x02299;</mo><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover><mo stretchy="false">&#x00029;</mo><mo>&#x0002B;</mo><mi>q</mi><mo>&#x000B7;</mo><mi>&#x003BC;</mi><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><munder><munder><mrow><mo minsize="1.2em" maxsize="1.2em">(</mo><mo stretchy="false">&#x00028;</mo><mi>q</mi><mspace width="0.167em" /><msup><mi>G</mi><mrow><mo>&#x022A4;</mo></mrow></msup><mo stretchy="false">&#x00029;</mo><mo>&#x02299;</mo><mi>s</mi><mo minsize="1.2em" maxsize="1.2em">)</mo></mrow><mo>&#x23DF;</mo></munder><mrow><mover><mi>q</mi><mo stretchy="false">&#x0007E;</mo></mover><mtext>&#x000A0;</mtext><mtext>(once&#x000A0;per&#x000A0;step)</mtext></mrow></munder><mo>&#x000B7;</mo><mspace width="0.278em" /><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover><mspace width="0.278em" /><mo>&#x0002B;</mo><mspace width="0.278em" /><munder><munder><mrow><mi>q</mi><mo>&#x000B7;</mo><mi>&#x003BC;</mi></mrow><mo>&#x23DF;</mo></munder><mrow><mtext>cancels</mtext></mrow></munder><mo>&#x0002E;</mo></mrow></math></div>
-<p>The <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>q</mi><mo>&#x000B7;</mo><mi>&#x003BC;</mi></mrow></math> term is the same for every cached token in the head, and
+<p>The stored reconstruction is \(\hat k = (s \odot \hat c)\,G + \mu\), where
+\(\hat c\) are the integer LUT codes, \(s\) the static per-coordinate scales
+(\(\sigma_j\) times grid constants), and \(\odot\) elementwise product. Then for
+any query \(q\):</p>
+\[ q \cdot \hat k
+   \;=\; q\,\big((s \odot \hat c)\,G\big)^{\top} + q \cdot \mu
+   \;=\; (q\,G^{\top}) \cdot (s \odot \hat c) + q \cdot \mu
+   \;=\; \underbrace{\big((q\,G^{\top}) \odot s\big)}_{\tilde q\ \text{(once per step)}} \cdot\; \hat c \;+\; \underbrace{q \cdot \mu}_{\text{cancels}} . \]
+<p>The \(q \cdot \mu\) term is the same for every cached token in the head, and
 softmax is invariant to adding a constant to all logits — it cancels exactly. So
-the entire decode-side cost of the transform is one <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>d</mi><mo>&#x000D7;</mo><mi>d</mi></mrow></math> multiply of the
+the entire decode-side cost of the transform is one \(d \times d\) multiply of the
 query per (layer, head-group) per step, and the inner loop computes
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover><mi>q</mi><mo stretchy="false">&#x0007E;</mo></mover><mo>&#x000B7;</mo><mover accent="true"><mi>c</mi><mo>&#x0005E;</mo></mover></mrow></math> — a dot product against integer codes. What the kernel
+\(\tilde q \cdot \hat c\) — a dot product against integer codes. What the kernel
 reads per token: packed codes (2–6 bits per coordinate as the rung dictates) and a
 <b>3-bit rung id</b>. Nothing else. Contrast OSCAR INT2, which stores an fp16
 scale <em>and</em> zero-point per token-group — 32 bits of metadata fetched inside
@@ -594,14 +612,14 @@ that front.</p>
 varies bits per <em>token</em>; the remaining axis is the <em>number of stored rows
 itself</em>. Long contexts are full of locally redundant runs — code punctuation,
 boilerplate, repeated structure — whose keys are nearly identical. If a 64-token
-page stores only <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>m</mi><mo>&#x0003C;</mo><mn>64</mn></mrow></math> representative rows, every surviving row gets more
+page stores only \(m < 64\) representative rows, every surviving row gets more
 bits under the same page budget, and attention reads fewer rows. This makes
 eviction (rows at zero information) and OSCAR (all rows, uniform bits) two corners
 of a single design space, and directly answers the project's founding question:
 <em>can n tokens go in and m &lt; n rows come out, at the same quality?</em></p>
 
 <h3>8.2 · The mechanism, step by step</h3>
-<p><b>Where it runs.</b> In code space <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>r</mi></mrow></math>, because of the §4 isometry:
+<p><b>Where it runs.</b> In code space \(r\), because of the §4 isometry:
 unweighted Euclidean clustering there <em>is</em> query-weighted clustering on raw
 keys — no weighting needed anywhere in the algorithm.</p>
 <p><b>What may merge.</b> Only <em>contiguous runs</em> of adjacent tokens within
@@ -610,38 +628,40 @@ partition is just the list of run lengths — a 6-bit count per stored row — w
 arbitrary clusters would need per-token pointers (≈ 6 bits per <em>token</em>,
 erasing the savings).</p>
 <p><b>How runs are chosen.</b> Bottom-up greedy (Ward) merging. Start with 64 runs
-of one token each. Merging two adjacent runs <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>a</mi><mo>&#x0002C;</mo><mi>b</mi></mrow></math> (sizes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>c</mi><mi>a</mi></msub><mo>&#x0002C;</mo><msub><mi>c</mi><mi>b</mi></msub></mrow></math>,
-centroids <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mi>a</mi></msub><mo>&#x0002C;</mo><msub><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mi>b</mi></msub></mrow></math>) increases the total within-run squared error by
+of one token each. Merging two adjacent runs \(a, b\) (sizes \(c_a, c_b\),
+centroids \(\bar r_a, \bar r_b\)) increases the total within-run squared error by
 exactly</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>&#x00394;</mi><mrow><mi>a</mi><mi>b</mi></mrow></msub><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><mfrac><mrow><msub><mi>c</mi><mi>a</mi></msub><mspace width="0.167em" /><msub><mi>c</mi><mi>b</mi></msub></mrow><mrow><msub><mi>c</mi><mi>a</mi></msub><mo>&#x0002B;</mo><msub><mi>c</mi><mi>b</mi></msub></mrow></mfrac><mspace width="0.278em" /><mo>&#x02016;</mo><msub><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mi>a</mi></msub><mo>&#x02212;</mo><msub><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mi>b</mi></msub><msup><mo>&#x02016;</mo><mn>2</mn></msup><mo>&#x0002C;</mo></mrow></math></div>
+\[ \Delta_{ab} \;=\; \frac{c_a\, c_b}{c_a + c_b}\; \lVert \bar r_a - \bar r_b \rVert^2 , \]
 <p>so the algorithm repeatedly merges the adjacent pair with the smallest
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x00394;</mi></mrow></math> — always the cheapest information loss first. Each merge reduces the
+\(\Delta\) — always the cheapest information loss first. Each merge reduces the
 row count by one, producing a nested hierarchy of partitions.</p>
 <div class="qa">
 <p class="q">Do pages merge into an arbitrary number of rows, or is the target fixed?</p>
 <p><b>Fixed.</b> The hierarchy is snapshotted at exactly three row counts —
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>m</mi><mo>&#x02208;</mo><mo stretchy="false">&#x0007B;</mo><mn>64</mn><mo>&#x0002C;</mo><mn>32</mn><mo>&#x0002C;</mo><mn>16</mn><mo stretchy="false">&#x0007D;</mo></mrow></math>: unmerged, 2× merged, 4× merged. <em>Which</em> tokens
+\(m \in \{64, 32, 16\}\): unmerged, 2× merged, 4× merged. <em>Which</em> tokens
 share a row is data-dependent (whatever runs the Ward pass formed by then), but a
 page's row count is always one of these three values. The reason is the serving
 constraint from §1.3: fixed levels mean pages come in a small set of byte-size
-classes <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x0007B;</mo><mi>S</mi><mo>&#x0002C;</mo><mi>S</mi><mo>&#x0002F;</mo><mn>2</mn><mo>&#x0002C;</mo><mi>S</mi><mo>&#x0002F;</mo><mn>4</mn><mo stretchy="false">&#x0007D;</mo></mrow></math>, which a paged allocator can handle; arbitrary <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>m</mi></mrow></math>
+classes \(\{S, S/2, S/4\}\), which a paged allocator can handle; arbitrary \(m\)
 would reintroduce variable-size pages through the back door. Each page then makes
 a <b>2-bit choice of level</b>: the per-row width RDO of §5.2 is run at each level
-under the <em>same</em> byte budget <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>B</mi></mrow></math>, and the page keeps whichever level
+under the <em>same</em> byte budget \(B\), and the page keeps whichever level
 achieved the lowest total distortion (ties broken toward less merging). Empirical
 footnote: the 16-row level was <em>never chosen</em> by the optimizer at any tested
 rate (1.25–2.0 b/c), so deployment needs only two page size classes.</p>
 </div>
 <p><b>How merged rows enter the RDO.</b> Merging composes cleanly with the width
-allocator because distortion decomposes exactly. For a run <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi mathvariant="script">C</mi></mrow></math> of size
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi></mrow></math> with centroid <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover></mrow></math>, reconstructing every member at the quantized
-centroid <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>Q</mi><mo stretchy="false">&#x00028;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mo stretchy="false">&#x00029;</mo></mrow></math> costs</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><munder><mo>&#x02211;</mo><mrow><mi>i</mi><mo>&#x02208;</mo><mi mathvariant="script">C</mi></mrow></munder><mo>&#x02016;</mo><msub><mi>r</mi><mi>i</mi></msub><mo>&#x02212;</mo><mi>Q</mi><mo stretchy="false">&#x00028;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mo stretchy="false">&#x00029;</mo><msup><mo>&#x02016;</mo><mn>2</mn></msup><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><munder><munder><mrow><msub><mo>&#x02211;</mo><mrow><mi>i</mi><mo>&#x02208;</mo><mi mathvariant="script">C</mi></mrow></msub><mo>&#x02016;</mo><msub><mi>r</mi><mi>i</mi></msub><mo>&#x02212;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><msup><mo>&#x02016;</mo><mn>2</mn></msup></mrow><mo>&#x23DF;</mo></munder><mrow><mtext>spread&#x000A0;(fixed&#x000A0;by&#x000A0;clustering)</mtext></mrow></munder><mspace width="0.278em" /><mo>&#x0002B;</mo><mspace width="0.278em" /><munder><munder><mrow><mi>c</mi><mspace width="0.167em" /><mo>&#x02016;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x02212;</mo><mi>Q</mi><mo stretchy="false">&#x00028;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mo stretchy="false">&#x00029;</mo><msup><mo>&#x02016;</mo><mn>2</mn></msup></mrow><mo>&#x23DF;</mo></munder><mrow><mi>c</mi><mspace width="0.167em" /><mo>&#x000D7;</mo><mspace width="0.167em" /><mtext>ordinary&#x000A0;quantization&#x000A0;error</mtext></mrow></munder><mo>&#x0002C;</mo></mrow></math></div>
+allocator because distortion decomposes exactly. For a run \(\mathcal C\) of size
+\(c\) with centroid \(\bar r\), reconstructing every member at the quantized
+centroid \(Q(\bar r)\) costs</p>
+\[ \sum_{i \in \mathcal C} \lVert r_i - Q(\bar r) \rVert^2
+   \;=\; \underbrace{\sum_{i \in \mathcal C} \lVert r_i - \bar r \rVert^2}_{\text{spread (fixed by clustering)}}
+   \;+\; \underbrace{c\, \lVert \bar r - Q(\bar r) \rVert^2}_{c\,\times\,\text{ordinary quantization error}} , \]
 <p>the cross term vanishing because errors are measured about the centroid
-(<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mo>&#x02211;</mo><mrow><mi>i</mi><mo>&#x02208;</mo><mi mathvariant="script">C</mi></mrow></msub><mo stretchy="false">&#x00028;</mo><msub><mi>r</mi><mi>i</mi></msub><mo>&#x02212;</mo><mover><mi>r</mi><mo stretchy="true">&#x000AF;</mo></mover><mo stretchy="false">&#x00029;</mo><mo>&#x0003D;</mo><mn>0</mn></mrow></math>). So at any level, each row presents
-the RDO a distortion "spread + <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi></mrow></math> · grid error" and a rate "profile bits +
+(\(\sum_{i\in\mathcal C}(r_i - \bar r) = 0\)). So at any level, each row presents
+the RDO a distortion "spread + \(c\) · grid error" and a rate "profile bits +
 6-bit count", and the same λ-bisection of §5.2 allocates widths across rows. A
-merged run of 4 at a 160-bit profile costs <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mn>160</mn><mo>&#x0002B;</mo><mn>6</mn></mrow></math> bits ≈ 41.5 bits per
+merged run of 4 at a 160-bit profile costs \(160 + 6\) bits ≈ 41.5 bits per
 original token — a rate point <em>below the cheapest non-zero rung</em> (64 bits)
 that still carries real, local information. Merging fills the gap in the rate
 ladder between "own row" and "erased".</p>
@@ -651,14 +671,14 @@ and the recent context are exactly the tokens whose individuality matters most.<
 <h3 id="mergevszero">8.3 · How is merging different from giving a token zero bits?</h3>
 <p>They sound similar — both "give up" on tokens — but they differ in what
 survives, what it costs, and what attention computes. Side by side, for a run of
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi><mo>&#x0003D;</mo><mn>4</mn></mrow></math> redundant tokens:</p>
+\(c = 4\) redundant tokens:</p>
 <div class="tblwrap"><table>
 <tr><th></th><th>rung 0 (zero bits) × 4</th><th>merged run of 4</th></tr>
-<tr><td>each token reconstructs to</td><td>the <b>global</b> calibration mean <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BC;</mi></mrow></math> — identical for every zero-bit token in the corpus</td><td>the run's <b>local</b> centroid — specific to these 4 tokens</td></tr>
+<tr><td>each token reconstructs to</td><td>the <b>global</b> calibration mean \(\mu\) — identical for every zero-bit token in the corpus</td><td>the run's <b>local</b> centroid — specific to these 4 tokens</td></tr>
 <tr><td>information kept</td><td>none (token-specific and local content both gone)</td><td>everything the 4 tokens share; lost: only their within-run differences</td></tr>
-<tr><td>reconstruction error</td><td>each token's full distance to <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>&#x003BC;</mi></mrow></math> (large)</td><td>within-run spread (small — that's why the run was chosen)</td></tr>
+<tr><td>reconstruction error</td><td>each token's full distance to \(\mu\) (large)</td><td>within-run spread (small — that's why the run was chosen)</td></tr>
 <tr><td>rate for the 4 tokens</td><td>4 × 3-bit ids = 12 bits</td><td>one payload + count, e.g. 160 + 6 + 3 bits</td></tr>
-<tr><td>attention arithmetic</td><td>4 independent softmax slots at <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover accent="true"><mi>k</mi><mo>&#x0005E;</mo></mover><mo>&#x0003D;</mo><mi>&#x003BC;</mi></mrow></math>, each contributing mass at the corpus mean</td><td>one row with a <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo>&#x0002B;</mo><mi>log</mi><mn>4</mn></mrow></math> logit bias ≡ exactly 4 tokens' mass at the centroid (§8.4)</td></tr>
+<tr><td>attention arithmetic</td><td>4 independent softmax slots at \(\hat k = \mu\), each contributing mass at the corpus mean</td><td>one row with a \(+\log 4\) logit bias ≡ exactly 4 tokens' mass at the centroid (§8.4)</td></tr>
 <tr><td>rows read at decode</td><td>4</td><td>1 (fewer bytes <em>and</em> fewer FLOPs)</td></tr>
 </table></div>
 <p>Three points deserve emphasis:</p>
@@ -669,7 +689,7 @@ mean — "this token said the same thing as its neighbors". When local redundanc
 exists, the second is a strictly gentler approximation, and the Ward pass only
 forms runs where it is.</li>
 <li><b>A different point on the rate axis.</b> Rung 0 is all-or-nothing: 0 payload
-bits. Merging creates fractional per-token rates (payload ⁄ <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi></mrow></math>) that the width
+bits. Merging creates fractional per-token rates (payload ⁄ \(c\)) that the width
 ladder cannot express — with actual content, unlike rung 0.</li>
 <li><b>Why it can't just be "one more rung".</b> A rung is a per-token,
 independent decision — exactly what makes the §5.2 Lagrangian decouple. "Merge
@@ -685,18 +705,21 @@ its error explodes (0.01233), merging holds error to 0.00894 (−28%): sharing b
 forgetting.</p>
 
 <h3>8.4 · Why merged attention is exact (the replication–bias identity)</h3>
-<p>Merging would be worthless if serving <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>m</mi></mrow></math> rows changed the attention
+<p>Merging would be worthless if serving \(m\) rows changed the attention
 semantics. It doesn't — up to the already-counted key approximation, it is an
-identity. Suppose <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi></mrow></math> cached tokens all had exactly the key <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover></mrow></math>, with
-values <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>v</mi><mn>1</mn></msub><mo>&#x0002C;</mo><mo>&#x02026;</mo><mo>&#x0002C;</mo><msub><mi>v</mi><mi>c</mi></msub></mrow></math>. Their joint contribution to attention is</p>
-<div class="eqm"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><munderover><mo>&#x02211;</mo><mrow><mi>i</mi><mo>&#x0003D;</mo><mn>1</mn></mrow><mrow><mi>c</mi></mrow></munderover><msup><mi>e</mi><mrow><mspace width="0.167em" /><mi>q</mi><mo>&#x000B7;</mo><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover></mrow></msup><mspace width="0.167em" /><msub><mi>v</mi><mi>i</mi></msub><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><mi>c</mi><mspace width="0.167em" /><msup><mi>e</mi><mrow><mspace width="0.167em" /><mi>q</mi><mo>&#x000B7;</mo><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover></mrow></msup><mspace width="0.167em" /><mover><mi>v</mi><mo stretchy="true">&#x000AF;</mo></mover><mspace width="0.278em" /><mo>&#x0003D;</mo><mspace width="0.278em" /><msup><mi>e</mi><mrow><mspace width="0.167em" /><mi>q</mi><mo>&#x000B7;</mo><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x0002B;</mo><mi>log</mi><mi>c</mi></mrow></msup><mspace width="0.167em" /><mover><mi>v</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x0002C;</mo><mspace width="2em" /><mover><mi>v</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x0003D;</mo><mstyle displaystyle="false" scriptlevel="0"><mfrac><mrow><mn>1</mn></mrow><mrow><mi>c</mi></mrow></mfrac></mstyle><mstyle displaystyle="false" scriptlevel="0"><munder><mo>&#x02211;</mo><mi>i</mi></munder><msub><mi>v</mi><mi>i</mi></msub><mo>&#x0002C;</mo></mstyle></mrow></math></div>
+identity. Suppose \(c\) cached tokens all had exactly the key \(\bar k\), with
+values \(v_1, \dots, v_c\). Their joint contribution to attention is</p>
+\[ \sum_{i=1}^{c} e^{\,q \cdot \bar k}\, v_i
+   \;=\; c\, e^{\,q \cdot \bar k}\, \bar v
+   \;=\; e^{\,q \cdot \bar k + \log c}\, \bar v ,
+   \qquad \bar v = \tfrac{1}{c}\textstyle\sum_i v_i , \]
 <p>in both numerator and denominator of the softmax. So <b>one stored row</b>
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mover><mi>v</mi><mo stretchy="true">&#x000AF;</mo></mover><mo>&#x0002C;</mo><mtext>&#x000A0;</mtext><mi>log</mi><mi>c</mi><mo stretchy="false">&#x00029;</mo></mrow></math> — centroid key, mean value, and a logit bias of
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>log</mi><mi>c</mi></mrow></math> — reproduces the <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>c</mi></mrow></math> tokens <em>exactly</em>. The bias is one scalar
-add before the online-softmax max (or, folded as a <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mo stretchy="false">&#x00028;</mo><mi>d</mi><mrow><mo>&#x0002B;</mo></mrow><mn>1</mn><mo stretchy="false">&#x00029;</mo></mrow></math>-th coordinate with
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mover><mi>q</mi><mo stretchy="false">&#x0007E;</mo></mover><mrow><mi>d</mi><mo>&#x0002B;</mo><mn>1</mn></mrow></msub><mo>&#x0003D;</mo><mn>1</mn></mrow></math>, it works in an unmodified FlashAttention kernel). The only
+\((\bar k,\ \bar v,\ \log c)\) — centroid key, mean value, and a logit bias of
+\(\log c\) — reproduces the \(c\) tokens <em>exactly</em>. The bias is one scalar
+add before the online-softmax max (or, folded as a \((d{+}1)\)-th coordinate with
+\(\tilde q_{d+1} = 1\), it works in an unmodified FlashAttention kernel). The only
 approximation in the whole construction is that the original keys were not exactly
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mover><mi>k</mi><mo stretchy="true">&#x000AF;</mo></mover></mrow></math> — and that error is precisely the "spread" term the RDO already
+\(\bar k\) — and that error is precisely the "spread" term the RDO already
 accounted for in §8.2. Our evaluation harness serves the replication form
 (centroid repeated at each member position), which by this identity is
 <em>mathematically identical</em> to the deployment form — so measured F1 is
@@ -795,7 +818,7 @@ numbers exist, "faster than OSCAR" is a hypothesis, not a result.</p>
 <h3>9.4 · pgq5: does the format transfer? (Qwen3-8B)</h3>
 <p>Everything structural — page size, ladders, rate targets, grids, escapes,
 window — was frozen byte-for-byte from the Llama study; only the per-model
-statistics (<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msub><mi>&#x003A3;</mi><mi>Q</mi></msub><mo>&#x0002C;</mo><mi>&#x003BC;</mi></mrow></math>, profiles, scales) were refit, from just 12
+statistics (\(\Sigma_Q, \mu\), profiles, scales) were refit, from just 12
 calibration prompts. The codec's own proxy error transferred within 3.7%
 (0.002615 on Qwen vs 0.002716 on Llama).</p>
 <figure><div id="qwenchart"></div>
@@ -901,7 +924,7 @@ width allocation nor token merging breaks the entropy-coding frontier below
 1.5 b/c per original token. Below that band, buy quality with merging; don't chase
 EC parity.</li>
 <li><b>Merging is a free option with a fixed-level format.</b> Snapshotting at
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>m</mi><mo>&#x02208;</mo><mo stretchy="false">&#x0007B;</mo><mn>64</mn><mo>&#x0002C;</mo><mn>32</mn><mo stretchy="false">&#x0007D;</mo></mrow></math> keeps pages in two byte classes, never hurts (the level
+\(m \in \{64, 32\}\) keeps pages in two byte classes, never hurts (the level
 choice simply declines to merge when bits are ample), extends the operating range
 down, and cuts stored rows 15–20% under rate pressure.</li>
 <li><b>Fixed-byte pages + rung ids are enough.</b> Variable-rate coding buys
