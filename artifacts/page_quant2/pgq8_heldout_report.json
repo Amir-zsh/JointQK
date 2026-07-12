@@ -1,0 +1,57 @@
+{
+  "bundle": "artifacts/page_quant2/pgq8_bundle__llama31_8b.pt",
+  "report": {
+    "pgq_dctlm_rdo@b1.5": {
+      "norm_ratio_med": 0.9722270369529724,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4999727364774353,
+      "rung_hist": [
+        455577,
+        5403626,
+        4776416,
+        509166,
+        1420512,
+        881344,
+        362367,
+        217376
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.023343494161963463
+    },
+    "pgq_dctlm_rdo@b2": {
+      "norm_ratio_med": 0.9843648076057434,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.9999370204612692,
+      "rung_hist": [
+        30370,
+        921459,
+        4300746,
+        697164,
+        4033984,
+        2609093,
+        1034937,
+        398631
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.012083419598639011
+    },
+    "pgq_dctlmrw_rdo@b2": {
+      "norm_ratio_med": 0.9851190447807312,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1287867260401643,
+      "rung_hist": [
+        29502,
+        895713,
+        4167124,
+        668206,
+        3904337,
+        2525971,
+        1000733,
+        834798
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.01123135443776846
+    }
+  },
+  "sha8": "9d2527b5"
+}

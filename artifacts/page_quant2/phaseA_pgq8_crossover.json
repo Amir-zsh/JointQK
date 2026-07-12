@@ -1,0 +1,39 @@
+{
+  "candidates": {
+    "pgq_dctlm_rdo@b1.6": {
+      "k_mse": 0.38693800060873096,
+      "logit_err": 0.0028082527222065517,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.5976387616215106,
+      "top1": 0.6595636183215726,
+      "top5": 0.9804494919315461
+    },
+    "pgq_dctlm_rdo@b1.75": {
+      "k_mse": 0.339642690823581,
+      "logit_err": 0.0023918723351730466,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.7499676240102833,
+      "top1": 0.6674673018916961,
+      "top5": 0.9844397883261403
+    }
+  },
+  "reference": {
+    "ec_qpca_unc_dz0.5@1.95": {
+      "note": "see phaseA_report.json"
+    },
+    "jq_k2": {
+      "k_mse": 0.2597,
+      "logit_err": 0.00207,
+      "top1": 0.5596,
+      "top5": 0.9836
+    },
+    "tq_k2": {
+      "k_mse": 0.5572,
+      "logit_err": 0.02329,
+      "rate": 2.125,
+      "source": "phaseA_report.json (EC study, same rows)",
+      "top1": 0.4031,
+      "top5": 0.9212
+    }
+  }
+}

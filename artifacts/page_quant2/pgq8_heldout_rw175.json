@@ -1,0 +1,23 @@
+{
+  "bundle": "artifacts/page_quant2/pgq8_bundle__llama31_8b.pt",
+  "report": {
+    "pgq_dctlmrw_rdo@b1.75": {
+      "norm_ratio_med": 0.9793201088905334,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.8867948981496787,
+      "rung_hist": [
+        126744,
+        2507164,
+        5520727,
+        571002,
+        2457391,
+        1502320,
+        630408,
+        710628
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.016079246997833252
+    }
+  },
+  "sha8": "9d2527b5"
+}
