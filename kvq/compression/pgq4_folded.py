@@ -56,23 +56,37 @@ SINK_LIM = 127
 GAIN_BITS = 16
 
 
-def uniform_quant(r: torch.Tensor, scale: torch.Tensor, w: int) -> torch.Tensor:
-    """Symmetric mid-tread saturating INT-w grid; scale (d,) or (1, d)."""
+def uniform_codes(r: torch.Tensor, scale: torch.Tensor, w: int):
+    """Symmetric mid-tread saturating INT-w grid; scale (d,) or (1, d).
+    Returns (codes uint8 in [0, 2^w-2] with code = idx + lim, dequant).
+    Dequant is idx * s — the single source of truth for uniform_quant."""
     lim = (1 << (w - 1)) - 1
     s = scale.unsqueeze(0) if scale.dim() == 1 else scale
-    return torch.round(r / s).clamp_(-lim, lim) * s
+    idx = torch.round(r / s).clamp_(-lim, lim)
+    return (idx + lim).to(torch.uint8), idx * s
 
 
-def lm_quant(r: torch.Tensor, cents: torch.Tensor,
-             code_std: torch.Tensor) -> torch.Tensor:
+def uniform_quant(r: torch.Tensor, scale: torch.Tensor, w: int) -> torch.Tensor:
+    return uniform_codes(r, scale, w)[1]
+
+
+def lm_codes(r: torch.Tensor, cents: torch.Tensor, code_std: torch.Tensor):
     """Per-coord Lloyd-Max LUT: cents (2^w,) unit levels (zero forced),
-    scaled by code_std (d,). Nearest-level via bucketize on the unit axis."""
-    y = r / code_std.clamp_min(1e-12).unsqueeze(0)
+    scaled by code_std (d,) — or (T, d) for per-row scale maps (pgq8).
+    Nearest-level via bucketize on the unit axis.
+    Returns (LUT positions uint8, dequant = cents[pos] * code_std)."""
+    code_std = (code_std.unsqueeze(0) if code_std.dim() == 1 else code_std)
+    y = r / code_std.clamp_min(1e-12)
     pos = torch.bucketize(y, cents).clamp_max_(cents.numel() - 1)
     left = (pos - 1).clamp_min(0)
     pick_left = (y - cents[left]) < (cents[pos] - y)
     pos = torch.where(pick_left & (pos > 0), left, pos)
-    return cents[pos] * code_std.unsqueeze(0)
+    return pos.to(torch.uint8), cents[pos] * code_std
+
+
+def lm_quant(r: torch.Tensor, cents: torch.Tensor,
+             code_std: torch.Tensor) -> torch.Tensor:
+    return lm_codes(r, cents, code_std)[1]
 
 
 class FoldedScalarPagedCompressor(_PagedBase):
@@ -127,11 +141,17 @@ class FoldedScalarPagedCompressor(_PagedBase):
         return HEADER_BITS + self.id_bits * ntok
 
     def _quant_width(self, r, w, wi):
+        return self._codes_width(r, w, wi)[1]
+
+    def _codes_width(self, r, w, wi):
+        """(LUT codes uint8, dequant) for width w; dequant is what
+        _quant_width always produced (codes share the same snap ops)."""
         if w == 0:
-            return torch.zeros_like(r)
+            return (torch.zeros(r.shape, dtype=torch.uint8, device=r.device),
+                    torch.zeros_like(r))
         if self.grid == "lm" and w < self.width_ladder[-1]:
-            return lm_quant(r, self.lm_cents[wi], self.code_std)
-        return uniform_quant(r, self.alphas[wi] * self.code_std, w)
+            return lm_codes(r, self.lm_cents[wi], self.code_std)
+        return uniform_codes(r, self.alphas[wi] * self.code_std, w)
 
     def _apply_gain(self, k, r_hat):
         """k_hat = g * (r_hat @ G) + mu with g = fp16(||k-mu||)/||r_hat@G||.
@@ -144,7 +164,11 @@ class FoldedScalarPagedCompressor(_PagedBase):
 
     @torch.no_grad()
     def roundtrip(self, states: torch.Tensor,
-                  start_pos: int = 0) -> torch.Tensor:
+                  start_pos: int = 0, emit: dict | None = None) -> torch.Tensor:
+        """emit (additive, pgq7 K1): pass a dict to receive the packed-format
+        source data — assign (T,), per-coord LUT codes (T, d) uint8 under each
+        token's assigned profile, sink_codes (nsink, d) uint8, nsink, and the
+        exact pre-gain r_hat (the bit-identity reference for pack/unpack)."""
         self._maybe_migrate(states)
         shape = states.shape
         d = shape[-1]
@@ -156,10 +180,15 @@ class FoldedScalarPagedCompressor(_PagedBase):
 
         # per-width quantizations + per-coord squared errors, shared by rungs
         widths_pos = self.widths_pos
+        want_codes = emit is not None
+        codes_by_w = {}
         dq_by_w = {0: torch.zeros_like(r)}
         err2_by_w = {0: r.square()}
         for wi, w in enumerate(widths_pos):
-            dq = self._quant_width(r, w, wi)
+            if want_codes:
+                codes_by_w[w], dq = self._codes_width(r, w, wi)
+            else:
+                dq = self._quant_width(r, w, wi)
             dq_by_w[w] = dq
             err2_by_w[w] = (r - dq).square()
 
@@ -305,20 +334,33 @@ class FoldedScalarPagedCompressor(_PagedBase):
 
         # reconstruction
         r_hat = torch.zeros_like(r)
+        codes = (torch.zeros(T, d, dtype=torch.uint8, device=dev)
+                 if want_codes else None)
         for ri in range(R):
             msk = assign == ri
             if not msk.any():
                 continue
             row = self.profiles[ri]
             block = torch.zeros(int(msk.sum()), d, device=dev)
+            cblk = (torch.zeros(int(msk.sum()), d, dtype=torch.uint8,
+                                device=dev) if want_codes else None)
             for w in widths_pos:
                 cols = (row == w)
                 if cols.any():
                     block[:, cols] = dq_by_w[w][msk][:, cols]
+                    if want_codes:
+                        cblk[:, cols] = codes_by_w[w][msk][:, cols]
             r_hat[msk] = block
+            if want_codes:
+                codes[msk] = cblk
+        sink_codes = None
         if nsink:
-            r_hat[:nsink] = (torch.round(r[:nsink] / self.sink_scale)
-                             .clamp_(-SINK_LIM, SINK_LIM) * self.sink_scale)
+            sidx = (torch.round(r[:nsink] / self.sink_scale)
+                    .clamp_(-SINK_LIM, SINK_LIM))
+            r_hat[:nsink] = sidx * self.sink_scale
+            if want_codes:
+                sink_codes = (sidx + SINK_LIM).to(torch.uint8)
+                codes[:nsink] = 0        # sink rows live in sink_codes only
 
         self.pages_total += int(P)
         self.pages_overflow += int(overflow)
@@ -328,6 +370,10 @@ class FoldedScalarPagedCompressor(_PagedBase):
         binc = torch.bincount(assign[nsink:], minlength=R)
         for ri in range(R):
             self.rung_hist[ri] += int(binc[ri])
+
+        if want_codes:
+            emit.update(assign=assign, codes=codes, nsink=nsink,
+                        sink_codes=sink_codes, r_hat=r_hat)
 
         if self.gain:
             out = self._apply_gain(k, r_hat)
