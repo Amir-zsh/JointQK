@@ -1,0 +1,702 @@
+<title>Page-Unit KV Quantization: the pgq Arc</title>
+<style>
+:root{
+  --paper:#f6f6f4; --ink:#1c2026; --ink2:#4a5261; --line:#d8dade;
+  --card:#ffffff; --accent:#2456c8; --accent2:#b8860b; --good:#1d7a4f;
+  --bad:#b03434; --warn:#8a6d1a; --chip:#eceef2; --code:#eef0f4;
+  --w0:#e4e6ea; --w2:#bcd0f5; --w3:#7fa4ec; --w4:#4173d9; --w6:#1d47a8;
+  --mrg:#d9a441;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#15171c; --ink:#e6e7ea; --ink2:#9aa2b1; --line:#32363f;
+  --card:#1d2027; --accent:#7aa2f7; --accent2:#d9a441; --good:#4fbf8b;
+  --bad:#e07070; --warn:#cfa93f; --chip:#262a33; --code:#232732;
+  --w0:#2a2e37; --w2:#31456e; --w3:#3f62a8; --w4:#5c85d6; --w6:#8fb2ee;
+}}
+:root[data-theme="light"]{
+  --paper:#f6f6f4; --ink:#1c2026; --ink2:#4a5261; --line:#d8dade;
+  --card:#ffffff; --accent:#2456c8; --accent2:#b8860b; --good:#1d7a4f;
+  --bad:#b03434; --warn:#8a6d1a; --chip:#eceef2; --code:#eef0f4;
+  --w0:#e4e6ea; --w2:#bcd0f5; --w3:#7fa4ec; --w4:#4173d9; --w6:#1d47a8;
+  --mrg:#d9a441;
+}
+:root[data-theme="dark"]{
+  --paper:#15171c; --ink:#e6e7ea; --ink2:#9aa2b1; --line:#32363f;
+  --card:#1d2027; --accent:#7aa2f7; --accent2:#d9a441; --good:#4fbf8b;
+  --bad:#e07070; --warn:#cfa93f; --chip:#262a33; --code:#232732;
+  --w0:#2a2e37; --w2:#31456e; --w3:#3f62a8; --w4:#5c85d6; --w6:#8fb2ee;
+  --mrg:#d9a441;
+}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);margin:0;
+  font:16px/1.65 -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 20px 96px}
+h1,h2,h3{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+  line-height:1.25;text-wrap:balance}
+h1{font-size:2.1rem;margin:.4em 0 .2em}
+h2{font-size:1.5rem;margin-top:2.2em;border-bottom:1px solid var(--line);padding-bottom:.25em}
+h3{font-size:1.15rem;margin-top:1.6em}
+p, li{max-width:72ch}
+.lead{font-size:1.12rem;color:var(--ink2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;
+  padding:2px 12px;font-size:.8rem;letter-spacing:.04em}
+.chip b{color:var(--accent)}
+code, .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+code{background:var(--code);padding:1px 5px;border-radius:4px}
+.math{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-style:italic}
+.eq{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:10px 16px;margin:14px 0;overflow-x:auto;
+  font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.05rem;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:16px 0}
+.stage{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;margin:14px 0}
+.stage .n{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;margin-top:2px}
+.stage h4{margin:.1em 0 .3em;font-size:1.02rem}
+.stage p{margin:.2em 0;color:var(--ink2);font-size:.95rem}
+table{border-collapse:collapse;margin:14px 0;font-variant-numeric:tabular-nums;width:100%}
+.tblwrap{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:6px 12px;text-align:right;font-size:.92rem}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600;letter-spacing:.03em;font-size:.82rem;text-transform:uppercase}
+.sig{color:var(--good);font-weight:600}
+.tie{color:var(--ink2)}
+.neg{color:var(--bad);font-weight:600}
+.verdict{border-left:3px solid var(--good)}
+.verdict.no{border-left-color:var(--bad)}
+.verdict.mixed{border-left-color:var(--warn)}
+.tag{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.tag.hold{color:var(--good)} .tag.down{color:var(--warn)} .tag.fail{color:var(--bad)}
+figure{margin:22px 0}
+figcaption{font-size:.85rem;color:var(--ink2);margin-top:8px;max-width:78ch}
+svg text{font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.83rem;margin:6px 2px;color:var(--ink2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;
+  margin-right:5px;background:var(--c)}
+.slider-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0}
+input[type=range]{accent-color:var(--accent);width:min(340px,60vw)}
+.readout{font-family:ui-monospace,Menlo,monospace;font-size:.9rem;background:var(--chip);
+  border-radius:6px;padding:3px 10px}
+#pagegrid{display:grid;grid-template-columns:repeat(16,1fr);gap:3px;margin:12px 0}
+#pagegrid div{aspect-ratio:1;border-radius:3px;position:relative;transition:background .15s}
+#pagegrid .snk{outline:2px solid var(--accent2);outline-offset:-2px}
+#pagegrid .m{outline:2px dashed var(--mrg);outline-offset:-2px}
+.note{font-size:.9rem;color:var(--ink2);border-left:3px solid var(--accent2);
+  padding:2px 0 2px 14px;margin:14px 0}
+.toc{columns:2;gap:32px;font-size:.93rem}
+.toc a{color:var(--accent);text-decoration:none}
+.toc a:hover{text-decoration:underline}
+details{margin:10px 0}
+summary{cursor:pointer;color:var(--accent);font-weight:600}
+@media (max-width:640px){.toc{columns:1}}
+</style>
+
+<div class="wrap">
+
+<h1>Page-Unit KV-Cache Quantization</h1>
+<p class="lead">How the pgq codec family works — calibrated rotation, per-token bit
+allocation inside fixed-byte pages, and token merging — with the measured evidence
+from the pgq4 → pgq5 → pgq6 studies on Llama-3.1-8B and Qwen3-8B.</p>
+<div class="chips">
+  <div class="chip"><b>pgq4</b> profile-rung codec, ties entropy coding @ 2 b/c</div>
+  <div class="chip"><b>pgq5</b> Qwen3-8B transfer, +6.2 F1 over TurboQuant</div>
+  <div class="chip"><b>pgq6</b> merged pages: free at parity, −28% error @ 1 b/c</div>
+  <div class="chip"><b>pgq7</b> Triton kernel port (in progress)</div>
+</div>
+
+<div class="card toc">
+<a href="#problem">1 · Problem definition</a><br>
+<a href="#overview">2 · The pipeline, step by step</a><br>
+<a href="#calib">3 · Calibration &amp; the right error metric</a><br>
+<a href="#basis">4 · The query-aware basis</a><br>
+<a href="#alloc">5 · Width profiles &amp; the page RDO</a><br>
+<a href="#grids">6 · Grids, sinks, and the recency window</a><br>
+<a href="#serve">7 · Why this decodes fast (the fold identity)</a><br>
+<a href="#merge">8 · Merged pages (pgq6)</a><br>
+<a href="#results">9 · Results</a><br>
+<a href="#concl">10 · Conclusions, takeaways, next steps</a>
+</div>
+
+<h2 id="problem">1 · Problem definition</h2>
+<p>During autoregressive decoding, a transformer keeps every past token's key and
+value in memory. For Qwen3-8B at 128k context this KV cache is tens of gigabytes in
+fp16, and each generated token must <em>read all of it</em> — long-context decode is
+memory-bandwidth-bound, not compute-bound. Compressing the cache therefore buys two
+things at once: capacity (longer contexts, bigger batches) and speed (less memory
+traffic per step).</p>
+<p>The design constraints we imposed, following the serving reality of paged
+attention (vLLM/SGLang) and NVIDIA's OSCAR system:</p>
+<ul>
+<li><b>Page unit.</b> The cache is stored in fixed-size pages (64 tokens here). Every
+page must occupy a fixed, predictable number of bytes so the allocator stays simple
+and the format drops into FlashAttention-style paged kernels.</li>
+<li><b>Decode-usable.</b> Compression must survive being <em>read by every future
+query</em>, not just storage. No re-encoding, random access per page.</li>
+<li><b>Kernel-implementable.</b> Every decode-side operation must map onto a small
+set of GPU-kernel primitives: integer unpack, table lookup, dot product. (Python
+research code stores dequantized fp16 for convenience, but the format is designed so
+a kernel never has to.)</li>
+<li><b>Non-uniform bits across tokens.</b> The central bet of this project: eviction
+methods (SnapKV, Expected Attention, H2O) prove many tokens carry little attention
+mass. A page codec that can assign <em>different</em> bit-widths to different tokens
+— down to zero — contains both uniform quantization (OSCAR) and eviction as special
+cases, so it should never do worse than either.</li>
+</ul>
+<p>Formally: for each layer <span class="math">ℓ</span> and kv-head
+<span class="math">h</span>, we need an encoder for pages of keys
+<span class="math">K ∈ ℝ<sup>64×128</sup></span> whose reconstruction
+<span class="math">K̂</span> preserves the <em>attention outputs</em> future queries
+will compute, under a budget of <span class="math">b</span> bits per coordinate per
+original token (all-in: payload + every bit of metadata). Values get the same
+treatment (held fixed to a standard 2-bit baseline in all experiments so K-side
+comparisons are clean).</p>
+
+<h2 id="overview">2 · The pipeline, step by step</h2>
+<p>Five stages. Everything expensive happens <em>offline</em> (once per model) or at
+<em>encode time</em> (once per page); the decode path — the part that runs for every
+generated token — is deliberately the cheapest.</p>
+
+<div class="card">
+<div class="stage"><div class="n">1</div><div>
+<h4>Calibrate: learn what queries look like</h4>
+<p>Run ~400 long prompts through the model once. For every (layer, kv-head), record
+the second moments of queries and keys — Σ<sub>Q</sub>, Σ<sub>K</sub> — and their
+means. Intuition: quantization error only matters in the directions queries actually
+probe. Σ<sub>Q</sub> is the map of those directions.</p>
+</div></div>
+<div class="stage"><div class="n">2</div><div>
+<h4>Rotate: change coordinates so error budgets make sense</h4>
+<p>Linearly transform each key into a basis (QPCA) where "one unit of quantization
+noise" costs the same attention damage in every coordinate — and where energy
+concentrates in few coordinates. Now cheap scalar quantizers become near-optimal, and
+importance = variance, which we can read off per coordinate.</p>
+</div></div>
+<div class="stage"><div class="n">3</div><div>
+<h4>Allocate: spend the page's bit budget where it hurts least</h4>
+<p>Each token in a page gets one of ≤8 pre-computed <em>width profiles</em> ("rungs")
+— e.g. 4 bits for the first 32 coordinates, 3 for the next, 0 for the tail. A
+rate–distortion optimizer picks each token's rung so the page exactly fills its fixed
+byte budget. Unimportant tokens sink to low rungs (soft pruning); no token is ever
+unaddressable.</p>
+</div></div>
+<div class="stage"><div class="n">4</div><div>
+<h4>Quantize: Lloyd-Max grids plus two safety rails</h4>
+<p>Coordinates are snapped to Gaussian-optimal levels scaled by calibration. Two
+protections, both derivable from position alone: the first 4 tokens (attention sinks)
+escape to a generous 8-bit grid, and the last 4 pages of the prompt are pinned to the
+top rung (the recency window — the single biggest quality lever we found).</p>
+</div></div>
+<div class="stage"><div class="n">5</div><div>
+<h4>Serve: fold everything into the query, decode on integer codes</h4>
+<p>At decode time the basis and all scales collapse into a single per-step transform
+of the <em>query</em>. The stored page is just integer codes + a 3-bit rung id per
+token; the kernel unpacks, looks up levels, dots — no per-token scales or zeros to
+fetch, which is OSCAR's main per-token overhead.</p>
+</div></div>
+</div>
+
+<figure>
+<svg viewBox="0 0 900 120" width="100%" role="img" aria-label="pipeline diagram">
+<defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+<path d="M0,0L8,4L0,8z" fill="var(--ink2)"/></marker></defs>
+<g font-size="13" fill="var(--ink)">
+<rect x="8"   y="30" width="150" height="56" rx="9" fill="var(--card)" stroke="var(--accent)"/>
+<text x="83" y="53" text-anchor="middle" font-weight="600">calibrate</text>
+<text x="83" y="72" text-anchor="middle" fill="var(--ink2)" font-size="11">Σ_Q, Σ_K, μ (offline)</text>
+<rect x="192" y="30" width="150" height="56" rx="9" fill="var(--card)" stroke="var(--accent)"/>
+<text x="267" y="53" text-anchor="middle" font-weight="600">rotate</text>
+<text x="267" y="72" text-anchor="middle" fill="var(--ink2)" font-size="11">r = (k−μ)F, QPCA</text>
+<rect x="376" y="30" width="150" height="56" rx="9" fill="var(--card)" stroke="var(--accent)"/>
+<text x="451" y="53" text-anchor="middle" font-weight="600">allocate</text>
+<text x="451" y="72" text-anchor="middle" fill="var(--ink2)" font-size="11">per-token rung RDO</text>
+<rect x="560" y="30" width="150" height="56" rx="9" fill="var(--card)" stroke="var(--accent)"/>
+<text x="635" y="53" text-anchor="middle" font-weight="600">quantize</text>
+<text x="635" y="72" text-anchor="middle" fill="var(--ink2)" font-size="11">LM grids · sinks · window</text>
+<rect x="744" y="30" width="150" height="56" rx="9" fill="var(--card)" stroke="var(--accent2)"/>
+<text x="819" y="53" text-anchor="middle" font-weight="600">serve</text>
+<text x="819" y="72" text-anchor="middle" fill="var(--ink2)" font-size="11">q̃ = q Gᵀdiag(s) · int dots</text>
+<line x1="158" y1="58" x2="188" y2="58" stroke="var(--ink2)" marker-end="url(#ar)"/>
+<line x1="342" y1="58" x2="372" y2="58" stroke="var(--ink2)" marker-end="url(#ar)"/>
+<line x1="526" y1="58" x2="556" y2="58" stroke="var(--ink2)" marker-end="url(#ar)"/>
+<line x1="710" y1="58" x2="740" y2="58" stroke="var(--ink2)" marker-end="url(#ar)"/>
+<text x="83" y="108" text-anchor="middle" fill="var(--ink2)" font-size="11">once per model</text>
+<text x="451" y="108" text-anchor="middle" fill="var(--ink2)" font-size="11">once per sealed page</text>
+<text x="819" y="108" text-anchor="middle" fill="var(--ink2)" font-size="11">every decode step</text>
+</g></svg>
+<figcaption><b>Fig 1.</b> The pgq pipeline. Cost decreases left to right; the decode
+path touches only integer codes, one rung id per token, and a query that was
+pre-multiplied once per step.</figcaption>
+</figure>
+
+<h2 id="calib">3 · Calibration &amp; the right error metric</h2>
+<p><b>Intuition.</b> Mean-squared error on keys is the wrong target: a large error in
+a direction no query ever probes is free, while a small error along a
+frequently-queried direction corrupts every future attention score. The fix is to
+weight reconstruction error by the query distribution.</p>
+<p>From a calibration corpus we pool, per (layer, kv-head), with GQA query groups
+flattened:</p>
+<div class="eq">Σ<sub>Q</sub> = E[q qᵀ], &nbsp; Σ<sub>K</sub> = E[k kᵀ], &nbsp; μ = E[k], &nbsp; μ<sub>q</sub> = E[q]</div>
+<p>For a key error <span class="math">e = k − k̂</span>, the expected squared logit
+error over queries is exactly a Mahalanobis norm:</p>
+<div class="eq">E<sub>q</sub>[(qᵀe)²] = eᵀ Σ<sub>Q</sub> e</div>
+<p>This <em>logit error</em>, computed on held-out rows against each row's own real
+queries, is the screening proxy used everywhere below — every design choice was
+frozen on it before any benchmark F1 was run (pre-registration discipline).</p>
+
+<h2 id="basis">4 · The query-aware basis (qpca_unc)</h2>
+<p><b>Intuition.</b> We want coordinates that are (a) decorrelated, so scalar
+quantization is near-optimal, and (b) scaled so one unit of noise costs one unit of
+logit error everywhere. QPCA achieves this by whitening with Σ<sub>Q</sub> and then
+diagonalizing the query-weighted key energy.</p>
+<div class="eq">Σ<sub>Q</sub> = U Λ Uᵀ, &nbsp; W = Λ<sup>1/2</sup>Uᵀ &nbsp;(query whitener)</div>
+<div class="eq">M = W Σ<sub>K</sub> Wᵀ = V D Vᵀ &nbsp;→&nbsp; F = Wᵀ V &nbsp;(forward), &nbsp; G = F<sup>−1</sup> &nbsp;(inverse)</div>
+<p>Keys are encoded as <span class="math">r = (k − μ) F</span> and reconstructed as
+<span class="math">k̂ = r̂ G + μ</span>. In this basis the diagonal of
+<span class="math">D</span> orders coordinates by <em>attention-relevant</em> energy;
+spectra are heavily compacted (most energy in few coordinates), which is what makes
+"give the tail zero bits" work. Both Σ's come from the same pooled 400-prompt
+statistics (<code>_unc</code> = uncentered, data-matched — an earlier centered
+variant created a calibration asymmetry that masqueraded as a quality gap).</p>
+<p>Measured (pgq4 screening, identical quantizer swapped between bases): OSCAR's
+per-layer rotation is <b>5.9×</b> worse logit error, r_sym is <b>7.4×</b> worse. The
+basis is the single largest factor in the whole system.</p>
+
+<h2 id="alloc">5 · Width profiles &amp; the page RDO</h2>
+<p><b>Intuition.</b> Two facts drive the format. First, coordinates differ wildly in
+importance (compacted spectrum) → bit-width must vary <em>per coordinate</em>.
+Second, tokens differ in how hard they are to code and how much they matter → the
+per-coordinate pattern should be pickable <em>per token</em>. But fully free choice
+would need unbounded metadata. The compromise: a small ladder of ≤8 pre-computed
+<em>profiles</em> (rungs), so per-token metadata is a 3-bit id.</p>
+<h3>Building the profiles (offline, per head)</h3>
+<p>Coordinates are grouped into 4 blocks of 32. For every width
+<span class="math">w ∈ {0,2,3,4,6}</span> and block, we <em>measure</em> the actual
+quantization distortion on the fit pool. A profile is a monotone non-increasing
+width tuple over blocks, e.g. <code>(4,3,2,0)</code>; for each bits-per-token target
+in a fixed ladder we keep the tuple with minimum measured distortion:</p>
+<div class="eq">profile(T) = argmin<sub>t monotone, cost(t) ≤ T</sub> Σ<sub>blocks b</sub> D̂<sub>b</sub>(t<sub>b</sub>)</div>
+<p>On Llama the profile ladder can be shared per layer (sharing penalty 1.9% &lt; 3%
+rule); on Qwen heads are more heterogeneous (penalty 6.2%) so profiles stay
+per-head — the rule was frozen, the outcome is model-dependent.</p>
+<h3>Assigning rungs (encode time, per page)</h3>
+<p>Each page must fit exactly <span class="math">B = b·d·64</span> bits including
+every header, rung id, and escape. Choosing each token's rung is a small constrained
+optimization solved with a Lagrangian:</p>
+<div class="eq">min<sub>rung(t)</sub> Σ<sub>t</sub> D<sub>t,rung(t)</sub> &nbsp;s.t.&nbsp; Σ<sub>t</sub> R<sub>rung(t)</sub> ≤ B − side&nbsp;bits</div>
+<div class="eq">rung(t) = argmin<sub>r</sub> [ D<sub>t,r</sub> + λ R<sub>r</sub> ], &nbsp; λ solved by bisection per page</div>
+<p>where <span class="math">D<sub>t,r</sub></span> is the token's <em>actual</em>
+(snap-aware) squared error under rung <span class="math">r</span> — measured, not
+modeled, so grid overload prices itself. A greedy pass then spends any leftover bits
+on the best distortion-per-bit upgrades. Rung 0 (all-zero widths) reconstructs the
+token at the calibration mean: this is the "soft pruning" limit — the token costs
+~3 bits total and still participates in attention.</p>
+
+<figure class="card">
+<h3 style="margin-top:0">Interactive: watch the RDO spend a page's budget</h3>
+<p style="font-size:.93rem;color:var(--ink2)">A toy 64-token page. Token "difficulty"
+is synthetic (a few heavy tokens, some redundant runs); colors = assigned per-block
+widths (darker = more bits). Gold outline = sink escape (positions 0–3). Dashed
+outline = tokens the pgq6 merge collapsed into their neighbor (only engages when the
+budget is tight). Drag the budget.</p>
+<div class="slider-row">
+  <label for="bslider"><b>page budget</b></label>
+  <input type="range" id="bslider" min="0.75" max="3" step="0.05" value="2.0">
+  <span class="readout" id="bread">b = 2.00 b/coord</span>
+  <span class="readout" id="rread"></span>
+</div>
+<div id="pagegrid" aria-label="page allocation grid"></div>
+<div class="legend">
+<span style="--c:var(--w0)">w = 0 (mean)</span><span style="--c:var(--w2)">2</span>
+<span style="--c:var(--w3)">3</span><span style="--c:var(--w4)">4</span>
+<span style="--c:var(--w6)">6</span><span style="--c:var(--mrg)">merged run</span>
+<span style="--c:var(--accent2)">sink escape</span>
+</div>
+<figcaption><b>Fig 2.</b> At generous budgets everything rides high rungs and merging
+disengages — exactly what the real telemetry shows at 2.0 b/c. Tighten the budget and
+the allocator first drops unimportant tokens down the ladder, then starts merging
+redundant neighbors to free bits for the survivors.</figcaption>
+</figure>
+
+<h2 id="grids">6 · Grids, sinks, and the recency window</h2>
+<h3>Lloyd-Max grids</h3>
+<p>Rotated coordinates are near-Gaussian, so each width uses the optimal Gaussian
+quantizer: unit Lloyd-Max centroids <span class="math">c<sub>w</sub></span> (the
+near-zero level forced to exactly 0, so rung-0 blocks and dead coordinates are
+exact), scaled per coordinate by the calibrated standard deviation:</p>
+<div class="eq">r̂<sub>j</sub> = σ<sub>j</sub> · c<sub>w</sub>[ argmin<sub>i</sub> |r<sub>j</sub>/σ<sub>j</sub> − c<sub>w</sub>[i]| ]</div>
+<p>The top width stays a covering <em>uniform</em> grid (fitted step multiplier), so
+the highest rung bounds worst-case error instead of optimizing the average.</p>
+<h3>The sink escape</h3>
+<p>Positions 0–3 are attention sinks: enormous-norm keys that the whole sequence
+attends to. Quantizing them on the narrow calibrated grids clips them 3–5× past the
+99.9th percentile and — because they sit in every softmax denominator — poisons
+<em>all</em> attention scores (an early hard lesson). They escape to an absolute
+8-bit per-coordinate grid sized to cover the calibration sinks with margin. The
+trigger is pure position, so it costs zero metadata. Verified on Qwen: sink mass
+concentrates at positions 0–3 (median 11.7%), no displaced structural sink in 160
+probes.</p>
+<h3>The recency window</h3>
+<p>pgq4's cleanest discovery: on code completion (lcc), per-token-adaptive codecs
+beat static ones by ~10 F1 — and the entire gap is a <em>recency</em> effect.
+Queries in code attend to the immediately preceding context. Forcing the last 4
+prompt pages (256 tokens) to the top rung recovers all of it, costs +0.06–0.13 b/c,
+and — like the sink rule — is position-derivable with zero metadata. This
+"<code>rw</code>" window is part of the shipping config and reproduced perfectly on
+Qwen (lcc 56.4 → 63.4).</p>
+
+<h2 id="serve">7 · Why this decodes fast (the fold identity)</h2>
+<p><b>Intuition.</b> Everything the decoder would need to "undo" — the basis, the
+per-coordinate scales, the mean — is <em>calibration-static</em>. So instead of
+dequantizing every stored token every step, transform the <em>one new query</em>
+once per step and dot it directly against integer codes.</p>
+<p>With <span class="math">k̂ = (s ⊙ ĉ) G + μ</span> (codes ĉ, static scales s):</p>
+<div class="eq">q · k̂ = ((q Gᵀ) ⊙ s) · ĉ + q·μ &nbsp;=&nbsp; q̃ · ĉ + const<sub>head</sub></div>
+<p>The <span class="math">q·μ</span> term is identical for every token in the head,
+and softmax is shift-invariant — it cancels. So the per-step cost is one 128×128
+transform of the query per (layer, head-group), and then the kernel reads: packed
+codes (2–6 bits/coord as the rung dictates), a 3-bit rung id per token, and nothing
+else. Contrast OSCAR INT2: an fp16 scale <em>and</em> zero per token (32 bits/token
+of metadata) fetched inside the attention loop. Our per-token metadata is 3 bits —
+~7× less — and there are no per-token loads besides the codes themselves. At the
+honest 2.13 b/c operating point, the K-side read is ~34 bytes/token versus 256 in
+bf16: a ~7.5× bandwidth reduction, which is the entire speed story of
+bandwidth-bound decode. (The pgq7 kernel port, mirroring OSCAR's Triton FlashDecoding
+structure, is turning this arithmetic into measured tokens/s.)</p>
+
+<h2 id="merge">8 · Merged pages (pgq6): pruning ∪ quantization in one knob</h2>
+<p><b>Intuition.</b> Width profiles vary bits per <em>coordinate</em>; rung-0 is
+per-token soft pruning. The remaining axis is the <em>token count itself</em>:
+adjacent tokens are often redundant (runs of code punctuation, boilerplate). If a
+64-token page stores only <span class="math">m</span> representative rows, every
+survivor gets more bits under the same page budget — and attention does less work.
+Eviction (m&lt;n at 0 bits) and OSCAR (m=n, uniform bits) become two corners of one
+design space swept by a single λ.</p>
+<h3>The exactness identity</h3>
+<p>Merging is honest because of a softmax identity: attending to
+<span class="math">c</span> <em>identical</em> keys k̄ with values
+v<sub>1..c</sub> is exactly equivalent to attending to one row
+(k̄, v̄, β):</p>
+<div class="eq">Σ<sub>i=1..c</sub> e<sup>q·k̄</sup> v<sub>i</sub> = e<sup>q·k̄ + log c</sup> v̄, &nbsp; v̄ = mean(v<sub>i</sub>)</div>
+<p>So a merged row is stored as centroid key + mean value + a 6-bit run count (the
+bias is log c), and the +log c enters the kernel as one added scalar per row — or
+folds into a (d+1)-th coordinate so even unmodified FlashAttention can serve it. The
+<em>only</em> approximation is that the original keys were not exactly identical;
+that error is the within-run spread, and it's measurable in advance:</p>
+<div class="eq">Σ<sub>i∈run</sub> ‖r<sub>i</sub> − Q(r̄)‖² = Σ<sub>i∈run</sub> ‖r<sub>i</sub> − r̄‖² &nbsp;+&nbsp; c·‖r̄ − Q(r̄)‖²</div>
+<p>(the cross term vanishes over a run) — spread plus ordinary quantization error,
+cleanly additive, so merge levels slot into the same RDO as width rungs.</p>
+<h3>The algorithm</h3>
+<p>Per page: an adjacent-only Ward merge in the rotated basis (where unweighted
+distance <em>is</em> query-weighted distance, because the basis already absorbed
+Σ<sub>Q</sub>) produces nested clusterings at m ∈ {64, 32, 16}. For each level, the
+per-row width RDO runs under the same fixed byte budget; the page keeps whichever
+level achieved the least distortion. Contiguous runs mean the "cluster map" is just
+the run counts — no extra sideband. Sinks never merge; recency-window pages never
+merge; deployment pages come in two byte-size classes {S, S/2} (the 4:1 level was
+never chosen by the optimizer at any tested rate).</p>
+<p>Evaluation uses the replication form (centroid repeated at member positions),
+which is <em>mathematically identical</em> to the bias form — so every existing
+harness measures exactly what deployment would serve.</p>
+
+<h2 id="results">9 · Results</h2>
+<p>Protocol for all F1 numbers: LongBench 5-task (lcc, musique, 2wikimqa, qasper,
+hotpotqa), 150–500 rows/task, compression fraction 1.0, layer 0 fp16, V =
+TurboQuant 2-bit everywhere, honest all-in rates, row-paired bootstrap CIs (10k
+resamples) on shared rows. All confidence intervals below use the corrected gold
+parser (a real bug found this week — see the integrity note).</p>
+
+<h3>9.1 · The rate–distortion picture (held-out proxy)</h3>
+<figure>
+<div id="rdchart"></div>
+<div class="legend">
+<span style="--c:#4173d9">profile codec (proflm)</span>
+<span style="--c:#d9a441">merged pages (mrg)</span>
+<span style="--c:#7a52a8">entropy coding (ecu)</span>
+<span style="--c:#5a8a68">RVQ</span>
+<span style="--c:#b03434">TurboQuant K2 (2.125)</span>
+</div>
+<figcaption><b>Fig 3.</b> Held-out logit error (log scale, lower is better) vs
+bits/coordinate <em>per original token</em>, Llama selection rows. Hover points for
+values. Three structural facts: the fixed-width profile codec reaches the
+entropy-coding frontier at 2.0; merging strictly dominates the profile codec below
+1.5 (−28% at 1.0) but does not break the EC wall; TurboQuant sits an order of
+magnitude off frontier at its own operating point.</figcaption>
+</figure>
+
+<h3>9.2 · pgq4 on Llama (corrected CIs)</h3>
+<div class="tblwrap"><table>
+<tr><th>claim @ 2.0–2.13 b/c</th><th>Δ pooled-5</th><th>95% CI</th><th>verdict</th></tr>
+<tr><td>proflmrw vs entropy coding (ecu)</td><td>−1.34</td><td>[−3.09, +0.45]</td><td class="tie">tie — <span class="tag hold">holds</span></td></tr>
+<tr><td>proflmrw vs RVQ</td><td>+0.99</td><td>[−0.62, +2.63]</td><td class="tie">tie — <span class="tag down">downgraded from SIG</span></td></tr>
+<tr><td>proflmrw vs TurboQuant K2V2</td><td>+0.15</td><td>[−1.77, +2.09]</td><td class="tie">tie — <span class="tag hold">holds</span></td></tr>
+<tr><td>recency window effect (rdo arm)</td><td>+1.95</td><td>[+0.67, +3.23]</td><td class="sig">SIG — <span class="tag hold">holds</span></td></tr>
+<tr><td>ω importance vs plain RDO</td><td>+0.81</td><td>[−0.51, +2.12]</td><td class="tie">tie — <span class="tag hold">holds</span></td></tr>
+</table></div>
+<p>Reading: a fixed-width, random-access, kernel-implementable codec matches
+variable-rate entropy coding at 2 b/c — the claim that motivated the whole format —
+and the positional recency window is the one allocation signal with a significant
+F1 effect on Llama.</p>
+
+<h3>9.3 · pgq5: does the format transfer? (Qwen3-8B)</h3>
+<p>Format constants (page size, ladders, targets, grids, escapes, window) were
+frozen byte-for-byte from Llama; only per-model statistics were refit, from just 12
+calibration prompts. At the proxy level the codec transferred within 3.7%
+(logit error 0.002615 vs 0.002716) while the TurboQuant baseline's proxy <em>improved</em>
+— a ratio-gate technicality documented as a methods lesson (gate on numerators, not
+ratios).</p>
+<figure><div id="qwenchart"></div>
+<figcaption><b>Fig 4.</b> Qwen3-8B, mean over the 5 tasks (500-row cells). Whiskers on
+the paired contrasts below.</figcaption></figure>
+<div class="tblwrap"><table>
+<tr><th>task</th><th>FP16</th><th>TurboQuant K2V2</th><th>proflm @2.0</th><th>proflm<b>rw</b> @2.0</th></tr>
+<tr><td>lcc</td><td>64.81</td><td>50.29</td><td>56.42</td><td><b>63.41</b></td></tr>
+<tr><td>musique</td><td>33.47</td><td>27.51</td><td>31.89</td><td>32.49</td></tr>
+<tr><td>2wikimqa</td><td>48.43</td><td>40.72</td><td>42.85</td><td>44.17</td></tr>
+<tr><td>qasper</td><td>43.06</td><td>37.65</td><td>37.12</td><td>37.76</td></tr>
+<tr><td>hotpotqa</td><td>63.75</td><td>54.47</td><td>63.97</td><td>63.60</td></tr>
+<tr><td><b>mean</b></td><td><b>50.70</b></td><td>42.13</td><td>46.45</td><td><b>48.29</b></td></tr>
+</table></div>
+<div class="card verdict">
+<p style="margin:.3em 0"><b>vs TurboQuant K2V2: +6.16 [+3.91, +8.45], significant.</b>
+The margin over the incumbent <em>grew</em> from a tie on Llama to +6 F1 on Qwen.
+FP retention 0.952 (the incumbent manages 0.831). Window effect +1.83 [+0.95, +2.73]
+SIG, with the lcc recency structure reproducing exactly (+7.0). The format is
+model-generic; only cheap statistics are per-model.</p></div>
+
+<h3>9.4 · pgq6: what merging did and didn't do</h3>
+<div class="tblwrap"><table>
+<tr><th>question (pre-registered)</th><th>measurement</th><th>verdict</th></tr>
+<tr><td>Does merging break the 1.5 b/c entropy-coding wall?</td>
+<td>mrg@1.5 err 0.00482 vs bars 0.00318 / 0.00405</td>
+<td class="neg">NO — wall extends to the token axis</td></tr>
+<tr><td>Does merge-as-rung ever hurt?</td>
+<td>@1.0: −28% err; @1.25: −7%; @1.5, @2.0: exact ties</td>
+<td class="sig">Never — weak dominance confirmed</td></tr>
+<tr><td>Is merging free at the shipping rate (2.0)?</td>
+<td>F1 pooled −0.23 [−0.78, +0.25]; merging self-disengages (100% unmerged, RDO's choice)</td>
+<td class="sig">YES — adopted as format default</td></tr>
+<tr><td>Do code-heavy tasks merge more (redundancy adaptivity)?</td>
+<td>engagement 30–39% across ALL tasks @1.25</td>
+<td class="tie">No — merging responds to rate pressure, not content</td></tr>
+<tr><td>Does observed attention beat calibration signals (oracle)?</td>
+<td>oracle −15% <em>worse</em> at 1.25 and 1.5</td>
+<td class="sig">No — phase-symmetric signals win outright</td></tr>
+<tr><td>Hidden value-side cost from merging?</td>
+<td>attention-output error ratio 0.95 @1.5, 1.00 @2.0</td>
+<td class="sig">None — exactness argument verified</td></tr>
+</table></div>
+<figure><div id="mergechart"></div>
+<figcaption><b>Fig 5.</b> Merge engagement (fraction of tokens in 2:1-merged pages)
+by task and rate. At 2.0 b/c the optimizer leaves everything unmerged — merging costs
+nothing when unneeded. At 1.25 engagement is 30–39% everywhere: a rate-pressure
+response, uniform across content types, worth 15–20% fewer stored rows.</figcaption>
+</figure>
+<p>The oracle result deserves emphasis because it settles a design argument with
+data: giving the allocator each token's <em>actually realized</em> attention mass
+(information that does not exist at decode time) made allocation <em>worse</em> than
+the calibration-plus-position signals. The deployable signal set isn't a
+compromise — it's the better allocator. This validates the phase-symmetric policy:
+every signal in the format is available identically at prefill and during long
+generation.</p>
+
+<h3>9.5 · Integrity note: the gold-parsing correction</h3>
+<p>While cross-checking pgq6's parity numbers, the paired-bootstrap tool was found to
+be silently corrupting multi-answer ground truths (a numpy-repr string,
+<code>['a' 'b']</code>, parsed by <code>literal_eval</code> concatenates into
+<code>'ab'</code>). The fix was validated by recomputing per-row means on all 35
+bench cells and matching every cell's official metric exactly. Every CI in this
+report is post-fix; the one committed claim it materially changed (pgq4 "SIG over
+RVQ" → tie) is corrected in the study reports. The pgq5 and pgq6 headline verdicts
+were unaffected.</p>
+
+<h2 id="concl">10 · Conclusion, takeaways, next steps</h2>
+<h3>Conclusion</h3>
+<p>The arc set out to build a next-generation OSCAR: page-unit K quantization where
+bits vary across tokens, so uniform quantization and eviction are interior points of
+one format. That format now exists, is frozen, and is evidenced: a calibrated
+query-aware rotation (≈6× the leverage of OSCAR's), per-token width profiles chosen
+by an exact per-page RDO under fixed-byte pages, Gaussian-optimal grids with
+position-derived sink and recency protections, and token merging as an additional
+rung. It ties entropy coding at 2 b/c on Llama with ~7× less per-token metadata
+than OSCAR, transfers to Qwen3-8B with a +6 F1 margin over the strongest incumbent,
+degrades gracefully to 1.0 b/c (where merging buys back 28% of the error), and
+every decode-side operation was designed against a named GPU-kernel primitive.</p>
+<h3>Takeaways</h3>
+<ul>
+<li><b>The basis is the battle.</b> Rotation quality dominates quantizer quality
+(6–8× on proxy). Spend calibration effort there first.</li>
+<li><b>Positional rules beat learned importance.</b> The two biggest quality levers
+(sink escape, recency window) are pure position rules; the observed-attention oracle
+<em>lost</em> to calibration statistics. Cheap, deployable, phase-symmetric signals
+are not a compromise.</li>
+<li><b>The ~1.5 b/c wall is real and two-dimensional.</b> Neither smarter width
+allocation nor token merging breaks the entropy-coding frontier below 1.5 b/c per
+original token. Below that band, buy quality with merging; don't chase EC parity.</li>
+<li><b>Merging is a free option.</b> It never hurts, self-disengages when
+unnecessary, extends the operating range down, and reduces stored rows (attention
+FLOPs) under rate pressure. Two page size classes suffice.</li>
+<li><b>Fixed-byte pages + rung ids are enough.</b> Variable-rate coding buys nothing
+at the operating point once allocation is done well — and fixed-width random access
+is what makes the kernel port straightforward.</li>
+<li><b>Process earns trust.</b> Pre-registration, held-out gates, and paired
+bootstraps caught two of our own bugs (a silent fp16 leak in decode bookkeeping; the
+gold-parsing bug) before they could contaminate claims — and forced an honest
+downgrade of one committed result.</li>
+</ul>
+<h3>Suggestions &amp; next steps</h3>
+<ol>
+<li><b>pgq7 — the efficient implementation (in progress, plan approved).</b> Triton
+FlashDecoding-style fused kernel mirroring OSCAR's architecture (their entire INT2
+path is ~6k lines of Triton — no custom CUDA needed): rung-segmented stage-1 with
+query folding and LUT dequant, unified stage-2, sink/fp16 tiers as a second arena.
+Target: ≥2.5× decode-attention speedup vs bf16 at 80k context, then an end-to-end
+Qwen demo with quantized-resident cache — memory and tokens/s measured, F1 parity
+row-paired.</li>
+<li><b>Long-generation survival study (parked, design complete).</b> Thinking-mode
+math tasks compress the model's <em>own</em> tokens closed-loop — the regime where
+quantizers die and where none of the current evidence reaches. The parked pgq5
+C0/C1 design (trace diagnostics → W* selection → closed-loop math500 with an
+attribution arm matrix) should run on the mrg-default format, ideally after pgq7 so
+decode is cheap.</li>
+<li><b>Deferred science, ranked:</b> phase-asymmetric signals (prompt-window /
+ring-lifetime attention) — recorded, only worth revisiting with a better oracle
+construction given the negative result; general (non-contiguous) and cross-page
+merging; merged-tie preference for the FLOPs win; Qwen kernel-side per-head profile
+tables; SGLang integration following OSCAR's pool/backend pattern.</li>
+</ol>
+
+<p class="note">Sources: studies pgq4–pgq6 (plans, reports, freezes and per-cell
+artifacts under <code>notes/page_quant/</code> and <code>artifacts/page_quant2/</code>,
+branches pgq4/pgq5/pgq6). All CIs: row-paired 10k bootstraps, corrected parser.
+Llama-3.1-8B-Instruct &amp; Qwen3-8B, A100-SXM4-40GB.</p>
+</div>
+
+<script>
+(function(){
+// ---------- Fig 2: interactive page RDO toy ----------
+const N=64, LAD=[0,2,3,4,6], RATE=LAD.map(w=>w*128/4*4/128); // b/coord per full-width rung? simplified per-token widths uniform
+// synthetic per-token "energy" (difficulty): sinks huge, a few heavy, runs of redundant
+let E=[], run=0, runval=0;
+for(let i=0;i<N;i++){
+  if(i<4){E.push(30);continue}
+  if(run<=0){run=1+Math.floor(sr(i)*6); runval=.2+sr(i+97)*2.2;}
+  E.push(runval*(0.9+0.2*sr(i+31))); run--;
+}
+function sr(x){x=Math.sin(x*127.1)*43758.5453;return x-Math.floor(x)}
+// redundancy: mark runs of near-equal E as mergeable neighbors
+const grid=document.getElementById('pagegrid');
+const cells=[];
+for(let i=0;i<N;i++){const d=document.createElement('div');grid.appendChild(d);cells.push(d);}
+const wcol={0:'var(--w0)',2:'var(--w2)',3:'var(--w3)',4:'var(--w4)',6:'var(--w6)'};
+function alloc(b){
+  // budget in "width units" per token approximating b/coord * 1 (widths ARE b/coord here)
+  const budget=b*N;
+  // candidate D(t,w) = E_t * 2^{-2w} (Gaussian R-D), rate w
+  const D=(t,w)=>E[t]*Math.pow(2,-2*w);
+  // merge pass first at tight budgets: adjacent tokens with similar E merge (2:1) freeing rate
+  let merged=new Array(N).fill(false);
+  if(b<1.6){
+    for(let i=5;i<N-8;i+=2){
+      if(Math.abs(E[i]-E[i+1])<0.08*E[i]){merged[i+1]=true;}
+    }
+  }
+  // lambda bisection over active tokens
+  const act=[...Array(N).keys()].filter(i=>i>=4&&!merged[i]);
+  const sinkCost=4*8; // display only
+  let lo=0,hi=50;
+  const pick=l=>act.map(t=>{let bw=0,bc=1e9;for(const w of LAD){const c=D(t,w)+l*w;if(c<bc){bc=c;bw=w}}return bw});
+  for(let it=0;it<40;it++){const m=(lo+hi)/2;const ws=pick(m);
+    const used=ws.reduce((a,x)=>a+x,0)+sinkCost/128*N*0;
+    if(used> budget - 4*6) lo=m; else hi=m;}
+  const ws=pick(hi);
+  const out=new Array(N).fill(0);
+  act.forEach((t,j)=>out[t]=ws[j]);
+  for(let i=0;i<4;i++)out[i]=8;
+  let used=ws.reduce((a,x)=>a+x,0), dist=0;
+  act.forEach((t,j)=>dist+=D(t,ws[j]));
+  return {out,merged,rate:(used+4*8+ (merged.some(x=>x)? (N-4)*0.05:0))/N, dist};
+}
+function render(){
+  const b=parseFloat(document.getElementById('bslider').value);
+  const {out,merged,rate,dist}=alloc(b);
+  for(let i=0;i<N;i++){
+    const c=cells[i];
+    c.className='';
+    if(i<4){c.style.background='var(--w6)';c.classList.add('snk');c.title='sink escape (8-bit absolute)';continue}
+    if(merged[i]){c.style.background='var(--mrg)';c.classList.add('m');c.title='merged into left neighbor (bias = log c)';continue}
+    c.style.background=wcol[out[i]];
+    c.title='token '+i+' · width '+out[i];
+  }
+  document.getElementById('bread').textContent='b = '+b.toFixed(2)+' b/coord';
+  document.getElementById('rread').textContent='page distortion ≈ '+dist.toFixed(2)+(merged.some(x=>x)?' · merging engaged':' · no merging');
+}
+document.getElementById('bslider').addEventListener('input',render);
+render();
+
+// ---------- Fig 3: R-D chart ----------
+const series=[
+ {n:'proflm',c:'#4173d9',pts:[[1.0,0.01233],[1.25,0.00728],[1.5,0.00483],[2.0,0.00272]]},
+ {n:'mrg',c:'#d9a441',pts:[[1.0,0.00894],[1.25,0.00679],[1.5,0.00482],[2.0,0.00273]]},
+ {n:'ecu',c:'#7a52a8',pts:[[1.0,0.00646],[1.5,0.00318],[2.0,0.00155]]},
+ {n:'rvq',c:'#5a8a68',pts:[[1.5,0.00405],[2.0,0.00238],[2.5,0.00203]]},
+ {n:'TurboQuant K2',c:'#b03434',pts:[[2.125,0.02623]]},
+];
+const W=880,H=380,ML=64,MR=16,MT=14,MB=44;
+const xmin=0.9,xmax=2.6,ymin=Math.log10(0.0012),ymax=Math.log10(0.032);
+const X=v=>ML+(v-xmin)/(xmax-xmin)*(W-ML-MR);
+const Y=v=>MT+(1-(Math.log10(v)-ymin)/(ymax-ymin))*(H-MT-MB);
+let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%">';
+for(const g of [0.002,0.005,0.01,0.02]){
+  s+='<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" stroke="var(--line)" stroke-dasharray="3 4"/>';
+  s+='<text x="'+(ML-8)+'" y="'+(Y(g)+4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">'+g+'</text>';}
+for(const g of [1.0,1.25,1.5,2.0,2.5]){
+  s+='<line y1="'+MT+'" y2="'+(H-MB)+'" x1="'+X(g)+'" x2="'+X(g)+'" stroke="var(--line)" stroke-dasharray="3 4"/>';
+  s+='<text y="'+(H-MB+18)+'" x="'+X(g)+'" text-anchor="middle" font-size="11" fill="var(--ink2)">'+g+'</text>';}
+s+='<text x="'+(W/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="12" fill="var(--ink2)">bits / coordinate / original token (all-in)</text>';
+s+='<text transform="rotate(-90)" x="'+(-H/2)+'" y="16" text-anchor="middle" font-size="12" fill="var(--ink2)">held-out logit error (log)</text>';
+for(const ser of series){
+  if(ser.pts.length>1){
+    s+='<polyline fill="none" stroke="'+ser.c+'" stroke-width="2" points="'+ser.pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')+'"/>';}
+  for(const p of ser.pts){
+    s+='<circle cx="'+X(p[0])+'" cy="'+Y(p[1])+'" r="5" fill="'+ser.c+'"><title>'+ser.n+' @ '+p[0]+' b/c : '+p[1]+'</title></circle>';}
+}
+s+='</svg>';
+document.getElementById('rdchart').innerHTML=s;
+
+// ---------- Fig 4: Qwen bars ----------
+const bars=[['FP16',50.70,'var(--ink2)'],['TQ K2V2',42.13,'#b03434'],
+  ['proflm@2.0',46.45,'#4173d9'],['proflmrw@2.0',48.29,'#2456c8']];
+const BW=880,BH=240,BL=110,BB=28;
+let b2='<svg viewBox="0 0 '+BW+' '+BH+'" width="100%">';
+const bx=v=>BL+(v-38)/(52-38)*(BW-BL-20);
+bars.forEach((r,i)=>{
+  const y=18+i*52;
+  b2+='<text x="'+(BL-10)+'" y="'+(y+21)+'" text-anchor="end" font-size="13" fill="var(--ink)">'+r[0]+'</text>';
+  b2+='<rect x="'+BL+'" y="'+y+'" height="30" width="'+(bx(r[1])-BL)+'" rx="4" fill="'+r[2]+'" opacity="0.85"><title>'+r[1]+'</title></rect>';
+  b2+='<text x="'+(bx(r[1])+8)+'" y="'+(y+21)+'" font-size="13" font-weight="600" fill="var(--ink)">'+r[1].toFixed(2)+'</text>';});
+b2+='<line x1="'+bx(50.70)+'" x2="'+bx(50.70)+'" y1="10" y2="'+(BH-BB)+'" stroke="var(--ink2)" stroke-dasharray="4 4"/>';
+b2+='</svg>';
+document.getElementById('qwenchart').innerHTML=b2;
+
+// ---------- Fig 5: merge engagement ----------
+const tasks=['hotpotqa','multi_news','musique','pass_retr','qasper','qmsum','repobench','triviaqa'];
+const m125=[32,32,34,39,31,35,34,30], m20=[0,0,0,1,0,0,0,0];
+const MW=880,MH=260,MML=70,MMB=64;
+let m='<svg viewBox="0 0 '+MW+' '+MH+'" width="100%">';
+const mx=i=>MML+i*((MW-MML-16)/tasks.length)+8;
+const mw=((MW-MML-16)/tasks.length)-18;
+const my=v=>14+(1-v/45)*(MH-14-MMB);
+for(const g of [0,10,20,30,40]){
+  m+='<line x1="'+MML+'" x2="'+(MW-10)+'" y1="'+my(g)+'" y2="'+my(g)+'" stroke="var(--line)" stroke-dasharray="3 4"/>';
+  m+='<text x="'+(MML-8)+'" y="'+(my(g)+4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">'+g+'%</text>';}
+tasks.forEach((t,i)=>{
+  m+='<rect x="'+mx(i)+'" width="'+(mw/2-2)+'" y="'+my(m125[i])+'" height="'+(my(0)-my(m125[i]))+'" fill="#d9a441"><title>'+t+' @1.25: '+m125[i]+'%</title></rect>';
+  m+='<rect x="'+(mx(i)+mw/2+2)+'" width="'+(mw/2-2)+'" y="'+my(m20[i])+'" height="'+(my(0)-my(m20[i]))+'" fill="#4173d9"><title>'+t+' @2.0: '+m20[i]+'%</title></rect>';
+  m+='<text x="'+(mx(i)+mw/2)+'" y="'+(MH-40)+'" text-anchor="middle" font-size="11" fill="var(--ink2)" transform="rotate(28 '+(mx(i)+mw/2)+' '+(MH-40)+')">'+t+'</text>';});
+m+='<rect x="'+MML+'" y="'+(MH-24)+'" width="10" height="10" fill="#d9a441"/><text x="'+(MML+16)+'" y="'+(MH-15)+'" font-size="11" fill="var(--ink2)">b = 1.25</text>';
+m+='<rect x="'+(MML+90)+'" y="'+(MH-24)+'" width="10" height="10" fill="#4173d9"/><text x="'+(MML+106)+'" y="'+(MH-15)+'" font-size="11" fill="var(--ink2)">b = 2.0</text>';
+m+='</svg>';
+document.getElementById('mergechart').innerHTML=m;
+})();
+</script>
