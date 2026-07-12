@@ -51,12 +51,14 @@ case "$MODEL_TAG" in
         CCA="${REPO_ROOT}/artifacts/bases/jointqk_llama31_8b_longbench_compact8_n400.pt"
         VST="${REPO_ROOT}/artifacts/v_bases/v_stats_llama31_8b_longbench_compact8_n400.pt"
         PGQ4_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt"
+        PGQ8_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq8_bundle__llama31_8b.pt"
         ;;
     qwen3_8b)
         MODEL="Qwen/Qwen3-8B"
         CCA="${REPO_ROOT}/artifacts/bases/qpca_qwen3_8b_longbench_compact8_n400.pt"
         VST="${REPO_ROOT}/artifacts/v_bases/v_stats_longbench_compact8_n400.pt"
         PGQ4_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq5_bundle__qpca_unc__qwen3_8b_compact8train12.pt"
+        PGQ8_BUNDLE_DEFAULT="${REPO_ROOT}/artifacts/page_quant2/pgq8_bundle__qwen3_8b.pt"
         ;;
     *) echo "Unknown --model-tag: $MODEL_TAG" >&2; exit 1 ;;
 esac
@@ -66,6 +68,7 @@ PGQ_BUNDLE="${REPO_ROOT}/artifacts/page_quant/pgq_bundle__qpca_unc__dz0.5__base1
 PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca_unc__compact8train18.pt}"
 PGQ3_BUNDLE="${PGQ3_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400.pt}"
 PGQ4_BUNDLE="${PGQ4_BUNDLE:-$PGQ4_BUNDLE_DEFAULT}"
+PGQ8_BUNDLE="${PGQ8_BUNDLE:-$PGQ8_BUNDLE_DEFAULT}"
 OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/${MODEL_TAG}"
 LOG_DIR="${REPO_ROOT}/logs/bench_pgq_${MODEL_TAG}"
 
@@ -99,6 +102,11 @@ for cell in "${CELL_ARR[@]}"; do
     elif [[ "$kind" == pgq_nd_* || "$kind" == pgq_rvq_* ]]; then
         # pgq2 arms; for *_uni the value is the rung/stage index, else b/c
         BUNDLE="$PGQ2_BUNDLE"
+        [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
+        K_METHOD="$kind"; K_BITS="$rate"
+    elif [[ "$kind" == pgq_dct* ]]; then
+        # pgq8 arms: token-axis DCT — needs the dct_std-carrying bundle
+        BUNDLE="$PGQ8_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
     elif [[ "$kind" == pgq_fold* || "$kind" == pgq_prof* || "$kind" == pgq_mrg* ]]; then

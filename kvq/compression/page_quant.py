@@ -449,7 +449,7 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
     by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
-    if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg")):
+    if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg", "pgq_dct")):
         return _load_pgq4(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
         return _load_pgq3(blob, path, k_method, b_page)
@@ -566,7 +566,9 @@ def _load_pgq4(blob, path, k_method, k_bits):
     k_bits is the RUNG INDEX; otherwise the page budget in bits/coord.
     Frozen omega taus come from the bundle (carried, no re-selection).
     mrg (pgq6) = merged-page codec on the SAME bundle stats (width profiles,
-    LM cents, sink scales reused; clustering is runtime, no refit)."""
+    LM cents, sink scales reused; clustering is runtime, no refit).
+    dct (pgq8) = token-axis DCT rows; needs a pgq8 bundle carrying dct_std
+    (per-coefficient-row scale maps); mods restricted to lm/rw."""
     from kvq.compression.pgq4_folded import (
         PGQ4_BUNDLE_VERSION, WIDTH_LADDER, FoldedScalarPagedCompressor,
     )
@@ -575,7 +577,8 @@ def _load_pgq4(blob, path, k_method, k_bits):
         raise ValueError(f"pgq4 bundle version mismatch at {path}")
     fam, variant = k_method.split("_")[1], k_method.split("_")[2]
     family = ("fold" if fam.startswith("fold")
-              else "mrg" if fam.startswith("mrg") else "prof")
+              else "mrg" if fam.startswith("mrg")
+              else "dct" if fam.startswith("dct") else "prof")
     mods, rest = set(), fam[len(family):]
     while rest:
         for tok in ("lm", "ob", "rs", "px", "rw", "g"):
@@ -586,6 +589,11 @@ def _load_pgq4(blob, path, k_method, k_bits):
         else:
             raise ValueError(f"unknown pgq4 fam modifier in {k_method!r}")
 
+    if family == "dct":
+        if mods - {"lm", "rw"}:
+            raise ValueError(f"pgq_dct supports only lm/rw mods, got {mods}")
+        if "dct_std" not in blob:
+            raise ValueError(f"pgq_dct needs a pgq8 bundle with dct_std: {path}")
     basis = "oscar" if "ob" in mods else ("r_sym" if "rs" in mods
                                           else "qpca_unc")
     L, H = blob["n_layers"], blob["n_kv_heads"]
@@ -608,9 +616,9 @@ def _load_pgq4(blob, path, k_method, k_bits):
     bset = blob["bases"][basis]
     stats = blob["stats"][basis]
     blk = d // blob["prof_head"].shape[-1] if "prof_head" in blob else d
-    # family A keeps the registered {0,2,3,4}; families B/mrg may carry the
-    # amendment-A1 extended ladder (bundle field, default legacy)
-    if family in ("prof", "mrg"):
+    # family A keeps the registered {0,2,3,4}; families B/mrg/dct may carry
+    # the amendment-A1 extended ladder (bundle field, default legacy)
+    if family in ("prof", "mrg", "dct"):
         ladder = tuple(blob.get("prof_width_ladder", WIDTH_LADDER))
     else:
         ladder = WIDTH_LADDER
@@ -634,12 +642,18 @@ def _load_pgq4(blob, path, k_method, k_bits):
                 profiles = blob["prof_head"][l, h].repeat_interleave(
                     blk, dim=1)
             lm_cents = blob.get("lm_cents")
+            extra = {}
             if family == "mrg":
                 from kvq.compression.pgq6_merge import MergedPageCompressor
                 cls = MergedPageCompressor
+            elif family == "dct":
+                from kvq.compression.pgq8_dct import PageDCTCompressor
+                cls = PageDCTCompressor
+                extra["dct_std"] = blob["dct_std"][l, h]
             else:
                 cls = FoldedScalarPagedCompressor
             comps[(l, h)] = cls(
+                **extra,
                 forward_map=fmap, inverse_map=imap,
                 mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h],
                 code_std=stats["code_std"][l, h],

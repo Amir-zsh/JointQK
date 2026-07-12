@@ -205,6 +205,10 @@ def main() -> None:
     ap.add_argument("--heldout-out", default=None,
                     help="override the held-out report filename (pgq6 gate "
                          "runs must not clobber the canonical pgq4 report)")
+    ap.add_argument("--bundle", default=None,
+                    help="evaluate --eval-modes against this bundle instead "
+                         "of the canonical fit output (pgq8 gates load "
+                         "pgq_dct* from the dct_std-carrying bundle)")
     args = ap.parse_args()
     dev = torch.device(args.device)
     ensure_dir(OUT_DIR)
@@ -231,6 +235,9 @@ def main() -> None:
     else:
         tag = f"compact8train{args.pool_rows}r400"
         out_path = OUT_DIR / f"pgq4_bundle__3bases__{tag}.pt"
+    if args.bundle:
+        assert args.skip_fit, "--bundle is an eval-only override"
+        out_path = Path(args.bundle)
 
     if not args.skip_fit:
         Fq, Gq = build_basis("qpca_unc", cca, mu_k, None)
