@@ -93,6 +93,36 @@ launch_pgq_longbench.sh PGQ8_BUNDLE routing, fit_pgq4_bundle.py --bundle
 eval override, tests/test_pgq8.py (9). Suites green: pgq4/pgq6/pgq8/pack/
 page_quant 44/44.
 
+## Appendix: Qwen3-8B transfer (2026-07-12, bundle 2cf29a8a)
+
+Same recipe, zero new choices: dct_std refit from the 12-row Qwen fit pool,
+everything else frozen. Screening (selection rows): dctlm dominates proflm
+at every rate (0.00293/0.00231/0.00188 vs 0.00441/0.00336/0.00262 at
+1.5/1.75/2.0); the crossover criterion (≤ proflm@2.0 = 0.00262) again
+selects **1.75**. Gates clean (rates 1.8175/2.0636, ovf 0, sinkCE 0.003,
+normR 0.978/0.983). W1 (10 cells, row-paired vs the committed pgq5
+incumbent cd6a3d41; pgq8_bootstraps_qwen.json):
+
+| task | dctlmrw@1.75 (1.818) | dctlmrw@2.0 (2.064) | proflmrw@2.0 (2.064) |
+|---|---|---|---|
+| lcc | 63.18 | 63.43 | 63.41 |
+| musique | 31.31 | 31.77 | 32.49 |
+| 2wikimqa | 44.85 | 46.00 | 44.17 |
+| qasper | 39.65 | 40.00 | 37.76 |
+| hotpotqa | 61.48 | 62.82 | 63.60 |
+| **mean5** | 48.09 | **48.80** | 48.29 |
+
+- parity at 2.0: +0.52 [−0.66, +1.73] tie (positive point — free, again);
+- **headline replicates: dctlmrw@1.75 vs incumbent −0.19 [−1.46, +1.10]
+  tie at 12% fewer honest bits** (1.8175 vs 2.0636);
+- **vs TurboQuant K2V2: +5.97 [+3.72, +8.22] SIG at 14% fewer bits than
+  TQ's 2.125** (the @2.0 arm: +6.68 [+4.38, +9.00]);
+- FP retention at 1.82 b/c: 0.949 (−2.61 [−4.23, −1.04]).
+
+The format story is now two-model consistent at every level: proxy
+dominance ratios, the 1.75 crossover, parity-freeness, and the
+rate-not-score cash-out.
+
 ## Deferred (recorded)
 
 Qwen transfer of dct (machinery ready: fit_pgq8_stats --model-tag qwen3_8b

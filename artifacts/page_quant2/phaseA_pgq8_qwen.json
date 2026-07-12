@@ -1,0 +1,71 @@
+{
+  "candidates": {
+    "pgq_dctlm_rdo@b1.5": {
+      "k_mse": 0.4045915929128313,
+      "logit_err": 0.0029280116987984977,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4999797637290893,
+      "top1": 0.6241749354771206,
+      "top5": 0.8797641209193638
+    },
+    "pgq_dctlm_rdo@b1.75": {
+      "k_mse": 0.32987290842568373,
+      "logit_err": 0.0023146243982300743,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.7499732058657416,
+      "top1": 0.6599100385393415,
+      "top5": 0.9077703203473773
+    },
+    "pgq_dctlm_rdo@b2": {
+      "k_mse": 0.2710291834180501,
+      "logit_err": 0.0018772396401801875,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.999939153553099,
+      "top1": 0.6894520350864956,
+      "top5": 0.9281416756766183
+    },
+    "pgq_proflm_rdo@b1.5": {
+      "k_mse": 0.5823983879678282,
+      "logit_err": 0.004414724608027722,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4999782578493577,
+      "top1": 0.5727280752999442,
+      "top5": 0.8073254176548549
+    },
+    "pgq_proflm_rdo@b1.75": {
+      "k_mse": 0.45894002029384195,
+      "logit_err": 0.0033633769575889512,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.7499901915414249,
+      "top1": 0.6116229466029576,
+      "top5": 0.8526761736188616
+    },
+    "pgq_proflm_rdo@b2": {
+      "k_mse": 0.3669387100156041,
+      "logit_err": 0.0026152055500560617,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.9999889933145416,
+      "top1": 0.6455866132463728,
+      "top5": 0.8864545549665178
+    }
+  },
+  "reference": {
+    "ec_qpca_unc_dz0.5@1.95": {
+      "note": "see phaseA_report.json"
+    },
+    "jq_k2": {
+      "k_mse": 0.2597,
+      "logit_err": 0.00207,
+      "top1": 0.5596,
+      "top5": 0.9836
+    },
+    "tq_k2": {
+      "k_mse": 0.5572,
+      "logit_err": 0.02329,
+      "rate": 2.125,
+      "source": "phaseA_report.json (EC study, same rows)",
+      "top1": 0.4031,
+      "top5": 0.9212
+    }
+  }
+}

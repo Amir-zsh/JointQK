@@ -1,0 +1,40 @@
+dataset: longbench
+data_dir: 2wikimqa
+model: Qwen/Qwen3-8B
+device: null
+press_name: jointqk
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+exclude_indices_file: /vault/amir/efficient-llm/teamily-project/artifacts/calibration_splits/longbench_compact8_60_seed20260504_2k32k/exclude_train_indices_for_eval.json
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/amir/efficient-llm/teamily-project/artifacts/bench_pgq/qwen3_8b/pgq__pgq_dctlmrw_rdo__b1.75__2cf29a8a__2wikimqa
+log_level: INFO
+model_kwargs: {}
+press_init_command: JointQKPress(cca_stats_path='/vault/amir/efficient-llm/teamily-project/artifacts/bases/qpca_qwen3_8b_longbench_compact8_n400.pt',
+  v_stats_path='/vault/amir/efficient-llm/teamily-project/artifacts/v_bases/v_stats_longbench_compact8_n400.pt',
+  v_method='v_turboquant', k_method='pgq_dctlmrw_rdo', ec_bundle_path='/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq8_bundle__qwen3_8b.pt',
+  k_bits=1.75, v_bits=2, rank=64, layer0_full_precision=True, quantize_k=True, quantize_v=True,
+  compress_decode=False, decode_chunk=0, decode_recent=0, eps=1e-06, compression_ratio=1.0,
+  compressor_cache_dir='artifacts/_compressor_cache', use_batched_compress=False)
+press_kwargs:
+  cca_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/bases/qpca_qwen3_8b_longbench_compact8_n400.pt
+  v_stats_path: /vault/amir/efficient-llm/teamily-project/artifacts/v_bases/v_stats_longbench_compact8_n400.pt
+  k_method: pgq_dctlmrw_rdo
+  ec_bundle_path: /vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq8_bundle__qwen3_8b.pt
+  v_method: v_turboquant
+  k_bits: 1.75
+  v_bits: 2
+  compress_decode: false
+  layer0_full_precision: true
+  quantize_k: true
+  quantize_v: true
+seed: 42
+fp8: false

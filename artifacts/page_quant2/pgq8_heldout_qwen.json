@@ -1,0 +1,40 @@
+{
+  "bundle": "artifacts/page_quant2/pgq8_bundle__qwen3_8b.pt",
+  "report": {
+    "pgq_dctlmrw_rdo@b1.75": {
+      "norm_ratio_med": 0.9780161380767822,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.8175456888768275,
+      "rung_hist": [
+        148562,
+        3393336,
+        5470265,
+        1039134,
+        2211394,
+        1481231,
+        1170301,
+        520777
+      ],
+      "sink_code_relerr_med": 0.0033689530100673437,
+      "sink_mass_shift_med": 0.006802755873650312
+    },
+    "pgq_dctlmrw_rdo@b2": {
+      "norm_ratio_med": 0.9831203818321228,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.06357264380018,
+      "rung_hist": [
+        47748,
+        1545265,
+        4241603,
+        1348264,
+        3301017,
+        2367714,
+        1931734,
+        651655
+      ],
+      "sink_code_relerr_med": 0.0033689530100673437,
+      "sink_mass_shift_med": 0.005723130889236927
+    }
+  },
+  "sha8": "2cf29a8a"
+}
