@@ -1,0 +1,57 @@
+{
+  "bundle": "/vault/amir/efficient-llm/teamily-project/artifacts/page_quant2/pgq4_bundle__3bases__compact8train40r400.pt",
+  "report": {
+    "pgq_mrglm_rdo@b1.5": {
+      "norm_ratio_med": 0.9589507579803467,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.4959951396157776,
+      "rung_hist": [
+        259,
+        1747444,
+        11243099,
+        76113,
+        420943,
+        132629,
+        295651,
+        110246
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.05449709668755531
+    },
+    "pgq_mrglm_rdo@b2": {
+      "norm_ratio_med": 0.9781790375709534,
+      "overflow_frac": 0.0,
+      "rate_heldout": 1.996324338746017,
+      "rung_hist": [
+        0,
+        61074,
+        2715127,
+        2216311,
+        4625504,
+        3376355,
+        1023985,
+        8028
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.02656680904328823
+    },
+    "pgq_mrglmrw_rdo@b2": {
+      "norm_ratio_med": 0.979030191898346,
+      "overflow_frac": 0.0,
+      "rate_heldout": 2.1252801614185794,
+      "rung_hist": [
+        0,
+        58717,
+        2624645,
+        2149212,
+        4477200,
+        3274181,
+        987175,
+        455254
+      ],
+      "sink_code_relerr_med": 0.00211621867492795,
+      "sink_mass_shift_med": 0.026609297841787338
+    }
+  },
+  "sha8": "ff390304"
+}
