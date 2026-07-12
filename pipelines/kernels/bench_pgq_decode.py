@@ -1,0 +1,302 @@
+"""pgq7 K3: decode-attention microbenchmark — pgq v1 kernel vs BF16 paths
+vs the vendored OSCAR INT2 kernel (plan7/plan8 §4).
+
+One decode step of one layer at Qwen3-8B geometry (8 KV heads x GQA group 4
+= 32 q heads, d=128), bs=1, contexts {8k, 32k, 80k, 128k}. Buffers are
+fabricated at the REAL pgq operating point: rung mix drawn from the
+dctlmrw@2.0 held-out telemetry (pgq8_heldout_report.json), all interior
+pages DCT, LM-style LUTs — byte volumes and code paths identical to a real
+cell; contents random (timing is data-independent). Correctness is pinned
+BEFORE timing by a real-compressor parity case (same gate as the unit
+tests), mirroring OSCAR's check-then-time harness discipline.
+
+OSCAR arm: their `decode_attention_fwd_grouped_quant_int2` loaded straight
+from the vendored tree (2 module stubs), buffers fabricated per their own
+_build_case shapes (INT2 crumbs (T, H, d/4) uint8 + fp32 scales/zeros
+(T, H, 2) for K and V; note THEIR arm quantizes V too — ours keeps V fp16,
+so their V-side reads ~4x less; reported per-arm bytes make this explicit).
+
+Pre-registered bar (plan7 K3): >= 2.5x vs the BF16 dense path at 80k bs=1.
+
+Usage: python -u pipelines/kernels/bench_pgq_decode.py --gpu 0
+"""
+from __future__ import annotations
+
+import argparse
+import importlib.util
+import json
+import math
+import sys
+import time
+import types
+from pathlib import Path
+
+import torch
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+import _bootstrap  # noqa: E402,F401
+
+from kvq.compression.per_coord import unit_gaussian_centroids  # noqa: E402
+from kvq.kernels.pgq_decode_attn import page_attention_v1  # noqa: E402
+from kvq.kernels.pgq_pack import BLOCK  # noqa: E402
+
+H_KV, GROUP, D, PTOK, HGP = 8, 4, 128, 64, 16
+CONTEXTS = (8192, 32768, 81920, 131072)
+PROFILES = [
+    [0, 0, 0, 0], [2, 0, 0, 0], [2, 2, 0, 0], [3, 2, 0, 0],
+    [3, 2, 2, 0], [4, 3, 2, 0], [4, 4, 3, 2], [6, 4, 4, 3],
+]
+RUNG_HIST = [29502, 895713, 4167124, 668206, 3904337, 2525971, 1000733,
+             834798]                       # dctlmrw@2.0 heldout telemetry
+
+
+def build_lut_bench(dev):
+    lut = torch.zeros(91, device=dev)
+    off = torch.zeros(7, dtype=torch.int32, device=dev)
+    o = 0
+    for w in (2, 3, 4):
+        c = unit_gaussian_centroids(w).sort().values
+        c[c.abs().argmin()] = 0.0
+        lut[o:o + c.numel()] = c.to(dev)
+        off[w] = o
+        o += c.numel()
+    lim = 31
+    lut[o:o + 63] = (torch.arange(63, device=dev) - lim).float() * 0.28
+    off[6] = o
+    return lut, off
+
+
+def fabricate(T, dev, seed=0):
+    g = torch.Generator(device="cpu").manual_seed(seed)
+    P = T // PTOK
+    bw = torch.tensor(PROFILES, dtype=torch.int32, device=dev)
+    strides = (bw * BLOCK).sum(1) // 8
+    probs = torch.tensor(RUNG_HIST, dtype=torch.float64)
+    probs /= probs.sum()
+    rung = torch.multinomial(probs.expand(H_KV * T, -1).float(), 1,
+                             generator=g).reshape(H_KV, T).to(torch.uint8)
+    row_len = strides.cpu()[rung.long()]
+    row_ptr = torch.zeros(H_KV, T, dtype=torch.int32)
+    row_ptr[:, 1:] = row_len.cumsum(1)[:, :-1].to(torch.int32)
+    pay_off, total = [], 0
+    for h in range(H_KV):
+        pay_off.append(total)
+        total += int(row_len[h].sum())
+    payload = torch.randint(0, 256, (total + 1,), dtype=torch.uint8,
+                            generator=g)
+    # codes must stay in-alphabet for LUT indexing: mask each byte pattern
+    # is unnecessary — widths <= 6 index <= 63 < lut size only if code in
+    # range; clamp via lut padding instead:
+    lut, lut_off = build_lut_bench(dev)
+    lut_pad = torch.zeros(256 + 91, device=dev)
+    lut_pad[:91] = lut
+    from kvq.kernels.golden import WIDTH_SET  # noqa: F401
+
+    kinds = torch.full((P,), 2, dtype=torch.int8)
+    kinds[0] = 1
+    kinds[-4:] = 1                                       # rw pages identity
+    from kvq.compression.pgq8_dct import dct_matrix
+    gm = {
+        "H": H_KV, "T": T, "d": D, "ptok": PTOK, "hg": GROUP, "hgp": HGP,
+        "payload": payload.to(dev),
+        "pay_off": torch.tensor(pay_off, dtype=torch.int64, device=dev),
+        "row_ptr": row_ptr.to(dev), "row_rung": rung.to(dev),
+        "bw": bw, "lut": lut_pad.expand(H_KV, -1).contiguous(),
+        "lut_off": lut_off,
+        "sigma_id": (torch.rand(H_KV, PTOK, D, generator=g) * 0.6
+                     + 0.7).to(dev),
+        "sigma_dct": (torch.rand(H_KV, PTOK, D, generator=g) * 0.6
+                      + 0.7).to(dev),
+        "dct_t": dct_matrix(PTOK).to(dev),
+        "pages": torch.arange(P, dtype=torch.int32, device=dev),
+        "page_kind": kinds.to(dev),
+        "qt": torch.randn(H_KV, HGP, D, generator=g).to(dev),
+        "sm_scale": 1.0 / math.sqrt(D),
+        "v": torch.randn(H_KV, T, D, generator=g).half().to(dev),
+        "tier_idx": torch.empty(0, dtype=torch.int64, device=dev),
+        "z_tier": torch.empty(H_KV, GROUP, 0, device=dev),
+    }
+    gm["qt"][:, GROUP:] = 0
+    kb = (int(payload.numel()) + int(rung.numel() * 3 / 8)
+          + H_KV * T * D * 2)                            # K packed + V fp16
+    gm["bytes_step"] = kb
+    return gm
+
+
+def load_oscar():
+    utils_stub = types.ModuleType("sglang.srt.utils")
+    utils_stub.is_hip = lambda: False
+
+    class _E:
+        def __getattr__(self, k):
+            class V:
+                value = None
+
+                def get(self):
+                    return None
+            return V()
+
+    env_stub = types.ModuleType("sglang.srt.environ")
+    env_stub.envs = _E()
+    for name, mod in [("sglang", types.ModuleType("sglang")),
+                      ("sglang.srt", types.ModuleType("sglang.srt")),
+                      ("sglang.srt.utils", utils_stub),
+                      ("sglang.srt.environ", env_stub)]:
+        sys.modules.setdefault(name, mod)
+    spec = importlib.util.spec_from_file_location(
+        "oscar_decode_attention",
+        REPO / "vendor/OSCAR/sglang-research/python/sglang/srt/layers/"
+               "attention/triton_ops/decode_attention.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def oscar_case(T, dev, splits=16):
+    B, Hq = 1, H_KV * GROUP
+    k_buf = torch.randint(0, 256, (T + 8, H_KV, D // 4), dtype=torch.uint8,
+                          device=dev)
+    v_buf = torch.randint(0, 256, (T + 8, H_KV, D // 4), dtype=torch.uint8,
+                          device=dev)
+    k_sz = torch.rand(T + 8, H_KV, 2, device=dev) * 0.05
+    v_sz = torch.rand(T + 8, H_KV, 2, device=dev) * 0.05
+    q = torch.randn(B, Hq, D, dtype=torch.float16, device=dev)
+    o = torch.empty_like(q)
+    logits = torch.empty(B, Hq, splits, D, dtype=torch.float32, device=dev)
+    lse = torch.empty(B, Hq, splits, dtype=torch.float32, device=dev)
+    indptr = torch.tensor([0, T], dtype=torch.int32, device=dev)
+    indices = torch.arange(T, dtype=torch.int64, device=dev)
+    nsplits = torch.tensor([splits], dtype=torch.int32, device=dev)
+    bytes_step = ((T * H_KV * D // 4) * 2 + T * H_KV * 2 * 4 * 2)
+    return dict(q=q, k_buf=k_buf, v_buf=v_buf, k_sz=k_sz, v_sz=v_sz, o=o,
+                logits=logits, lse=lse, indptr=indptr, indices=indices,
+                nsplits=nsplits, splits=splits,
+                sm=1.0 / math.sqrt(D), bytes_step=bytes_step)
+
+
+def bench(fn, n=30, warmup=5):
+    for _ in range(warmup):
+        fn()
+    torch.cuda.synchronize()
+    t0 = time.time()
+    for _ in range(n):
+        fn()
+    torch.cuda.synchronize()
+    return (time.time() - t0) / n * 1e3
+
+
+def parity_gate(dev):
+    """Real-compressor parity before any timing row (harness discipline)."""
+    sys.path.insert(0, str(REPO / "tests"))
+    from test_pgq_kernel import build_multi
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4)
+    o = page_attention_v1(gm)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, f"parity gate failed: {err}"
+    return err
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--gpu", type=int, default=0)
+    ap.add_argument("--iters", type=int, default=30)
+    args = ap.parse_args()
+    dev = torch.device(f"cuda:{args.gpu}")
+    torch.cuda.set_device(dev)
+    err = parity_gate(dev)
+    print(f"[k3] parity gate: {err:.2e}", flush=True)
+
+    oscar = None
+    try:
+        oscar = load_oscar()
+        print("[k3] OSCAR kernel loaded", flush=True)
+    except Exception as e:
+        print(f"[k3] OSCAR arm unavailable: {e}", flush=True)
+
+    rows = {}
+    for T in CONTEXTS:
+        gm = fabricate(T, dev)
+        best = min(
+            (bench(lambda p=p, w=w: page_attention_v1(gm, p, num_warps=w),
+                   args.iters), p, w)
+            for p in (4, 8, 16) for w in (4, 8))
+        pgq_ms, pps, nw = best
+
+        K16 = torch.randn(H_KV, T, D, device=dev).half()
+        V16 = gm["v"]
+        Q16 = gm["qt"][:, :GROUP].half()
+
+        def dense():
+            outs = []
+            for h in range(H_KV):
+                z = (Q16[h].float() @ K16[h].float().T) / math.sqrt(D)
+                outs.append(torch.softmax(z, 1) @ V16[h].float())
+            return outs
+
+        dense_ms = bench(dense, max(5, args.iters // 3))
+
+        qs = Q16.reshape(1, H_KV * GROUP, 1, D)
+        ks = K16[:, None].expand(H_KV, GROUP, T, D).reshape(
+            1, H_KV * GROUP, T, D)
+        vs = V16[:, None].expand(H_KV, GROUP, T, D).reshape(
+            1, H_KV * GROUP, T, D)
+
+        def sdpa():
+            return torch.nn.functional.scaled_dot_product_attention(
+                qs, ks, vs)
+
+        sdpa_ms = bench(sdpa, args.iters)
+
+        row = {
+            "pgq_v1_ms": pgq_ms, "pgq_cfg": {"pps": pps, "warps": nw},
+            "dense_fp16_ms": dense_ms, "sdpa_fp16_ms": sdpa_ms,
+            "pgq_MB": gm["bytes_step"] / 1e6,
+            "fp16_MB": 2 * H_KV * T * D * 2 / 1e6,
+            "speedup_vs_dense": dense_ms / pgq_ms,
+            "speedup_vs_sdpa": sdpa_ms / pgq_ms,
+        }
+        if oscar is not None:
+            best_o = None
+            for s in (8, 16, 32):
+                c = oscar_case(T, dev, splits=s)
+                fn = lambda c=c: oscar.decode_attention_fwd_grouped_quant_int2(
+                    c["q"], c["k_buf"], c["v_buf"], c["k_sz"], c["v_sz"],
+                    c["o"], c["indptr"], c["indices"], c["logits"],
+                    c["lse"], c["nsplits"], c["splits"], c["sm"])
+                ms = bench(fn, args.iters)
+                if best_o is None or ms < best_o[0]:
+                    best_o = (ms, s, c["bytes_step"])
+            row["oscar_int2_ms"] = best_o[0]
+            row["oscar_splits"] = best_o[1]
+            row["oscar_MB"] = best_o[2] / 1e6
+            row["pgq_vs_oscar"] = best_o[0] / pgq_ms
+        rows[str(T)] = row
+        print(f"[k3] T={T:6d}: pgq {pgq_ms:7.3f} ms (pps={pps},w={nw}) | "
+              f"dense {dense_ms:7.3f} | sdpa {sdpa_ms:7.3f} | "
+              f"oscar {row.get('oscar_int2_ms', float('nan')):7.3f} | "
+              f"x_dense {row['speedup_vs_dense']:.2f} "
+              f"x_sdpa {row['speedup_vs_sdpa']:.2f} "
+              f"x_oscar {row.get('pgq_vs_oscar', float('nan')):.2f}",
+              flush=True)
+        del gm, K16, V16, ks, vs
+        torch.cuda.empty_cache()
+
+    out = {"geometry": {"H_kv": H_KV, "group": GROUP, "d": D, "ptok": PTOK,
+                        "bs": 1},
+           "note": ("one layer-step; pgq arm: K packed @2.0 mix (real "
+                    "telemetry) + V fp16; OSCAR arm: their INT2 kernel, K "
+                    "AND V INT2 (reads less V than us by design); bar "
+                    ">=2.5x vs dense fp16 at 80k"),
+           "parity_gate_err": err, "rows": rows}
+    dst = REPO / "artifacts/kernels/bench_pgq_decode.json"
+    dst.parent.mkdir(exist_ok=True)
+    dst.write_text(json.dumps(out, indent=1))
+    print(f"[k3] wrote {dst}", flush=True)
+    bar = rows["81920"]["speedup_vs_dense"]
+    print(f"[k3] PRE-REGISTERED BAR (>=2.5x dense @80k bs=1): "
+          f"{bar:.2f}x -> {'PASS' if bar >= 2.5 else 'MISS'}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

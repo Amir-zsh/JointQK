@@ -147,3 +147,41 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
     }
     return {k: (v.to(dev) if torch.is_tensor(v) else v)
             for k, v in out.items()}
+
+
+def stack_heads(golds: list[dict], hgp: int = 16) -> dict:
+    """Stack per-head golden dicts (same T/ptok/page structure) into the
+    multi-head layout of the v1 kernel: payload concatenated with per-head
+    offsets, (H, ...) tables, q tiles zero-padded to hgp rows."""
+    H = len(golds)
+    g0 = golds[0]
+    T, d, ptok = g0["T"], g0["d"], g0["ptok"]
+    dev = g0["qt"].device
+    Hg = g0["qt"].shape[0]
+    pay_off, bufs, off = [], [], 0
+    for g in golds:
+        pay_off.append(off)
+        bufs.append(g["payload"])
+        off += int(g["payload"].numel())
+    qt = torch.zeros(H, hgp, d, device=dev)
+    for h, g in enumerate(golds):
+        qt[h, :Hg] = g["qt"]
+    out = {
+        "H": H, "T": T, "d": d, "ptok": ptok, "hg": Hg, "hgp": hgp,
+        "payload": torch.cat(bufs),
+        "pay_off": torch.tensor(pay_off, dtype=torch.int64, device=dev),
+        "row_ptr": torch.stack([g["row_ptr"] for g in golds]),
+        "row_rung": torch.stack([g["row_rung"] for g in golds]),
+        "bw": g0["bw"], "lut_off": g0["lut_off"],
+        "lut": torch.stack([g["lut"] for g in golds]),
+        "sigma_id": torch.stack([g["sigma_id"] for g in golds]),
+        "sigma_dct": torch.stack([g["sigma_dct"] for g in golds]),
+        "dct_t": g0["dct_t"],
+        "pages": g0["pages"], "page_kind": g0["page_kind"],
+        "qt": qt, "sm_scale": g0["sm_scale"],
+        "v": torch.stack([g["v"] for g in golds]),
+        "tier_idx": g0["tier_idx"],
+        "z_tier": torch.stack([g["z_tier"] for g in golds]),
+        "o_ref": torch.stack([g["o_ref"] for g in golds]),
+    }
+    return out

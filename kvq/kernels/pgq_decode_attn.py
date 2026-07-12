@@ -159,6 +159,126 @@ def _page_attn_kernel(
              acc)
 
 
+@triton.jit
+def _page_attn_kernel_v1(
+    payload_ptr, pay_off_ptr, row_ptr_ptr, row_rung_ptr,
+    bw_ptr, lut_ptr, lut_off_ptr, LUTN: tl.constexpr,
+    sigma_id_ptr, sigma_dct_ptr, dct_ptr,
+    pages_ptr, kind_ptr, qt_ptr, v_ptr,
+    m_out_ptr, l_out_ptr, acc_out_ptr,
+    NPAGES, PPS, sm_scale,
+    T, HGP: tl.constexpr, D: tl.constexpr, PTOK: tl.constexpr,
+    NBLK: tl.constexpr, CBLK: tl.constexpr,
+):
+    """K2c perf shape: rows-as-lanes tiles + tensor-core dots, one program
+    per (page-range split, kv head)."""
+    split = tl.program_id(0)
+    h = tl.program_id(1)
+    rows = tl.arange(0, PTOK)
+    ci = tl.arange(0, CBLK)
+    hg = tl.arange(0, HGP)
+    dj = tl.arange(0, D)
+    pbase = tl.load(pay_off_ptr + h)
+
+    m = tl.full((HGP,), float("-inf"), dtype=tl.float32)
+    l = tl.zeros((HGP,), dtype=tl.float32)
+    acc = tl.zeros((HGP, D), dtype=tl.float32)
+
+    for pi in range(split * PPS, tl.minimum((split + 1) * PPS, NPAGES)):
+        page = tl.load(pages_ptr + pi)
+        kind = tl.load(kind_ptr + pi)
+        t0 = page * PTOK
+        base = tl.load(row_ptr_ptr + h * T + t0 + rows)        # (PTOK,)
+        rung = tl.load(row_rung_ptr + h * T + t0 + rows).to(tl.int32)
+        u = tl.zeros((HGP, PTOK), dtype=tl.float32)
+        boff = tl.zeros((PTOK,), dtype=tl.int32)
+        for b in tl.static_range(NBLK):
+            w = tl.load(bw_ptr + rung * NBLK + b)              # (PTOK,)
+            bitpos = w[:, None] * ci[None, :]                  # (PTOK, CBLK)
+            bidx = pbase + base[:, None] + boff[:, None] + (bitpos >> 3)
+            live = (w > 0)[:, None]
+            b0 = tl.load(payload_ptr + bidx, mask=live, other=0).to(tl.int32)
+            b1 = tl.load(payload_ptr + bidx + 1, mask=live, other=0).to(tl.int32)
+            code = ((b0 | (b1 << 8)) >> (bitpos & 7)) \
+                & ((1 << w[:, None]) - 1)
+            lo = tl.load(lut_off_ptr + w)                      # (PTOK,)
+            lev = tl.load(lut_ptr + h * LUTN + lo[:, None] + code,
+                          mask=live, other=0.0)
+            coord = b * CBLK + ci
+            sid = tl.load(sigma_id_ptr + h * PTOK * D
+                          + rows[:, None] * D + coord[None, :])
+            sdc = tl.load(sigma_dct_ptr + h * PTOK * D
+                          + rows[:, None] * D + coord[None, :])
+            sig = tl.where(kind == 2, sdc, sid)
+            deq = tl.where(live, lev * sig, 0.0).to(tl.float16)
+            qb = tl.load(qt_ptr + h * HGP * D + hg[:, None] * D
+                         + coord[None, :]).to(tl.float16)      # (HGP, CBLK)
+            u += tl.dot(qb, tl.trans(deq))                     # (HGP, PTOK)
+            boff += (w * CBLK) >> 3
+        if kind == 2:
+            dt = tl.load(dct_ptr + rows[:, None] * PTOK
+                         + rows[None, :]).to(tl.float16)       # (PTOK, PTOK)
+            u = tl.dot(u.to(tl.float16), dt)
+        z = u * sm_scale
+        m_new = tl.maximum(m, tl.max(z, axis=1))
+        alpha = tl.exp(m - m_new)
+        p = tl.exp(z - m_new[:, None])
+        l = l * alpha + tl.sum(p, axis=1)
+        vt = tl.load(v_ptr + h * T * D + (t0 + rows)[:, None] * D
+                     + dj[None, :])                            # (PTOK, D) f16
+        acc = acc * alpha[:, None] + tl.dot(p.to(tl.float16), vt)
+        m = m_new
+
+    S = tl.num_programs(0)
+    tl.store(m_out_ptr + (h * S + split) * HGP + hg, m)
+    tl.store(l_out_ptr + (h * S + split) * HGP + hg, l)
+    tl.store(acc_out_ptr + ((h * S + split) * HGP + hg[:, None]) * D
+             + dj[None, :], acc)
+
+
+def page_attention_v1(gm: dict, pages_per_split: int = 8,
+                      num_warps: int = 4) -> torch.Tensor:
+    """Multi-head v1 path over a stack_heads dict; returns (H, Hg, d)."""
+    H, T, d, ptok = gm["H"], gm["T"], gm["d"], gm["ptok"]
+    hg, hgp = gm["hg"], gm["hgp"]
+    dev = gm["qt"].device
+    npages = int(gm["pages"].numel())
+    nsplit = max(1, (npages + pages_per_split - 1) // pages_per_split)
+    m_p = torch.empty(H, nsplit, hgp, device=dev)
+    l_p = torch.empty(H, nsplit, hgp, device=dev)
+    acc_p = torch.empty(H, nsplit, hgp, d, device=dev)
+    _page_attn_kernel_v1[(nsplit, H)](
+        gm["payload"], gm["pay_off"], gm["row_ptr"], gm["row_rung"],
+        gm["bw"], gm["lut"], gm["lut_off"], gm["lut"].shape[1],
+        gm["sigma_id"], gm["sigma_dct"], gm["dct_t"],
+        gm["pages"], gm["page_kind"], gm["qt"], gm["v"],
+        m_p, l_p, acc_p,
+        npages, pages_per_split, gm["sm_scale"],
+        T, HGP=hgp, D=d, PTOK=ptok,
+        NBLK=gm["bw"].shape[1], CBLK=d // gm["bw"].shape[1],
+        num_warps=num_warps,
+    )
+    # fold the torch tier in as one more split, reduce (stage 2)
+    ti = gm["tier_idx"]
+    if ti.numel():
+        zt = gm["z_tier"] * gm["sm_scale"]                     # (H, Hg, nt)
+        mt = torch.full((H, 1, hgp), float("-inf"), device=dev)
+        lt = torch.zeros(H, 1, hgp, device=dev)
+        at = torch.zeros(H, 1, hgp, d, device=dev)
+        mt[:, 0, :hg] = zt.max(dim=2).values
+        pt = torch.exp(zt - mt[:, 0, :hg, None])
+        lt[:, 0, :hg] = pt.sum(2)
+        at[:, 0, :hg] = pt @ gm["v"][:, ti].float()
+        m_p = torch.cat([m_p, mt], 1)
+        l_p = torch.cat([l_p, lt], 1)
+        acc_p = torch.cat([acc_p, at], 1)
+    m_star = m_p.max(1).values
+    w = torch.exp(m_p - m_star[:, None, :])
+    l_star = (l_p * w).sum(1).clamp_min(1e-30)
+    o = (acc_p * w[..., None]).sum(1) / l_star[..., None]
+    return o[:, :hg]
+
+
 def page_attention(g: dict, pages_per_split: int = 8) -> torch.Tensor:
     """Full decode attention over kernel pages + torch tier. Returns
     (Hg, d) fp32 output; reference is g['o_ref'] (build_golden with v)."""
