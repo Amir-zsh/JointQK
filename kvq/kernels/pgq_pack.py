@@ -156,11 +156,16 @@ def unpack_sequence(packed: dict):
 
 def dequant_codes(codes: torch.Tensor, assign: torch.Tensor, comp,
                   nsink: int = 0,
-                  sink_codes: torch.Tensor | None = None) -> torch.Tensor:
-    """Codes -> r_hat, bit-identical to the compressor's reconstruction
-    (comp is the FoldedScalarPagedCompressor the codes came from)."""
+                  sink_codes: torch.Tensor | None = None,
+                  sigma: torch.Tensor | None = None) -> torch.Tensor:
+    """Codes -> reconstruction, bit-identical to the compressor's.
+
+    Default scales are comp.code_std (pgq4 token rows). Pass sigma (T, d)
+    — e.g. PageDCTCompressor's emitted per-row map — to dequant pgq8
+    coefficient rows; the result is then the COEFFICIENT-domain y_hat and
+    the caller applies the page-inverse transform."""
     T, d = codes.shape
-    r_hat = torch.zeros(T, d, device=codes.device)
+    out = torch.zeros(T, d, device=codes.device)
     top = comp.width_ladder[-1]
     for ri in range(comp.n_rungs):
         msk = assign == ri
@@ -174,17 +179,21 @@ def dequant_codes(codes: torch.Tensor, assign: torch.Tensor, comp,
                 continue
             c = codes[msk][:, cols].long()
             if comp.grid == "lm" and w < top:
-                block[:, cols] = (comp.lm_cents[wi][c]
-                                  * comp.code_std[cols].unsqueeze(0))
+                s = (sigma[msk][:, cols] if sigma is not None
+                     else comp.code_std[cols].unsqueeze(0))
+                block[:, cols] = comp.lm_cents[wi][c] * s
             else:
                 lim = (1 << (w - 1)) - 1
-                s = (comp.alphas[wi] * comp.code_std)[cols]
-                block[:, cols] = (c.float() - lim) * s.unsqueeze(0)
-        r_hat[msk] = block
+                if sigma is not None:
+                    s = (comp.alphas[wi] * sigma)[msk][:, cols]
+                else:
+                    s = (comp.alphas[wi] * comp.code_std)[cols].unsqueeze(0)
+                block[:, cols] = (c.float() - lim) * s
+        out[msk] = block
     if nsink:
-        r_hat[:nsink] = ((sink_codes.float() - SINK_LIM)
-                         * comp.sink_scale.unsqueeze(0))
-    return r_hat
+        out[:nsink] = ((sink_codes.float() - SINK_LIM)
+                       * comp.sink_scale.unsqueeze(0))
+    return out
 
 
 def payload_bytes(packed: dict) -> int:

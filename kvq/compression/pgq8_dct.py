@@ -53,7 +53,11 @@ class PageDCTCompressor(FoldedScalarPagedCompressor):
     @torch.no_grad()
     def roundtrip(self, states: torch.Tensor,
                   start_pos: int = 0, emit: dict | None = None) -> torch.Tensor:
-        assert emit is None, "pgq8 packing lands with the pgq7 K1 rework"
+        """emit (pgq7 golden vectors): assign, coefficient-row LUT codes,
+        sink_codes, tmask (per full page: transformed?), nfull, y_hat (the
+        coefficient-domain bit-identity reference; pack/unpack must
+        reproduce it exactly), sigma (the (T, d) scale map the codes were
+        quantized against), and the post-inverse r_hat."""
         self._maybe_migrate(states)
         shape = states.shape
         d = shape[-1]
@@ -94,13 +98,17 @@ class PageDCTCompressor(FoldedScalarPagedCompressor):
 
         # per-width quantizations on the (mixed) rows with per-row scales
         widths_pos = self.widths_pos
+        want_codes = emit is not None
+        codes_by_w = {}
         dq_by_w = {0: torch.zeros_like(y)}
         err2_by_w = {0: y.square()}
         for wi, w in enumerate(widths_pos):
             if self.grid == "lm" and w < self.width_ladder[-1]:
-                dq = lm_codes(y, self.lm_cents[wi], sigma)[1]
+                cw, dq = lm_codes(y, self.lm_cents[wi], sigma)
             else:
-                dq = uniform_codes(y, self.alphas[wi] * sigma, w)[1]
+                cw, dq = uniform_codes(y, self.alphas[wi] * sigma, w)
+            if want_codes:
+                codes_by_w[w] = cw
             dq_by_w[w] = dq
             err2_by_w[w] = (y - dq).square()
 
@@ -183,27 +191,47 @@ class PageDCTCompressor(FoldedScalarPagedCompressor):
 
         # reconstruction in the mixed-row domain
         y_hat = torch.zeros_like(y)
+        codes = (torch.zeros(T, d, dtype=torch.uint8, device=dev)
+                 if want_codes else None)
         for ri in range(R):
             msk = assign == ri
             if not msk.any():
                 continue
             row = self.profiles[ri]
             block = torch.zeros(int(msk.sum()), d, device=dev)
+            cblk = (torch.zeros(int(msk.sum()), d, dtype=torch.uint8,
+                                device=dev) if want_codes else None)
             for w in widths_pos:
                 cols = (row == w)
                 if cols.any():
                     block[:, cols] = dq_by_w[w][msk][:, cols]
+                    if want_codes:
+                        cblk[:, cols] = codes_by_w[w][msk][:, cols]
             y_hat[msk] = block
+            if want_codes:
+                codes[msk] = cblk
+        sink_codes = None
         if nsink:
-            y_hat[:nsink] = (torch.round(r[:nsink] / self.sink_scale)
-                             .clamp_(-SINK_LIM, SINK_LIM) * self.sink_scale)
+            sidx = (torch.round(r[:nsink] / self.sink_scale)
+                    .clamp_(-SINK_LIM, SINK_LIM))
+            y_hat[:nsink] = sidx * self.sink_scale
+            if want_codes:
+                sink_codes = (sidx + SINK_LIM).to(torch.uint8)
+                codes[:nsink] = 0        # sink rows live in sink_codes only
+        if want_codes:
+            emit.update(assign=assign, codes=codes, nsink=nsink,
+                        sink_codes=sink_codes, y_hat=y_hat.clone(),
+                        sigma=sigma, tmask=tmask.clone(), nfull=nfull)
 
-        # invert the transform on transformed pages
+        # invert the transform on transformed pages (y_hat was cloned into
+        # emit above — this in-place pass must not touch the golden copy)
         r_hat = y_hat
         if tmask.any():
             rp = r_hat[: nfull * ptok].reshape(nfull, ptok, d)
             rp[tmask[:nfull]] = torch.einsum(
                 "st,psd->ptd", self.dct_m, rp[tmask[:nfull]])
+        if want_codes:
+            emit["r_hat"] = r_hat
 
         self.pages_total += int(P)
         self.pages_overflow += int(overflow)

@@ -148,6 +148,38 @@ def test_block_constancy_enforced():
         block_widths(prof, 16)
 
 
+def test_dct_rows_pack_bit_identity():
+    """pgq8 coefficient rows through the same pack path: unpack + dequant
+    (per-row sigma) must equal the emitted y_hat exactly, and the page
+    inverse must land on the emitted r_hat."""
+    import torch as _t
+    from kvq.compression.pgq8_dct import dct_matrix
+    from test_pgq8 import make_dct_comp
+
+    comp, _ = make_dct_comp(grid="lm", b_page=2.0)
+    k = gauss_keys(96, comp)
+    em = {}
+    comp.roundtrip(k.clone(), emit=em)
+    packed = pack_sequence(em["codes"], em["assign"], comp.profiles,
+                           comp.ptok, nsink=em["nsink"],
+                           sink_codes=em["sink_codes"], block=16)
+    codes, assign, sink = unpack_sequence(packed)
+    assert torch.equal(codes, em["codes"])
+    assert torch.equal(assign, em["assign"])
+    y_hat = dequant_codes(codes, assign, comp, nsink=em["nsink"],
+                          sink_codes=sink, sigma=em["sigma"])
+    assert torch.equal(y_hat, em["y_hat"])
+    # invert the transform exactly as the compressor does
+    ptok, d = comp.ptok, y_hat.shape[1]
+    nfull, tmask = em["nfull"], em["tmask"]
+    r_hat = y_hat.clone()
+    rp = r_hat[: nfull * ptok].reshape(nfull, ptok, d)
+    rp[tmask[:nfull]] = _t.einsum("st,psd->ptd", dct_matrix(ptok),
+                                  rp[tmask[:nfull]])
+    assert torch.equal(r_hat, em["r_hat"])
+    assert bool(tmask.any())                     # the case actually fired
+
+
 @pytest.mark.skipif(not (QWEN_BUNDLE.exists() and QWEN_RAW.exists()),
                     reason="Qwen pgq5 artifacts not present on this host")
 def test_real_qwen_selection_rows():
