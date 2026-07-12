@@ -55,10 +55,13 @@ def build_lut(comp) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
-                 device="cuda") -> dict:
+                 device="cuda", v: torch.Tensor | None = None) -> dict:
     """comp: FoldedScalarPagedCompressor or PageDCTCompressor (d=128,
     ptok=64 geometry). emit: comp.roundtrip(..., emit={}) output. packed:
-    pgq_pack.pack_sequence of that emit. q: (Hg, d) raw queries."""
+    pgq_pack.pack_sequence of that emit. q: (Hg, d) raw queries. Pass
+    v (T, d) values to additionally build the full-attention reference
+    (o_ref) and the torch-tier logits (tier_idx/z_tier) for rows the
+    kernel doesn't serve — all logits mu-dropped, so tiers compose."""
     T, d = emit["codes"].shape
     ptok = comp.ptok
     P = (T + ptok - 1) // ptok
@@ -115,7 +118,23 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
             u = u @ dct_t                             # z = u D
         z_ref[:, sl] = u
 
+    extra = {}
+    if v is not None:
+        served = torch.zeros(T, dtype=torch.bool)
+        for p in pages:
+            served[p * ptok: (p + 1) * ptok] = True
+        tier_idx = torch.nonzero(~served).squeeze(1)
+        z_full = z_ref.clone()
+        z_full[:, tier_idx] = qt @ y_hat[tier_idx].t()   # identity rows
+        import math as _math
+        sm = 1.0 / _math.sqrt(d)
+        att = torch.softmax(z_full * sm, dim=1)
+        extra = {"v": v.half(), "o_ref": att @ v.float(),
+                 "tier_idx": tier_idx.to(torch.int64),
+                 "z_tier": (qt @ y_hat[tier_idx].t()), "sm_scale": sm}
+
     out = {
+        **extra,
         "payload": payload, "row_ptr": row_ptr, "row_rung": row_rung,
         "bw": block_widths(comp.profiles, BLOCK).to(torch.int32),
         "strides": strides.to(torch.int32),

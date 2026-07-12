@@ -124,6 +124,48 @@ def test_kernel_parity_mixed_rw():
     assert err < 1e-2, err
 
 
+def run_attn_case(comp, T, Hg=4, seed=5, pps=8):
+    from kvq.kernels.golden import build_golden
+    from kvq.kernels.pgq_pack import pack_sequence
+    from kvq.kernels.pgq_decode_attn import page_attention
+
+    k = corr_keys(comp, T)
+    em = {}
+    comp.roundtrip(k.clone(), emit=em)
+    packed = pack_sequence(em["codes"], em["assign"], comp.profiles,
+                           comp.ptok, nsink=em["nsink"],
+                           sink_codes=em["sink_codes"])
+    g = torch.Generator().manual_seed(seed)
+    q = torch.randn(Hg, 128, generator=g)
+    v = torch.randn(T, 128, generator=g)
+    gold = build_golden(comp, em, packed, q, device="cuda", v=v)
+    o = page_attention(gold, pages_per_split=pps)
+    ref = gold["o_ref"]
+    return float((o - ref).norm() / ref.norm().clamp_min(1e-9))
+
+
+@cuda
+def test_attention_parity_dct():
+    comp = real_geometry_comp(dct=True, b_page=2.0, rw=4)
+    err = run_attn_case(comp, T=64 * 13 + 9)         # sink+rw+partial tiers
+    assert err < 1e-2, err
+
+
+@cuda
+def test_attention_parity_identity():
+    comp = real_geometry_comp(dct=False, b_page=1.5)
+    err = run_attn_case(comp, T=64 * 9)
+    assert err < 1e-2, err
+
+
+@cuda
+def test_attention_split_invariance():
+    comp = real_geometry_comp(dct=True, b_page=2.0)
+    e1 = run_attn_case(comp, T=64 * 13, pps=3)
+    e2 = run_attn_case(comp, T=64 * 13, pps=64)
+    assert e1 < 1e-2 and e2 < 1e-2, (e1, e2)
+
+
 @cuda
 @pytest.mark.skipif(not LLAMA_BUNDLE.exists(), reason="bundle not on host")
 def test_kernel_parity_real_bundle_cell():
