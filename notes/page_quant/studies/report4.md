@@ -194,3 +194,19 @@ decision tree). Six screening passes + two bundle refits ≈ 2 GPU-h.
    honest — one 5-cell wave.
 5. **Decode arm (Mode-B'):** implementation validated at W∈{0,32} smokes;
    runs when a codec formally clears Tier-K.
+
+## Correction (2026-07-11, pgq6-3)
+
+A gold-parsing bug in bootstrap_pairs (multi-answer numpy-repr golds
+concatenated by ast.literal_eval; see fixes_to_apply.md pgq6-3) inflated
+qasper/musique row scores' sensitivity in all report4 CIs. Recomputed with
+the fixed parser (per-row means now match every cell's metrics.json):
+
+- **HOLDS:** Tier-E tie vs ecu@2.0 (−1.34 [−3.09, +0.45]); TQ row-paired
+  tie (+0.15 [−1.77, +2.09]); window effect on the rdo arm — now
+  +1.95 [+0.67, +3.23], still SIG; ω-vs-rdo tie (+0.81).
+- **DOWNGRADED:** "SIG over rvq" — corrected to +0.99 [−0.62, +2.63] (rdo)
+  and +1.09 [−0.47, +2.65] (ea): positive point estimates, CIs ∋ 0 → TIES.
+  The Tier-K "beats rvq" language elsewhere in this report should be read
+  accordingly. Window effect on the ea arm: +1.23 [−0.04, +2.47], marginal.
+- The lcc-specific W3 numbers (single-answer task) are unaffected.

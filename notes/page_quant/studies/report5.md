@@ -11,15 +11,18 @@ preserved in plan5.md; the Mode-B' `_qlen` crop fix (tracker pgq5-1) landed.
 calibration rows (format constants byte-frozen from the Llama study), the
 frozen winner `pgq_proflmrw_rdo@2.0`:
 
-- **beats the TurboQuant incumbent by +6.30 F1 pooled** (row-paired 10k
-  bootstraps, 95% CI [+4.21, +8.49], SIG on the same-V k2_v2; +5.18 SIG on
-  the V-advantaged k2_v3) — a LARGER margin than on Llama (+0.34 tie);
-- **retains 0.952 of full-precision** (48.29 vs 50.70 mean5; −1.73
-  [−3.07, −0.38]) — above the original 0.90 T1 bar even though A5-2 demoted
+- **beats the TurboQuant incumbent by +6.16 F1 pooled** (row-paired 10k
+  bootstraps, 95% CI [+3.91, +8.45], SIG on the same-V k2_v2; +4.63 SIG on
+  the V-advantaged k2_v3) — a LARGER margin than on Llama (+0.15 tie);
+- **retains 0.952 of full-precision** (48.29 vs 50.70 mean5; −2.42
+  [−3.91, −0.94]) — above the original 0.90 T1 bar even though A5-2 demoted
   it to descriptive (the incumbent retains only 0.831 on Qwen);
-- **reproduces the recency-window effect**: rw − plain = +1.66 [+0.81,
-  +2.50] SIG pooled, driven by lcc (+6.99: 56.42 → 63.41), exactly the pgq4
-  W3 structure.
+- **reproduces the recency-window effect**: rw − plain = +1.83 [+0.95,
+  +2.73] SIG pooled, driven by lcc (+6.99: 56.42 → 63.41), exactly the pgq4
+  W3 structure (Llama window effect, corrected: +1.95 SIG).
+
+All CIs computed with the pgq6-3-fixed gold parser (see fixes_to_apply.md;
+per-row means validated against every cell's metrics.json).
 
 | task | proflm@2.0 | proflmrw@2.0 | FP | TQ-K2V2 |
 |---|---|---|---|---|
