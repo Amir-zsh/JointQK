@@ -449,7 +449,7 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
     by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
-    if k_method.startswith(("pgq_fold", "pgq_prof")):
+    if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg")):
         return _load_pgq4(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
         return _load_pgq3(blob, path, k_method, b_page)
@@ -557,14 +557,16 @@ def _load_pgq2(blob, path, k_method, k_bits):
 
 
 def _load_pgq4(blob, path, k_method, k_bits):
-    """pgq4 loader: pgq_{fold,prof}[mods]_{uni,rdo,ea,pgr}.
+    """pgq4/pgq6 loader: pgq_{fold,prof,mrg}[mods]_{uni,rdo,ea,pgr}.
 
-    fam modifiers (concatenated after fold/prof): g = fp16 gain/token,
+    fam modifiers (concatenated after fold/prof/mrg): g = fp16 gain/token,
     lm = Lloyd-Max LUT grid (qpca basis only), ob = OSCAR per-layer
     U_Q.H.Pbr basis, rs = r_sym basis, px = prefix-truncation profiles,
     rw = force last 4 prompt pages to the top rung (P7 ablation). For *_uni
     k_bits is the RUNG INDEX; otherwise the page budget in bits/coord.
-    Frozen omega taus come from the bundle (carried, no re-selection)."""
+    Frozen omega taus come from the bundle (carried, no re-selection).
+    mrg (pgq6) = merged-page codec on the SAME bundle stats (width profiles,
+    LM cents, sink scales reused; clustering is runtime, no refit)."""
     from kvq.compression.pgq4_folded import (
         PGQ4_BUNDLE_VERSION, WIDTH_LADDER, FoldedScalarPagedCompressor,
     )
@@ -572,7 +574,8 @@ def _load_pgq4(blob, path, k_method, k_bits):
     if blob.get("pgq_version") != PGQ4_BUNDLE_VERSION:
         raise ValueError(f"pgq4 bundle version mismatch at {path}")
     fam, variant = k_method.split("_")[1], k_method.split("_")[2]
-    family = "fold" if fam.startswith("fold") else "prof"
+    family = ("fold" if fam.startswith("fold")
+              else "mrg" if fam.startswith("mrg") else "prof")
     mods, rest = set(), fam[len(family):]
     while rest:
         for tok in ("lm", "ob", "rs", "px", "rw", "g"):
@@ -605,9 +608,9 @@ def _load_pgq4(blob, path, k_method, k_bits):
     bset = blob["bases"][basis]
     stats = blob["stats"][basis]
     blk = d // blob["prof_head"].shape[-1] if "prof_head" in blob else d
-    # family A keeps the registered {0,2,3,4}; family B may carry the
+    # family A keeps the registered {0,2,3,4}; families B/mrg may carry the
     # amendment-A1 extended ladder (bundle field, default legacy)
-    if family == "prof":
+    if family in ("prof", "mrg"):
         ladder = tuple(blob.get("prof_width_ladder", WIDTH_LADDER))
     else:
         ladder = WIDTH_LADDER
@@ -631,7 +634,12 @@ def _load_pgq4(blob, path, k_method, k_bits):
                 profiles = blob["prof_head"][l, h].repeat_interleave(
                     blk, dim=1)
             lm_cents = blob.get("lm_cents")
-            comps[(l, h)] = FoldedScalarPagedCompressor(
+            if family == "mrg":
+                from kvq.compression.pgq6_merge import MergedPageCompressor
+                cls = MergedPageCompressor
+            else:
+                cls = FoldedScalarPagedCompressor
+            comps[(l, h)] = cls(
                 forward_map=fmap, inverse_map=imap,
                 mu=blob["mu"][l, h], mu_q=blob["mu_q"][l, h],
                 code_std=stats["code_std"][l, h],

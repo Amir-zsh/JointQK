@@ -22,6 +22,7 @@ sys.path.insert(0, str(REPO / "vendor/kvpress/evaluation"))
 
 import argparse  # noqa: E402
 import ast  # noqa: E402
+import re  # noqa: E402
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -48,14 +49,32 @@ def cell_predictions(method: str, task: str, bench: Path = BENCH,
     return pd.read_csv(csvs[0])
 
 
+_QUOTED = re.compile(r"'((?:[^'\\]|\\.)*)'|\"((?:[^\"\\]|\\.)*)\"",
+                     re.DOTALL)
+
+
+def parse_answers(raw):
+    """predictions.csv stores the HF `answers` column as str(numpy array):
+    `['a' 'b']` — NO commas. ast.literal_eval on that form silently
+    CONCATENATES adjacent string literals into one wrong gold ('ab'),
+    collapsing max-over-gold F1 on multi-answer rows (qasper -20 pts). Parse
+    by extracting the quoted items instead; single-answer rows produce the
+    identical one-element list."""
+    if not isinstance(raw, str):
+        return raw
+    items = [a if a else b for a, b in _QUOTED.findall(raw)]
+    assert items, f"unparseable answers cell: {raw[:80]!r}"
+    return [i.encode().decode("unicode_escape") if "\\" in i else i
+            for i in items]
+
+
 def row_scores(df: pd.DataFrame, task: str) -> pd.Series:
     metric = dataset2metric[task]
     out = {}
     for _, row in df.iterrows():
         pred = str(row["predicted_answer"]) if pd.notna(
             row["predicted_answer"]) else ""
-        answers = ast.literal_eval(row["answers"]) \
-            if isinstance(row["answers"], str) else row["answers"]
+        answers = parse_answers(row["answers"])
         ac = row.get("all_classes")
         all_classes = ast.literal_eval(ac) if isinstance(ac, str) else None
         if task in ("trec", "triviaqa", "samsum", "lsht"):
