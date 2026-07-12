@@ -1,0 +1,27 @@
+dataset: longbench
+data_dir: 2wikimqa
+model: Qwen/Qwen3-8B
+device: null
+press_name: no_press
+compression_ratio: 0.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 0.3
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_allmethods_n400/bf16
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+press_init_command: None
+seed: 42
+fp8: false
+press_kwargs: null
+exclude_indices_file: null

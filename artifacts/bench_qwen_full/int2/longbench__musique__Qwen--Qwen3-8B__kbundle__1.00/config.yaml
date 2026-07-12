@@ -1,0 +1,33 @@
+dataset: longbench
+data_dir: musique
+model: Qwen/Qwen3-8B
+device: null
+press_name: kbundle
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_qwen_full/int2
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+press_init_command: null
+seed: 42
+fp8: false
+press_kwargs:
+  v_method: v_turboquant
+  v_bits: 2
+  quantize_k: true
+  quantize_v: true
+  layer0_full_precision: true
+  k_bundle_path: /vault/samuel/efficient-llm/JointQK/entropy_coding/mb_scalar_int2_n400.pt
+exclude_indices_file: /vault/samuel/efficient-llm/JointQK/logs/bench_allmethods/exclude_musique_train.json

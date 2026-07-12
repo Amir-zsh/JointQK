@@ -1,0 +1,662 @@
+length,task,answers,language,answer_prefix,all_classes,_id,dataset,question,compression_ratio,max_new_tokens,predicted_answer
+615,lcc,['                    self.choice = int(self.choice) - 1'],python,"Next line of code:
+",,0015062cf7e9262884bb54332e85c9529f05689017c95eff,lcc,,1.0,84,"```python
+                        elif self.choice.lower() == 'help':
+                            print(self.grn + ""[*] Commands: 'list', 'exit', 'help'""+self.blk)
+                            continue
+                    else:
+                        try:
+                            packet_index = int(self.choice) - 1
+                            if 0 <= packet_index < len(self.cap):
+                                print(self.grn + ""[*] Inspecting packet ""+"
+743,lcc,['            set { _numValues = value; }'],csharp,"Next line of code:
+",,90e9975c7f92d8ef21fcbe89fd1500b3a541124b7b4304fb,lcc,,1.0,84,"```csharp
+}
+```
+
+Here's the completed code with the closing brace for the class:
+
+```csharp
+}
+```
+
+### Final Completed Code:
+
+```csharp
+///////////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2006-2019 Esper Team. All rights reserved.                           /
+// http://esper.codehaus.org                                                          /
+// ---------------------------------------------------------------------------------- /
+// The software in this package is published under"
+1364,lcc,"['                        b}, callback, asyncState);']",csharp,"Next line of code:
+",,985588e7dc66ac6d50e0fe4a6602f7b58eb5fef402be68fa,lcc,,1.0,84,"```csharp
+}
+```
+
+Here's the completed code with the missing closing brace and the rest of the class properly closed:
+
+```csharp
+}
+}
+}
+```
+
+### Final Completed Code:
+
+```csharp
+}
+}
+}
+```
+
+### Summary:
+- The missing closing brace `}` was added to properly close the `AddNumbers` class.
+- The `SelectCertificateDialog` class and the `StoreDialog"
+609,lcc,['] + models)'],python,"Next line of code:
+",,588825a49d4fdd244fc2fb3cce5086b306490b945a3bc787,lcc,,1.0,84,"```python
+    'BibrecBibxxx'
+])
+```
+
+Here's the completed code with the final line added:
+
+```python
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2014, 2015 CERN.
+#
+# Invenio is free software; you can redistribute it and/or
+#"
+2251,lcc,"['    response = _pubsub_consumer(session, cluster_id, query_wrapper)']",python,"Next line of code:
+",,9621a523cfd2361541d82c5585397ca2326e223496d5585c,lcc,,1.0,84,"```python
+    def __iter__(self):
+        return iter(self.result)
+```
+
+This completes the code by adding the `__iter__` method to the `_SearchResult` class, allowing iteration over the query results."
+1566,lcc,['      if (split.length < 2 || split.length > 4)'],java,"Next line of code:
+",,4bd2fd0f69e4de7c6c60f4067b514b23e77ab94af50551f3,lcc,,1.0,84,"```java
+      if (split.length < 2) {
+        throw new IllegalArgumentException(""Invalid line in mapping file: "" + line);
+      }
+```
+
+Continuing the code:
+
+```java
+      String regexStr = split[0];
+      String type = split[1];
+      Set<String> overwritableTypes = Collections.emptySet();
+      double priority = 1.0;
+
+      if (split.length"
+626,lcc,"[""        log.log_strm = open(args.log_file, 'w')""]",python,"Next line of code:
+",,cd81bc2e4c0a7dc1e4f6a340a63de44a5b0e7a055b43a7b3,lcc,,1.0,84,"```python
+    log.info('cryptostasis', 'Starting Cryptostasis')
+```
+
+Here's the completed code with the missing line added:
+
+```python
+    log.info('cryptostasis', 'Starting Cryptostasis')
+```
+
+### Full Completed Code (with the added line):
+
+```python
+# ... [previous code] ...
+
+    log.info('cryptostasis', 'Starting Cryptostasis')
+
+   "
+910,lcc,['\t\t\treturn new ConstructorBuilder(mb);'],csharp,"Next line of code:
+",,6b78cc0ec714622bb22d89aa972b1eae59e59788b357955a,lcc,,1.0,84,"```csharp
+return new ConstructorBuilder(mb);
+```
+
+Here's the completed code with the missing line:
+
+```csharp
+public ConstructorBuilder DefineTypeInitializer()
+{
+    MethodBuilder mb = DefineMethod(ConstructorInfo.TypeConstructorName, MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName, null, Type.EmptyTypes);
+    return new ConstructorBuilder(mb);
+}
+```
+
+###"
+1163,lcc,['                int len = fCode.Length + 2;'],csharp,"Next line of code:
+",,5c41dbe75be69a522492a261348f685fcc83189eb876ce02,lcc,,1.0,84,"```csharp
+                float fontX = 0;
+                float fontY = 0;
+                if (font != null) {
+                    if (baseline > 0)
+                        fontY = baseline - font.GetFontDescriptor(BaseFont.DESCENT, size);
+                    else
+                        fontY = -baseline + size;
+                    string fullCode = code;
+                    if (generateChecksum && checksumText)
+                        full"
+664,lcc,['\t\tif(caseInsensitive); // this is to avoid eclipse warning only.'],java,"Next line of code:
+",,9516693902335ad7c898f1e9ec8d1799680dac2988c0259d,lcc,,1.0,84,"```java
+		return 0;
+	}
+```
+
+Here's the completed code with the missing `compareTo` method:
+
+```java
+		return 0;
+	}
+}
+```
+
+### Summary:
+- The `compareTo` method was incomplete and needed to be implemented.
+- The method is overridden from the `Object` class, and in this case, it's returning `0`, which means the object is considered"
+567,lcc,['\t\t\t\t\tpos = btnEnergizeAll.bottom();'],java,"Next line of code:
+",,64d5f26d486a85e85284229e8d254f996cfafd844cd321c5,lcc,,1.0,84,"```java
+					pos = btnEnergizeAll.bottom();
+				}
+			}
+			hide();
+		}
+	}
+}
+```
+
+This completes the `WndAlchemizeItem` class, which is a custom window for interacting with items during the alchemy process. It includes buttons for selling or energizing the selected item, and then hides the window after an action is performed.
+
+### Summary of"
+685,lcc,"['  winner, _inferenceResult, _dist, _categoryDist = knn.infer(v[2])']",python,"Next line of code:
+",,397181750c46cc7bb5cfa79f1f6812770ddf55fc6dac89cd,lcc,,1.0,84,"```python
+    return failures
+```
+
+---
+
+### ✅ Final Code (with the missing line added):
+
+```python
+    return failures
+```
+
+---
+
+### ✅ Full Completed Code Snippet (with the missing line):
+
+```python
+    return failures
+```
+
+---
+
+### ✅ Summary
+
+You were missing the final line of the `simulateKMoreThanOne()` function, which is:
+
+```python
+"
+1232,lcc,"['        s, o = self._session_cmd_close(session, suspend_log_chk_cmd)']",python,"Next line of code:
+",,659965fc4472dec4f8b056a906be656d08aac541f75950f4,lcc,,1.0,84,"```python
+        if not utils_misc.wait_for(lambda: session.cmd_status(cmd) == 0, 15):
+            logging.warning(""Failed to get current runlevel, proceeding anyway."")
+```
+
+This line continues the `setup_runlevel` function by adding a fallback mechanism in case the initial attempt to get the current runlevel fails. It uses `utils_misc.wait_for` to wait up to 15"
+744,lcc,"[""        types = ['cert', 'key']""]",python,"Next line of code:
+",,41849aea5e307f5199745185087b9ae2038c2a8673824a84,lcc,,1.0,84,"```python
+        # So we can delete the old ones
+        for cert_type in types:
+            try:
+                os.remove('%s/%s.pem' % (config_directory, cert_type))
+            except:
+                pass
+        return 0, ""Meter "" + name + "" created""
+    else:
+        # If the meter already exists, do nothing
+        module.exit_json(status=""Meter "" + name"
+671,lcc,"['                var firstId = Module.RevParse(gitStash.Name + ""^"");']",csharp,"Next line of code:
+",,f54df722d8cb6050f8b9b79929415e488a47e64578808ae4,lcc,,1.0,84,"```csharp
+                Stashed.SetStashDiffs(gitStash, gitItemStatuses);
+            }
+            Loading.Visible = false;
+            Loading.IsAnimating = false;
+            Stashes.Enabled = true;
+            refreshToolStripButton.Enabled = true;
+            toolStripButton_customMessage.Enabled = true;
+        }
+
+        private void LoadGitItemStatuses(IReadOnlyList<GitItemStatus> gitItemStatuses)
+"
+769,lcc,"[""            subsystem='input', ID_INPUT_MOUSE=True, sys_name='mouse0'))""]",python,"Next line of code:
+",,7293c0e9f7e75148f514aaf18ac8ea75262950e00b623dfd,lcc,,1.0,84,"```python
+            assert 'eggs' in posargs and 'spam' in posargs
+        )
+    )
+```
+
+So the completed code is:
+
+```python
+    def test_match_passthrough_property(self, enumerator):
+        with mock.patch.object(enumerator, 'match_property',
+                               autospec=True) as match_property:
+            enumerator.match(eggs=mock.sentinel.eggs, spam=mock"
+778,lcc,['\t\tif(beans == null)'],java,"Next line of code:
+",,f963d6d0a6afee2f2e97ceb0f221aca6ff419e9f3f0e1a2b,lcc,,1.0,84,"```java
+		return buildFromBeanCollection(beans);
+	}
+```
+
+Continuing the code with the rest of the implementation:
+
+```java
+	private static TumourGroupListVoCollection buildFromBeanCollection(java.util.Collection beans)
+	{
+		TumourGroupListVoCollection coll = new TumourGroupListVoCollection();
+		if (beans == null)
+			return coll;
+		java.util.Iterator"
+861,lcc,['            foreach (ArgumentSyntax argumentSyntax in argumentSyntaxs) {'],csharp,"Next line of code:
+",,a2ce4aeed86faf7c78539925675910ecdf08f4ca9f5603ee,lcc,,1.0,84,"```csharp
+foreach (var member in memberList)
+{
+    if (member is MethodDeclarationSyntax method)
+    {
+        var parameters = method.ParameterList.Parameters;
+        var byRefParameters = parameters.Where(p => p.Modifiers.Any(m => m.IsKind(SyntaxKind.RefKeyword)));
+
+        foreach (var param in byRefParameters)
+        {
+            var argument = param.Name.Identifier;
+            var replacement = SyntaxFactory"
+1153,lcc,['    if len(reaction.metabolites) != 1:'],python,"Next line of code:
+",,80bda6d99d3c518ff6465d159112864d8eed9a04c56b1d15,lcc,,1.0,84,"```python
+    def _total_components_flux(flux: float, components: List[float], consumption: bool = True) -> float:
+        """"""Calculate the total flux contribution of a reaction's components.""""""
+        if consumption:
+            return flux * sum(components)
+        else:
+            return flux * sum(-component for component in components)
+```
+
+This function is used to compute the total contribution of a reaction's components to"
+1423,lcc,['            if (this.owner.getDecorator() instanceof FTDecorator) {'],java,"Next line of code:
+",,656e6b487418898304f2b9808ba22f80abf877b82fdba872,lcc,,1.0,84,"```java
+            if (this.owner.getDecorator() instanceof FTDecorator) {
+                ((FTDecorator) this.owner.getDecorator()).setOnSendRequestAfterParameters(res, destination);
+            }
+            this.owner.getDecorator().onSendRequestAfter(r);
+            return res;
+        } catch (BodyTerminatedException e) {
+            logger.info(""[FAULT] "" + this.ownerID + "" : FAILURE OF "" + destination"
+3675,lcc,"['        var = (float(var), float(var))']",python,"Next line of code:
+",,b2e9852774a64a45a97fb402afdda4bca2ad6f026ab0a353,lcc,,1.0,84,"```python
+def _get_proj_data(projection):
+    """"""Take projection information and returns a proj CRS.""""""
+    from pyresample.utils import proj4_str_to_dict
+    if isinstance(projection, str):
+        # Try to parse as Proj4 string
+        try:
+            proj_dict = proj4_str_to_dict(projection)
+            return proj_dict
+        except:
+            pass
+    # If it's"
+755,lcc,"[""CREATED     = State('Start',     QUEST)""]",python,"Next line of code:
+",,733108e23bea8f0fe687224256eb5c0b58a30b29f6ce051d,lcc,,1.0,84,"```python
+QUEST.setState(""AVAILABLE"")
+```
+
+This line is needed to make the quest available in the game. It's a standard practice in L2J (Lineage 2 Java) quest systems to explicitly set the quest state to ""AVAILABLE"" so that it can be accepted by players.
+
+So the completed code would be:
+
+```python
+# Quest class and state definition
+QUEST       = Quest(QUEST_NUMBER"
+878,lcc,"[""    _not_serialized_attrs_ = ['layer_type', 'top_type']""]",python,"Next line of code:
+",,b1cefd5f19084d4e4a500f51ff0fd6a59f8c2c70e47b868c,lcc,,1.0,84,"```python
+class FractureLayer(GeoLayer):
+    """"""Geological layer representing fractures.""""""
+    def __init__(self, config={}):
+        super().__init__(config)
+        self.layer_type = LayerType.fracture
+```
+
+This completes the class definition for `FractureLayer` as a subclass of `GeoLayer`, setting its `layer_type` to `LayerType.fracture`"
+950,lcc,"['        java = regKey.OpenSubKey(""1.6"");']",csharp,"Next line of code:
+",,76a0bf2e534153ecd85f4baa149e185926fdf7267d6e1660,lcc,,1.0,84,"```csharp
+        return null;
+    }
+
+    private static String FindJdkInRegistry(String key)
+    {
+        RegistryKey regKey
+            = Registry.LocalMachine.OpenSubKey(key);
+        if (regKey == null)
+            return null;
+        RegistryKey java = regKey.OpenSubKey(""CurrentVersion"");
+        if (java == null)
+            return null;
+        String javaHome = (String"
+1652,lcc,['            final DataOutputStream out = new DataOutputStream(baos);'],java,"Next line of code:
+",,ce9e73e7e622c7688ef392b99d6afaa87bea6b138e34fa82,lcc,,1.0,84,"```java
+        header.write(NID.kEnd);
+    }
+```
+
+---
+
+### ✅ Full Completed Code
+
+Here is the **completed** version of the `SevenZOutputFile` class, including the missing lines of code:
+
+```java
+    }
+    /**
+     * Writes the file name of the archive entry.
+     *
+     * @param entry the archive entry
+     * @param header the header to"
+1329,lcc,['            int sizeAfter = getNamespaceResolverSize(desc);'],java,"Next line of code:
+",,8a2fd200c0170fc660f3939cf1ac96106dc7e05cbcd739ea,lcc,,1.0,84,"```java
+    private static final String XML_INPUT_FACTORY = ""javax.xml.stream.XMLInputFactory"";
+    private static final String XML_OUTPUT_FACTORY = ""javax.xml.stream.XMLOutputFactory"";
+    private static final String XML_STREAM_FACTORY = ""javax.xml.stream.XMLStreamFactory"";
+    private static final String XML_VALIDATION_FACTORY = ""javax.xml.validation.ValidatorFactory"";
+    private static final String XML_SCHEMA_FACTORY ="
+730,lcc,"['                new LayoutAnimationController(set, 0.5f);']",java,"Next line of code:
+",,ecfe82f294b057561aa2f9cd0122f2dbc5fb0dae134d8df8,lcc,,1.0,84,"```java
+        LayoutAnimationController controller = new LayoutAnimationController(set, 0.5f);
+        mListView.setLayoutAnimation(controller);
+    }
+```
+
+Now, I'll complete the rest of the code for the `WeaveBookmarksListActivity` class, including the `fillData()` method, `doSync()`, `doClear()`, and `doNavigationBack()` methods, as well as the"
+1044,lcc,['        self.aspectWidget = Object3DAspect(self)'],python,"Next line of code:
+",,f2938d3f351d2aebd34b5c529253c96aa77b793e3442e486,lcc,,1.0,84,"```python
+        self.mainLayout.addWidget(VerticalSpacer(self))
+```
+
+Here's the completed code with the missing line added:
+
+```python
+class Object3DPrivateInterface(qt.QGroupBox):
+    def __init__(self, parent = None):
+        qt.QGroupBox.__init__(self, parent)
+        self.setTitle('Private Configuration')
+        self.mainLayout = qt.QVBoxLayout(self)
+        self.button = qt"
+1595,lcc,['\t\tloop = gobject.MainLoop()'],python,"Next line of code:
+",,fe11c4d3c4d9b1392973aed3ba28df9d9cf6a13123cc8e59,lcc,,1.0,84,"```python
+def main():
+    service = SecretService()
+    service.add_standard_objects()
+    service.listen()
+```
+
+This completes the code by defining a `main()` function that initializes the `SecretService`, adds standard objects, and starts listening for D-Bus messages. This is the typical entry point for a D-Bus service in Python."
+677,lcc,"[""        s = lowlevel.SignalMessage('/a/b/c', 'foo.bar', 'baz')""]",python,"Next line of code:
+",,fdfc363818ce22cc623b576870180ec881f0a75f716cd8a8,lcc,,1.0,84,"```python
+    def test_member(self):
+        s = lowlevel.SignalMessage('/a/b/c', 'foo.bar', 'baz')
+        self.assertEqual(s.get_member(), 'baz')
+```
+
+This completes the `TestMessageMarshalling` class. If you'd like to continue with more test cases or complete the rest of the file, let me know!"
+2054,lcc,"[""                        for n in xrange(params[0]['nbins'] + 1)]""]",python,"Next line of code:
+",,7ca84608f996fd9789e4cbc658213c13482f990b4ea1c34e,lcc,,1.0,84,"```python
+class _Hist3D(_HistBase):
+    DIM = 3
+    def __init__(self, *args, **kwargs):
+        name = kwargs.get('name', None)
+        title = kwargs.get('title', None)
+        params = self._parse_args(*args)
+        if params[0]['bins'] is None and params[1]['bins'] is None and params[2"
+1187,lcc,"['                ""1:21: Expected \\"">\\""."",']",csharp,"Next line of code:
+",,2be88ed1d82791123566d7fc244876523ea87a620301c93a,lcc,,1.0,84,"```csharp
+        [Test]
+        public void ParseUnknownField()
+        {
+            TestAllTypes.Builder builder = TestAllTypes.CreateBuilder();
+            TextFormat.Merge(""unknown_field: 42"", builder);
+            Assert.AreEqual(42, builder.GetUnknownFields().GetField(100).VarintList[0]);
+        }
+    }
+}
+```
+
+### Explanation:
+- This test case checks"
+882,lcc,"['    return mock.getAvailCompoIds(sClientSpaceId, sUserId);']",java,"Next line of code:
+",,b519f9921c8764941f3609154c5ff4b26d6c0630555f325d,lcc,,1.0,84,"```java
+    return mock.getAvailCompoIds(sClientSpaceId, sUserId);
+  }
+```
+
+Here's the completed code with the missing method:
+
+```java
+  @Override
+  public String[] getAvailCompoIds(String sClientSpaceId, String sUserId) {
+    return mock.getAvailCompoIds(sClientSpaceId, sUserId);
+  }
+```
+
+###"
+2041,lcc,['\t\tname\t- aname/ename/gname'],python,"Next line of code:
+",,997526c4ebbb7938e65ea14362c83fde9d979401f5f5f445,lcc,,1.0,84,"```python
+class Responses:
+    def __init__(self):
+        self.responses = {
+            'LOGIN_ACCEPTED': LoginAcceptedResponse,
+            'LOGIN_ACCEPTED_NEW_VER': LoginAcceptedNewVerResponse,
+            'LOGGED_OUT': LoggedOutResponse,
+            'RESOURCE': ResourceResponse,
+            'STATS': StatsResponse,
+            'TOP': TopResponse,
+            'UPTIME': UptimeResponse,
+"
+844,lcc,"[""        rfd, fd, cfilename   = open_tmp_file('rwseektest.wav')""]",python,"Next line of code:
+",,04429037d9380b6e9c3f7b2070992a5af10745895025113c,lcc,,1.0,84,"```python
+        a.close()
+    def test_seek(self):
+        ofilename = join(TEST_DATA_DIR, 'test.wav')
+        a = Sndfile(ofilename, 'r')
+        nframes = a.nframes
+        buffsize = 1024
+        buffsize = min(nframes, buffsize)
+        # Read some frames
+        buff = a.read_frames(buffsize)
+        #"
+6006,lcc,"['                fout.Write(curr, 0, curr.Length);']",csharp,"Next line of code:
+",,0cc866de4a40f62e0dc2031e25487c87a06027728f76c5a9,lcc,,1.0,84,"```csharp
+```
+The code you've provided is a partial implementation of the `PdfReader` class from the iTextSharp library, which is used to read and parse PDF documents. The code is incomplete and contains some commented-out sections and incomplete methods.
+
+To complete the code, we need to ensure that all methods are properly implemented, and that the class can read and parse a PDF document correctly. Here's"
+701,lcc,['\t\t\tif (value <= 0x7F)'],csharp,"Next line of code:
+",,527be9dcafaca936af7816ffc1b91056d113516e8acf4806,lcc,,1.0,84,"```csharp
+{
+    return (uint)(value <= 0x7F ? 1 : value <= 0x3FFF ? 2 : value <= 0x1FFFFFFF ? 4 : 0);
+}
+```
+
+So the full completed code is:
+
+```csharp
+static uint GetCompressedUInt32Bytes(uint value) {
+    return (uint)(value <= 0x"
+819,lcc,"['        y_points = np.arange(-89.12, +90.0, 42.847)']",python,"Next line of code:
+",,f199ac4b782288ef2a374c11cfb7bee86753f53493876247,lcc,,1.0,84,"```python
+        # Ensure the data is in a format that can be interpolated
+        test_cube = as_lazy_data(test_cube)
+        # Perform the nearest-neighbour interpolation
+        result = traj_interpolate(test_cube, sample_points, method=""nearest"")
+        # Compare the result with the expected values
+        self.assertArrayAllClose(result.data, expected, rtol=2.0e-7)
+``"
+1639,lcc,['\t\treturn hasSpeedModule() ? 5 : 10;'],java,"Next line of code:
+",,97d6976069558160fcb06c6802085ee52a6ef637d5832a1a,lcc,,1.0,84,"```java
+    public void setTarget(LivingEntity target) {
+        if (target == null) {
+            this.target = null;
+            return;
+        }
+
+        if (target instanceof Player) {
+            if (getOwner().isOwner((Player) target)) {
+                this.target = target;
+                return;
+            }
+        }
+
+        if (target instanceof Mob) {
+            if (getMode().isAg"
+1012,lcc,"['\t\t\tthis.comboBox1.Size = new System.Drawing.Size(224, 21);']",csharp,"Next line of code:
+",,8f007015b8b3b455a6fcd8f989241324f18ff10327811d5b,lcc,,1.0,84,"```csharp
+this.comboBox1.Size = new System.Drawing.Size(200, 21);
+```
+
+Continuing the code completion:
+
+```csharp
+this.comboBox1.TabIndex = 0;
+this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+this.textBox2.Location = new System.Drawing.Point(59, 240);
+this.textBox2.Name = ""textBox2"";
+this.textBox"
+1264,lcc,['\t\t\tint beg = la.pos; int col = la.col;'],csharp,"Next line of code:
+",,ae0f2d60c0cb9d0cb36a55fcf60b29466a441974ac234dca,lcc,,1.0,84,"```csharp
+		}
+	}
+}
+```
+
+### Explanation:
+- The `AttrDecl` method is a helper method used to process **attribute declarations** in the grammar.
+- It checks if the current token is either `26` (which might represent a keyword like `attribute`) or `28` (which might be another keyword like `attr` or `attribute`).
+- If it's"
+980,lcc,['    N1 = a/sqrt(1-eccSquared*sin(phi1Rad)*sin(phi1Rad))'],python,"Next line of code:
+",,b3d7b8ae829a609d04350475dc3cbba8c1903ae29d44f33f,lcc,,1.0,84,"```python
+    + (15*eccSquared*eccSquared/256)*sin(4*LatRad) 
+    - (35*eccSquared*eccSquared*eccSquared/3072)*sin(6*LatRad))
+```
+
+Now, let's complete the `UTMtoLL` function and add the missing parts of the code to make the full function work."
+451,lcc,['                    Label noneFound = new Label();'],csharp,"Next line of code:
+",,c8bb6c7b2115807916ef0d828a186d6e698ed8a7962bc728,lcc,,1.0,84,"```csharp
+}
+```
+
+Continuing the code from where it left off, here's the completed `loadServiceInfo()` method and the rest of the class:
+
+```csharp
+else
+{
+    MessageBox.Show(""No modules found."");
+}
+}
+```
+
+Now, let's complete the rest of the class, including the `btnNext_Click`, `btnDone_Click`, and `btnCancel_Click` event handlers"
+575,lcc,['        long t = getMissionTime();'],java,"Next line of code:
+",,7630f3d4fd6c44654c13b705304c20adea2cf0798b4dc72c,lcc,,1.0,84,"```java
+        return Event.newBuilder().setSource(source).setSeqNo(seqNo.getAndIncrement());
+    }
+```
+
+### Full Completed Code:
+
+```java
+    @Override
+    public Event.Builder newEvent() {
+        return Event.newBuilder().setSource(source).setSeqNo(seqNo.getAndIncrement());
+    }
+}
+```
+
+### Explanation:
+
+- `newEvent()` is a method that returns a `Event"
+1113,lcc,['\t\t\t\t\t\tGraphNode cgn = graphNodes.get(cell);'],java,"Next line of code:
+",,341005dfebe6821d4201177ffce38b1e3048f5a0d9c30463,lcc,,1.0,84,"```java
+						GraphNode cgn = graphNodes.get(cell);
+						if (cgn.depth == -1) continue;
+						for (Iterator<Geometric> it = cell.getGeometric().iterator(); it.hasNext(); ) {
+							Geometric geom = it.next();
+							if (geom instanceof NodeInst) {
+								NodeInst ni = (NodeInst) geom;
+								if (ni.isPort"
+600,lcc,['                    for (int i = 0; i < ticker.length; i++)'],java,"Next line of code:
+",,6a3563763220617ce12df989e13f3ad3d2a6e723fd3d119e,lcc,,1.0,84,"```java
+alphaLevel = rampUp ? 255 : 0;
+```
+
+Continuing the code from where it left off:
+
+```java
+            long lastTime = start;
+            while (!Thread.interrupted()) {
+                long now = System.currentTimeMillis();
+                long elapsed = now - lastTime;
+                lastTime = now;
+
+                if (elapsed >= 1000 / fps) {
+                   "
+5243,lcc,['\t\t\t\tParticipant p = (Participant)m_Participants[i];'],csharp,"Next line of code:
+",,28ce5cf5e0beeb47248c6cba20ae17fa71d60d402770d464,lcc,,1.0,84,"```csharp
+public void OnDeath( Mobile mob, Container corpse )
+{
+    if ( !m_Registered || m_Finished || !m_StartedBeginCountdown )
+        return;
+
+    if ( m_EventGame != null )
+        m_EventGame.OnDeath( mob, corpse );
+    else
+    {
+        if ( mob is PlayerMobile )
+        {
+            PlayerMobile pm = (PlayerMobile)mob"
+686,lcc,"['        mark = ""setRepeated(\'%s\');"" % status_id']",python,"Next line of code:
+",,14de6afab15eabeb4fec480f9d6b4db78e93e0493851cc35,lcc,,1.0,84,"```python
+        self.webview.execute_javascript(mark)
+    def unmark_status_as_repeated(self, status_id):
+        mark = ""unsetRepeated('%s');"" % status_id
+        self.webview.execute_javascript(mark)
+    def lock_status(self, status_id):
+        self.webview.execute_javascript(""lockStatus('%s')"" % status_id)
+    def unlock_status(self, status_id):
+        self"
+734,lcc,['        r = [head]'],python,"Next line of code:
+",,d8447e7d54fe3091a9199e7ab96ea24e60a7f9976caf7d82,lcc,,1.0,84,"```python
+        if not raw:
+            if formatter is not None:
+                return highlight(
+                    [Token.Column, sep] + [Token.Literal, s] for s in self.cols
+                )
+            else:
+                return sep.join(self.cols)
+        else:
+            return self.cols
+```
+
+So the completed code is:
+
+```python
+    def show(self, raw=False, **params):
+        formatter"
+4268,lcc,"['        for state, dict_ in states.items():']",python,"Next line of code:
+",,52b05f3e84a4fe67c9a1b15719fbecb75dda4932f22567e9,lcc,,1.0,84,"```python
+    def _take_snapshot(self):
+        if not self._is_transaction_boundary:
+            self._new = self._parent._new
+            self._deleted = self._parent._deleted
+            self._key_switches = self._parent._key_switches
+            return
+        if not self.session._flushing:
+            self.session.flush()
+        self._new = weakref.WeakKeyDictionary"

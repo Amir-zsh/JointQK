@@ -1,0 +1,36 @@
+dataset: longbench
+data_dir: musique
+model: /vault/ultraz/llm_models/models--meta-llama--Llama-3.1-8B-Instruct/snapshots/0e9e39f249a16976918f6564b8830bc894c89659
+device: null
+press_name: vq
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_llama_vq_fp8/vq_fp8_band
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+  local_files_only: true
+press_init_command: null
+seed: 42
+fp8: false
+press_kwargs:
+  v_method: v_turboquant
+  v_bits: 2
+  quantize_k: true
+  quantize_v: true
+  layer0_full_precision: true
+  vq_codebook_path: /vault/samuel/efficient-llm/JointQK/entropy_coding/vqa_G4_strat_flat_llama_fp8.pt
+  vq_sink: 4
+  vq_recent: 32
+exclude_indices_file: /vault/samuel/efficient-llm/JointQK/logs/bench_allmethods/exclude_musique_train.json

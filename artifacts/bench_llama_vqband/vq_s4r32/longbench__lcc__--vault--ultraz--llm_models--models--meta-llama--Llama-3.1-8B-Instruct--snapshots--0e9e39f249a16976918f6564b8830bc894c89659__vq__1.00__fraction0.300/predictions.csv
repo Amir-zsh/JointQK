@@ -1,0 +1,1758 @@
+length,question,max_new_tokens,compression_ratio,language,_id,task,dataset,answers,answer_prefix,all_classes,predicted_answer
+615,,84,1.0,python,0015062cf7e9262884bb54332e85c9529f05689017c95eff,lcc,lcc,['                    self.choice = int(self.choice) - 1'],"Next line of code:
+",,"```python
+elif self.choice.lower() == 'help':
+    self.print_help()
+    continue
+```
+And here's the `print_help` method:
+```python
+def print_help(self):
+    os.system('clear')
+    print('--------------------------')
+    print(self.grn+'Inspection mode help'+self.blk)
+    print('--------------------------')
+    print('list: List all captured packets')
+   "
+743,,84,1.0,csharp,90e9975c7f92d8ef21fcbe89fd1500b3a541124b7b4304fb,lcc,lcc,['            set { _numValues = value; }'],"Next line of code:
+",,"```csharp
+}
+```
+This is the end of the class definition.
+
+Here is the complete code:
+```csharp
+using System;
+using System.Collections.Generic;
+
+namespace com.espertech.esper.common.@internal.collection
+{
+    /// <summary> reference-counting set based on a HashMap implementation that stores keys and a reference counter for
+    /// each unique key value. Each time the same key is added"
+1364,,84,1.0,csharp,985588e7dc66ac6d50e0fe4a6602f7b58eb5fef402be68fa,lcc,lcc,"['                        b}, callback, asyncState);']","Next line of code:
+",,"```csharp
+[System.Diagnostics.DebuggerStepThroughAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute(""code"")]
+[System.Web.Services.WebServiceBindingAttribute(Name = ""VirtuosoWSSecure"", Namespace = ""http://temp.uri/"")]
+// Instead of deriving from System.Web.Services.Protocols.SoapHttpClientProtocol,
+// WSE Web Service proxies must derive from Microsoft.Web.Services.WebServicesClientProtocol
+public class AddNumbers : Microsoft.Web"
+609,,84,1.0,python,588825a49d4fdd244fc2fb3cce5086b306490b945a3bc787,lcc,lcc,['] + models)'],"Next line of code:
+",,"```python
+    'Bibxxx' + str(i) for i in range(100)
+])
+```
+However, this will not work as expected because the `Bibxxx` models are not defined in the `__all__` list. We need to define them in the `__all__` list. Here's the corrected code:
+
+```python
+__all__ = tuple([
+    'Record',
+"
+2251,,84,1.0,python,9621a523cfd2361541d82c5585397ca2326e223496d5585c,lcc,lcc,"['    response = _pubsub_consumer(session, cluster_id, query_wrapper)']","Next line of code:
+",,"```python
+def pubsub_consumer_list(session, cluster_id, topic_name, needs_columns=False):
+    """""" All pub/sub consumers.
+    """"""
+    response = _pubsub_consumer(session, cluster_id, query_wrapper)
+    if topic_name:
+        response = response.filter(PubSubTopic.name==topic_name)
+    return response
+```
+This function is similar to the previous ones, it queries the database for pub"
+1566,,84,1.0,java,4bd2fd0f69e4de7c6c60f4067b514b23e77ab94af50551f3,lcc,lcc,['      if (split.length < 2 || split.length > 4)'],"Next line of code:
+",,"```java
+if (split.length < 4) {
+  log.warning(""Ignoring line "" + lineCount + "" in RegexNER mapping file: "" + line);
+  continue;
+}
+```
+This is because the line should have at least 4 parts: the regex, the type, the overwritable types, and the priority.
+
+Next line of code:
+```java
+String regex = split[0];
+"
+626,,84,1.0,python,cd81bc2e4c0a7dc1e4f6a340a63de44a5b0e7a055b43a7b3,lcc,lcc,"[""        log.log_strm = open(args.log_file, 'w')""]","Next line of code:
+",,"```python
+if args.log_file is not None:
+    log.set_log_file(args.log_file)
+```
+This line sets the log file path to the specified file.
+
+Next, we need to load the archive index:
+```python
+archive_index = load_archive_index(args.index_file)
+```
+This line calls the `load_archive_index` function with the specified index file path.
+
+Next, we need to check if the"
+910,,84,1.0,csharp,6b78cc0ec714622bb22d89aa972b1eae59e59788b357955a,lcc,lcc,['\t\t\treturn new ConstructorBuilder(mb);'],"Next line of code:
+",,"```csharp
+return new ConstructorBuilder(mb);
+```
+Here is the completed code snippet:
+```csharp
+public ConstructorBuilder DefineTypeInitializer()
+{
+    MethodBuilder mb = DefineMethod(ConstructorInfo.TypeConstructorName, MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName, null, Type.EmptyTypes);
+    return new ConstructorBuilder(mb);
+}
+```
+This method defines a"
+1163,,84,1.0,csharp,5c41dbe75be69a522492a261348f685fcc83189eb876ce02,lcc,lcc,['                int len = fCode.Length + 2;'],"Next line of code:
+",,"```csharp
+                if (generateChecksum && checksumText)
+                    fCode += GetChecksum(fCode);
+                if (startStopText)
+                    fCode = ""*"" + fCode + ""*"";
+                return new Rectangle(fontX, barHeight + fontY, fontX, fontY);
+            }
+```
+Here's the complete code:
+```csharp
+using System;
+using iTextSharp.text;
+using i"
+664,,84,1.0,java,9516693902335ad7c898f1e9ec8d1799680dac2988c0259d,lcc,lcc,['\t\tif(caseInsensitive); // this is to avoid eclipse warning only.'],"Next line of code:
+",,"```java
+if (this.getClass().equals(obj.getClass())) {
+    return 0;
+} else if (caseInsensitive) {
+    return String.valueOf(this).compareTo(String.valueOf(obj));
+} else {
+    return this.toString().compareTo(obj.toString());
+}
+```
+This code compares the current object with the given object `obj`. If they are of the same class, it returns 0. If case-insensitive comparison is"
+567,,84,1.0,java,64d5f26d486a85e85284229e8d254f996cfafd844cd321c5,lcc,lcc,['\t\t\t\t\tpos = btnEnergizeAll.bottom();'],"Next line of code:
+",,"```java
+pos = btnEnergizeAll.bottom();
+```
+However, this is not the end of the code. There are several lines of code that are commented out. Here is the complete code with the commented out lines uncommented:
+
+```java
+// Add a button to consume the Alchemize spell
+RedButton btnConsume = new RedButton(Messages.get(this, ""consume"")) {
+    @Override"
+685,,84,1.0,python,397181750c46cc7bb5cfa79f1f6812770ddf55fc6dac89cd,lcc,lcc,"['  winner, _inferenceResult, _dist, _categoryDist = knn.infer(v[2])']","Next line of code:
+",,"```python
+def simulateClassifier(knn, patternDict, testName):
+    """"""Simulate the KNN classifier on a set of patterns""""""
+    failures = """"
+    for i in patternDict:
+        pattern = patternDict[i]['pattern']
+        category = patternDict[i]['category']
+        knn.learn(pattern, category)
+    for i in patternDict:
+        pattern = patternDict[i]['pattern']
+        category ="
+1232,,84,1.0,python,659965fc4472dec4f8b056a906be656d08aac541f75950f4,lcc,lcc,"['        s, o = self._session_cmd_close(session, suspend_log_chk_cmd)']","Next line of code:
+",,"```python
+        s, o = self._session_cmd_close(session, suspend_log_chk_cmd)
+        if s:
+            raise exceptions.TestError(""Guest system log is not as expected."")
+```
+
+Here's the complete `GuestSuspend` class:
+```python
+class GuestSuspend(object):
+    """"""
+    Suspend guest, supports both Linux and Windows.
+    """"""
+    SUSPEND_TYPE_MEM = ""mem""
+"
+744,,84,1.0,python,41849aea5e307f5199745185087b9ae2038c2a8673824a84,lcc,lcc,"[""        types = ['cert', 'key']""]","Next line of code:
+",,"```python
+            # Each new meter gets a new key.pem and ca.pem file, so they should be deleted
+            # Check if the files exist
+            key_file = os.path.join(config_directory, 'key.pem')
+            ca_file = os.path.join(config_directory, 'ca.pem')
+            if os.path.exists(key_file):
+                os.remove(key_file)
+            if os.path.exists(ca_file):
+                os"
+671,,84,1.0,csharp,f54df722d8cb6050f8b9b79929415e488a47e64578808ae4,lcc,lcc,"['                var firstId = Module.RevParse(gitStash.Name + ""^"");']","Next line of code:
+",,"```csharp
+else
+{
+    Stashed.SetStashDiffs(gitStash, gitItemStatuses);
+}
+```
+This line of code is setting the stash diffs for the selected stash item. The `SetStashDiffs` method is called with the `gitStash` object and the list of `gitItemStatuses`.
+
+Here is the complete method:
+```csharp
+private void"
+769,,84,1.0,python,7293c0e9f7e75148f514aaf18ac8ea75262950e00b623dfd,lcc,lcc,"[""            subsystem='input', ID_INPUT_MOUSE=True, sys_name='mouse0'))""]","Next line of code:
+",,"```python
+            match_subsystem='input'))
+        assert len(devices) > 0
+```
+This test case checks if the `list_devices` method of the `Context` class returns a list of devices that match the specified subsystem.
+
+Here is the complete code:
+```python
+# -*- coding: utf-8 -*-
+# Copyright (C) 2010, 2011, 2012 Sebastian"
+778,,84,1.0,java,f963d6d0a6afee2f2e97ceb0f221aca6ff419e9f3f0e1a2b,lcc,lcc,['\t\tif(beans == null)'],"Next line of code:
+",,"```java
+		for (ims.clinicaladmin.vo.beans.TumourGroupListVoBean bean : beans)
+		{
+			coll.add(new TumourGroupListVo(bean));
+		}
+		return coll;
+	}
+}
+```
+This method takes a collection of `TumourGroupListVoBean` objects and creates a new `TumourGroupListVoCollection` by adding a"
+861,,84,1.0,csharp,a2ce4aeed86faf7c78539925675910ecdf08f4ca9f5603ee,lcc,lcc,['            foreach (ArgumentSyntax argumentSyntax in argumentSyntaxs) {'],"Next line of code:
+",,"```csharp
+private static NamespaceDeclarationSyntax FixByReferenceCalls(NamespaceDeclarationSyntax finalScript, SyntaxList<MemberDeclarationSyntax> memberList)
+{
+    var toReplace = new Dictionary<ArgumentSyntax, ArgumentSyntax>();
+    IEnumerable<ArgumentSyntax> argumentSyntaxs = finalScript.DescendantNodes().OfType<ArgumentSyntax>();
+    foreach (var argument in argumentSyntaxs)
+    {
+        if (argument.Parent is Invocation"
+1153,,84,1.0,python,80bda6d99d3c518ff6465d159112864d8eed9a04c56b1d15,lcc,lcc,['    if len(reaction.metabolites) != 1:'],"Next line of code:
+",,"```python
+def _total_components_flux(flux: float, components: List[float], consumption: bool = True) -> float:
+    """"""
+    Compute the total flux of a reaction's components.
+
+    Parameters
+    ----------
+    flux : float
+        The reaction's flux.
+    components : List[float]
+        A list of the reaction's components.
+    consumption : bool, optional
+        Whether the reaction consumes or"
+1423,,84,1.0,java,656e6b487418898304f2b9808ba22f80abf877b82fdba872,lcc,lcc,['            if (this.owner.getDecorator() instanceof FTDecorator) {'],"Next line of code:
+",,"```java
+            if (this.owner.getDecorator() instanceof FTDecorator) {
+                ((FTDecorator) this.owner.getDecorator()).setOnSendRequestAfterParameters(res, destination);
+            }
+            this.owner.getDecorator().onSendRequestAfter(r);
+            return res;
+        } catch (BodyTerminatedException e) {
+            logger.info(""[FAULT] "" + this.ownerID + "" : FAILURE OF "" + destination"
+3675,,84,1.0,python,b2e9852774a64a45a97fb402afdda4bca2ad6f026ab0a353,lcc,lcc,"['        var = (float(var), float(var))']","Next line of code:
+",,"```python
+def _format_list(var, name):
+    """"""Ensure that parameter is list-like of numbers.""""""
+    # Single-number format.
+    if not isinstance(var, (list, tuple)) and name in ('resolution', 'radius'):
+        return [var, var]
+    # Check if list-like object contains only numbers.
+    if not all(isinstance(x, (int, float)) for x in var):
+       "
+755,,84,1.0,python,733108e23bea8f0fe687224256eb5c0b58a30b29f6ce051d,lcc,lcc,"[""CREATED     = State('Start',     QUEST)""]","Next line of code:
+",,"```python
+STATE_CREATED = 0
+STATE_STARTED = 1
+STATE_COMPLETED = 2
+STATE_FAILED = 3
+```
+This defines the states for the quest.
+
+Next, we need to define the state machine for the quest. This can be done by creating a class that inherits from the Quest class and overrides the `onEvent` method.
+
+```python
+class StolenDignity(Quest"
+878,,84,1.0,python,b1cefd5f19084d4e4a500f51ff0fd6a59f8c2c70e47b868c,lcc,lcc,"[""    _not_serialized_attrs_ = ['layer_type', 'top_type']""]","Next line of code:
+",,"```python
+class FractureLayer(GeoLayer):
+    """"""Fracture layer""""""
+    def __init__(self, config={}):
+        super().__init__(config)
+        self.layer_type = LayerType.fracture
+```
+This class inherits from `GeoLayer` and sets the `layer_type` attribute to `LayerType.fracture`.
+
+Here's the complete code:
+```python
+class Fr"
+950,,84,1.0,csharp,76a0bf2e534153ecd85f4baa149e185926fdf7267d6e1660,lcc,lcc,"['        java = regKey.OpenSubKey(""1.6"");']","Next line of code:
+",,"```csharp
+      return java.GetValue(""JavaHome"") + @""\bin"";
+    }
+
+    private static String GetJavaHome(String resinHome, String javaHome)
+    {
+      if (javaHome!= null)
+        return javaHome;
+      else if (resinHome!= null)
+        return FindJdkInRegistry(HKEY_JDK);
+      else
+        return null;
+    }
+
+    private static String Get"
+1652,,84,1.0,java,ce9e73e7e622c7688ef392b99d6afaa87bea6b138e34fa82,lcc,lcc,['            final DataOutputStream out = new DataOutputStream(baos);'],"Next line of code:
+",,"```java
+writeEmptyStreams(header, emptyStreams);
+```
+This method writes the empty streams information to the header.
+
+Here is the rest of the code:
+```java
+private void writeEmptyStreams(final DataOutput header, final BitSet emptyStreams) throws IOException {
+    header.write(NID.kEmptyStreams);
+    header.write(emptyStreams.nextClearBit(0));
+    header.write(emptyStreams.nextClearBit(0));
+"
+1329,,84,1.0,java,8a2fd200c0170fc660f3939cf1ac96106dc7e05cbcd739ea,lcc,lcc,['            int sizeAfter = getNamespaceResolverSize(desc);'],"Next line of code:
+",,"```java
+            int sizeAfter = getNamespaceResolverSize(desc);
+            assertEquals(sizeBefore, sizeAfter);
+            StringReader reader = new StringReader(writer.toString());
+            InputSource inputSource = new InputSource(reader);
+            Document testDocument = parser.parse(inputSource);
+            writer.close();
+            reader.close();
+            objectToXMLDocumentTest(testDocument);
+        }
+    }
+
+    public void testValidatingMarshal() throws"
+730,,84,1.0,java,ecfe82f294b057561aa2f9cd0122f2dbc5fb0dae134d8df8,lcc,lcc,"['                new LayoutAnimationController(set, 0.5f);']","Next line of code:
+",,"```java
+        LayoutAnimationController controller = new LayoutAnimationController(set, 0.25f);
+        mListView.setLayoutAnimation(controller);
+```
+Here is the complete method:
+```java
+/**
+ * Set the list loading animation.
+ */
+private void setAnimation() {
+    AnimationSet set = new AnimationSet(true);
+    Animation animation = new AlphaAnimation(0.0f, 1.0f);
+   "
+1044,,84,1.0,python,f2938d3f351d2aebd34b5c529253c96aa77b793e3442e486,lcc,lcc,['        self.aspectWidget = Object3DAspect(self)'],"Next line of code:
+",,"```python
+self.l.addWidget(self.drawingModeWidget)
+self.aspectWidget = Object3DAspect(self)
+self.l.addWidget(self.aspectWidget)
+self.scaleWidget = Object3DScale(self)
+self.l.addWidget(self.scaleWidget)
+self.privateInterface = Object3DPrivateInterface(self)
+self.l.addWidget(self.privateInterface)
+self.setLayout(self.l)
+```
+This code creates instances of the `Object3DDrawingModeWidget"
+1595,,84,1.0,python,fe11c4d3c4d9b1392973aed3ba28df9d9cf6a13123cc8e59,lcc,lcc,['\t\tloop = gobject.MainLoop()'],"Next line of code:
+",,"```python
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+```
+This line sets up the DBus main loop, which is necessary for the service to receive and process DBus messages.
+
+Here's the complete `listen` method:
+```python
+def listen(self):
+    global ready_pipe
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    loop = gobject"
+677,,84,1.0,python,fdfc363818ce22cc623b576870180ec881f0a75f716cd8a8,lcc,lcc,"[""        s = lowlevel.SignalMessage('/a/b/c', 'foo.bar', 'baz')""]","Next line of code:
+",,"```python
+def test_interface(self):
+    s = lowlevel.SignalMessage('/a/b/c', 'foo.bar', 'baz')
+    self.assertEqual(s.get_interface(), 'foo.bar')
+    self.assertFalse(s.has_interface('foo.bar'))
+    s.set_interface('foo.bar')
+    self.assertTrue(s.has_interface('foo.bar'))
+    self.assertEqual(s.get_interface(), 'foo.bar')
+    self.assertEqual(type(s.get_interface"
+2054,,84,1.0,python,7ca84608f996fd9789e4cbc658213c13482f990b4ea1c34e,lcc,lcc,"[""                        for n in xrange(params[0]['nbins'] + 1)]""]","Next line of code:
+",,"```python
+for n in range(params[0]['nbins'] + 1)]
+            ]
+        if params[1]['bins'] is None:
+            step = (params[1]['high'] - params[1]['low']) / float(params[1]['nbins'])
+            params[1]['bins'] = [
+                params[1]['low'] + n * step
+                for n in range(params"
+1187,,84,1.0,csharp,2be88ed1d82791123566d7fc244876523ea87a620301c93a,lcc,lcc,"['                ""1:21: Expected \\"">\\""."",']","Next line of code:
+",,"```csharp
+#endregion
+```
+This is a comment block that marks the end of the copyright notice and license section.
+
+Here is the rest of the code:
+```csharp
+using System;
+using System.IO;
+using Google.ProtocolBuffers.TestProtos;
+using NUnit.Framework;
+
+namespace Google.ProtocolBuffers
+{
+    public class TextFormatTest
+    {
+        private static readonly string AllFieldsSetText = TestResources.text_format"
+882,,84,1.0,java,b519f9921c8764941f3609154c5ff4b26d6c0630555f325d,lcc,lcc,"['    return mock.getAvailCompoIds(sClientSpaceId, sUserId);']","Next line of code:
+",,"```java
+return mock.getAvailCompoIds(sClientSpaceId, sUserId);
+```
+It seems like you're trying to create a mock object for the `OrganizationController` class, which is used for testing purposes. The `mock` object is created using Mockito, and it's used to delegate method calls to the actual `OrganizationController` instance.
+
+However, it's worth noting that the `Organization"
+2041,,84,1.0,python,997526c4ebbb7938e65ea14362c83fde9d979401f5f5f445,lcc,lcc,['\t\tname\t- aname/ename/gname'],"Next line of code:
+",,"```python
+class VoteRevokedResponse(Response):
+    def __init__(self, cmd, restag, rescode, resstr, datalines):
+        """"""
+        attributes:
+        data:
+        """"""
+        Response.__init__(self, cmd, restag, rescode, resstr, datalines)
+        self.codestr = 'VOTE_REVOKED'
+        self.codehead = ()
+        self"
+844,,84,1.0,python,04429037d9380b6e9c3f7b2070992a5af10745895025113c,lcc,lcc,"[""        rfd, fd, cfilename   = open_tmp_file('rwseektest.wav')""]","Next line of code:
+",,"```python
+        rfd, fd, cfilename = open_tmp_file('pysndfiletest.wav')
+```
+Should be:
+```python
+        rfd, fd, cfilename = open_tmp_file('pysndfiletest.wav')
+        try:
+            # Open the test file for reading
+            a = Sndfile(ofilename, 'r')
+            nframes = a.nframes
+           "
+6006,,84,1.0,csharp,0cc866de4a40f62e0dc2031e25487c87a06027728f76c5a9,lcc,lcc,"['                fout.Write(curr, 0, curr.Length);']","Next line of code:
+",,"```csharp
+public void EliminateSharedStreams() {
+    //... (rest of the method remains the same)
+}
+```
+This method is used to eliminate shared streams in the PDF document. A shared stream is a stream that is referenced by multiple objects in the document. By eliminating shared streams, the document can be optimized for better performance.
+
+Here's the complete method:
+```csharp
+public void Eliminate"
+701,,84,1.0,csharp,527be9dcafaca936af7816ffc1b91056d113516e8acf4806,lcc,lcc,['\t\t\tif (value <= 0x7F)'],"Next line of code:
+",,"```csharp
+return (uint)((value & 0x3F) << 24 | (value >> 8) & 0xFF);
+```
+This line of code is calculating the number of bytes required to represent the compressed uint32 value. The compressed uint32 value is calculated by shifting the high 8 bits to the left by 24 places and then combining them with the low 8 bits that"
+819,,84,1.0,python,f199ac4b782288ef2a374c11cfb7bee86753f53493876247,lcc,lcc,"['        y_points = np.arange(-89.12, +90.0, 42.847)']","Next line of code:
+",,"```python
+y_points = np.arange(-90.0, +90.0, 10.0)
+```
+
+Here's the complete code with the additional line:
+```python
+@tests.skip_data
+class TestTriPolar(tests.IrisTest):
+    def setUp(self):
+        # load data
+        cubes = iris.load(
+            tests.get_data_path([""NetCDF"", ""ORCA2"","
+1639,,84,1.0,java,97d6976069558160fcb06c6802085ee52a6ef637d5832a1a,lcc,lcc,['\t\treturn hasSpeedModule() ? 5 : 10;'],"Next line of code:
+",,"```java
+return 1.0F / (1.0F + (getDistanceToTarget() / 10.0F));
+```
+This line of code calculates the shooting speed of the sentry, which is inversely proportional to the distance to the target. The closer the target, the faster the sentry will shoot. The `getDistanceToTarget()` method is not shown in the provided code"
+1012,,84,1.0,csharp,8f007015b8b3b455a6fcd8f989241324f18ff10327811d5b,lcc,lcc,"['\t\t\tthis.comboBox1.Size = new System.Drawing.Size(224, 21);']","Next line of code:
+",,"```csharp
+this.comboBox1.Size = new System.Drawing.Size(200, 21);
+this.comboBox1.TabIndex = 0;
+this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+// 
+// textBox2
+// 
+this.textBox2.Location = new System.Drawing.Point(59, 235);
+this.textBox2.Name = ""textBox2"";
+this.textBox2.Size = new System.Drawing.Size(200,"
+1264,,84,1.0,csharp,ae0f2d60c0cb9d0cb36a55fcf60b29466a441974ac234dca,lcc,lcc,['\t\t\tint beg = la.pos; int col = la.col;'],"Next line of code:
+",,"```csharp
+			int beg = la.pos; int col = la.col;
+			while (StartOf(13)) {
+				SemText(out sym.attrPos);
+				if (la.kind == 29) {
+					Get();
+					SemText(out sym.attrPos);
+				}
+			}
+			if (t.pos > beg)
+				sym.attrPos = new Position(beg, t.pos"
+980,,84,1.0,python,b3d7b8ae829a609d04350475dc3cbba8c1903ae29d44f33f,lcc,lcc,['    N1 = a/sqrt(1-eccSquared*sin(phi1Rad)*sin(phi1Rad))'],"Next line of code:
+",,"```python
+phi1 = phi1Rad*_rad2deg;
+```
+Should be:
+```python
+phi1 = phi1Rad * _rad2deg;
+```
+Here is the rest of the code:
+```python
+phi1 = phi1Rad * _rad2deg;
+
+# Calculate the longitude
+lambdaRad = (x / (a * k0)) + LongOriginRad;
+lambda = lambda"
+451,,84,1.0,csharp,c8bb6c7b2115807916ef0d828a186d6e698ed8a7962bc728,lcc,lcc,['                    Label noneFound = new Label();'],"Next line of code:
+",,"```csharp
+MessageBox.Show(""No services found."");
+```
+This will display a message box with the message ""No services found."" when no services are found.
+
+Here is the complete method:
+```csharp
+private void loadServiceInfo()
+{
+    alModules = new ArrayList();
+    if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory))
+    {
+        String[] files = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory"
+575,,84,1.0,java,7630f3d4fd6c44654c13b705304c20adea2cf0798b4dc72c,lcc,lcc,['        long t = getMissionTime();'],"Next line of code:
+",,"```java
+return Event.newBuilder().setSource(source).setSeqNo(seqNo.get());
+```
+This line of code returns a new `Event.Builder` instance with the source and sequence number set to the current values of the `source` and `seqNo` fields.
+
+Here's the complete `newEvent()` method:
+```java
+@Override
+public Event.Builder newEvent() {
+    return Event.newBuilder().setSource"
+1113,,84,1.0,java,341005dfebe6821d4201177ffce38b1e3048f5a0d9c30463,lcc,lcc,['\t\t\t\t\t\tGraphNode cgn = graphNodes.get(cell);'],"Next line of code:
+",,"```java
+						GraphNode cgn = graphNodes.get(cell);
+						if (cgn == null) continue;
+						if (cgn.depth == -1) {
+							cgn.depth = 0;
+							cgn.x = 0;
+							cgn.y = 0;
+							cgn.yoff = 0;
+							cgn.clock = 0;
+						}
+						if (c"
+600,,84,1.0,java,6a3563763220617ce12df989e13f3ad3d2a6e723fd3d119e,lcc,lcc,['                    for (int i = 0; i < ticker.length; i++)'],"Next line of code:
+",,"```java
+                if (System.currentTimeMillis() - start > rampDelay)
+                {
+                    inRamp = false;
+                    alphaLevel = rampUp? 255 : 0;
+                }
+                else
+                {
+                    alphaLevel = (int) ((System.currentTimeMillis() - start) / (double) rampDelay * 255);
+                }
+                g2.setColor(new Color(255, 255, 255"
+5243,,84,1.0,csharp,28ce5cf5e0beeb47248c6cba20ae17fa71d60d402770d464,lcc,lcc,['\t\t\t\tParticipant p = (Participant)m_Participants[i];'],"Next line of code:
+",,"```csharp
+for ( int j = 0; j < m_Participants.Count; ++j )
+{
+    Participant p = (Participant)m_Participants[j];
+    for ( int k = 0; k < p.Players.Length; ++k )
+    {
+        DuelPlayer pl = p.Players[k];
+        if ( pl!= null )
+        {
+            pl.Mobile.CloseGump( types[k] );
+       "
+686,,84,1.0,python,14de6afab15eabeb4fec480f9d6b4db78e93e0493851cc35,lcc,lcc,"['        mark = ""setRepeated(\'%s\');"" % status_id']","Next line of code:
+",,"```python
+mark = ""setRepeated('%s');"" % status_id
+self.webview.execute_javascript(mark)
+```
+
+Here is the complete code:
+```python
+def mark_status_as_repeated(self, status_id):
+    mark = ""setRepeated('%s');"" % status_id
+    self.webview.execute_javascript(mark)
+```
+
+This method is used to mark a status as repeated. It sends a JavaScript"
+734,,84,1.0,python,d8447e7d54fe3091a9199e7ab96ea24e60a7f9976caf7d82,lcc,lcc,['        r = [head]'],"Next line of code:
+",,"```python
+return highlight(self.toks, formatter, outfile)
+```
+Here's the complete `tokenrow` class:
+```python
+class tokenrow(object):
+    def __init__(self, toks=None):
+        if toks is None:
+            toks = []
+        self.toks = [(t, ""%s"" % s) for (t, s) in toks]
+        self.maxwidth"
+4268,,84,1.0,python,52b05f3e84a4fe67c9a1b15719fbecb75dda4932f22567e9,lcc,lcc,"['        for state, dict_ in states.items():']","Next line of code:
+",,"```python
+def _finalize_loaded(self, states):
+    """"""Finalize the loading of a set of states.""""""
+    for state in states:
+        state._finalize_loaded()
+```
+This method is used to finalize the loading of a set of states. It iterates over the states and calls the `_finalize_loaded` method on each state.
+
+Here's the complete code:
+```python
+def _finalize_loaded(self,"
+1319,,84,1.0,python,6071885a8ddae41fc3b21de3b7edec8f485b65d210d0a2e3,lcc,lcc,"[""    elif color == 'yellow':""]","Next line of code:
+",,"```python
+print '\033[0m'
+```
+This will reset the color back to default.
+
+Here's the complete function:
+```python
+def print_color(color=""red or yellow""):
+    # consloe out color
+    if color =='red':
+        print '\033[1;31;40m',
+    elif color == 'yellow':
+        print '\033[1;33;40m',
+"
+545,,84,1.0,python,58414c770f11b4a32f9d1c67426fd6d8e2028e408a27f131,lcc,lcc,"['                elif res[\'error_code\'] in [""606"", ""607"", ""608""]:']","Next line of code:
+",,"```python
+def handlePremium(self):
+    #... (rest of the code remains the same)
+    # Add the following code to handle the premium download
+    if premium_url:
+        self.download(premium_url)
+    else:
+        self.fail(_(""Failed to get premium download link""))
+```
+This code checks if a premium download link was obtained, and if so, it downloads the file using that link. If"
+598,,84,1.0,csharp,91b83a11b6dc2c86381251a96905d31244b8ac184fe12ef5,lcc,lcc,['\t\t\t\tdirections |= ScrollDirection.Right;'],"Next line of code:
+",,"```csharp
+				directions |= ScrollDirection.Right;
+			}
+			if (Viewport.LastMousePos.Y >= Game.Renderer.Resolution.Height - EdgeCornerScrollThreshold)
+				directions |= ScrollDirection.Down;
+			if (Viewport.LastMousePos.X < EdgeCornerScrollThreshold)
+				directions |= ScrollDirection.Left;
+			if (Viewport.LastMousePos.Y < EdgeCornerScrollThreshold)
+				directions |="
+3874,,84,1.0,python,c2347b59144779a0b7a159df894795eedab94a268ecd2b43,lcc,lcc,"[""        obj = CommandLoader(args=['aunpack'] + au_flags \\""]","Next line of code:
+",,"```python
+class extracthere(Command):
+    def execute(self):
+        """""" Extract copied files to current directory """"""
+        copied_files = tuple(self.fm.env.copy)
+        if not copied_files:
+            return
+        def refresh(_):
+            cwd = self.fm.env.get_directory(original_path)
+            cwd.load_content()
+        one_file = copied_files[0]
+        cwd = self.fm.env.cwd
+        original_path = cwd"
+518,,84,1.0,java,971fbab8c3ab0ce2be833fead765ea9d6620fe3529e6e4f2,lcc,lcc,"['\t\t\t\t\tdrawPressed3DBorder(g, x, y, controlSize, controlSize);']","Next line of code:
+",,"```java
+g.setColor(MetalLookAndFeel.getControlHighlight());
+g.drawRect(x, y, controlSize - 1, controlSize - 1);
+```
+
+Here's the complete code snippet:
+```java
+public void paintIcon(Component c, Graphics g, int x, int y) {
+    JCheckBox cb = (JCheckBox)c;
+    TristateCheckModel model = (TristateCheckModel)"
+945,,84,1.0,java,5d56dd41743ce710c9b0986b24ec730ba947774b15696336,lcc,lcc,['        if (GenericValidator.isBlankOrNull(studyFormName)) {'],"Next line of code:
+",,"```java
+private static ValidationResults matchExistingStudyFormName(String accessionNumber, String studyFormName, boolean existingRequired) {
+    // Check if the existing study form name matches the accession number
+    SampleDAO sampleDAO = new SampleDAOImpl();
+    Sample sample = sampleDAO.getSampleByAccessionNumber(accessionNumber);
+    if (sample!= null && sample.getStudyFormName().equals(studyForm"
+620,,84,1.0,csharp,941de4a30042444c37ae61552e7f11d288717b818793b5d1,lcc,lcc,['\t\t\t\tmapping.loader = new HbmLoader();'],"Next line of code:
+",,"```csharp
+mapping.SqlLoader = new HbmSqlLoader { name = namedQueryReference };
+```
+Here is the complete method:
+```csharp
+public void Loader(string namedQueryReference)
+{
+    if (mapping.SqlLoader == null)
+    {
+        mapping.SqlLoader = new HbmSqlLoader { name = namedQueryReference };
+    }
+    else
+    {
+        mapping.SqlLoader.name = namedQuery"
+1570,,84,1.0,java,e42bb143aca03ffdde352e012ca3991013aa4f1018e60c8f,lcc,lcc,['        if ((args == null) || (args.length == 0)) {'],"Next line of code:
+",,"```java
+        String[] argValues = new String[args.length];
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == null) {
+                argValues[i] = """";
+            } else if (args[i].isResource()) {
+                MessageResources messages = getMessageResources(request);
+                argValues[i] = getMessage(messages, locale, args[i].getKey"
+743,,84,1.0,csharp,1fbe52a6ae333eb46f1ea6000375cec54d0c1377ea171db3,lcc,lcc,['\t\tinternal abstract bool IsColumnContained (DataColumn column);'],"Next line of code:
+",,"```csharp
+// Add the following line to the end of the Constraint class
+internal abstract void RemoveFromConstraintCollectionCleanup(ConstraintCollection collection);
+```
+This line adds a new method to the Constraint class, which is used to perform any necessary cleanup when a constraint is removed from a ConstraintCollection.
+
+Here is the complete updated code:
+```csharp
+// System.Data.Constraint.cs
+//
+// Author:
+//	F"
+655,,84,1.0,csharp,83459d6f1f2adf3b906ee4a28eaf21c3a195f75ae100c64b,lcc,lcc,['            var item = Subject.GetItems().Single();'],"Next line of code:
+",,"```csharp
+PrepareClientToReturnCompletedItem(true, ratio: 1.0, seedingTime: 30);
+var item = Subject.GetItems().Single();
+item.CanBeRemoved.Should().BeTrue();
+item.CanMoveFiles.Should().BeTrue();
+```
+This test case checks that the item is removable and can be moved when the max idletime is configured and the item is paused. 
+
+Note:"
+1227,,84,1.0,python,291eb52753b18a31b084cd6c13d64847dd010ab270cd7bff,lcc,lcc,"['        for l in (self.reactions, self.genes, self.metabolites):']","Next line of code:
+",,"```python
+self._model = self
+```
+This line is necessary to ensure that all objects in the model point to the model itself. This is done in the `__setstate__` method, which is called when the model is loaded from a serialized state.
+
+Here is the complete code:
+```python
+from warnings import warn
+from copy import deepcopy, copy
+from six import iteritems, string_types"
+1021,,84,1.0,csharp,7a6b465ccf619db236b9ebaa5024b7f2602fd097e1f14af8,lcc,lcc,['\t\tsourceEventBinding.DataSource = new dfComponentMemberInfo()'],"Next line of code:
+",,"```csharp
+sourceEventBinding.DataSource = DataSource.Component;
+sourceEventBinding.DataMember = DataSource.MemberName;
+sourceEventBinding.EventName = SourceEventName;
+sourceEventBinding.Target = this;
+sourceEventBinding.OnEventRaised += new dfEventBinding.EventRaisedHandler(OnSourceEventRaised);
+sourceEventBinding.Bind();
+```
+
+And here's the rest of the code:
+```csharp
+private void bindTargetEvent"
+2508,,84,1.0,csharp,bca3c4560f23f25e2f915056e3c74f7832b570be4c2e30fb,lcc,lcc,['\t\t\tif (a == null) a = LeadingAny(p.down);'],"Next line of code:
+",,"```csharp
+else if (p.typ == Node.iter || p.typ == Node.opt) {
+    a = LeadingAny(p.sub);
+}
+```
+This is because the `LeadingAny` function is called recursively on the `sub` node of the `iter` and `opt` nodes, which are the only other nodes that can have an `any` node as a child.
+
+Here is the complete code:
+"
+976,,84,1.0,csharp,218d7b3f8d5e93240d972dc518c5b9e0fe4372b38cd94b33,lcc,lcc,['            int random = Utility.Random(100);'],"Next line of code:
+",,"```csharp
+            if (Utility.Random(100) < chance)
+            {
+                res = EnhanceResult.Success;
+            }
+            else
+            {
+                res = EnhanceResult.Failure;
+            }
+        }
+```
+This code will check if the random number generated by `Utility.Random(100)` is less than the given chance. If it is, the result will be set to `EnhanceResult.Success"
+772,,84,1.0,csharp,a35dec5733725ddbb50c8215f4db5a1bb8d03ea5bf6f87c7,lcc,lcc,['                if (_diff > 0)'],"Next line of code:
+",,"```csharp
+if (_diff > 0)
+{
+    await RecycleItems(session, cancellationToken, bluk, ItemId.ItemBlukBerry);
+}
+if (_diff > 0)
+{
+    await RecycleItems(session, cancellationToken, pinap, ItemId.ItemPinapBerry);
+}
+if (_diff > 0)
+{
+    await RecycleItems(session, cancellationToken, wepar, ItemId.ItemW"
+475,,84,1.0,java,2abe780e4777e159876fcba6fb9c21888d8a0782e7499c3e,lcc,lcc,"['\t\tdamageCooldown = compound.getInteger(""DamageCooldown"");']","Next line of code:
+",,"```java
+damage = compound.getInteger(""ToolDamage"");
+```
+This line reads the ""ToolDamage"" value from the NBT compound and assigns it to the `damage` variable.
+
+Next, we need to read the enchantment levels from the NBT compound. We can do this by iterating over the enchantment tags in the compound:
+```java
+NBTTagList enchantments = compound.getTagList(""ench"", "
+498,,84,1.0,java,1dba3395659d0bbbbc35a3da100e582c60c44de0cdd4c2e8,lcc,lcc,['        for (StackImpl stack : stacks) {'],"Next line of code:
+",,"```java
+assertTrue(found.size() == 3);
+```
+This line of code is asserting that the size of the list of found stacks is 3, which means that all three stacks with the specified tags were found.
+
+Here is the complete code snippet:
+```java
+@Test(dependsOnMethods = ""shouldUpdateStack"")
+public void shouldFindStacksWithSpecifiedTags() throws Exception {
+    stacks[0]."
+1519,,84,1.0,python,b581893ac400757aaad32eed292afd06559e04175e8d6fdf,lcc,lcc,"[""        cat = getToolByName(self.context, 'uid_catalog')""]","Next line of code:
+",,"```
+cat = getToolByName(self.context, 'uid_catalog')
+resbrains = cat.searchResults(query)
+if len(resbrains) == 1:
+    contobj = resbrains[0].getObject()
+```
+
+Here is the rest of the code:
+```
+    if contobj.isDiscussable() and canreply(contobj):
+        if self.request.has_key('comcynapsecommentsview'):
+            view"
+715,,84,1.0,csharp,65e83568eadd384a035b2d009ca4b6e8962b6a6b11a58326,lcc,lcc,['\t\t\t\tif (typeAttribute != null)'],"Next line of code:
+",,"```csharp
+if (typeAttribute!= null)
+{
+    _returnType = new ClassItem(Context, this, typeAttribute.Value);
+}
+```
+This line of code checks if the `typeAttribute` is not null, and if it's not null, it creates a new `ClassItem` instance and assigns it to the `_returnType` field.
+
+Here's the complete method:
+```csharp
+///"
+549,,84,1.0,csharp,b293cf5f342371e0bf71c2612684f816f33409393283da9c,lcc,lcc,['            if (Keys.Count < 1)'],"Next line of code:
+",,"```csharp
+            }
+            base.UpdateItemID();
+        }
+```
+Here is the complete code:
+```csharp
+using System;
+using System.Collections.Generic;
+using Server.Targeting;
+using Server.Engines.Craft;
+
+namespace Server.Items
+{
+    public class KeyRing : Item, IResource, IQuality
+    {
+        private CraftResource _Resource;
+        private Mobile _Crafter;
+       "
+692,,84,1.0,csharp,c4cefa2a1ddbaac52ded7360c79296813666aad6d9e178b1,lcc,lcc,"['\t\t\tthis.butAttach.Location = new System.Drawing.Point(738, 2);']","Next line of code:
+",,"```csharp
+this.butAttach.Location = new System.Drawing.Point(802, 44);
+this.butAttach.Name = ""butAttach"";
+this.butAttach.Size = new System.Drawing.Size(75, 23);
+this.butAttach.TabIndex = 8;
+this.butAttach.Text = ""&Attach"";
+this.butAttach.Click += new System.EventHandler(this.butAttach_Click);
+```
+
+Next line of code:
+```csharp
+this"
+808,,84,1.0,csharp,faeb4c1f5b91b0308378f17f35d5be9bb0bb461449205814,lcc,lcc,"['                pt = (POINT)c.ReadToStructure(0, typeof(POINT));']","Next line of code:
+",,"```csharp
+                pt = (POINT)c.ReadToStructure(0, typeof(POINT));
+                c.Dispose();
+                return new Point(pt.x, pt.y);
+            }
+        }
+    }
+    /// <summary>
+    /// A column of a list view.
+    /// </summary>
+    public class SystemListViewColumn
+    {
+        public SystemListViewColumn(int format, int width, int index, string title"
+675,,84,1.0,java,641e1c881986075c2c1d4de3afcfdf28d45ea43407457b7d,lcc,lcc,['        CreateUtkastRequest utkastRequest = buildRequest(intygsTyp);'],"Next line of code:
+",,"```java
+CreateUtkastRequest utkastRequest = buildRequest(intygsTyp);
+utkastRequest.setPatientFornamn(Strings.repeat(""a"", 256));
+Response response = utkastController.createUtkast(intygsTyp, utkastRequest);
+assertEquals(BAD_REQUEST.getStatusCode(), response.getStatus());
+```
+This test case checks if the `createUtkast` method"
+1183,,84,1.0,csharp,f928fa8a814e6601eba3952b11bcbc31cc18a3d2f086048f,lcc,lcc,['\t\t\tfor (var i = 0; i < numberToCancel; i++)'],"Next line of code:
+",,"```csharp
+			if (numberToCancel > 0)
+			{
+				var item = queue.FirstOrDefault(i => i.Item == itemName);
+				if (item!= null)
+				{
+					if (item.NumberToCancel < numberToCancel)
+					{
+						queue.Remove(item);
+						queue.Add(new ProductionItem(this, itemName, item.TotalCost, item.PlayerPower, item.NumberToCancel - item"
+588,,84,1.0,python,a8df204f2a859a703bf766e6567ed3d50e67fb8e91bc975b,lcc,lcc,"['        lang, proj, dir_path, filename = split_pootle_path(pootle_path)']","Next line of code:
+",,"```python
+def get_for_path(self, pootle_path, user):
+    """"""Returns units that fall below the `pootle_path` umbrella.
+    :param pootle_path: An internal pootle path.
+    :param user: The user who is accessing the units.
+    """"""
+    # Assuming you want to filter units based on the pootle_path and user
+    return self.get"
+961,,84,1.0,java,daa27a5d67ba9d011a6296ae7e7effeac588540b3e61d3e5,lcc,lcc,['            if (newLocationList.size() > 0)'],"Next line of code:
+",,"```java
+beanProperties.addPropertyValue(LegacyConfigPostProcessor.PROPERTY_LOCATIONS, newLocationList);
+```
+This line of code adds the new location list to the bean properties. 
+
+Here's the complete code snippet:
+```java
+/**
+ * Given a bean name (assumed to implement {@link org.springframework.core.io.support.PropertiesLoaderSupport})
+ * checks whether it already references the <code>global-properties</"
+1301,,84,1.0,csharp,774fe32bf5c3e50a3060d52bef095025decb114d4ab2a37b,lcc,lcc,['\t\t\t\tvalue = ch - 0xFF60 + 0x8EA0;'],"Next line of code:
+",,"```csharp
+				// This range contains half-width katakana.
+				value = (ch - 0xFF60) * 2;
+				value = ((int)(extraToJis[value])) |
+						(((int)(extraToJis[value + 1])) << 8);
+			} else {
+				// This is a control character, so we just copy it.
+				value"
+840,,84,1.0,java,cdd96b1a6cdd32b52402ed8afa5c640bc81a206da183fee0,lcc,lcc,['    if (results == null) {'],"Next line of code:
+",,"```java
+return results;
+```
+Here is the complete method:
+```java
+/**
+ * Loads a comma-separated list of strings from Properties.  Commas may be quoted if needed, e.g.:
+ *    property1 = value1,value2,""a quoted value"",'another quoted value'
+ *    
+ * getStringArray(props, ""property1"") should return the same thing as
+ *    new String[] {"
+1735,,84,1.0,java,caf4ee2315e7782e651f443c2b635e258cb5c7aea3ede55c,lcc,lcc,['\t\tcontextMenus = new ContextMenus();'],"Next line of code:
+",,"```java
+		super.setGlobalContext(ContextBridgeFlyweightFactory.getInstance().create(GlobalContextBridge.class, context, true));
+		super.setGlobalContext(ContextBridgeFlyweightFactory.getInstance().create(GlobalContextBridge.class, context, true));
+		super.setGlobalContext(ContextBridgeFlyweightFactory.getInstance().create(GlobalContextBridge.class, context, true));
+		super.setGlobalContext(ContextBridgeFlyweightFactory.getInstance().create(GlobalContext"
+599,,84,1.0,csharp,f0c18c81b769fb90470c8df8bae97ef061380d5b8dcb9b40,lcc,lcc,"['            ptr_of_this_method = ILIntepreter.Minus(__esp, 1);']","Next line of code:
+",,"```csharp
+ptr_of_this_method = ILIntepreter.GetObjectAndResolveReference(ptr_of_this_method);
+UnityEngine.Ray instance_of_this_method = (UnityEngine.Ray)typeof(UnityEngine.Ray).CheckCLRTypes(StackObject.ToObject(ptr_of_this_method, __domain, __mStack));
+var result_of_this_method = instance_of_this_method.ToString();
+ptr_of_this_method = ILIntepreter.Minus"
+854,,84,1.0,csharp,93191c3c840c04430c2e0222e3643013a8af4e2b709e6f95,lcc,lcc,"['\t\t\t\tGump g = new Gump(0, 0);']","Next line of code:
+",,"```csharp
+                from.SendGump(new EodonianWallMapGump(from));
+            }
+        }
+
+        public class EodonianWallMapGump : Gump
+        {
+            public EodonianWallMapGump(Mobile from) : base(75, 75)
+            {
+                AddBackground(0, 0, 400, 400, 9270);
+
+                AddHtml"
+824,,84,1.0,python,09ae4ef8effb51b554602ffbe68a496389bb548ebc5983ad,lcc,lcc,['        course_key = CourseKey.from_string(self._course_key)'],"Next line of code:
+",,"```python
+return CourseKey.from_string(self._course_key)
+```
+Here's the complete code snippet:
+```python
+@property
+def _course_location(self):
+    """"""
+    Return the locator string for the course.
+    """"""
+    return CourseKey.from_string(self._course_key)
+```
+This method returns the course location as a `CourseKey` object, which can be used to access the course in the Studio"
+756,,84,1.0,python,0c4383dd82b695a9c0f842643d57d89b5f9deac30eb27285,lcc,lcc,"['                im1L = im1.convert(""L"", rgb2I)']","Next line of code:
+",,"```
+                im1L = im1.convert(""L"", rgb2I)
+            elif channel == ""R"":
+                im1L = im1.convert(""L"", rgb2r)
+            elif channel == ""G"":
+                im1L = im1.convert(""L"", rgb2g)
+            else:
+                im1L = im1.convert(""L"", rgb2b)
+            h1 = im"
+1740,,84,1.0,csharp,2c8143e18e8a59b4e401fca8446e57b31d54c7fc033009c7,lcc,lcc,"['\t\t\t\tMsg(""Welcome to the real world..."");']","Next line of code:
+",,"```
+case ""complicity"":
+    Msg(""What are you talking about? I'm just a simple shepherd."");
+    break;
+```
+This line of code will handle the ""complicity"" keyword and respond with a message. 
+
+However, it seems like the code is missing the implementation of the `Upgrade` method, which is called in the `@upgrade` case. Here's a possible implementation:
+```c"
+562,,84,1.0,csharp,ab64e80497dc29027b566fe583c6e6936d54fd063307f698,lcc,lcc,['            return src.Map.Rules == MapRules.FeluccaRules;'],"Next line of code:
+",,"```csharp
+// In Fel or Follow the same rules as indirect spells such as wither
+// If the target is in Fel, the detection is always successful
+if (target.InFel)
+{
+    return true;
+}
+// If the target is following the source, the detection is always successful
+if (target.Following == src)
+{
+    return true;
+}
+// If the source is in Fel,"
+1328,,84,1.0,java,1d185bc0190b4d50ec508a59208f05925712f6455d6ece65,lcc,lcc,['        if (currentSession != null && currentSession.isOpened()) {'],"Next line of code:
+",,"```java
+if (currentSession!= null && currentSession.getState() == SessionState.CREATED_TOKEN_LOADED) {
+    userInfoSession = currentSession;
+    userInfoSession.requestAsync(new Request.Callback() {
+        @Override
+        public void onCompleted(Response response, Object state, Bundle extras) {
+            GraphUser user = response.getGraphObjectAs(GraphUser.class);
+            UserSettingsFragment.this.user = user;
+            updateUI"
+1017,,84,1.0,csharp,abeb767e6c37cee48470e6764ac480ad487fef3e3fc93bba,lcc,lcc,"['            return View(""Form"", new DelegateViewModel());']","Next line of code:
+",,"```csharp
+return View(""Form"", new DelegateViewModel());
+```
+However, I will assume that you want to add the rest of the methods to the class. Here is the completed code:
+
+```csharp
+namespace App.Mvc.Controllers
+{
+    using Contracts;
+    using Mvc;
+    using Contracts.Services;
+    using Models;
+    using Filters;
+    using System.Collections.Generic;
+    using System.Linq;
+    using"
+799,,84,1.0,java,67a6dc96ef742343a5472232bc814279dccd54c1055439e8,lcc,lcc,['        PlayerGroup group = player.getPlayerGroup2();'],"Next line of code:
+",,"```java
+public static void changeLeader(Player newLeader) {
+    Preconditions.checkNotNull(newLeader, ""New leader should not be null"");
+    PlayerGroup group = newLeader.getPlayerGroup2();
+    if (group!= null) {
+        group.onEvent(new ChangeLeaderEvent(group, newLeader));
+    }
+}
+```
+This method changes the leader of a group. It first checks if the new leader is not null,"
+673,,84,1.0,java,d885bc25f6d6b7f2bed6c360c4182759018c010914bbd263,lcc,lcc,['        for(int i = 0; i< myWeapons.length; i++) {'],"Next line of code:
+",,"```java
+for (int i = 0; i < ActiveWeapons.size(); i++) {
+    ActiveWeapons.get(i).update(delta);
+}
+```
+This will update the cooldowns of all active weapons.
+
+Next, you need to update the display to show the new positions of the player, enemies, and other players. You can do this by calling the `render` method of the `HUD` class and"
+2070,,84,1.0,csharp,d2cc14959cc14d9e5f5c314ff857cbc70f1ff16fa1441fa2,lcc,lcc,['\t\t\t\tforeach (ILNode child in block.GetChildren()) {'],"Next line of code:
+",,"```csharp
+foreach (ILBasicBlock child in block.Body) {
+    if (child!= block.EntryGoto) {
+        if (prevChildAsBB!= null) {
+            prevChildAsBB.Next = child;
+        } else {
+            block.EntryGoto.Next = child;
+        }
+        prevChildAsBB = child;
+        flatBody.AddRange(child.Body);
+    }
+}
+block.Body = flatBody"
+2179,,84,1.0,python,71ce6181e5bc2ca033a59fff909ae4682cbb94f61145ba04,lcc,lcc,"['                return sorted(result), bool(extension.get_critical())']","Next line of code:
+",,"```python
+return result, extension.get_critical()
+```
+This line is missing in the provided code snippet. It should be added after the `for extension_idx in range(0, self.cert.get_extension_count()):` loop in the `CertificateInfoPyOpenSSL` class.
+
+Here's the complete method:
+```python
+def _get_all_extensions(self):
+    result = {}
+    for extension_idx in range(0"
+924,,84,1.0,java,d18db499c41a15c135ce3f82d3cc62afdcd46c02c9a100e3,lcc,lcc,['        if (font == null) {'],"Next line of code:
+",,"```java
+d.width = font.getSize() * 10;
+d.height = font.getSize() * 2;
+return d;
+```
+This sets the minimum size of the text figure to be 10 times the font size in width and 2 times the font size in height.
+
+Here is the complete method:
+```java
+@Override
+public Dimension getMinimumSize() {
+    Dimension d = new Dimension();
+    Font"
+764,,84,1.0,csharp,94f4579778d0f769443d95027663337643885b8b0b67cd03,lcc,lcc,"['            this.rptComboBox.Location = new System.Drawing.Point(92, 5);']","Next line of code:
+",,"```csharp
+this.rptComboBox.Items.AddRange(new object[] {
+    ""Money Received Report (Payments Received)"",
+    ""Money Received Report (Documents Created)"",
+    ""Items Sold/Issued Report"",
+    ""Rooms Needing Cleaning"",
+    ""Sales Report"",
+    ""Sales Return Report"",
+    ""Sales Return Report (Items Returned)"",
+    ""Sales Return Report (Items Not Returned)"",
+    ""Sales Return Report ("
+5328,,84,1.0,csharp,8e0bd228e7aa848a9bf8109d86ecaf76dcf9e5dee02fba5e,lcc,lcc,['\t\t\tbuff[4] = (byte)(address & 0x000000ff);'],"Next line of code:
+",,"```csharp
+buff[4] = (byte)((address & 0x000000ff) >> 0);
+```
+This line is setting the 4th byte of the report to the least significant byte of the address.
+
+Here's the complete method:
+```csharp
+public byte[] ReadData(int address, short size)
+{
+    byte[] buff = CreateReport();
+    buff[0] ="
+431,,84,1.0,java,9ebf3a9f0f2f7e7496ccd13c44ec7354a4a0230fe1f15f47,lcc,lcc,['\t\t\t\treturn new int[0];'],"Next line of code:
+",,"```java
+return new int[] { 0 };
+```
+Here's the complete method:
+```java
+@Nonnull
+public int[] getBlockSelectionStarts() {
+    return new int[] { 0 };
+}
+```
+Note that this method is supposed to return an array of block selection starts, but in this implementation, it always returns an array with a single element, 0. This might not be"
+1086,,84,1.0,csharp,79bfd01dfd65567d16786ba83d96abf2c1f32aed45f161f0,lcc,lcc,['\t\t\tthis.label8 = new global::Gtk.Label ();'],"Next line of code:
+",,"```csharp
+// Container child hbox3.Gtk.Box+BoxChild
+this.label8 = new global::Gtk.Label ();
+this.label8.Name = ""label8"";
+this.label8.LabelProp = global::Mono.Unix.Catalog.GetString (""_White spaces:"");
+this.label8.UseUnderline = true;
+this.hbox3.Add (this.label8);
+global::Gtk.Box.BoxChild w28 = ((global"
+3043,,84,1.0,python,0040aff29f9f6ccd4819e0793a5a66b9d75d882f56fae40c,lcc,lcc,['        for i in zip(self.loaded_plugins):'],"Next line of code:
+",,"```python
+        for plugname, plug in self.loaded_plugins:
+            try:
+                plug.collect()
+            except (OSError, IOError) as e:
+                if e.errno in fatal_fs_errors:
+                    self.ui_log.error("""")
+                    self.ui_log.error("" %s while collecting plugin %s"" % (e.strerror, plugname))
+                    self.ui_log.error("""")
+                else:
+                    raise e
+"
+831,,84,1.0,python,e23602db74e35727f7f766eb0f92a05cdb9599280a144a07,lcc,lcc,"[""        elif hasattr( original, 'originalFunction' ):""]","Next line of code:
+",,"```python
+def nullFunction( self, functionName, dll, resultType=ctypes.c_int, argTypes=(), doc=None, argNames=(), extension=None, deprecated=False ):
+    """"""Create a null function for given name""""""
+    func = ctypes.CFUNCTYPE( resultType, *argTypes )( None )
+    func.__doc__ = doc
+    func.argNames = list(argNames or ())
+   "
+864,,84,1.0,csharp,0e11139b864daa3a41696de69d95d0a294335165cb569f6a,lcc,lcc,['                        Mobile m = mobiles[i];'],"Next line of code:
+",,"```csharp
+                    for (int i = 0; i < mobiles.Count; i++)
+                    {
+                        Mobile m = mobiles[i];
+                        if (m!= m_Item.From && SpellHelper.ValidIndirectTarget(m_Item.From, m) && m_Item.From.CanBeHarmful(m, false))
+                        {
+                            m_Item.From.DoHarmful(m);
+                            AOS.Damage(m,"
+847,,84,1.0,java,45be6133b10843a59b2ff2272116e322f7dd795025749020,lcc,lcc,['        User user = getUser(request);'],"Next line of code:
+",,"```java
+/**
+ * Prepares the domain info
+ *
+ * @param request the request being serviced
+ * @param manager the mail manager
+ * @param domain the domain
+ * @exception MailManagerException if an error occurs
+ */
+private void doDomainInfo(HttpServletRequest request, MailManager manager,
+                          String domain) throws MailManagerException {
+    DomainInfo domainInfo = manager.getDomainInfo(domain);
+    request.setAttribute"
+746,,84,1.0,python,bc922d0a7fcc0c037de90c7f575f1de8f8ac956e5c9e4e82,lcc,lcc,['        self.member_groups = self.user.get_member_groups(self.groups)'],"Next line of code:
+",,"```python
+def save(self, commit=True):
+    """"""Override save to add user to the instance""""""
+    instance = super(PermissionGroupsForm, self).save(commit=False)
+    instance.user = SystersUser.objects.get(user=self.user)
+    instance.community = self.community
+    if commit:
+        instance.save()
+    return instance
+```
+However, since `PermissionGroupsForm` is a form and not a"
+2896,,84,1.0,java,8d3d0541e92abe43d18a21fd5943d0fee67278670fbf48d8,lcc,lcc,"['                        16 + (~stactics_display_buffer.read(i) & 0x0f),']","Next line of code:
+",,"```java
+for (i = 12; i < 16; i++) {
+    drawgfx(bitmap, Machine.gfx[5],
+            16 + (~stactics_display_buffer.read(i) & 0x0f),
+            16,
+            0, 0,
+            pixel_x, pixel_y,
+            Machine.visible_area, TRANSPARENCY_NONE, 0);
+    pixel_x +="
+515,,84,1.0,java,04233bb10cad37ee372ddcc1ca95b3e2a853d217fa90929e,lcc,lcc,['\t\t\t\tfirms = loadFromFile();'],"Next line of code:
+",,"```java
+@Override
+public void loadToData() {
+    firms = loadFromFile();
+}
+```
+
+Here is the complete `File` enum:
+```java
+public enum File {
+    PLAYER(new ConfigFile<String, Person>() {
+        @Override
+        public Person create(String string, ConfigurationSection conf) {
+            return new Person(string, conf);
+        }
+
+        @Override
+        public ConcurrentMap<String, Person"
+1060,,84,1.0,java,23da8d9de20f882d02d5c855b1322a6bc6b13eebcf69be20,lcc,lcc,['        if (halfTradePeriodDate == null && takeOfferDate != null)'],"Next line of code:
+",,"```java
+if (halfTradePeriodDate == null && getMaxTradePeriodDate()!= null) {
+    halfTradePeriodDate = new Date(getMaxTradePeriodDate().getTime() + getOffer().getPaymentMethod().getHalfTradePeriod());
+}
+return halfTradePeriodDate;
+```
+This method returns the half trade period date, which is used to determine when the trade period is halfway over. If the half"
+931,,84,1.0,java,e183058d346d8baf870f97d2f9f4a343610cbd294e8bc9ff,lcc,lcc,['            else if (filterStr.length() == 0 || filterStr.length() > 255) {'],"Next line of code:
+",,"```java
+else {
+    String[] filters = filterStr.split("","");
+    for (String filter : filters) {
+        TcpAddress.TcpAddressMask mask = new TcpAddress.TcpAddressMask(filter);
+        tcpAcceptFilters.add(mask);
+    }
+}
+```
+This code assumes that the `TcpAddress.TcpAddressMask` class has a constructor that takes a string as an argument and parses it into a `Tcp"
+807,,84,1.0,csharp,cb8ef7b164c1f9b4d27225f6b8e45ea33c8096c073d82e27,lcc,lcc,"['\t\t\t\t\tSendOrderTo(newConn, ""AuthenticationError"", message);']","Next line of code:
+",,"```csharp
+					SendOrderTo(newConn, ""ServerError"", message);
+					DropClient(newConn);
+					return;
+				}
+				if (handshake.Mod!= ModData.Manifest.Id)
+				{
+					var message = ""Server requires mod "" + ModData.Manifest.Id;
+					SendOrderTo(newConn, ""ServerError"", message);
+					DropClient(newConn);
+					return;
+				}
+"
+1045,,84,1.0,python,6632f438b48e38612c7af5be064f73e8a4b86ead00fbda69,lcc,lcc,"[""    return aetypes.Range(dict['star'], dict['stop'])""]","Next line of code:
+",,"```python
+    return aetypes.Range(dict)
+```
+Here is the complete function:
+```python
+def mkrange(dict):
+    return aetypes.Range(dict)
+```
+This function is used to create a Range object from a dictionary.
+
+Next line of code:
+```python
+def mkcomparison(dict):
+```
+Here is the complete function:
+```python
+def mkcomparison(dict):
+    return aetypes.Comparison(dict"
+2596,,84,1.0,python,25409067cd0b9bd6ffc59d2ab30579edc2ec8b0a47154def,lcc,lcc,['                sample_count[v] -= sample_count[edge.child]'],"Next line of code:
+",,"```python
+            sample_count[edge.child] = 0
+            v = parent[v]
+        for edge in edges_in:
+            parent[edge.child] = edge.parent
+            v = edge.parent
+            while v!= -1:
+                sample_count[v] += sample_count[edge.child]
+                v = parent[v]
+        for edge in edges_in:
+            v = edge.child
+            while v!= -1"
+673,,84,1.0,python,f8ded3af8ef3545db8175306e099fcfdecc9a38e3633b747,lcc,lcc,['\t\tself.feid = int(self.satfinder_scan_nims.value)'],"Next line of code:
+",,"```python
+def __init__(self, session):
+    # existing code
+    self.satfinder_scan_nims = self.satfinder_scan_nims or ConfigSelection(choices=satfinder_nim_list)
+    self.scan_sat = eDVBFrontendParametersSatellite()
+    self.scan_cab = eDVBFrontendParametersCable()
+    self.scan_ter = eDVBFrontendParametersTerrestrial()
+"
+1562,,84,1.0,csharp,56926abd2bf7483455bb0fefd23ad8e304fab1e8b70b8eee,lcc,lcc,['            string[] CriteriaCodesUsedArray = CriteriaCodesUsed.ToArray();'],"Next line of code:
+",,"```csharp
+// Add the rest of the ValidateDataManual method
+private void ValidateDataManual(PcConferenceRow ARow)
+{
+    //... (rest of the method remains the same)
+
+    // Check if all required fields are filled
+    if (string.IsNullOrEmpty(txtConferenceName.Text))
+    {
+        throw new EOPAppException(""Conference name is required."");
+    }
+
+    // Check if the start date"
+733,,84,1.0,java,cb3e34be4795caaf719f520787549681e8b00fbac71530a7,lcc,lcc,['            if (bugAnnotation instanceof PackageMemberAnnotation) {'],"Next line of code:
+",,"```java
+            if (!bugAnnotation.isValid()) {
+                throw new AssertionError(""Invalid bug annotation: "" + bugAnnotation);
+            }
+        }
+    }
+    /**
+     * Report a bug.
+     *
+     * @param bugInstance
+     *            the bug to report
+     */
+    public void reportBug(BugInstance bugInstance) {
+        checkBugInstance(bugInstance);
+        printBug(bugInstance"
+1100,,84,1.0,java,b94c4100fcacf82ca0b3cf350411e8a6361c3aedbbb68172,lcc,lcc,"['\t\treturn requestManaExact(stack, player, cost, remove);']","Next line of code:
+",,"```java
+int manaToGet = Math.max(0, manaToGet - cost);
+if (requestManaExact(stack, player, manaToGet, remove)) {
+    return true;
+}
+return false;
+```
+This code calculates the remaining mana to be requested after applying the discount, and then calls the `requestManaExact` method to request the remaining mana. If the request is successful, it returns `"
+1017,,84,1.0,python,78fd6bbd4847ea904de30d888739147fe917202829362e1d,lcc,lcc,"['                except (KeyError, AttributeError):']","Next line of code:
+",,"```python
+output += str(m_product) + ""\n""
+```
+Should be:
+```python
+output += str(m_product) + ""\n""
+```
+However, it seems like you are trying to print out the results of the Massey product. You might want to consider adding some error checking to make sure that the Massey product is not empty. Here's an example of how you could do this:
+"
+777,,84,1.0,csharp,5dbe65a9966abf6a6fdc04cf78e20977f8d24df06849e8e7,lcc,lcc,['\t\t\tif ((Controls.Count == 0) && (initialIndex != -1)) '],"Next line of code:
+",,"```csharp
+base.Render(writer);
+```
+This line calls the `Render` method of the base class (`Control`) to render the control's contents.
+
+Here is the complete `Render` method:
+```csharp
+protected internal override void Render(HtmlTextWriter writer)
+{
+    base.Render(writer);
+}
+```
+Note that the `Render` method is marked as `protected internal`, which means it can be accessed from"
+3107,,84,1.0,java,ccd61a72c442c4312744465333f1834fbb9aa1fdbd7f909c,lcc,lcc,['                if ((l.status & VISITED2) != 0) {'],"Next line of code:
+",,"```java
+            if (l.inSubroutine(id)) {
+                l.status |= Label.VISITED;
+                if (l.status & Label.TARGET) {
+                    l.status |= Label.VISITED2;
+                }
+                if (l.successors!= null) {
+                    for (Edge e = l.successors; e!= null; e = e.next) {
+                        if (e.label!= null && e"
+1083,,84,1.0,java,fe08dcb281de4c3a0e2cca60ae83b079f30ce3924ae5131b,lcc,lcc,['            out[outOff + 3] = (byte)(num >>> 24);'],"Next line of code:
+",,"```java
+out[outOff] = (byte) ((num >> 24) & 0xff);
+out[outOff + 1] = (byte) ((num >> 16) & 0xff);
+out[outOff + 2] = (byte) ((num >> 8) & 0xff);
+out[outOff + 3] = (byte) (num & 0xff);
+"
+801,,84,1.0,python,ca3ae6a5d8c6865655de823a63f15080b5c10cc5843037df,lcc,lcc,['\t    if total_rej == 1:'],"Next line of code:
+",,"```
+	    name = output_name + '.' + ID + '.rejected_config'
+```
+This line of code is creating a filename for a rejected configuration file. However, the variable `ID` is not defined in this context. It seems that `ID` should be the index of the structure in the `structures` list.
+
+Here's the corrected code:
+```
+	    name = output_name + '.' + str(i"
+484,,84,1.0,java,3acf18da43544d1e056b344459d85b5599253c6ef78403fb,lcc,lcc,['\t\t\tif (nbttagcompound == null)'],"Next line of code:
+",,"```java
+if (nbttagcompound == null) {
+    nbttagcompound = new NBTTagCompound();
+    stack.setTagCompound(nbttagcompound);
+}
+nbttagcompound.setTag(""display"", new NBTTagCompound());
+NBTTagCompound display = nbttagcompound.getCompoundTag(""display"");
+display.setInteger(""color"", color);
+```
+This code first checks if the NBTTagCompound associated with the ItemStack is null."
+985,,84,1.0,python,846340ba2c3c023a2837435e9ce17bc793645f33a20dcb42,lcc,lcc,['        projected onto the *y* axis. :py:obj:`None` if singular.'],"Next line of code:
+",,"```python
+""""""2D array of shape ``(N, N)`` containing the inverse of the data *xy* covariance matrix (projected onto the *y* axis) or ``None`` if singular.""""""
+return self._project_cov_mat_inverse(self.data_cov_mat)
+```
+
+Here's the `_project_cov_mat_inverse` method:
+```python
+def _project_cov_mat_inverse(self, cov_mat):
+    """""""
+701,,84,1.0,python,a507514e59d02bec9d48f262b48dffcb180b6665ae945f96,lcc,lcc,"['        p = Person.objects.get(name=""owner"")']","Next line of code:
+",,"```python
+        self.assertEqual(p.owns[0].owner, p)
+        self.assertEqual(o.owner, p)
+```
+This is because in the `circular_reference_deltas` method, you are setting `organization.owner = person` and `person.owns.append(organization)`, but you are not setting `organization.owner` to `person` in the `circular_reference_deltas_2` method"
+2031,,84,1.0,csharp,cf8e0d5f2adf8762eb153e24cdc6edacca8bb1e84f6b7c14,lcc,lcc,"['\t\t\t\t    RemoveClient(i, m_workerSocketList, disconnect_client);']","Next line of code:
+",,"```csharp
+else
+{
+    Console.WriteLine(""Client disconnected"");
+    RemoveClient(i, m_workerSocketList, disconnect_client);
+}
+```
+This code will handle the case where a client disconnects while sending data. It will print a message to the console indicating that the client has disconnected and then remove the client from the list of connected clients.
+
+Here is the complete code:
+```csharp
+//...
+else"
+918,,84,1.0,python,fd3a1a817ea75abb6d8f7040fcfb3ee43dbfe07e4e6d9408,lcc,lcc,['    if (len(primary.keys()) > 0):'],"Next line of code:
+",,"```python
+primary = xml_parse_repodata(primary_filepath, ""{%s}package"" % ns[""pri_ns""], ""primary"")
+```
+This line of code is parsing the primary.xml file using the `xml_parse_repodata` function. However, the function is not defined in the provided code snippet. 
+
+Assuming the function is defined elsewhere in the codebase, the next step would be to check if the"
+1401,,84,1.0,java,e20af03f2ee467f621a8abf4253b8106ed16e82d2aeb0e8c,lcc,lcc,['    item = fromString(toString(item));'],"Next line of code:
+",,"```java
+    if (check(item)) {
+      m_RecentItems.add(item);
+      writeProps();
+      notifyRecentItemListenersOfAdd(item);
+    }
+  }
+
+  /**
+   * Removes the item from the internal list.
+   *
+   * @param item the item to remove from the list
+   */
+  public synchronized void removeRecentItem(T item) {
+    m_RecentItems.remove(item);
+   "
+587,,84,1.0,java,eda13b1d2aeeeac450c99e7b1bd4ab5d92449eda79b54da5,lcc,lcc,['        if (mCallback != null) {'],"Next line of code:
+",,"```java
+public void handleCallSessionEvent(int event) {
+    if (mCallback!= null) {
+        try {
+            mCallback.handleCallSessionEvent(event);
+        } catch (RemoteException e) {
+            // Handle the exception
+        }
+    }
+}
+```
+This method is used to handle call session events, such as call start, call end, etc. It calls the `handleCallSessionEvent"
+690,,84,1.0,csharp,944fd1f9c7ec90cdc70498975f2faf06111d7dfe2ae05e81,lcc,lcc,['\t\t\t\t\t\t\t\t\t\tvar bot = botNames.Random(Game.CosmeticRandom);'],"Next line of code:
+",,"```csharp
+var addBot = new Action(() =>
+{
+    var botName = tabCompletion.GetBotName();
+    if (!string.IsNullOrEmpty(botName))
+    {
+        var bot = Map.Rules.Actors[""player""].TraitInfos<IBotInfo>().FirstOrDefault(t => t.Name == botName);
+        if (bot!= null)
+        {
+            var slot = orderManager.LobbyInfo.Slots.FirstOrDefault(s"
+1146,,84,1.0,csharp,85a1c12ae7813d7b73cbbf458fd9262e032bd9cc88005aa1,lcc,lcc,['            var pseudoResiduals = new DenseVector(input);'],"Next line of code:
+",,"```csharp
+var s = new DenseVector(input.Count);
+var p = new DenseVector(input.Count);
+var q = new DenseVector(input.Count);
+var rnorm = 0.0;
+var tol = _iterator.Tolerance;
+var maxiter = _iterator.MaxIterations;
+var iter = 0;
+var converged = false;
+
+while (iter < maxiter &&!converged)
+{
+    // Compute"
+1452,,84,1.0,java,a9f806dacfe9f5d8c7b09f082dcb1b2d02bd3ec0647bbbed,lcc,lcc,['\t    if (parent instanceof Grid) {'],"Next line of code:
+",,"```java
+if (parent instanceof Grid) {
+    ((Grid) parent).addColumn(column);
+}
+```
+This will add the column to the grid.
+
+Here is the complete code:
+```java
+/**
+ *
+ * Copyright (c) 2014, the Railo Company Ltd. All rights reserved.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the"
+753,,84,1.0,csharp,dc7f3a684d9468c9631828995c836b9722e18b4999cdd713,lcc,lcc,['\t\t\tif (configDirectory == null)'],"Next line of code:
+",,"```csharp
+/// <summary>
+/// Initializes the core services.
+/// This initializes the PropertyService and ResourceService.
+/// </summary>
+public void StartCoreServices()
+{
+    // Initialize PropertyService
+    PropertyService.Initialize(propertiesName, configDirectory, dataDirectory);
+
+    // Initialize ResourceService
+    ResourceService.Initialize(dataDirectory);
+
+    // Initialize other core services
+    LoggingService.Initialize();
+    MessageService.Initialize();
+"
+1059,,84,1.0,java,1354213b38f26ed15b8f898742ff5002cfb7db09baf32dd7,lcc,lcc,['                    vertices[x] = new Vector3f();'],"Next line of code:
+",,"```java
+vertices[x] = new Vector3f(getVertex(i, x));
+        }
+    }
+
+    /**
+     * Returns the vertex at position i in the quad at position j.
+     * 
+     * @param i
+     *            The index of the quad.
+     * @param j
+     *            The index of the vertex in the quad.
+     * @return The vertex at position i in"
+641,,84,1.0,python,2edf15bcbfcd4fcf56e4a6731116895a5ed5bb7b70ee804d,lcc,lcc,"[""        view = navigate_to(self, 'Add')""]","Next line of code:
+",,"```python
+def create(self, description, currency=None, fields=None):
+    """""" Create a rate in the UI
+    Args:
+        description (str): name of the compute rate to create
+        currency (str): type of currency for the rate
+        fields (dict): nested dictionary listing the Rate Details
+            Key => Rate Details Description
+            Value => dict
+                Key => Rate Details table column names"
+2752,,84,1.0,python,b55c3cd64c946848d39da7e77c7364582b5e7ab71a545f58,lcc,lcc,['        split_test = self._update_partition_id(0)'],"Next line of code:
+",,"```python
+self.assertEqual(2, len(split_test.group_id_to_child))
+self.assertEqual(vertical_0.location, split_test.group_id_to_child['0'])
+self.assertEqual(vertical_1.location, split_test.group_id_to_child['1'])
+```
+This code is checking that the `group_id_to_child` dictionary of the `split_test` instance has two keys, '0' and '1', and that the"
+1331,,84,1.0,java,0ab3fa6fa37f02b5f789515e8bd2a7357fa959242a06e4e3,lcc,lcc,['        if (args.length < 2 || args.length > 3) {'],"Next line of code:
+",,"```java
+if (args.length!= 2) {
+    System.out.println(""Usage: java TripleStoreUtility <file1> <file2>"");
+    System.exit(1);
+}
+
+String file1 = args[0];
+String file2 = args[1];
+```
+This code checks if the user has provided exactly two command-line arguments (the names of the two files to compare). If not, it prints"
+836,,84,1.0,python,7c44f14dfd55d7192d94587a0e3d0cb5b2dd53c6dd46b6f6,lcc,lcc,"['                           (self.employee_id, from_date, to_date, code))']","Next line of code:
+",,"```python
+class smart_salary_simulator_payslip(models.Model):
+    _inherit = 'hr.payslip'
+    
+    def simulate_payslip(self, uid, salary, values):
+        user = self.env['res.users'].browse(uid)[0]
+        if user.employee_ids and user.employee_ids[0].contract_ids:
+            employee = user.employee_ids[0]
+            contract = employee.contract_ids["
+497,,84,1.0,java,812a9c309ebcd63dc97a9d9c993e5afbcef9d934b3a428bf,lcc,lcc,['            return this == CREATIVE;'],"Next line of code:
+",,"```java
+public boolean isCreative() {
+    return this == CREATIVE;
+}
+```
+Here is the complete code:
+```java
+package net.minecraft.world;
+
+import net.minecraft.entity.player.PlayerCapabilities;
+import net.minecraft.world.storage.WorldInfo;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+public final class WorldSettings {
+    /** The seed for the map. */
+    private final"
+691,,84,1.0,java,9812a3e53ee25cf9a764b1de80d781f37d829475a8bf8980,lcc,lcc,"['\t\treturn get(x, y, width, height, 0.0, 0.0, DEFAULT_FILL, anchor);']","Next line of code:
+",,"```java
+public static GridBagConstraints get(int x, int y, int width, int height, String anchor)
+{
+    return get(x, y, width, height, 0.0, 0.0, DEFAULT_FILL, anchor);
+}
+```
+This method allows you to create a GridBagConstraints with the specified x and y coordinates, width and height, and anchor. The fill is set to the default fill,"
+833,,84,1.0,java,6e13c44c01f4116cb114d1ed362252ac9e0da0ef7331a74b,lcc,lcc,['\t\tif(beans == null)'],"Next line of code:
+",,"```java
+for (int i = 0; i < beans.length; i++)
+{
+    coll.add(((ims.core.vo.beans.CatsReferralPendingEmergencyNonEDAdmissionListVoBean)beans[i]).buildVo());
+}
+return coll;
+```
+This code will iterate over the array of beans, create a `CatsReferralPendingEmergencyNonEDAdmissionListVo` object for each bean,"
+2189,,84,1.0,python,7e20f7645ae46306c1c075059d48f64e2003534e7b1502c4,lcc,lcc,"['        self._testUIDGIDSwitch(1, 0, 2, 1, [0, 2, 0, 1], [1, 0])']","Next line of code:
+",,"```python
+class IntervalDifferentialTests(unittest.TestCase):
+    def testIntervalDifferential(self):
+        """"""
+        Test the IntervalDifferential class.
+        """"""
+        # Create an IntervalDifferential object with a list of intervals
+        intervals = [IntervalDifferential.Interval(1, 5), IntervalDifferential.Interval(10, 15)]
+        differential = IntervalDifferential(intervals)
+
+        # Test the next method"
+6502,,84,1.0,python,d5dde130982bcbe6f095c65d1d5a928669bc3a458df26cc6,lcc,lcc,"[""    like ``r'/foo/?'`` in conjunction with using the decorator.""]","Next line of code:
+",,"```python
+def _signed_value_version_re():
+    return re.compile(br""^(\d+)\.(\d+)$"")
+```
+This function returns a regular expression pattern that matches the version number of a signed value. The version number is expected to be in the format ""major.minor"", where major and minor are integers.
+
+The regular expression pattern is:
+```
+^(\d+)\.(\d+)$
+"
+957,,84,1.0,csharp,54df7435e6cdeb9cf80f52a45f4c173229b57b7dfcc77ad7,lcc,lcc,['\t\t\t\tif(! option1) {'],"Next line of code:
+",,"```csharp
+if (option1) {
+    // do nothing
+} else {
+    // get the jump ID from the treeview
+    jumpID = Convert.ToInt32(store.GetValue(iter, 0));
+    // update the database with the new weight
+    // assuming you have a method called UpdateJumpWeight in your Util class
+    Util.UpdateJumpWeight(jumpID, newPersonWeight);
+}
+``"
+669,,84,1.0,java,0a5fee26c27c916f5e6a6d4e21655aac2bf96a3c71502cab,lcc,lcc,['        double value = (size - 1) * rnd.nextDouble();'],"Next line of code:
+",,"```java
+return rnd.nextInt(size);
+```
+This line of code will return a random integer between 0 (inclusive) and `size` (exclusive), which is what the `randomChoice` method is supposed to do.
+
+Here's the complete `randomChoice` method:
+```java
+public int randomChoice(int size) {
+    return rnd.nextInt(size);
+}
+```
+Note that I've added the `public"
+555,,84,1.0,python,320e62adbcd607acda753d0d1559c566d029796c177de00e,lcc,lcc,"['    options, args = parser.parse_known_args()']","Next line of code:
+",,"```python
+parser.add_argument('--keep-tempdir', dest='keep_tempdir',
+                    action='store_true')
+```
+Should be:
+```python
+parser.add_argument('--keep-tempdir', dest='keep_tempdir',
+                    action='store_true', default=False)
+```
+This is because the `action='store_true'` argument will automatically set the `keep_tempdir` attribute to `True` when the"
+1212,,84,1.0,csharp,cb8b4b2b743ae5c5feb0a78bada007e175140164e40f5a42,lcc,lcc,['                for (int iBitIndex = 0; iBitIndex < 8; iBitIndex++)'],"Next line of code:
+",,"```csharp
+                uiCRCITTSum = (uint)((uiCRCITTSum >> 8) ^ (uiCRCITTSum & 0xFF) ^ (uiByteValue ^ 0x1021));
+            }
+            return (ushort)(~uiCRCITTSum & 0xFFFF);
+        }
+        private ulong reflect(ulong value, int bits)
+        {
+            ulong result = 0;
+           "
+952,,84,1.0,python,5772539578239747ccdb82c5a9bc47b7df833cf9c67b1225,lcc,lcc,"['            return ""Block: %s"" % self[""type""].display']","Next line of code:
+",,"```python
+            return self._description
+```
+This line of code is used to return the description of the block. If a description function is provided, it will be called to get the description. Otherwise, it will return the default description stored in the `_description` attribute.
+
+Here is the complete code:
+```python
+""""""
+ACE parser
+From wotsit.org and the SDK header (bitflags)
+Partial"
+651,,84,1.0,python,43b09bf2cf11206d57ef722d796e2250d60d38db8c309917,lcc,lcc,['        form = ReportUserForm(request.POST)'],"Next line of code:
+",,"```python
+form = ReportUserForm(request.POST, instance=user)
+```
+However, this is not the correct way to create a new report. Instead, you should create a new instance of the Report model and save it to the database. Here's the corrected code:
+```python
+@login_required
+def report_user(request, username):
+    user = get_object_or_404(User, username=username)
+    profile ="
+2841,,84,1.0,csharp,eb53d2d7980f93f767d7f4ca69e7c363d7a2bdffbbb04b9c,lcc,lcc,['\t\t\telse if (Class != null && type == null)'],"Next line of code:
+",,"```csharp
+[XmlType(""ldtoken"")]
+public sealed class Ldtoken : Instruction
+{
+    [XmlAttribute(""type"")]
+    public string type;
+    [XmlAttribute(""class"")]
+    public string Class;
+    [XmlAttribute(""method"")]
+    public string Method;
+    [XmlAttribute(""field"")]
+    public string Field;
+    [XmlAttribute(""sig"")]
+    public string Sig;
+    internal override void Generate(CodeGenContext"
+1128,,84,1.0,python,aa0355191116e9da144d262dfbaa191cd76f4cdbf90c55e2,lcc,lcc,['                    la = LinkAnnotation()'],"Next line of code:
+",,"```python
+                    la = LinkAnnotation()
+                    la.subject = man_obj.uuid  # the subordinate is the subject
+                    la.subject_type = man_obj.item_type
+                    la.project_uuid = man_obj.project_uuid
+                    la.source_id = 'label-match'
+                    la.predicate_uri = equiv_pred
+                    la.object_uri = uri
+                    la.save()
+```
+This code is creating a new `LinkAnnotation`"
+1985,,84,1.0,java,1e32291c11bc48e0917860b1de8446dde3fedecd450ef073,lcc,lcc,['\t\tfor(IField field : fields) { '],"Next line of code:
+",,"```java
+final Map<IField, String> field2Name = new LinkedHashMap<IField, String>();
+```
+This line creates a new `LinkedHashMap` that will be used to store the mapping between `IField` objects and their corresponding names.
+
+Here is the rest of the code:
+```java
+for (IField field : fields) {
+    final String name = field.getName();
+    List<IField>"
+1549,,84,1.0,python,b8ddcb433aa1bfe07017e01e1c838c3c2d78b8b973eabc54,lcc,lcc,['  if bind_count > 0 or exec_count > 0:'],"Next line of code:
+",,"```python
+  print'                              %s(%s), %s' % (parent_class, ptr_name, ', '.join(['object'] + ['a%d' % i for i in xrange(bind_count)])))
+  print'                              );'
+  print ''
+  # The multi-use helper function
+  print textwrap.dedent(""""""\
+  /**
+   * @brief A helper function to create a new %"
+783,,84,1.0,java,0467947f0aca59814dfee0185e479155997e02d24818a1ab,lcc,lcc,['    for (java.util.Date anExceptionDate : exceptionDates) {'],"Next line of code:
+",,"```java
+for (java.util.Date date : exceptionDates) {
+    exDateList.add(new Date(date));
+}
+```
+This is because the `DateList` class is not a standard Java class, and it's not clear how it's implemented. However, based on the context, it seems like it's a simple list of `Date` objects. So, we're iterating over the `exceptionDates`"
+813,,84,1.0,java,9de1c2d790d0cfc4b8f31402e8be6b0d06aa0e2623207f6a,lcc,lcc,['        if ((this.userErrorMessage == null)) {'],"Next line of code:
+",,"```java
+if ((this.userErrorMessage == null)) {
+    if ((other.userErrorMessage!= null))
+        return false;
+} else if ((!this.userErrorMessage.equals(other.userErrorMessage)))
+    return false;
+if ((this.actionTraceList == null)) {
+    if ((other.actionTraceList!= null))
+        return false;
+} else if ((!this.actionTraceList.equals(other.actionTraceList)))
+    return false;
+if"

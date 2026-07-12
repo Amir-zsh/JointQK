@@ -1,0 +1,28 @@
+dataset: longbench
+data_dir: 2wikimqa
+model: /vault/ultraz/llm_models/models--meta-llama--Llama-3.1-8B-Instruct/snapshots/0e9e39f249a16976918f6564b8830bc894c89659
+device: null
+press_name: no_press
+compression_ratio: 0.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_llama_gate/bf16
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+  local_files_only: true
+press_init_command: None
+seed: 42
+fp8: false
+press_kwargs: null
+exclude_indices_file: null

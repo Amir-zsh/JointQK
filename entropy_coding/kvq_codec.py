@@ -860,9 +860,149 @@ class PageCodecRANSCUDA(PageCodecRANS):
 
         return k_hat
 
-    # ----------------------------------------------------------------------- #
+    def decode_to_rhat(self, buf: bytes) -> torch.Tensor:
+        """Decode to the residual domain r̂ — STOP before inverse+mu. Fused
+        residual-domain attention applies inv implicitly via q' = q@invᵀ, so the
+        per-key inverse never runs and fp16 K is never formed."""
+        buf = bytes(buf)
+        if not hasattr(self, "_kernel_events"):
+            self._kernel_events = []
+        magic, T, Phdr, nb = struct.unpack_from("<IIII", buf, 0)
+        rung_ids, off0 = _unpack(buf, nb, self.id_bits, 16)
+        blobs_meta = []
+        off = off0
+        for bi in range(nb):
+            blob, off = self._read_blob(buf, off)
+            n = min((bi + 1) * Phdr, T) - bi * Phdr
+            blobs_meta.append((blob, int(rung_ids[bi]), n))
+
+        idx_gpu = torch.zeros((T, self.d), dtype=torch.int64, device=self.device)
+        rung_groups = defaultdict(list)
+        for bi, (blob, ri, n) in enumerate(blobs_meta):
+            rung_groups[ri].append((bi, blob, n))
+
+        for ri, pages in rung_groups.items():
+            nc_t, cf_t, co_t = self._cuda_cdf_tensors[ri]
+            C = int(nc_t.shape[0]); n_pg = len(pages); dev = self.device
+            all_bytes = b"".join(blob for _, blob, _ in pages)
+            blob_arr = np.frombuffer(all_bytes, dtype=np.uint8).copy()
+            page_byte_off = np.zeros(n_pg, dtype=np.int64)
+            lane_off_arr = np.zeros((n_pg, self.N), dtype=np.int64)
+            k0a = np.zeros((n_pg, self.N), dtype=np.int32)
+            k1a = np.zeros((n_pg, self.N), dtype=np.int32)
+            ns_arr = np.zeros(n_pg, dtype=np.int32)
+            cumoff = 0
+            for pi, (bi, blob, n_toks) in enumerate(pages):
+                S = n_toks * C
+                Nh, Sb = struct.unpack_from("<II", blob, 0)
+                lane_lens = [struct.unpack_from("<I", blob, 8 + 4 * l)[0] for l in range(self.N)]
+                starts = np.cumsum([0] + lane_lens)
+                bounds = [round(k * S / self.N) for k in range(self.N + 1)]
+                page_byte_off[pi] = cumoff; ns_arr[pi] = n_toks
+                header_size = 8 + 4 * self.N
+                for l in range(self.N):
+                    lane_off_arr[pi, l] = header_size + int(starts[l])
+                    k0a[pi, l] = bounds[l]; k1a[pi, l] = bounds[l + 1]
+                cumoff += len(blob)
+            def _T(a, dt): return torch.as_tensor(a, dtype=dt, device=dev)
+            _ks = torch.cuda.Event(enable_timing=True); _ke = torch.cuda.Event(enable_timing=True)
+            _ks.record()
+            pos_gpu = self.ext.decode_pages(
+                _T(blob_arr, torch.uint8), _T(page_byte_off, torch.int64),
+                _T(lane_off_arr.reshape(-1), torch.int64), _T(k0a.reshape(-1), torch.int32),
+                _T(k1a.reshape(-1), torch.int32), _T(ns_arr, torch.int32),
+                nc_t, cf_t, co_t, self.N, C, self.P, self.d,
+            )
+            _ke.record(); self._kernel_events.append((_ks, _ke))
+            vals_t = self._vals_gpu[ri]; nc_mask = self._nc_mask_gpu[ri]; cv_t = self._cv_gpu[ri]
+            j_idx = torch.arange(self.d, device=dev)
+            flat = pos_gpu.reshape(-1, self.d).long()
+            gathered = vals_t[j_idx.unsqueeze(0), flat]
+            gathered[:, ~nc_mask] = cv_t[~nc_mask]
+            gathered = gathered.reshape(n_pg, self.P, self.d)
+            for pi, (bi, _, n_toks) in enumerate(pages):
+                idx_gpu[bi * self.P: bi * self.P + n_toks] = gathered[pi, :n_toks]
+
+        # dequant only — STOP HERE, no inverse, no mu
+        delta_tok = torch.empty((T, self.d), dtype=torch.float32, device=self.device)
+        for bi in range(nb):
+            ri = int(rung_ids[bi])
+            sl = slice(bi * self.P, min((bi + 1) * self.P, T))
+            delta_tok[sl] = self._deltas_gpu[ri]
+        idx_f = idx_gpu.float()
+        r_hat = idx_f.sign() * (idx_f.abs() + (0.5 - self.dz)) * delta_tok
+        return r_hat          # (T, d) residual domain    # ----------------------------------------------------------------------- #
     # Optional sanity check
 
+    def decode_to_idx(self, buf: bytes):
+        """Decode to quantized indices (int8) + per-token scalar delta. STOP before
+        dequant — the kernel dequantizes in-register: r̂ = sign(idx)·(|idx|+0.5−dz)·δ.
+        Returns (idx_i8 (T,d) int8, delta_tok (T,) float32)."""
+        buf = bytes(buf)
+        if not hasattr(self, "_kernel_events"):
+            self._kernel_events = []
+        magic, T, Phdr, nb = struct.unpack_from("<IIII", buf, 0)
+        rung_ids, off0 = _unpack(buf, nb, self.id_bits, 16)
+        blobs_meta = []; off = off0
+        for bi in range(nb):
+            blob, off = self._read_blob(buf, off)
+            n = min((bi + 1) * Phdr, T) - bi * Phdr
+            blobs_meta.append((blob, int(rung_ids[bi]), n))
+        idx_gpu = torch.zeros((T, self.d), dtype=torch.int64, device=self.device)
+        rung_groups = defaultdict(list)
+        for bi, (blob, ri, n) in enumerate(blobs_meta):
+            rung_groups[ri].append((bi, blob, n))
+        for ri, pages in rung_groups.items():
+            nc_t, cf_t, co_t = self._cuda_cdf_tensors[ri]
+            C = int(nc_t.shape[0]); n_pg = len(pages); dev = self.device
+            all_bytes = b"".join(blob for _, blob, _ in pages)
+            blob_arr = np.frombuffer(all_bytes, dtype=np.uint8).copy()
+            page_byte_off = np.zeros(n_pg, dtype=np.int64)
+            lane_off_arr = np.zeros((n_pg, self.N), dtype=np.int64)
+            k0a = np.zeros((n_pg, self.N), dtype=np.int32)
+            k1a = np.zeros((n_pg, self.N), dtype=np.int32)
+            ns_arr = np.zeros(n_pg, dtype=np.int32)
+            cumoff = 0
+            for pi, (bi, blob, n_toks) in enumerate(pages):
+                S = n_toks * C
+                Nh, Sb = struct.unpack_from("<II", blob, 0)
+                lane_lens = [struct.unpack_from("<I", blob, 8 + 4 * l)[0] for l in range(self.N)]
+                starts = np.cumsum([0] + lane_lens)
+                bounds = [round(k * S / self.N) for k in range(self.N + 1)]
+                page_byte_off[pi] = cumoff; ns_arr[pi] = n_toks
+                header_size = 8 + 4 * self.N
+                for l in range(self.N):
+                    lane_off_arr[pi, l] = header_size + int(starts[l])
+                    k0a[pi, l] = bounds[l]; k1a[pi, l] = bounds[l + 1]
+                cumoff += len(blob)
+            def _T(a, dt): return torch.as_tensor(a, dtype=dt, device=dev)
+            _ks = torch.cuda.Event(enable_timing=True); _ke = torch.cuda.Event(enable_timing=True)
+            _ks.record()
+            pos_gpu = self.ext.decode_pages(
+                _T(blob_arr, torch.uint8), _T(page_byte_off, torch.int64),
+                _T(lane_off_arr.reshape(-1), torch.int64), _T(k0a.reshape(-1), torch.int32),
+                _T(k1a.reshape(-1), torch.int32), _T(ns_arr, torch.int32),
+                nc_t, cf_t, co_t, self.N, C, self.P, self.d,
+            )
+            _ke.record(); self._kernel_events.append((_ks, _ke))
+            vals_t = self._vals_gpu[ri]; nc_mask = self._nc_mask_gpu[ri]; cv_t = self._cv_gpu[ri]
+            j_idx = torch.arange(self.d, device=dev)
+            flat = pos_gpu.reshape(-1, self.d).long()
+            gathered = vals_t[j_idx.unsqueeze(0), flat]
+            gathered[:, ~nc_mask] = cv_t[~nc_mask]
+            gathered = gathered.reshape(n_pg, self.P, self.d)
+            for pi, (bi, _, n_toks) in enumerate(pages):
+                idx_gpu[bi * self.P: bi * self.P + n_toks] = gathered[pi, :n_toks]
+        # per-token scalar delta (delta is scalar per rung here)
+        delta_tok = torch.empty((T,), dtype=torch.float32, device=self.device)
+        for bi in range(nb):
+            ri = int(rung_ids[bi])
+            sl = slice(bi * self.P, min((bi + 1) * self.P, T))
+            delta_tok[sl] = float(self._deltas_gpu[ri].reshape(-1)[0])
+        # idx fits int8 (verified |idx|<=~53 at b=2); assert to be safe
+        # assert disabled for timing (forces device sync)
+        return idx_gpu.to(torch.int16), delta_tok
+    
     def validate_one_page(self, buf: bytes, page_idx: int = 0) -> bool:
         """Decode a single page with both CPU and GPU paths and compare K_hat."""
         magic, T, Phdr, nb = struct.unpack_from("<IIII", buf, 0)

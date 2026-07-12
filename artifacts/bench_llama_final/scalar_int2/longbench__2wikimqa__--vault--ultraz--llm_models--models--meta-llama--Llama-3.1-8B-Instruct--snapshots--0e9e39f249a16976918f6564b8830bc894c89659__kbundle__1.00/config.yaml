@@ -1,0 +1,34 @@
+dataset: longbench
+data_dir: 2wikimqa
+model: /vault/ultraz/llm_models/models--meta-llama--Llama-3.1-8B-Instruct/snapshots/0e9e39f249a16976918f6564b8830bc894c89659
+device: null
+press_name: kbundle
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 1.0
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_llama_final/scalar_int2
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+  local_files_only: true
+press_init_command: null
+seed: 42
+fp8: false
+press_kwargs:
+  v_method: v_turboquant
+  v_bits: 2
+  quantize_k: true
+  quantize_v: true
+  layer0_full_precision: true
+  k_bundle_path: /vault/samuel/efficient-llm/JointQK/entropy_coding/mb_scalar_int2_better_llama.pt
+exclude_indices_file: null

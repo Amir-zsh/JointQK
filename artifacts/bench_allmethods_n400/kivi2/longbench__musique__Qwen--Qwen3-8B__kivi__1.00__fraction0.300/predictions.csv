@@ -1,0 +1,92 @@
+_id,compression_ratio,predicted_answer,answer_prefix,length,question,all_classes,max_new_tokens,answers,task,language,dataset
+f9a50652b4e5d7000c42ae27b2477a54d2a88cfceec0ec3b,1.0, Château de Chalmazel,Answer:,10449,"Question: What is the name of the castle in the city where the performers of Spirit If.. became a band?
+",,52,['Casa Loma'],musique,en,musique
+865a174ebe32ad81f573feb122198c1f16e6f2fd6c3fdda5,1.0, FDA,Answer:,12201,"Question: The food safety system of the agency that has the authority to decide if a drug is marketed otc or prescription is known as?
+",,52,['Food Safety Modernization Act (FSMA)'],musique,en,musique
+afd66c76fbcbd6fd65cfccf021882c773e57478071afaa65,1.0, Jennifer Connelly,Answer:,11579,"Question: Who is the spouse of the person who voices Jarvis in the Avengers Age of Ultron?
+",,52,['Jennifer Connelly'],musique,en,musique
+38da792d05c3f8c7220c951b8d66f7400debb80114932a80,1.0, 2005,Answer:,12238,"Question: In what year was Twilight Princess from the game series on which The Legend of Neil was based originally planned for release?
+",,52,['2005'],musique,en,musique
+046a6c5856736e4dc6f532658038afabde83e9c71507832f,1.0, 1967,Answer:,11691,"Question: When did the place of birth of the performer of Mother-in-Law elect its first black Mayor?
+",,52,['1970s'],musique,en,musique
+442e302cee202c213a085d6aa1caf87e3aebf6b954c690b0,1.0, The highest city in the state where Dell ranks sixth by revenue is Fort Davis.,Answer:,11714,"Question: What is the highest city in the state where Dell ranks sixth by revenue?
+",,52,['Fort Davis'],musique,en,musique
+c44fa02fb87c848c0ab4d0a254787e29540715ef86fff95a,1.0," Port Angeles, Washington",Answer:,11417,"Question: What city was the author of What We Talk About When We Talk About love born in?
+",,52,"['Clatskanie' 'Clatskanie, Oregon']",musique,en,musique
+45b3ff5fd17fddc64c647566139dadd2693cf4488c0e6ec7,1.0, Mila Kunis did not voice any character in The Cleveland Show. She voiced Meg Griffin in Family Guy.,Answer:,12181,"Question: Who did the original voice of the character played by mila kunis in the cleveland show?
+",,52,['Lacey Chabert'],musique,en,musique
+0efe9b8bd5ade04ff3030e3d944b21b0ac4aa9527e17bde6,1.0, 1984,Answer:,10333,"Question: What year did the company that published Starship Command end?
+",,52,['1986'],musique,en,musique
+ea32ca3702e3eedd278c8c77153712c07dbb5dd7025d8c3d,1.0, Kirkpatrick,Answer:,10868,"Question: Who is the mayor presiding now where Merrill Elam was born?
+",,52,['Lance Bottoms'],musique,en,musique
+ede452592bbb410b3678e75fc6aaaeeda204fffc69034041,1.0, 1986,Answer:,11207,"Question: When did Burroughs Corporation merge to form a new corporation?
+",,52,['1986'],musique,en,musique
+606e28838e5641e3dab2482d21f65cf2915cacdf6d63b454,1.0, 1946,Answer:,10779,"Question: When did the party that gained control of Congress in the midterm elections in 1946 take control of the government branch that determines the rules of the US House?
+",,52,['January 2015'],musique,en,musique
+6cbb382cf679c0cf091fbf0d3c6d9638bffbc8ea039ca8b2,1.0," Common Sense, by the same author as Rights of Man, was an important work because it crystallized sentiment for independence in 1776, significantly influencing the American Revolution by advocating for separation from Britain and promoting republican ideals.",Answer:,12362,"Question: Why was Common Sense, by the same author as Rights of Man, an important work?
+",,52,"['crystallized the rebellious demand for independence from Great Britain'
+ 'Great Britain']",musique,en,musique
+70a325ff2a0681bc4f6fd064f47bf88b4551447ac97dea96,1.0, Tom Hood,Answer:,11724,"Question: Who is Frances Freeling Broderip's sibling?
+",,52,['Tom Hood' 'Thomas Hood'],musique,en,musique
+78b24e393c76b4fcd88852e310548721c5eea12bb8848aca,1.0, Henry Bathurst,Answer:,12328,"Question: Who was the British general in the battle named after the birth city of the person who recorded Mother-in-Law?
+",,52,['General Edward Pakenham' 'Edward Pakenham'],musique,en,musique
+e5d8a267444a8532a875af8cfb8b07e6f6d02d6e85148540,1.0, 10.75 years,Answer:,10659,"Question: What is the life expectancy of the type of retriever named after the body of water the Patuxent River turns into?
+",,52,['average lifespan at 9.4 years'],musique,en,musique
+554fd0d8696f182e7802bf42d669102e4227ba40f8a6bd4f,1.0, Luke Bryan and Little Big Town,Answer:,11479,"Question: Who sings Home Alone Tonight with the Rain is a Good Thing singer?
+",,52,['Karen Fairchild'],musique,en,musique
+011cb0e253041c568db1d0b01a34fa26ff951bbbdebbd887,1.0, Thelma Dickinson,Answer:,11507,"Question: What character in A League of their Own was played by the actress who played Thelma in the movie Thelma and Louise?
+",,52,['Dottie Hinson'],musique,en,musique
+ebaefb7e8412f8323769c1e4ee596d5135b609ae76514273,1.0, Ernst Mach,Answer:,12623,"Question: Who is the employer of the person Mach's principle was named after?
+",,52,['Charles University'],musique,en,musique
+b6f4cf7f8c262ad66ad3a336c1b5f0dc86e9c8c308b86180,1.0, Francisco Guterres,Answer:,10966,"Question: Who is the president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Kotamadya is located?
+",,52,['Francisco Guterres'],musique,en,musique
+70444bcfcd30c497b730b5b408990ea2c672ec03caa5235f,1.0, 0,Answer:,12182,"Question: How many times did the plague occur in the city where Flora's painter died?
+",,52,['22'],musique,en,musique
+a39f4cbf6b6f7cb942cd2ce0e1234cae29855f2eaffc1be9,1.0, Nuevo Laredo Municipality,Answer:,11696,"Question: What administrative territorial entity is the owner of Ciudad Deportiva located?
+",,52,['Tamaulipas'],musique,en,musique
+102eaee0943270c43f63b7d45a0088f6a8515e51a126d925,1.0, Josh Groban,Answer:,11732,"Question: Along with the Closer performer, what notable pop artist started out his career on adult contemporary radio?
+",,52,['Michael Bublé'],musique,en,musique
+bfcfaa4a93f27ba34411adfc4a326e54fa373314b0ba15ab,1.0," Ulises Solís is the brother of José Antonio Aguirre, but the question seems to be asking for the son of the Italian navigator who explored the eastern coast of the continent, which is not directly related to Ulises Solís. The correct answer based",Answer:,9872,"Question: Who is the son of the Italian navigator who explored the eastern coast of the continent Ulises Solís' birthplace is located in for England?
+",,52,['Sebastian Cabot'],musique,en,musique
+c6fe007044674795d280bb474e2adc9dc8bacd8853a9cef5,1.0, Thailand,Answer:,10941,"Question: Where did they film The Beach in the country where Pao Sarasin was born?
+",,52,['Ko Phi Phi Leh' 'Ko Phi Phi Le'],musique,en,musique
+a3ba409a8a3c8bad40a1fa415b981a8227c7d21936a06f17,1.0, Rostov,Answer:,10431,"Question: The city where Dmitry Borisovich was born is located where in Russia?
+",,52,['Yaroslavl Oblast'],musique,en,musique
+f11250d4b392a30f6d22566d5167dee1464544f525c2975c,1.0, Maya Rudolph,Answer:,11185,"Question: In Grown Ups, who plays the wife of the actor who produced The Chosen One?
+",,52,['Joyce Van Patten'],musique,en,musique
+7e74ad75b51dd675970fecb014631c801252981eb2a657d1,1.0, 2014,Answer:,10702,"Question: When did the majority party in the body which determines rules of the US House and US Senate gain control of the House?
+",,52,['the 2010 election'],musique,en,musique
+9f271f822294cc528b1f20904bb7694884af4084e086d20f,1.0," No one. The song ""Nothing Suits Me Like a Suit"" is not related to the movie ""Batman: Under the Red Hood.""",Answer:,12087,"Question: Who does the Nothing Suits Me Like a Suit artist play in Batman Under the Red Hood?
+",,52,['Nightwing / Dick Grayson' 'Nightwing' 'Dick Grayson' 'Batman' 'Robin'],musique,en,musique
+e62b87ef31160a755763a2c665a516dbcbcf1f116050019b,1.0, Appleton,Answer:,9638,"Question: What is the seat of the county sharing a border with the county in which Valley New School is located?
+",,52,['Green Bay'],musique,en,musique
+9724776e8c8210a47eae48302b73a9e2603c238d417a63f2,1.0, 1964,Answer:,11640,"Question: During the war in which The Things They Carried is set, when was conscription introduced by the country where the film Grievous Bodily Harm was later released?
+",,52,['1964'],musique,en,musique
+936a34800c73e9d077b058fda4576fc45f8cb03bfae99c04,1.0," The performer of ""Heartbeat"" is named after the song's title, which is inspired by the feeling of a heartbeat. The song ""Heartbeat"" by Nina Sky is part of their album ""Nicole and Natalie."" The song's title and theme are",Answer:,11174,"Question: What is the performer of Heartbeat named after?
+",,52,['Natalie Albino' 'Nina Sky'],musique,en,musique
+e1be2d43c39ecba4174621ae6f571ae04eac92cfd209b786,1.0, The discovery of the periodic table and the understanding that each element has a unique atomic number.,Answer:,11601,"Question: What undertaking included the person who discovered that the number of protons in each element's atoms is unique?
+",,52,['Manhattan Project'],musique,en,musique
+1f4b2eebc578880d3f401476be8e933f743e77a865a31902,1.0, Royal Albert Bridge,Answer:,10991,"Question: What is the name of the famous bridge located in the birthplace of the composer of Nulla in mundo pax sincera?
+",,52,['Rialto Bridge' 'Ponte di Rialto'],musique,en,musique
+0942aa56c94ac545c00849686583273efd664347084e9682,1.0, Abu Ubaidah ibn al-Jarrah,Answer:,11094,"Question: Who led the muslim forces to retake the proposed embassy destination?
+",,52,['Abu Ubaidah'],musique,en,musique
+e34d03a801bfa0de0ee1f5ecd06dbee378a6410d5555f7fe,1.0, The 2014–15 Oman Professional League.,Answer:,12088,"Question: What league includes the operating group of Al Janoub Stadium?
+",,52,['Qatar Stars League'],musique,en,musique
+fe052f64d5c1f66bd84e1f2dc6df342b1ea10d2763c22a90,1.0, The God of the underworld in ancient Egypt is part of the Egyptian pantheon.,Answer:,11562,"Question: What pantheon is the God of the underworld in ancient Egypt a part of?
+",,52,['ancient Egyptian religion'],musique,en,musique
+de9c2fbc33bc6136a3a0598a7a1ad678882b4a8613f3900b,1.0, Merge Records,Answer:,8449,"Question: The Live Life Loud album's band signed to which label?
+",,52,['Fair Trade Services'],musique,en,musique
+685f8561239902c340fcf6b70d5ddc919b62aaf2b543ae3f,1.0, 2011,Answer:,11591,"Question: When was the last time Peter Till's sports team beat the winner of the 1894-95 FA Cup?
+",,52,['1 December 2010'],musique,en,musique
+0f4da7d5be33010bcfb9197d3d910cc40bb8abc0ecc3bd32,1.0, Claudia Wells,Answer:,10796,"Question: Who played the girlfriend of who plays marty mcfly's daughter in back to the future 2?
+",,52,['Claudia Wells'],musique,en,musique
+64219602b22a98429c3bc6a9c49ae282dd39e6a1b29debe7,1.0, Emilia Galotti,Answer:,11388,"Question: What is another notable work made by the author of Miss Sara Sampson?
+",,52,['Emilia Galotti'],musique,en,musique
+3b133029d40cc58823d90a6f9176ea531c8c30fb88c31736,1.0, Baranya County,Answer:,10252,"Question: What is the capital of the county that shares a border with the county where KRSU is licensed to broadcast?
+",,52,['Green Bay'],musique,en,musique
+163a438b614948528acdb5901ad522af7911b4e43c7a656a,1.0, Susilo Bambang Yudhoyono,Answer:,10562,"Question: Kiwil's birth country participated in a Commission of Truth and Friendship. Who is the president of the other country that participated?
+",,52,['Francisco Guterres'],musique,en,musique
+e956e4868d588132bd2de1926dc446d0975c2d7a45090cad,1.0, University of Toronto,Answer:,11283,"Question: The author of Elizabeth and After attended which university?
+",,52,['University of Toronto' 'UT'],musique,en,musique
+26bd6d08ea272ac11bebcf5250b16ff90f92352cdac405c1,1.0, The source of the river that is the mouth of the Caledon River is the Firth of Forth.,Answer:,8507,"Question: What is the source of the river that is the mouth of the Caledon River?
+",,52,['Thaba Putsoa'],musique,en,musique

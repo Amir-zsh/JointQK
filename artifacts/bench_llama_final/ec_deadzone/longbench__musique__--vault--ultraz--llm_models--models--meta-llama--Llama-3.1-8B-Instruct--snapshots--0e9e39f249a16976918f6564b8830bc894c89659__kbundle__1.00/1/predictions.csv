@@ -1,0 +1,305 @@
+_id,dataset,answer_prefix,task,predicted_answer,language,question,answers,length,compression_ratio,all_classes,max_new_tokens
+4606a3d2fbbd29e034c815d51bd05e8d5481860ad8c1e7ef,musique,Answer:,musique, The Joliot-Curie's experiment,en,"Question: What was the person who provided evidence to suggest the existence of the neutron a participant of?
+",['Manhattan Project'],11721,1.0,,52
+b5e26a0b0703d3a7b6b9ae4fd8627043ee84005137f515cd,musique,Answer:,musique, Merseyside,en,"Question: In which borough was Callum McManaman born?
+",['Knowsley' 'Metropolitan Borough of Knowsley'],11753,1.0,,52
+e9a0c409564baa2cadde3aa638d789031755b0ca9b72c63b,musique,Answer:,musique, There is no information about Francisco Bojado's birthplace in the given passages.,en,"Question: Who is the child of the Italian navigator who sailed for England and explored the eastern coast of the continent Francisco Bojado's birthplace is located?
+",['Sebastian Cabot'],11358,1.0,,52
+b129c8e6a0b184509c1a36a6b8b5703c924ee965727e79bc,musique,Answer:,musique, Not mentioned in the passage.,en,"Question: Who is the spouse of the actor who played hannibal smith in the a team?
+",['Sherry Boucher'],11728,1.0,,52
+685f8561239902c340fcf6b70d5ddc919b62aaf2b543ae3f,musique,Answer:,musique, There is no information in the given passages about Peter Till's sports team beating the winner of the 1894-95 FA Cup.,en,"Question: When was the last time Peter Till's sports team beat the winner of the 1894-95 FA Cup?
+",['1 December 2010'],11591,1.0,,52
+32b91f4d1aef1cc3c103e544e4fca9025ed7e6d677dbe380,musique,Answer:,musique, Tatum O'Neal,en,"Question: Who is the child of the cast member of Green Ice?
+","[""Tatum O'Neal""]",10929,1.0,,52
+936ced65be306aaccf844e11a0e0ef544d44a2a7edec8f14,musique,Answer:,musique, There is no information about the birthplace of La Silvia's composer in the given passages.,en,"Question: How many times did plague occur in the birthplace of La Silvia's composer?
+",['22'],11472,1.0,,52
+220004b7b3836d023f1e416666c0d8d43ae75a77c1a8bdd0,musique,Answer:,musique, James Meredith,en,"Question: Who was the first African American student at the university Robert Khayat was educated at?
+",['James Howard Meredith' 'James Meredith'],11947,1.0,,52
+7d7eb390be7dc75ca61b5eda6a9d9b36372273d1bd42646a,musique,Answer:,musique, The Royal Society of Chemistry,en,"Question: Who gives out the prize named after the author of Lectures on Jurisprudence?
+",['University of Cambridge' 'Cambridge'],10040,1.0,,52
+70a325ff2a0681bc4f6fd064f47bf88b4551447ac97dea96,musique,Answer:,musique, Tom Hood,en,"Question: Who is Frances Freeling Broderip's sibling?
+",['Tom Hood' 'Thomas Hood'],11724,1.0,,52
+26bd6d08ea272ac11bebcf5250b16ff90f92352cdac405c1,musique,Answer:,musique, The Orange River.,en,"Question: What is the source of the river that is the mouth of the Caledon River?
+",['Thaba Putsoa'],8507,1.0,,52
+1f4b2eebc578880d3f401476be8e933f743e77a865a31902,musique,Answer:,musique, Rialto Bridge,en,"Question: What is the name of the famous bridge located in the birthplace of the composer of Nulla in mundo pax sincera?
+",['Rialto Bridge' 'Ponte di Rialto'],10991,1.0,,52
+606e28838e5641e3dab2482d21f65cf2915cacdf6d63b454,musique,Answer:,musique, The Senate.,en,"Question: When did the party that gained control of Congress in the midterm elections in 1946 take control of the government branch that determines the rules of the US House?
+",['January 2015'],10779,1.0,,52
+8fc8fb567703000eb6065c007e97841b11c9595b8862197b,musique,Answer:,musique, The Juilliard School,en,"Question: Where did the producer of Julius Caesar study or work?
+",['Clifton College'],11517,1.0,,52
+30dac2419bdedc98a7dac06e6d4c8046262c2d0197c2b7f9,musique,Answer:,musique, Malko Tarnovo,en,"Question: Mehmet Hayri Tarhan's birthplace is the capital of what municipality?
+",['Malko Tarnovo Municipality'],11954,1.0,,52
+936a34800c73e9d077b058fda4576fc45f8cb03bfae99c04,musique,Answer:,musique, Nina,en,"Question: What is the performer of Heartbeat named after?
+",['Natalie Albino' 'Nina Sky'],11174,1.0,,52
+e956e4868d588132bd2de1926dc446d0975c2d7a45090cad,musique,Answer:,musique, The University of Toronto,en,"Question: The author of Elizabeth and After attended which university?
+",['University of Toronto' 'UT'],11283,1.0,,52
+8f9aa7e502ca3fcd999cb05b87a6aa78ef4c4af96cbe3199,musique,Answer:,musique, 1999,en,"Question: What year did the publisher of Labyrinth end?
+",['1986'],11395,1.0,,52
+865a174ebe32ad81f573feb122198c1f16e6f2fd6c3fdda5,musique,Answer:,musique, FDA,en,"Question: The food safety system of the agency that has the authority to decide if a drug is marketed otc or prescription is known as?
+",['Food Safety Modernization Act (FSMA)'],12201,1.0,,52
+78b24e393c76b4fcd88852e310548721c5eea12bb8848aca,musique,Answer:,musique, Ernie K-Doe,en,"Question: Who was the British general in the battle named after the birth city of the person who recorded Mother-in-Law?
+",['General Edward Pakenham' 'Edward Pakenham'],12328,1.0,,52
+096c9e28af3c91a52463c424203181b2a9c114c3b782dbf5,musique,Answer:,musique, Ocala.,en,"Question: Where is Sean Hampton's birth place in the state of Florida?
+",['in Northern Florida' 'Northern Florida'],9348,1.0,,52
+ecfec467704be2a08675527e8f1733d9fbb51309454145ef,musique,Answer:,musique, The International Olympic Committee,en,"Question: Who is the president of the group Kim Un-yong is a member of?
+",['Thomas Bach'],12200,1.0,,52
+9724776e8c8210a47eae48302b73a9e2603c238d417a63f2,musique,Answer:,musique, 1911,en,"Question: During the war in which The Things They Carried is set, when was conscription introduced by the country where the film Grievous Bodily Harm was later released?
+",['1964'],11640,1.0,,52
+f4f04befbe7bb6e1ca4055ffd495356951166e116a15b3de,musique,Answer:,musique, King Charles III,en,"Question: Who is the spouse of the current queen of England?
+",['Philip Mountbatten'],11581,1.0,,52
+94e583be9e34ba8c8cec05546807a1516b652c80be180e9b,musique,Answer:,musique, 1839,en,"Question: In which year did Taifa of Francisco Giner de los Rios' birthplace cease to exist?
+",['1065'],6624,1.0,,52
+a9233be5f19b456544331e69848af8bbf56256ce9ed0da78,musique,Answer:,musique, Da Nang,en,"Question: In what region of the country of S-Fone is The place of birth of John Phan located?
+",['South Central Coast'],10322,1.0,,52
+102eaee0943270c43f63b7d45a0088f6a8515e51a126d925,musique,Answer:,musique, Michael Bublé,en,"Question: Along with the Closer performer, what notable pop artist started out his career on adult contemporary radio?
+",['Michael Bublé'],11732,1.0,,52
+de9c2fbc33bc6136a3a0598a7a1ad678882b4a8613f3900b,musique,Answer:,musique, BEC Recordings,en,"Question: The Live Life Loud album's band signed to which label?
+",['Fair Trade Services'],8449,1.0,,52
+5c835b4c358e5f2e8c577dbc38c4857599539968e593a322,musique,Answer:,musique, Triumph,en,"Question: What is the record label of the Metalworks Studio founder?
+",['TML Entertainment'],7091,1.0,,52
+70444bcfcd30c497b730b5b408990ea2c672ec03caa5235f,musique,Answer:,musique, 2,en,"Question: How many times did the plague occur in the city where Flora's painter died?
+",['22'],12182,1.0,,52
+e62b87ef31160a755763a2c665a516dbcbcf1f116050019b,musique,Answer:,musique, Outagamie County,en,"Question: What is the seat of the county sharing a border with the county in which Valley New School is located?
+",['Green Bay'],9638,1.0,,52
+442e302cee202c213a085d6aa1caf87e3aebf6b954c690b0,musique,Answer:,musique, Fort Davis,en,"Question: What is the highest city in the state where Dell ranks sixth by revenue?
+",['Fort Davis'],11714,1.0,,52
+0f4da7d5be33010bcfb9197d3d910cc40bb8abc0ecc3bd32,musique,Answer:,musique, Elisabeth Shue,en,"Question: Who played the girlfriend of who plays marty mcfly's daughter in back to the future 2?
+",['Claudia Wells'],10796,1.0,,52
+97d4194eb1fc6ee16c04f46d93fd5df5fd2ff5c60056799f,musique,Answer:,musique, Outagamie County,en,"Question: What is the seat of the county sharing a border with the county in which J. P. Hayes was born?
+",['Green Bay'],11366,1.0,,52
+338a13d60af61b3eeb099758086e6b1522a9adcd8f6cb207,musique,Answer:,musique, 1,en,"Question: How many times did plague occur in the place where Venus with a Mirror's creator died?
+",['22'],11739,1.0,,52
+73b7efc9538e65dda454b5be9d9b84a35decf082cd4091be,musique,Answer:,musique, The Orange River.,en,"Question: What is the source of the river Orlam clans crossed to migrate to Namibia?
+",['Thaba Putsoa'],11531,1.0,,52
+6cbb382cf679c0cf091fbf0d3c6d9638bffbc8ea039ca8b2,musique,Answer:,musique," It was a clarion call for unity against the corrupt British court, so as to realize America's providential role in providing an asylum for liberty.",en,"Question: Why was Common Sense, by the same author as Rights of Man, an important work?
+","['crystallized the rebellious demand for independence from Great Britain'
+ 'Great Britain']",12362,1.0,,52
+96dfe963511d7bdd2daeda35b9fab72c44dcca15fbb91fba,musique,Answer:,musique, Pearl River County,en,"Question: In which county was Larkin I. Smith born?
+","['Pearl River County' 'Pearl River County, Mississippi']",11805,1.0,,52
+f6ab8327fd10a883614cd3f571224c82f1cb7073de8a1143,musique,Answer:,musique, The African Queen,en,"Question: What movie did the person who acted in the comedy film Crime School win his only Oscar for?
+",['The African Queen'],11434,1.0,,52
+0da7802e47b081fc2cc573f1d9559abcdd232d4733081512,musique,Answer:,musique," Golestan province, Iran.",en,"Question: Where is the province of Gonbad-e Qabus County located?
+",['in the north-east of the country south of the Caspian Sea' 'Caspian Sea'],5771,1.0,,52
+ce2f0aec72fade99a1be4add19d9e6364caf398a4586c902,musique,Answer:,musique, John D. Loudermilk,en,"Question: Who wrote the song turn me on that is performed by performer of Feelin' the Same Way?
+",['John D. Loudermilk'],11157,1.0,,52
+0b0b3547496ed078cb19ec901a35f071b7b3cf138fdf2e60,musique,Answer:,musique, The National Institute of Dramatic Art (NIDA),en,"Question: What institute did the actor playing the voice of John Smith in Pocahontas attend?
+",['National Institute of Dramatic Art' 'NIDA'],11496,1.0,,52
+0942aa56c94ac545c00849686583273efd664347084e9682,musique,Answer:,musique, Khalid ibn Walid,en,"Question: Who led the muslim forces to retake the proposed embassy destination?
+",['Abu Ubaidah'],11094,1.0,,52
+16db4ccc32ee8b04e3daee094ef5e8cfb985a4f0c2c999d5,musique,Answer:,musique, The River Thames,en,"Question: Which is the body of water near George Mills' place of birth?
+",['River Thames'],9983,1.0,,52
+8267f95a2928cb63203d20da0079d98138d4f58281fc4e9e,musique,Answer:,musique, The party who gained control of congress in the midterm elections in 1946 took control of the determiner of rules of the US House and US Senate in 1929-1931.,en,"Question: When did the party who gained control of congress in the midterm elections in 1946 take control of the determiner of rules of the US House and US Senate?
+",['January 2015'],10323,1.0,,52
+9f271f822294cc528b1f20904bb7694884af4084e086d20f,musique,Answer:,musique, Jason Todd,en,"Question: Who does the Nothing Suits Me Like a Suit artist play in Batman Under the Red Hood?
+",['Nightwing / Dick Grayson' 'Nightwing' 'Dick Grayson' 'Batman' 'Robin'],12087,1.0,,52
+92a5f365ee7514ded1c6f5dac8470281083060c3e6ec7594,musique,Answer:,musique, 1989,en,"Question: When was the death penalty abolished in the country near the country where the writer of The Book Thief is a citizen of?
+",['1989'],12366,1.0,,52
+8e2a26fbfbcf2d28b9873a39bac21802372e822d41cdaa2b,musique,Answer:,musique, Matthew Lawrence,en,"Question: Who is the brother of the Nothin' My Love Can't Fix performer?
+",['Matthew Lawrence'],9785,1.0,,52
+0140a933eed826f1c48d9a9c5c4717965cf982f1d749be6a,musique,Answer:,musique, Matthew Lawrence,en,"Question: Who is the brother of the Melissa and Joey Theme Song singer?
+",['Matthew Lawrence'],11813,1.0,,52
+64bae1eefc192258c2e5d8ecab71b8a02fc5a3d104c0fc21,musique,Answer:,musique, 1887,en,"Question: When was the last time the team that Arthur James was a member of beat the 1894-95 FA cup winner?
+",['1 December 2010'],11845,1.0,,52
+e935f6dea75d4f17c5f98b7e255950372a22ab83f9632876,musique,Answer:,musique, The Free Software Foundation (FSF),en,"Question: Who started the foundation that developed the Free Software Directory?
+",['Richard Stallman' 'rms'],12411,1.0,,52
+fe052f64d5c1f66bd84e1f2dc6df342b1ea10d2763c22a90,musique,Answer:,musique, Egyptian,en,"Question: What pantheon is the God of the underworld in ancient Egypt a part of?
+",['ancient Egyptian religion'],11562,1.0,,52
+02bd004f6306542bfdf5e166da61b306b5cf5f2faf50f796,musique,Answer:,musique, Vermont,en,"Question: Where was the president born on the fourth of July born?
+",['Plymouth Notch'],11663,1.0,,52
+e42937544d09a6051fc8507e1d3f89fe49b68d1300a44aa7,musique,Answer:,musique," Claudia Wells, Elisabeth Shue, and Cathy Cavadini",en,"Question: Who play's Marty's girlfriend in back to the future?
+",['Claudia Wells'],11409,1.0,,52
+05f1867336770bf201cf9a88de60e2b9bdd893efe98d9593,musique,Answer:,musique, Sire Records,en,"Question: What is the record label for the band which performed Pythons?
+",['Kanine Records'],3440,1.0,,52
+ebaefb7e8412f8323769c1e4ee596d5135b609ae76514273,musique,Answer:,musique," Ernst Mach was a physicist and philosopher, but the passage does not mention his employer.",en,"Question: Who is the employer of the person Mach's principle was named after?
+",['Charles University'],12623,1.0,,52
+e5d8a267444a8532a875af8cfb8b07e6f6d02d6e85148540,musique,Answer:,musique, 9.4 years,en,"Question: What is the life expectancy of the type of retriever named after the body of water the Patuxent River turns into?
+",['average lifespan at 9.4 years'],10659,1.0,,52
+648de9dea3ad81e8ac733acd312913385129ab16dd091834,musique,Answer:,musique, Estanislau da Silva,en,"Question: Who is the president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Sambas is located?
+",['Francisco Guterres'],11198,1.0,,52
+3fb64043e4ebb85b0e1d08ca7112c56185d90becb1f4ad11,musique,Answer:,musique, Tarnów,en,"Question: What is the capital of the country it is about?
+",['Aden'],10975,1.0,,52
+c341a480cb5616540b22eb1018953ba04aa96dac5e286674,musique,Answer:,musique, American football,en,"Question: The league playing in the Thursday night football game is a type of what?
+",['sports league' 'Sports league' 'league'],11819,1.0,,52
+f6564f948dc28ef7be445d610eb42c1a6a6042d47e62e7a6,musique,Answer:,musique, A powerful noble family led by the Black Douglases,en,"Question: A participant of the Battle of Brechin is an instance of?
+",['Scottish clan'],11507,1.0,,52
+7ac9fed94844e0922433d13032d684b7336219240499d6c1,musique,Answer:,musique, Fleur-de-lis,en,"Question: What is the symbol of the Saints from the city that is the location of Blanton's manufacturer's headquarters called?
+",['fleur - de-lis' 'Fleur-de-lis' 'fleur-de-lis'],10960,1.0,,52
+f182c6355042dd18a7d42f9275c46f1ee0c985e5ae5c6001,musique,Answer:,musique, The College of Charleston.,en,"Question: What is the oldest college in the state that contains Borough House Plantation?
+",['College of Charles Towne' 'Charles Towne'],11894,1.0,,52
+7a9091fd0314d17f4fb7683cc0a078b04501e3fbc1f64b42,musique,Answer:,musique, Rowan County,en,"Question: What county shares a border with the other county, that contains the city, that is the birthplace of the performer of Never Gonna Fall in Love Again?
+",['Cabarrus County'],11247,1.0,,52
+c44fa02fb87c848c0ab4d0a254787e29540715ef86fff95a,musique,Answer:,musique, Yakima,en,"Question: What city was the author of What We Talk About When We Talk About love born in?
+","['Clatskanie' 'Clatskanie, Oregon']",11417,1.0,,52
+e1be2d43c39ecba4174621ae6f571ae04eac92cfd209b786,musique,Answer:,musique, The discovery of the neutron by James Chadwick.,en,"Question: What undertaking included the person who discovered that the number of protons in each element's atoms is unique?
+",['Manhattan Project'],11601,1.0,,52
+59f0697aa3d51324795d9f102b93756a0f7bc68f5ebf4922,musique,Answer:,musique, The story of the character from The Bourne Deception was based on the seventh novel in the Jason Bourne series created by Robert Ludlum.,en,"Question: What was the story of the character from The Bourne Deception based on?
+",['the novel of the same name by Robert Ludlum' 'Robert Ludlum'],11301,1.0,,52
+aa614fdaaaefd5d4baa2796deb3b5f0067e79500b88427e5,musique,Answer:,musique, Scott Reeves,en,"Question: Who is one of the members of the music group that performed ""Good Little Girls""?
+",['Aaron Benward'],11816,1.0,,52
+0efe9b8bd5ade04ff3030e3d944b21b0ac4aa9527e17bde6,musique,Answer:,musique, 1986,en,"Question: What year did the company that published Starship Command end?
+",['1986'],10333,1.0,,52
+011cb0e253041c568db1d0b01a34fa26ff951bbbdebbd887,musique,Answer:,musique, Dottie Hinson,en,"Question: What character in A League of their Own was played by the actress who played Thelma in the movie Thelma and Louise?
+",['Dottie Hinson'],11507,1.0,,52
+79669636487de3810792f2a9a1b4a7c253da580013d1d2fb,musique,Answer:,musique, NFL,en,"Question: What is the abbreviated name of the exclusive platform of the video game named for the league with a halftime event just before the publishers clearing house sweepstakes drawing.
+",['NES' 'Family Computer' 'Famicom' 'Nintendo Entertainment System'],12220,1.0,,52
+db14f1320cc3442cb2416f65c437cd0ee74449baf687602b,musique,Answer:,musique," The spouse of Will Arnett, who plays Batman in the Lego Batman Movie, is not mentioned in the given passages.",en,"Question: Who is the spouse of the person who plays Batman in the Lego Batman Movie?
+",['Amy Poehler'],11392,1.0,,52
+0da908a928c375084638f1e0ab10c329679eaacae7e4ffe0,musique,Answer:,musique, 1769,en,"Question: When did the explorer reach the headquarters location of the group Con-Test's record label is part of?
+","['August 3, 1769']",11296,1.0,,52
+f9a50652b4e5d7000c42ae27b2477a54d2a88cfceec0ec3b,musique,Answer:,musique, Toronto,en,"Question: What is the name of the castle in the city where the performers of Spirit If.. became a band?
+",['Casa Loma'],10449,1.0,,52
+efa92baf3840922c7dc00ba73ad729345a2b12035fa39071,musique,Answer:,musique, Stephen Harper,en,"Question: Who is the federal leader of the party that Pierre-Hugues Boisvenu is a member of?
+",['Andrew Scheer'],10938,1.0,,52
+5188d3c87c6fead7f796c62c3f1bd13ea8576bab724ea06d,musique,Answer:,musique, 1 May to 30 September,en,"Question: At what local time does the country where Fuser and Alberto meet the indigenous couple traveling to look for work change their clocks for DST?
+",['24:00'],11208,1.0,,52
+046a6c5856736e4dc6f532658038afabde83e9c71507832f,musique,Answer:,musique, 2008,en,"Question: When did the place of birth of the performer of Mother-in-Law elect its first black Mayor?
+",['1970s'],11691,1.0,,52
+296a82255560704f3fd8c8ea411827192d0eceddbf38ce4c,musique,Answer:,musique, 1946-47,en,"Question: When was the last time Ken Faulkner's team beat the 1894-95 FA Cup winner?
+",['1 December 2010'],11561,1.0,,52
+38da792d05c3f8c7220c951b8d66f7400debb80114932a80,musique,Answer:,musique, 2005,en,"Question: In what year was Twilight Princess from the game series on which The Legend of Neil was based originally planned for release?
+",['2005'],12238,1.0,,52
+458b3f8687920863190957c08123f885c60989f59bf40681,musique,Answer:,musique, The Beavers,en,"Question: What is the mascot of the school that owns Goss Stadium at Coleman Field?
+",['Benny Beaver'],11698,1.0,,52
+5a79dda7bfdfb77d539fe80abea20ca003c2fe0496b89c02,musique,Answer:,musique, Jennifer Connelly,en,"Question: Who is the spouse of the actor that plays vision in avengers age of ultron?
+",['Jennifer Connelly'],11628,1.0,,52
+0b0d46b9b937c43da535ef8109b75a460051e57f97a3f7a2,musique,Answer:,musique, Rhett Butler,en,"Question: Who was the spouse of the leading lady in Gone With the wind?
+",['Laurence Olivier'],12243,1.0,,52
+ea32ca3702e3eedd278c8c77153712c07dbb5dd7025d8c3d,musique,Answer:,musique, Not found in the given passages.,en,"Question: Who is the mayor presiding now where Merrill Elam was born?
+",['Lance Bottoms'],10868,1.0,,52
+3fe817c10d1006cd821b07586f51302a3263884e83211ba8,musique,Answer:,musique, Cuyahoga County,en,"Question: What county shares a border with the county where She Did It's performer was born?
+",['Cabarrus County'],11696,1.0,,52
+517b237e011625d9c5ea0be465bdc9dcd38ef548cfd1a74e,musique,Answer:,musique, Paterson River,en,"Question: What watercourse is the river on which the Lostock Dam is located the mouth of?
+",['Hunter River'],6320,1.0,,52
+3b133029d40cc58823d90a6f9176ea531c8c30fb88c31736,musique,Answer:,musique, Not available in the given passages.,en,"Question: What is the capital of the county that shares a border with the county where KRSU is licensed to broadcast?
+",['Green Bay'],10252,1.0,,52
+163a438b614948528acdb5901ad522af7911b4e43c7a656a,musique,Answer:,musique, Susilo Bambang Yudhoyono,en,"Question: Kiwil's birth country participated in a Commission of Truth and Friendship. Who is the president of the other country that participated?
+",['Francisco Guterres'],10562,1.0,,52
+a8db3b0b50151b8616d23b55f0f359f2ef9ba8fff740c3f2,musique,Answer:,musique, The fleur-de-lis,en,"Question: What is the symbol of the Saints from the headquarters location of Ten High's manufacturer called?
+",['fleur - de-lis' 'Fleur-de-lis' 'fleur-de-lis'],11294,1.0,,52
+c858bf26a171d617a8decbb3a67e082b577a5a1166ca15b2,musique,Answer:,musique, Tanzania,en,"Question: Which country has a body of water that was inspiration for the name of the Mara Region?
+",['Tanzania'],9684,1.0,,52
+19e28bddd1e5817780ebfba2ff23817578fb6e01289caa3a,musique,Answer:,musique," The Atlantic Ocean, approximately 570 kilometres off the western coast of the African continent, near Senegal, The Gambia, and Mauritania.",en,"Question: Where is the country with ISO code ISO 3166-2:CV located?
+",['central Atlantic Ocean' 'Atlantic Ocean' 'Atlantic'],10731,1.0,,52
+8daaf871ac6117a987a5461e5a0cfc553ef30e1f47800200,musique,Answer:,musique, Neil Patrick Harris,en,"Question: In Batman Under the Red Hood, who does the actor of Barney Stinson from How I Met Your Mother play?
+",['Nightwing / Dick Grayson' 'Nightwing' 'Dick Grayson' 'Batman' 'Robin'],12377,1.0,,52
+a6005b1ac2dec9c661b1dec2b0d4e27939a56dff3d049992,musique,Answer:,musique, Audrey Hepburn,en,"Question: What did the singer of ""Moon River"" in the movie Breakfast at Tiffany win a Tony for?
+","['for Best Performance by a Leading Actress in a Play in Ondine'
+ 'leading role' 'star' 'leading actress' 'lead']",8517,1.0,,52
+88d9867cb4a10c547384a02cb1758981b8989081fd1bba53,musique,Answer:,musique, Orange River,en,"Question: What is the source of the river of which Kraai River is a tributary?
+",['Thaba Putsoa'],7223,1.0,,52
+22129e25d4587923fcde7881c2d6d6ea393fe1a5615db2bd,musique,Answer:,musique," Not applicable, as the passages do not mention the voice actor of Chance in Homeward Bound being in Back to the Future.",en,"Question: Who played the girlfriend of Chance's voice actor in Homeward Bound in Back to the Future?
+",['Claudia Wells'],12030,1.0,,52
+7b7acfdf920adc600a78d5e07adbb139447a4f4c05cdeb97,musique,Answer:,musique, 280-279 BC,en,"Question: Between which years did war with the person for whom Pyrrhic victory is named occur?
+",['323–272 BC'],11671,1.0,,52
+51cd91435004d29ca0defa249c04567792bba4ae689bcaff,musique,Answer:,musique, filing for Chapter 11 bankruptcy protection,en,"Question: MV Miralda's owner announced it was in the process of doing what in April 2010?
+","['trying to find a potential buyer for all of its operations in Finland'
+ 'FIN' 'fi' 'Finland']",11765,1.0,,52
+73c99907f8558b45cbd409c4453f2b005668503f8dd77cb1,musique,Answer:,musique, 23 December 1793,en,"Question: When did the Battle at Choo Hoey's birthplace end?
+",['15 February 1942'],11659,1.0,,52
+80eb4cdc289c327a7ce40633b12e1a144052165599d2521a,musique,Answer:,musique, The president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Sumardi was born is not explicitly mentioned in the given passages.,en,"Question: Who is the president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Sumardi was born?
+",['Francisco Guterres'],11204,1.0,,52
+d93d09390c108e43314b165e4eb32b63bee4bd289164c233,musique,Answer:,musique, Thailand,en,"Question: Where did they film The Beach in the country where Siddhi Savetsila was born?
+",['Ko Phi Phi Leh' 'Ko Phi Phi Le'],10810,1.0,,52
+2b182c3ce4bb7bb2c28fc1f86d7a76591488e7d2aef1bb35,musique,Answer:,musique, American,en,"Question: Who is the author of Growing Up this nationality of the creator MacGruder and Loud?
+",['Min Zhou' 'Carl L. Bankston'],10463,1.0,,52
+6d57f1e891250f9822eaef55f6f86661ba65ea90141fdb3f,musique,Answer:,musique, Kenton County,en,"Question: In which county did Snappy Tomato Pizza form?
+","['Kenton County' 'Kenton County, Kentucky']",11139,1.0,,52
+d38330e71e4ccaf9dacb5743005ac48880a86ad157c0e89d,musique,Answer:,musique, He became the first non-Caucasian winner of that category.,en,"Question: What other recognition did the Oscar winner for Best Actor in 2006 receive?
+","['nominated for an Academy Award for Best Supporting Actor'
+ 'Academy Award for Best Supporting Actor']",11397,1.0,,52
+6ce26ac59b2882dc391635da186779e5b8ed5a0b0354da10,musique,Answer:,musique, 2015,en,"Question: When did the majority party in the House of Representatives gain control of the body which approves members of the Cabinet?
+",['January 2015'],10752,1.0,,52
+6e64c9c62d8e1170c6341cde12aa2fe75a35762012ab8d30,musique,Answer:,musique, Zhejiang,en,"Question: In which county was Zhu Qinan born?
+",['Yongjia County'],11007,1.0,,52
+554fd0d8696f182e7802bf42d669102e4227ba40f8a6bd4f,musique,Answer:,musique, Karen Fairchild,en,"Question: Who sings Home Alone Tonight with the Rain is a Good Thing singer?
+",['Karen Fairchild'],11479,1.0,,52
+236a7ebf10d9e19269a51d46f62df7d301f6a475aed06dd8,musique,Answer:,musique, Tunis,en,"Question: What city is the star of 'Three Strangers in Rome' from?
+",['La Goulette' 'Tunis' 'Rome' 'Roma'],11392,1.0,,52
+034a82714302b4b4a869310daace9e08bb18dc7fc3a81206,musique,Answer:,musique, 2014,en,"Question: When did the party that controls the House of Representatives take control of the branch who determines the rules of the US house and Senate?
+",['January 2015'],10879,1.0,,52
+e21823470386531b4456eec33d0709c7eb82b63bc394f6fa,musique,Answer:,musique, 15 consecutive wins including friendlies,en,"Question: What series of wins did the sports team that the all time highest goal scorer in spain national team was a member or achieve in 2009?
+",['continental treble'],11570,1.0,,52
+f11250d4b392a30f6d22566d5167dee1464544f525c2975c,musique,Answer:,musique, Salma Hayek,en,"Question: In Grown Ups, who plays the wife of the actor who produced The Chosen One?
+",['Joyce Van Patten'],11185,1.0,,52
+9aea23787e6ee6df485a6b02ad5e2c185b44b9611ce8b921,musique,Answer:,musique, Bobby Brown,en,"Question: Who does the performer of Don't Be Cruel play in the wire?
+",['a Western District uniformed officer'],11485,1.0,,52
+ede452592bbb410b3678e75fc6aaaeeda204fffc69034041,musique,Answer:,musique, 1986,en,"Question: When did Burroughs Corporation merge to form a new corporation?
+",['1986'],11207,1.0,,52
+6c52099d688bcf9f3be62de4417112635370c9d72b748084,musique,Answer:,musique, 1992,en,"Question: When did the country, whose co-official language was used by the director of Group Portrait with a Lady, first attend the Olympics as an independent team?
+",['2016'],10225,1.0,,52
+a621901602313fe0bb3278547bfd2dc7a7eeb93905d04b78,musique,Answer:,musique," Her brother-in-law, Rabbi Menachem Mendel Schneersohn",en,"Question: Who followed Menucha Rochel Slonim's father?
+",['Menachem Mendel Schneersohn'],10265,1.0,,52
+abfa7716b861cb828af918cd5b406139e40afec4dfe84446,musique,Answer:,musique, Neil Simon,en,"Question: Who is the head of the developer of Simon?
+",['ADM Michael S. Rogers' 'Michael S. Rogers'],16497,1.0,,52
+6b6d8f1f4a1c7ecab4f8c3f8205f8bfc531627d12c21a3c4,musique,Answer:,musique, 1894-95,en,"Question: When was the last time the team that Terry Twell was a member of beat the 194-95 winner of the FA Cup?
+",['1 December 2010'],11460,1.0,,52
+2e723619f6cb5b2fe9cffb3e419841f96bbfd79a13f07f18,musique,Answer:,musique, Sun Jian,en,"Question: Who is the father of the artist who painted Head I?
+",['Nicholas Bacon' 'Sir Nicholas Bacon'],11648,1.0,,52
+704dd451c50a536eb50a9d580b8a57aa8203bd76d1862ef6,musique,Answer:,musique, The Orange River.,en,"Question: Where is the origin of the river Augrabies Falls is part of?
+",['Thaba Putsoa'],10672,1.0,,52
+f1ae33d3867ac32d4bf685be6b8eadd99847853869184186,musique,Answer:,musique, 1958,en,"Question: Where was the person who acted in the film Sous les pieds des femmes born?
+",['La Goulette'],10693,1.0,,52
+afd66c76fbcbd6fd65cfccf021882c773e57478071afaa65,musique,Answer:,musique, Not specified in the passage.,en,"Question: Who is the spouse of the person who voices Jarvis in the Avengers Age of Ultron?
+",['Jennifer Connelly'],11579,1.0,,52
+b15f31c4855a276dae1e56de0784c6eab14eb4621012cc10,musique,Answer:,musique, Clarke County,en,"Question: Which county shares a border with the county where the most populous city in the state where Redan High School is located?
+",['Presque Isle County'],10239,1.0,,52
+3601e9951ec350c2c121a537f60a7347d545f015663316d5,musique,Answer:,musique," Roseland NYC Live, a 1998 live album by English trip hop group Portishead, produced with the New York Philharmonic Orchestra.",en,"Question: The rapper who owns Aspiro was inspired by what when writing Song Cry?
+",['three different relationships he had in the past'],11684,1.0,,52
+9747157702dd161d08b47a241d23256b0055cd503ee4dadf,musique,Answer:,musique, Ada County,en,"Question: What administrative territorial entity includes the place that KTRP is licensed to broadcast to?
+","['Canyon County' 'Canyon County, Idaho']",10062,1.0,,52
+e349bd0727c841c1b6a985bbf6c1b043efcad758e078e1df,musique,Answer:,musique, Christopher McDonald,en,"Question: In A League of Their Own, who played the husband of the actress who played Thelma in Thelma and Louise?
+",['Bill Pullman'],11800,1.0,,52
+04c783fe592055e55b17ada8341007b7125bf0a326f9c58b,musique,Answer:,musique, Indonesia,en,"Question: What is the former name of the country where Atika Suri studied?
+",['Dutch East Indies'],9814,1.0,,52
+8a986323dbd4e14655caf5775eb54c222bc8081f890cadb6,musique,Answer:,musique, Tanzania,en,"Question: What province shares a border with the province where Lago District is located?
+",['Cabo Delgado Province'],7682,1.0,,52
+ac92ae6728bdfb340f9270a188da65795eec3273550ca498,musique,Answer:,musique, The Association for Computing Machinery (ACM),en,"Question: Who published Communications of the organization that Andries van Dam is a member of?
+",['Association for Computing Machinery' 'ACM'],10141,1.0,,52
+ebd4b995b91cadca20e7b463a7eeb03130f2aa06a4ac30a8,musique,Answer:,musique, Falls County,en,"Question: What county shares a border with Cedar Springs?
+",['Bell County'],10803,1.0,,52
+a39f4cbf6b6f7cb942cd2ce0e1234cae29855f2eaffc1be9,musique,Answer:,musique, Nuevo Laredo,en,"Question: What administrative territorial entity is the owner of Ciudad Deportiva located?
+",['Tamaulipas'],11696,1.0,,52
+bfcfaa4a93f27ba34411adfc4a326e54fa373314b0ba15ab,musique,Answer:,musique, Sebastian Cabot,en,"Question: Who is the son of the Italian navigator who explored the eastern coast of the continent Ulises Solís' birthplace is located in for England?
+",['Sebastian Cabot'],9872,1.0,,52
+fd437e73a2d708b551e27a13db723a6aa13ca01f70d63cd1,musique,Answer:,musique, Colin Firth,en,"Question: Who played the monarch at the end of WW2 in The King's Speech?
+",['Colin Firth'],12227,1.0,,52
+fe8275738f337cc423752bea9b254da45cecdf2559f38352,musique,Answer:,musique, Colorado,en,"Question: What is the place of birth of who does the voice of stan on the series that Insecurity is part of?
+","['Denver' 'Denver, Colorado']",11965,1.0,,52
+c6fe007044674795d280bb474e2adc9dc8bacd8853a9cef5,musique,Answer:,musique, Thailand,en,"Question: Where did they film The Beach in the country where Pao Sarasin was born?
+",['Ko Phi Phi Leh' 'Ko Phi Phi Le'],10941,1.0,,52
+b6f4cf7f8c262ad66ad3a336c1b5f0dc86e9c8c308b86180,musique,Answer:,musique, Xanana Gusmão,en,"Question: Who is the president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Kotamadya is located?
+",['Francisco Guterres'],10966,1.0,,52
+cb9b4679117faad98b982edb6bb06b9a24ec472f8542da17,musique,Answer:,musique, George VI,en,"Question: In the King's Speech, who played the person who was the King of England in 1950?
+",['Colin Firth'],12383,1.0,,52
+9cf11c3026ea59b7e28ae4488918a9822f86c5efc4db5883,musique,Answer:,musique," The author of The Happy Journey to Trenton and Camden, Thornton Wilder, received a Tony Award and a Drama Desk Award for Outstanding Revival of a Play.",en,"Question: What award did the author of The Happy Journey to Trenton and Camden receive?
+",['Pulitzer Prize for Drama'],11779,1.0,,52
+72265eb89876baa2a8ab23c14ad61073f5d9f26c471e1ff9,musique,Answer:,musique," The passage does not mention the designer of the Lap Engine. However, it does mention that the Lap Engine was built by Boulton and Watt, and that James Watt was the designer of the engine.",en,"Question: Where was the designer of the Lap Engine educated?
+",['University of Glasgow'],11575,1.0,,52
+d79a4697ef5b7302ea7cb8a81107a462d699843688a3050d,musique,Answer:,musique, Louis Chedid,en,"Question: Who is the father of the Labo M performer?
+",['Louis Chedid'],11057,1.0,,52
+dc7a928fdebf66b8a407ec96057d15ff1fc3a243bb3d87f1,musique,Answer:,musique, Adam Smith,en,"Question: Who gives out the award named after the person who argued that colonies were redundant?
+",['University of Cambridge' 'Cambridge'],12461,1.0,,52
+77351e24c1b3474414472073259cea34aa2b7c63234264a6,musique,Answer:,musique, Luke Bryan,en,"Question: Who sings Home Alone Tonight with the singer of ""I Don't Want This Night to End""?
+",['Karen Fairchild'],11918,1.0,,52
+40e8c816ba317d696267cad7f758b7be88c0c90eccd2d3ce,musique,Answer:,musique, Purdue University,en,"Question: What company is the school where Lawrence Landweber was educated a part of?
+",['City University of New York' 'The City University of New York'],10928,1.0,,52
+a6e0032c62ece331c56364ced53e1c4076c303e4ae287074,musique,Answer:,musique, Green Bay,en,"Question: What is the capital of the county that shares a border with the county where WAPL is licensed to broadcast?
+",['Green Bay'],10939,1.0,,52
+45b3ff5fd17fddc64c647566139dadd2693cf4488c0e6ec7,musique,Answer:,musique, Nia Long,en,"Question: Who did the original voice of the character played by mila kunis in the cleveland show?
+",['Lacey Chabert'],12181,1.0,,52
+64219602b22a98429c3bc6a9c49ae282dd39e6a1b29debe7,musique,Answer:,musique, Emilia Galotti,en,"Question: What is another notable work made by the author of Miss Sara Sampson?
+",['Emilia Galotti'],11388,1.0,,52
+7e74ad75b51dd675970fecb014631c801252981eb2a657d1,musique,Answer:,musique, 2010,en,"Question: When did the majority party in the body which determines rules of the US House and US Senate gain control of the House?
+",['the 2010 election'],10702,1.0,,52
+170fdcb3bc67d3485e1d9119c94ecb4accbd49d1a5b342ee,musique,Answer:,musique, 1599,en,"Question: In what year did Margaret Knox's spouse pass away?
+",['1572'],11047,1.0,,52
+a3ba409a8a3c8bad40a1fa415b981a8227c7d21936a06f17,musique,Answer:,musique, Rostov,en,"Question: The city where Dmitry Borisovich was born is located where in Russia?
+",['Yaroslavl Oblast'],10431,1.0,,52
+e34d03a801bfa0de0ee1f5ecd06dbee378a6410d5555f7fe,musique,Answer:,musique, The Qatar Stars League,en,"Question: What league includes the operating group of Al Janoub Stadium?
+",['Qatar Stars League'],12088,1.0,,52
+1c5e70656ffbd6ba33bd853ce406b5efd495e16a3610ed9f,musique,Answer:,musique," The Anglo-Saxon Heptarchy was not abolished, but it eventually dissolved into the Kingdom of England.",en,"Question: When was the kingdom that Heptarchy was part of abolished?
+",['918'],10768,1.0,,52
+665c0eff8918d3eeecbdd3439e19c078253bde37c2977f2c,musique,Answer:,musique, The average salary is not specified in the passage.,en,"Question: What is the average salary of a working person with the same nationality as the producer of The Wild Women of Chastity Gulch?
+","['$59,039']",11541,1.0,,52
+1f2d53ab7c6e9f6ae863e4bedf1091966ccc1cfb68374b35,musique,Answer:,musique, Santa Clara County,en,"Question: The city that Psycho Donuts is located in is in which county?
+","['Santa Clara County' 'Santa Clara County, California']",11096,1.0,,52

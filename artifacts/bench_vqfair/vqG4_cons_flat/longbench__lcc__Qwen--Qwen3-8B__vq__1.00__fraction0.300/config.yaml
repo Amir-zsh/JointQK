@@ -1,0 +1,37 @@
+dataset: longbench
+data_dir: lcc
+model: Qwen/Qwen3-8B
+device: null
+press_name: vq
+compression_ratio: 1.0
+key_channel_compression_ratio: null
+threshold: null
+fraction: 0.3
+max_new_tokens: null
+max_context_length: null
+query_aware: false
+needle_depth: null
+compression_interval: null
+target_size: null
+hidden_states_buffer_size: null
+output_dir: /vault/samuel/efficient-llm/JointQK/artifacts/bench_vqfair/vqG4_cons_flat
+log_level: INFO
+model_kwargs:
+  attn_implementation: sdpa
+  dtype: auto
+  device_map: auto
+press_init_command: VQPress(cca_stats_path='', v_stats_path='', v_method='v_turboquant',
+  k_method='r_sym_waterfill', ec_bundle_path='', k_bits=4, v_bits=2, rank=64, layer0_full_precision=True,
+  quantize_k=True, quantize_v=True, compress_decode=False, eps=1e-06, compression_ratio=1.0,
+  compressor_cache_dir='artifacts/_compressor_cache', use_batched_compress=False,
+  vq_codebook_path='/vault/samuel/efficient-llm/JointQK/entropy_coding/vqa_G4_cons_flat_fair.pt')
+seed: 42
+fp8: false
+press_kwargs:
+  v_method: v_turboquant
+  v_bits: 2
+  quantize_k: true
+  quantize_v: true
+  layer0_full_precision: true
+  vq_codebook_path: /vault/samuel/efficient-llm/JointQK/entropy_coding/vqa_G4_cons_flat_fair.pt
+exclude_indices_file: null

@@ -91,14 +91,14 @@ for cand in (Path.cwd().resolve(), Path.cwd().resolve().parent, SCRIPT_DIR, SCRI
 import _bootstrap  # noqa: E402,F401
 REPO = Path(_bootstrap.__file__).resolve().parent
 
-from kvq.compression.lloyd_max import Stage1MSECompressor  # noqa: E402
+from kvq.compression.lloyd_max import Stage1MSECompressor, generate_rotation_matrix  # noqa: E402
 from kvq.compression.per_coord import PerCoordCompressor  # noqa: E402
 from pipelines.calibration.analyze_bases import (  # noqa: E402
     allocate_bits, jointqk_basis, regularize_batch,
 )
 
 EPS = 1e-4
-FULL_DIR = "/mnt/c/JointQK_data/query_stats_longbench_under4k"
+FULL_DIR = "/vault/samuel/data/query_stats_longbench_under4k"
 
 def data_root():
     r = REPO / "notebooks" / "data" / FULL_DIR
@@ -232,9 +232,23 @@ def build_qpca_basis(sigma_q, sigma_k):
     forward = sqrt_mq @ V
     inverse = V.transpose(-1, -2) @ isqrt_mq
     fwdt = forward.transpose(-1, -2)
-    q_diag = (fwdt @ sq @ forward).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
     k_diag = (fwdt @ sk @ forward).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
-    score = k_diag * (q_diag) ** 0.55
+    # q_diag: Q-weighted energy per code coordinate. MUST be computed via the
+    # INVERSE map (G Sigma_Q G^T) -- QPCA's basis is non-orthogonal (forward !=
+    # inverse^T, unlike JointQK/PCA's rotation bases), so sandwiching by the
+    # forward map (F^T Sigma_Q F, what this used to compute) is wrong here.
+    # By construction QPCA absorbs the Q-weighting into the basis itself, so
+    # the correct q_diag is uniformly ~1 (verified empirically: max deviation
+    # ~5e-2 from EPS regularization). The old F^T Sigma_Q F formula instead
+    # spanned ~10 orders of magnitude across coordinates (2e-4 to 3.4e6 in one
+    # head) and was silently scrambling the score/bit-allocation below -- same
+    # bug class already fixed for build_qpca_ec's per-coord mode (see
+    # notes/ec_k2v2_report.md's "Audit fix 2026-06-16"), but that fix never
+    # propagated to this function.
+    q_diag = (inverse @ regularize_batch(sigma_q, EPS).to(inverse.dtype) @ inverse.transpose(-1, -2)
+             ).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30)
+    score = k_diag   # pure Lambda-only allocation -- matches kvq/compression/per_coord.py's
+                     # validated weights=ones_like(...) treatment of QPCA (q_diag ~= 1 anyway)
     return {"forward": forward, "inverse": inverse, "score": score, "std": k_diag.sqrt(),
             "q_diag": q_diag, "k_diag": k_diag, "sigma_q": sigma_q, "sigma_k": sigma_k}
 
@@ -308,14 +322,25 @@ def laplacian_lloyd_max(bits, iters=200):
     return (cent / var.clamp_min(1e-30).sqrt()).float()
 
 
-def build_qpca_centered_compressors(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
-                                    widen_coords=(0,), widen_mult=2.5):
+def _build_qpca_percoord_comps(qpca_cen, b, n_layers, n_kv_heads,
+                               widen_coords=(0,), widen_mult=2.5, with_maps=True):
+    """Shared core of QPCA-Fixed: per-coord bit allocation (waterfill on QPCA's
+    score), Lloyd-Max codebooks scaled to per-coord std, coord-0 widened +
+    overridden with a Laplacian codebook (QPCA's top coord is heavy-tailed).
+    with_maps=False leaves forward/inverse identity so a caller can insert a
+    transform (e.g. page rotation) between the QPCA basis projection and the
+    per-coord quantization step.
+
+    std MUST come from qpca_cen's own k_diag (the basis diagonalizes the
+    CENTERED covariance it was built from -- k_cov here). A previous version
+    re-sandwiched the UNCENTERED second moment (sigma_k) through this basis
+    instead, which is a different, non-diagonal matrix in this basis; taking
+    its diagonal gave a std inflated by ~1.3x on average and ~2-9x on coord 0
+    specifically (verified empirically) -- coord 0's widen_mult=2.5 hack was
+    almost certainly compensating for that bug rather than a real property of
+    the centered distribution."""
     fwd_c = qpca_cen["forward"]
-    fwdt_c = fwd_c.transpose(-1, -2)
-    sk = qpca_unc["sigma_k"].to(fwd_c.dtype)
-    su = (fwdt_c @ regularize_batch(sk, EPS).to(fwd_c.dtype) @ fwd_c
-          ).diagonal(dim1=-2, dim2=-1).clamp_min(1e-30).sqrt()
-    std = su.clone()
+    std = qpca_cen["k_diag"].sqrt().clone()
     for j in widen_coords:
         std[:, :, j] = std[:, :, j] * widen_mult
     allocs = allocate_bits(qpca_cen["score"], b, max_coord_bits=8)
@@ -324,18 +349,154 @@ def build_qpca_centered_compressors(qpca_cen, qpca_unc, k_mean, b, n_layers, n_k
         for h in range(n_kv_heads):
             comps[(l, h)] = PerCoordCompressor(
                 bits_per_coord=allocs[l, h], std_per_coord=std[l, h],
-                forward_map=fwd_c[l, h], inverse_map=qpca_cen["inverse"][l, h])
+                forward_map=fwd_c[l, h] if with_maps else None,
+                inverse_map=qpca_cen["inverse"][l, h] if with_maps else None)
+    # Laplacian codebook override is a companion to the widen hack -- gate it on the
+    # SAME coord set. widen_coords=() => pure reference-matching behavior (plain
+    # Gaussian Lloyd-Max on every coord scaled by sqrt(eigval), exactly what the
+    # production kvq/compression/per_coord.py:build_jointqk_compressor qpca path does).
     lap_cache = {}
     for l in range(n_layers):
         for h in range(n_kv_heads):
             comp = comps[(l, h)]
-            for j in [0]:
+            for j in widen_coords:
                 bj = int(comp.bits_int[j])
                 if bj not in lap_cache:
                     lap_cache[bj] = laplacian_lloyd_max(bj)
                 kk = lap_cache[bj].numel()
                 comp.codebooks_padded[j, :kk] = lap_cache[bj].to(comp.codebooks_padded) * std[l, h, j]
+    return comps, std
+
+
+def build_qpca_centered_compressors(qpca_cen, k_mean, b, n_layers, n_kv_heads,
+                                    widen_coords=(0,), widen_mult=2.5, with_maps=True):
+    comps, _ = _build_qpca_percoord_comps(qpca_cen, b, n_layers, n_kv_heads,
+                                          widen_coords, widen_mult, with_maps=with_maps)
     return {(l, h): CenteredRoundtrip(comps[(l, h)], k_mean[l, h])
+            for l in range(n_layers) for h in range(n_kv_heads)}
+
+
+class QPCADeadzoneFixed:
+    """Fixed-width (NO entropy coding) deadzone-uniform scalar quantizer on the QPCA
+    basis. Per coord j with b_j bits and code-std s_j (= sqrt(Lambda_j)):
+        Q_j    = 2^(b_j-1)            (max signed index magnitude; b_j=0 -> const 0)
+        delta_j = load * s_j / Q_j    (outermost level ~ load*s_j)
+        idx    = clamp(dz_round(r/delta_j), -Q_j, Q_j)      -- fixed b_j bits
+        r_hat  = dz_dequant(idx)
+    Reconstruction is the SAME family as the EC deadzone quantizer (Paged) -- only
+    the storage is fixed-width instead of entropy-coded, so accuracy is governed by
+    (delta, dz), matching EC at equal delta. Roundtrip centers by mu (subtract before
+    rotate, add after), as Amir's qpca_unc convention. `load` trades granular MSE for
+    overload margin; larger load protects the argmax-critical heavy tails (esp. the
+    widened coord 0) at the cost of coarser central spacing -- swept empirically."""
+    def __init__(self, fwd, inv, mu, bits, std, dz=0.375, load=3.0):
+        self.fwd = fwd.float(); self.inv = inv.float()
+        self.mu = mu.reshape(1, -1).float()
+        self.dz = float(dz)
+        bits = bits.long()
+        Q = torch.where(bits > 0, 2 ** (bits - 1).clamp_min(0), torch.zeros_like(bits))  # (d,)
+        delta = torch.where(bits > 0, load * std.float() / Q.clamp_min(1).float(),
+                            torch.ones_like(std.float()))
+        self.delta = delta.reshape(1, -1).clamp_min(1e-12)
+        self.qmax = Q.float().reshape(1, -1)                 # max |index| per coord
+        self.zero = (bits == 0).reshape(1, -1)
+        self.forward_map = self.fwd
+
+    def to(self, dev):
+        self.fwd = self.fwd.to(dev); self.inv = self.inv.to(dev)
+        self.mu = self.mu.to(dev); self.delta = self.delta.to(dev)
+        self.qmax = self.qmax.to(dev); self.zero = self.zero.to(dev)
+        self.forward_map = self.fwd
+        return self
+
+    @torch.no_grad()
+    def roundtrip(self, k):
+        if self.delta.device != k.device:
+            self.to(k.device)
+        r = (k.float() - self.mu) @ self.fwd
+        idx = _dz_round(r, self.delta, self.dz).clamp(-self.qmax, self.qmax)
+        q = _dz_dequant(idx, self.delta, self.dz)
+        q = torch.where(self.zero, torch.zeros_like(q), q)
+        return q @ self.inv + self.mu
+
+
+def build_qpca_fixed_deadzone(qpca_unc, k_mean, b, n_layers, n_kv_heads,
+                              widen_coords=(0,), widen_mult=2.5, dz=0.375, load=3.0):
+    """Fixed-width deadzone QPCA, per Amir's notes + user directives:
+      - UNCENTERED basis (qpca_unc; the math targets raw q^T k, so Sigma_K not k_cov)
+      - per-coord std = sqrt(Lambda)  (Lambda = qpca_unc['k_diag'] = diag(F^T Sigma_K F))
+      - Lambda-only bit allocation (waterfill on Lambda; no q_diag product)
+      - coord-0 (highest-energy) std widened by widen_mult (heavy-tail overload margin)
+      - deadzone-uniform fixed-width quantizer (QPCADeadzoneFixed)."""
+    fwd, inv = qpca_unc["forward"], qpca_unc["inverse"]
+    lam = qpca_unc["k_diag"]                        # (L,Hkv,d) = Lambda (uncentered code var)
+    std = lam.sqrt().clone()
+    for j in widen_coords:
+        std[:, :, j] = std[:, :, j] * widen_mult
+    allocs = allocate_bits(lam, b, max_coord_bits=8)   # Lambda-only allocation (Amir)
+    return {(l, h): QPCADeadzoneFixed(fwd[l, h], inv[l, h], k_mean[l, h],
+                                      allocs[l, h], std[l, h], dz=dz, load=load)
+            for l in range(n_layers) for h in range(n_kv_heads)}
+
+
+class PageRotatedQPCARoundtrip:
+    """QPCA-Fixed's per-coord Lloyd-Max quantizer, but the top `top_k` (highest-
+    energy, most heavily-bitted) QPCA coordinates are mixed across the `P`
+    tokens of each page by ONE fixed random P x P orthogonal rotation (shared
+    across all pages of a head, same convention as `generate_rotation_matrix`'s
+    other uses in this repo) before quantization, and un-rotated after
+    dequantization. A single token's outlier in a heavily-bitted coordinate
+    gets spread across the whole page instead of eating that coordinate's
+    codebook resolution alone -- worth testing since those are exactly the
+    coordinates QPCA-Fixed already special-cases (widen + Laplacian) for
+    being heavy-tailed."""
+    def __init__(self, comp, fwd, inv, mu, P, top_k, seed):
+        self.comp = comp
+        self.fwd = fwd.float(); self.inv = inv.float()
+        self.mu = mu.reshape(1, -1).float()
+        self.P = int(P); self.top_k = int(top_k)
+        self.R = generate_rotation_matrix(self.P, seed=seed)
+        self.forward_map = self.fwd
+
+    def to(self, device):
+        self.comp.to(device)
+        self.fwd = self.fwd.to(device); self.inv = self.inv.to(device)
+        self.mu = self.mu.to(device); self.R = self.R.to(device)
+        self.forward_map = self.fwd
+        return self
+
+    @torch.no_grad()
+    def roundtrip(self, k):
+        device = k.device
+        if self.R.device != device:
+            self.to(device)
+        P, top_k = self.P, self.top_k
+        T, d = k.shape
+        transformed = (k.float() - self.mu) @ self.fwd
+        nb = (T + P - 1) // P
+        pad = nb * P - T
+        if pad:
+            transformed = torch.cat([transformed, transformed.new_zeros(pad, d)], dim=0)
+        blocks = transformed.view(nb, P, d)
+        top = blocks[:, :, :top_k]
+        rot_top = torch.einsum("pq,nqk->npk", self.R, top)
+        blocks = torch.cat([rot_top, blocks[:, :, top_k:]], dim=-1)
+
+        q = self.comp.roundtrip(blocks.reshape(nb * P, d)).view(nb, P, d)
+        top_dq = q[:, :, :top_k]
+        unrot_top = torch.einsum("pq,nqk->npk", self.R.transpose(0, 1), top_dq)
+        q = torch.cat([unrot_top, q[:, :, top_k:]], dim=-1).reshape(nb * P, d)[:T]
+
+        return q @ self.inv + self.mu
+
+
+def build_qpca_pagerot_compressors(qpca_cen, k_mean, b, n_layers, n_kv_heads,
+                                   ptok, top_k, seed=0, widen_coords=(0,), widen_mult=2.5):
+    comps, _ = _build_qpca_percoord_comps(qpca_cen, b, n_layers, n_kv_heads,
+                                          widen_coords, widen_mult, with_maps=False)
+    fwd_c, inv_c = qpca_cen["forward"], qpca_cen["inverse"]
+    return {(l, h): PageRotatedQPCARoundtrip(comps[(l, h)], fwd_c[l, h], inv_c[l, h],
+                                             k_mean[l, h], ptok, top_k, seed=seed + 1000 * l + h)
             for l in range(n_layers) for h in range(n_kv_heads)}
 
 
@@ -557,7 +718,11 @@ def build_qpca_ec(qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
     F = qpca_cen["forward"]
     d = F.shape[-1]
     MOMENTS_CACHE.mkdir(parents=True, exist_ok=True)
-    key = (f"{root.name}__ecmodel__idx_" + "_".join(str(i) for i in sorted(calib_idx))
+    _idx_str = "_".join(str(i) for i in sorted(calib_idx))
+    if len(_idx_str) > 80:   # many-index pools (e.g. 80-prompt fair) overflow the 255-char filename limit
+        import hashlib
+        _idx_str = f"n{len(calib_idx)}h{hashlib.md5(_idx_str.encode()).hexdigest()[:12]}"
+    key = (f"{root.name}__ecmodel__idx_{_idx_str}"
            + f"__b{b}__dz{dz:g}__mr{int(match_rate)}__us{int(uniform_step)}")
     cache_path = MOMENTS_CACHE / f"{key}.pt"
     if cache_path.exists():
@@ -744,7 +909,7 @@ def main():
     comps["PCA"] = {b: build_compressors(pca, b, n_layers, n_kv_heads) for b in k_bits}
     comps["JointQK"] = {b: build_compressors(jq, b, n_layers, n_kv_heads) for b in k_bits}
     comps["QPCA"] = {b: build_qpca_centered_compressors(
-        qpca_cen, qpca_unc, k_mean, b, n_layers, n_kv_heads,
+        qpca_cen, k_mean, b, n_layers, n_kv_heads,
         widen_coords=tuple(args.widen), widen_mult=args.widen_mult) for b in k_bits}
 
     # QPCA-EC: fit delta+model on CALIB codes, measure rate on EVAL codes (frozen model)

@@ -1,0 +1,94 @@
+all_classes,question,answers,_id,task,dataset,predicted_answer,answer_prefix,compression_ratio,language,length,max_new_tokens
+,"Question: What is the name of the castle in the city where the performers of Spirit If.. became a band?
+",['Casa Loma'],f9a50652b4e5d7000c42ae27b2477a54d2a88cfceec0ec3b,musique,musique, Castle on the Hill,Answer:,1.0,en,10449,52
+,"Question: The food safety system of the agency that has the authority to decide if a drug is marketed otc or prescription is known as?
+",['Food Safety Modernization Act (FSMA)'],865a174ebe32ad81f573feb122198c1f16e6f2fd6c3fdda5,musique,musique," The Food Safety Modernization Act (FSMA) is known as the law that gives the Food and Drug Administration (FDA) the authority to regulate the safety of the food supply, including the marketing of drugs. The FSMA is the law that gives the FDA",Answer:,1.0,en,12201,52
+,"Question: Who is the spouse of the person who voices Jarvis in the Avengers Age of Ultron?
+",['Jennifer Connelly'],afd66c76fbcbd6fd65cfccf021882c773e57478071afaa65,musique,musique, The spouse of the person who voices Jarvis in the Avengers Age of Ultron is the actress who plays the role of the character in the film. The answer is: The spouse of the person who voices Jarvis in the Avengers Age of Ultron is the actress who,Answer:,1.0,en,11579,52
+,"Question: In what year was Twilight Princess from the game series on which The Legend of Neil was based originally planned for release?
+",['2005'],38da792d05c3f8c7220c951b8d66f7400debb80114932a80,musique,musique, 2005,Answer:,1.0,en,12238,52
+,"Question: When did the place of birth of the performer of Mother-in-Law elect its first black Mayor?
+",['1970s'],046a6c5856736e4dc6f532658038afabde83e9c71507832f,musique,musique, The place of birth of the performer of Mother-in-Law elect its first black Mayor on 1 January 1948.,Answer:,1.0,en,11691,52
+,"Question: What is the highest city in the state where Dell ranks sixth by revenue?
+",['Fort Davis'],442e302cee202c213a085d6aa1caf87e3aebf6b954c690b0,musique,musique," The highest city in the state where Dell ranks sixth by revenue is not directly mentioned in the provided passages. However, based on the information given, the highest city in the state of Texas, where Dell ranks sixth by revenue, is not directly identified. The passage",Answer:,1.0,en,11714,52
+,"Question: What city was the author of What We Talk About When We Talk About love born in?
+","['Clatskanie' 'Clatskanie, Oregon']",c44fa02fb87c848c0ab4d0a254787e29540715ef86fff95a,musique,musique," The question is asking for the city where the author of ""What We Talk About When We Talk About Love"" was born. The author of ""What We Talk About When We Talk About Love"" is Raymond Carver. According to Passage 14, Raymond",Answer:,1.0,en,11417,52
+,"Question: Who did the original voice of the character played by mila kunis in the cleveland show?
+",['Lacey Chabert'],45b3ff5fd17fddc64c647566139dadd2693cf4488c0e6ec7,musique,musique," The original voice of the character played by Mila Kunis in the Cleveland Show was Mike Henry. However, the voice of Cleveland Brown was originally played by Mike Henry, and later by Arif Zahir. The original voice of Cleveland Brown was Mike Henry.",Answer:,1.0,en,12181,52
+,"Question: What year did the company that published Starship Command end?
+",['1986'],0efe9b8bd5ade04ff3030e3d944b21b0ac4aa9527e17bde6,musique,musique, 1983,Answer:,1.0,en,10333,52
+,"Question: Who is the mayor presiding now where Merrill Elam was born?
+",['Lance Bottoms'],ea32ca3702e3eedd278c8c77153712c07dbb5dd7025d8c3d,musique,musique," The mayor presiding now where Merrill Elam was born is the mayor of Atlanta, which is Krysta. However, the question is about the current mayor of the city where Merrill Elam was born, which is the city of Atlanta, and the current",Answer:,1.0,en,10868,52
+,"Question: When did Burroughs Corporation merge to form a new corporation?
+",['1986'],ede452592bbb410b3678e75fc6aaaeeda204fffc69034041,musique,musique, The Burroughs Corporation merged in 1986 to form a new corporation.,Answer:,1.0,en,11207,52
+,"Question: When did the party that gained control of Congress in the midterm elections in 1946 take control of the government branch that determines the rules of the US House?
+",['January 2015'],606e28838e5641e3dab2482d21f65cf2915cacdf6d63b454,musique,musique," The question is about the 1946 United States House of Representatives elections and the party that gained control of Congress in the midterm elections. The passage does not provide a specific date or event that directly answers the question. Therefore, the answer is: **",Answer:,1.0,en,10779,52
+,"Question: Why was Common Sense, by the same author as Rights of Man, an important work?
+","['crystallized the rebellious demand for independence from Great Britain'
+ 'Great Britain']",6cbb382cf679c0cf091fbf0d3c6d9638bffbc8ea039ca8b2,musique,musique, Because it was a political work that helped to inspire the American Revolution and it was a book that helped to inspire the French Revolution. It was a book that helped to inspire the American Revolution and it was a book that helped to inspire the French Revolution. It was,Answer:,1.0,en,12362,52
+,"Question: Who is Frances Freeling Broderip's sibling?
+",['Tom Hood' 'Thomas Hood'],70a325ff2a0681bc4f6fd064f47bf88b4551447ac97dea96,musique,musique, Philippa Foot,Answer:,1.0,en,11724,52
+,"Question: Who was the British general in the battle named after the birth city of the person who recorded Mother-in-Law?
+",['General Edward Pakenham' 'Edward Pakenham'],78b24e393c76b4fcd88852e310548721c5eea12bb8848aca,musique,musique, Andrew Jackson.,Answer:,1.0,en,12328,52
+,"Question: What is the life expectancy of the type of retriever named after the body of water the Patuxent River turns into?
+",['average lifespan at 9.4 years'],e5d8a267444a8532a875af8cfb8b07e6f6d02d6e85148540,musique,musique," The life expectancy of the type of retriever named after the body of water the Patuxent River turns into is not directly mentioned in the provided passages. The question is about the life expectancy of a specific type of retriever, which is not directly addressed in",Answer:,1.0,en,10659,52
+,"Question: Who sings Home Alone Tonight with the Rain is a Good Thing singer?
+",['Karen Fairchild'],554fd0d8696f182e7802bf42d669102e4227ba40f8a6bd4f,musique,musique, Daniel Jacobs.,Answer:,1.0,en,11479,52
+,"Question: What character in A League of their Own was played by the actress who played Thelma in the movie Thelma and Louise?
+",['Dottie Hinson'],011cb0e253041c568db1d0b01a34fa26ff951bbbdebbd887,musique,musique, Thelma in the movie Thelma and Louise was played by the actress who played the character of Thelma in the movie Thelma and Louise. The character of Thelma in the movie Thelma and Louise was played by the actress,Answer:,1.0,en,11507,52
+,"Question: Who is the employer of the person Mach's principle was named after?
+",['Charles University'],ebaefb7e8412f8323769c1e4ee596d5135b609ae76514273,musique,musique," The question is asking for the employer of the person Mach's principle was named after. The person Mach's principle was named after is Ernst Mach. The employer of Ernst Mach is not explicitly stated in the provided passages. Therefore, the answer is: The information about",Answer:,1.0,en,12623,52
+,"Question: Who is the president of the newly declared independent country that is part of the Commission of Truth and Friendship with the country where Kotamadya is located?
+",['Francisco Guterres'],b6f4cf7f8c262ad66ad3a336c1b5f0dc86e9c8c308b86180,musique,musique, Francisco Guterres.,Answer:,1.0,en,10966,52
+,"Question: How many times did the plague occur in the city where Flora's painter died?
+",['22'],70444bcfcd30c497b730b5b408990ea2c672ec03caa5235f,musique,musique," The question is about the number of times the plague occurred in the city where Flora's painter died. The passage about Flora (Titian) does not mention the city where Flora's painter died, nor does it provide information about the plague in that",Answer:,1.0,en,12182,52
+,"Question: What administrative territorial entity is the owner of Ciudad Deportiva located?
+",['Tamaulipas'],a39f4cbf6b6f7cb942cd2ce0e1234cae29855f2eaffc1be9,musique,musique, The owner of Ciudad Deportiva is located in the administrative territorial entity of the municipality of Nuevo Laredo.,Answer:,1.0,en,11696,52
+,"Question: Along with the Closer performer, what notable pop artist started out his career on adult contemporary radio?
+",['Michael Bublé'],102eaee0943270c43f63b7d45a0088f6a8515e51a126d925,musique,musique, Josh Groban,Answer:,1.0,en,11732,52
+,"Question: Who is the son of the Italian navigator who explored the eastern coast of the continent Ulises Solís' birthplace is located in for England?
+",['Sebastian Cabot'],bfcfaa4a93f27ba34411adfc4a326e54fa373314b0ba15ab,musique,musique," The son of the Italian navigator Ulises Solís is Jorge Solís. Ulises Solís was born in Vigo, Spain, which is located in England. However, the question is about the son of the Italian navigator, which is Jorge Solís.",Answer:,1.0,en,9872,52
+,"Question: Where did they film The Beach in the country where Pao Sarasin was born?
+",['Ko Phi Phi Leh' 'Ko Phi Phi Le'],c6fe007044674795d280bb474e2adc9dc8bacd8853a9cef5,musique,musique," The Beach was filmed in the country where Pao Sarasin was born, which is Senegal.",Answer:,1.0,en,10941,52
+,"Question: The city where Dmitry Borisovich was born is located where in Russia?
+",['Yaroslavl Oblast'],a3ba409a8a3c8bad40a1fa415b981a8227c7d21936a06f17,musique,musique, The city where Dmitry Borisovich was born is located in the Rostov region of Russia.,Answer:,1.0,en,10431,52
+,"Question: In Grown Ups, who plays the wife of the actor who produced The Chosen One?
+",['Joyce Van Patten'],f11250d4b392a30f6d22566d5167dee1464544f525c2975c,musique,musique," The wife of the actor who produced The Chosen One is played by Maya Rudolph. However, the question is about the film ""Grown Ups"" and the character ""Roz"" (played by Maya Rudolph) is the wife of the actor (",Answer:,1.0,en,11185,52
+,"Question: When did the majority party in the body which determines rules of the US House and US Senate gain control of the House?
+",['the 2010 election'],7e74ad75b51dd675970fecb014631c801252981eb2a657d1,musique,musique," The question is about the 2014 United States Senate elections, specifically when the majority party in the Senate gained control of the House. However, the provided passages do not contain information about the House of Representatives or the 2014 Senate elections",Answer:,1.0,en,10702,52
+,"Question: Who does the Nothing Suits Me Like a Suit artist play in Batman Under the Red Hood?
+",['Nightwing / Dick Grayson' 'Nightwing' 'Dick Grayson' 'Batman' 'Robin'],9f271f822294cc528b1f20904bb7694884af4084e086d20f,musique,musique, The Nothing Suits Me Like a Suit artist play in Batman Under the Red Hood is Jason Todd.,Answer:,1.0,en,12087,52
+,"Question: What is the seat of the county sharing a border with the county in which Valley New School is located?
+",['Green Bay'],e62b87ef31160a755763a2c665a516dbcbcf1f116050019b,musique,musique," The seat of the county sharing a border with the county in which Valley New School is located is the city of Appleton, Wisconsin.",Answer:,1.0,en,9638,52
+,"Question: During the war in which The Things They Carried is set, when was conscription introduced by the country where the film Grievous Bodily Harm was later released?
+",['1964'],9724776e8c8210a47eae48302b73a9e2603c238d417a63f2,musique,musique," Conscription in Australia was introduced in 1909 with the Defence Act 1903, which allowed for the training of soldiers, but not for overseas service. The Defence Act 1903 was amended in 1909",Answer:,1.0,en,11640,52
+,"Question: What is the performer of Heartbeat named after?
+",['Natalie Albino' 'Nina Sky'],936a34800c73e9d077b058fda4576fc45f8cb03bfae99c04,musique,musique," The performer of ""Heartbeat"" is named after the film's director, Amanda Feilding. The film's title, ""Heartbeat in the Brain,"" is a reference to the director's work. The film's title is a reference to the director's",Answer:,1.0,en,11174,52
+,"Question: What undertaking included the person who discovered that the number of protons in each element's atoms is unique?
+",['Manhattan Project'],e1be2d43c39ecba4174621ae6f571ae04eac92cfd209b786,musique,musique, The discovery of the unique number of protons in each element's atoms was the undertaking of the person who discovered the neutron.,Answer:,1.0,en,11601,52
+,"Question: What is the name of the famous bridge located in the birthplace of the composer of Nulla in mundo pax sincera?
+",['Rialto Bridge' 'Ponte di Rialto'],1f4b2eebc578880d3f401476be8e933f743e77a865a31902,musique,musique," The name of the famous bridge located in the birthplace of the composer of ""Nulla in mundo pax sincera"" is the ""Royal Albert Bridge"" in England.",Answer:,1.0,en,10991,52
+,"Question: Who led the muslim forces to retake the proposed embassy destination?
+",['Abu Ubaidah'],0942aa56c94ac545c00849686583273efd664347084e9682,musique,musique," The Muslim forces were led by Khalid ibn Walid during the siege of Germanicia (Marash), which is the proposed embassy destination. However, the question is ambiguous and does not specify the embassy or the destination. Therefore, the answer is not determin",Answer:,1.0,en,11094,52
+,"Question: What league includes the operating group of Al Janoub Stadium?
+",['Qatar Stars League'],e34d03a801bfa0de0ee1f5ecd06dbee378a6410d5555f7fe,musique,musique, The 2014–15 Oman Professional League includes the operating group of Al Janoub Stadium.,Answer:,1.0,en,12088,52
+,"Question: What pantheon is the God of the underworld in ancient Egypt a part of?
+",['ancient Egyptian religion'],fe052f64d5c1f66bd84e1f2dc6df342b1ea10d2763c22a90,musique,musique," The pantheon of ancient Egypt is part of the Osirian and Horusian pantheons, which include the gods of the underworld, such as Osiris, and the gods of the underworld, such as Osiris, and the gods of the underworld",Answer:,1.0,en,11562,52
+,"Question: The Live Life Loud album's band signed to which label?
+",['Fair Trade Services'],de9c2fbc33bc6136a3a0598a7a1ad678882b4a8613f3900b,musique,musique, Sony Music Entertainment.,Answer:,1.0,en,8449,52
+,"Question: When was the last time Peter Till's sports team beat the winner of the 1894-95 FA Cup?
+",['1 December 2010'],685f8561239902c340fcf6b70d5ddc919b62aaf2b543ae3f,musique,musique," The 1894-95 FA Cup was won by Aston Villa, who defeated West Bromwich Albion 1-0 in the final. The last time Peter Till's sports team beat the winner of the 1894-9",Answer:,1.0,en,11591,52
+,"Question: Who played the girlfriend of who plays marty mcfly's daughter in back to the future 2?
+",['Claudia Wells'],0f4da7d5be33010bcfb9197d3d910cc40bb8abc0ecc3bd32,musique,musique, Claudia Wells played the girlfriend of who plays Marty McFly's daughter in Back to the Future 2.,Answer:,1.0,en,10796,52
+,"Question: What is another notable work made by the author of Miss Sara Sampson?
+",['Emilia Galotti'],64219602b22a98429c3bc6a9c49ae282dd39e6a1b29debe7,musique,musique," Another notable work made by the author of ""Miss Sara Sampson"" is ""Emilia Galotti"" by Gotthold Ephraim Lessing.",Answer:,1.0,en,11388,52
+,"Question: What is the capital of the county that shares a border with the county where KRSU is licensed to broadcast?
+",['Green Bay'],3b133029d40cc58823d90a6f9176ea531c8c30fb88c31736,musique,musique, The capital of the county that shares a border with the county where KRSU is licensed to broadcast is the capital of the district where the KRSU is licensed to broadcast. The capital of the district where KRSU is licensed to broadcast is the capital,Answer:,1.0,en,10252,52
+,"Question: Kiwil's birth country participated in a Commission of Truth and Friendship. Who is the president of the other country that participated?
+",['Francisco Guterres'],163a438b614948528acdb5901ad522af7911b4e43c7a656a,musique,musique, The president of the other country that participated is the president of the Republic of Suriname. The president of Suriname is the president of the other country that participated. The president of the other country that participated is the president of the Republic of Suriname. The,Answer:,1.0,en,10562,52
+,"Question: The author of Elizabeth and After attended which university?
+",['University of Toronto' 'UT'],e956e4868d588132bd2de1926dc446d0975c2d7a45090cad,musique,musique," The author of Elizabeth and After attended which university?  
+**Answer**: The author of ""Elizabeth and After"" is Matt Cohen, and he attended the University of Toronto.  
+**Answer**: The author of ""Elizabeth and After"" is Matt Cohen, and he",Answer:,1.0,en,11283,52
+,"Question: What is the source of the river that is the mouth of the Caledon River?
+",['Thaba Putsoa'],26bd6d08ea272ac11bebcf5250b16ff90f92352cdac405c1,musique,musique, The source of the Caledon River is the Caledon River catchment. The Caledon River is a tributary of the Manning River. The Caledon River rises in the Caledon River catchment. The Caledon River,Answer:,1.0,en,8507,52

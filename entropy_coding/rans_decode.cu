@@ -25,8 +25,14 @@ __global__ void decode_pages_kernel(
 {
     int p = blockIdx.x;
     int lane = threadIdx.x;
-    if (p >= n_pages || lane >= N) return;
+    if (p >= n_pages) return;
 
+    // stage rung CDF into shared memory (all threads cooperate, then sync)
+    extern __shared__ unsigned int s_cdf[];
+    for (int i = lane; i < cdf_len; i += blockDim.x) s_cdf[i] = cdf_flat[i];
+    __syncthreads();
+
+    if (lane >= N) return;
     int k0 = k0a[p * N + lane];
     int k1 = k1a[p * N + lane];
     if (k0 >= k1) return;
@@ -46,11 +52,11 @@ __global__ void decode_pages_kernel(
         int a = lo, b = hi - 1;
         while (a < b) {
             int mid = (a + b + 1) >> 1;
-            if (cdf_flat[mid] <= slot) a = mid; else b = mid - 1;
+            if (s_cdf[mid] <= slot) a = mid; else b = mid - 1;
         }
         int s = a - lo;
-        unsigned int start = cdf_flat[lo + s];
-        unsigned int freq = cdf_flat[lo + s + 1] - start;
+        unsigned int start = s_cdf[lo + s];
+        unsigned int freq = s_cdf[lo + s + 1] - start;
         x = freq * (x >> SCALE_BITS) + slot - start;
         while (x < RANS_L) { x = (x << 8) | (unsigned int)buf[bp]; ++bp; }
         pos_out[page_pos_base + (long)t * d + j] = s;
@@ -69,8 +75,9 @@ torch::Tensor decode_pages(
 
     int threads = ((int)N + 31) / 32 * 32;
     dim3 grid(n_pages), block(threads);
+    size_t shmem = (size_t)cdf_len * sizeof(unsigned int);
 
-    decode_pages_kernel<<<grid, block>>>(
+    decode_pages_kernel<<<grid, block, shmem>>>(
         blobs.data_ptr<uint8_t>(), page_byte_off.data_ptr<long>(), lane_off.data_ptr<long>(),
         k0a.data_ptr<int>(), k1a.data_ptr<int>(), ns.data_ptr<int>(), nonconst.data_ptr<int>(),
         reinterpret_cast<const unsigned int*>(cdf_flat.data_ptr<int32_t>()), cdf_off.data_ptr<int>(),
@@ -116,6 +123,6 @@ torch::Tensor debug_trace(
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-    m.def("decode_pages", &decode_pages, "rANS decode (warp per page)");
+    m.def("decode_pages", &decode_pages, "rANS decode (warp per page, CDF in SRAM)");
     m.def("debug_trace", &debug_trace, "trace lane0");
 }

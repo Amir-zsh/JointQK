@@ -1,0 +1,41 @@
+_id,language,answer_prefix,predicted_answer,compression_ratio,length,max_new_tokens,all_classes,task,answers,question,dataset
+32092cc7b80094b9c8914c1f70000295aefc4a985747b0ed,en,Answer:, Jacques Dutronc,1.0,5091,52,,2wikimqa,['Françoise Hardy'],"Question: Who is the spouse of the performer of song Et Moi, Et Moi, Et Moi?
+",2wikimqa
+8d3cf7916a2f8a2762de13a9520b6350e46464fbf7f63dd5,en,Answer:," The spouse of the director of film ""Emergency Wedding"" is not mentioned in the provided passages. Therefore, the answer cannot be determined from the given information.",1.0,10444,52,,2wikimqa,['Ona Munson'],"Question: Who is the spouse of the director of film Emergency Wedding?
+",2wikimqa
+40de6f6c353c080845a8ea644039e9ba83cd481d3745395b,en,Answer:," Archibald Primrose, 4th Earl of Rosebery",1.0,4383,52,,2wikimqa,"['Archibald Acheson, 2nd Earl of Gosford']","Question: Who is Archibald Acheson, 4Th Earl Of Gosford's paternal grandfather?
+",2wikimqa
+53f6acc70a61443a93c25c91ca7dc7f8780046d02e28c94a,en,Answer:, Queen Yi Jiang (邑姜),1.0,4142,52,,2wikimqa,['Yi Jiang'],"Question: Who is the paternal grandmother of King Kang Of Zhou?
+",2wikimqa
+300ccba91f776e583d418d6d9ecc5e1bdca7bd80580cd36e,en,Answer:," Dudley Russell was born first. Dudley Russell was born on 1 December 1896, while Juan René Serrano was born on 23 February 1984.",1.0,4526,52,,2wikimqa,['Dudley Russell'],"Question: Was Dudley Russell or Juan René Serrano born first?
+",2wikimqa
+435fae9b23d8b22e85a57cfd8ceb8541dea5b0c551acc3a9,en,Answer:, No Trees in the Street,1.0,7162,52,,2wikimqa,['No Trees In The Street'],"Question: Which film has the director who died later, True To The Navy or No Trees In The Street?
+",2wikimqa
+7940c60a5ff2d81b62d118253577d1d891057ca45695e91a,en,Answer:," The place of birth of the director of film ""Sweepstakes"" is not mentioned in the provided passages.",1.0,3277,52,,2wikimqa,"['Oklahoma City, Oklahoma']","Question: What is the place of birth of the director of film Sweepstakes (Film)?
+",2wikimqa
+29ec971fbdf0df2d0c41c497de945024db6159c0c30be307,en,Answer:," The director of film Lady Magdalene's, Reg Allen, was nominated for an Academy Award in the category Best Art Direction for the film Lady Sings the Blues.",1.0,3529,52,,2wikimqa,['Prometheus Award'],"Question: Which award the director of film Lady Magdalene'S got?
+",2wikimqa
+8848d4bd1425f8bef31b6c279ec378bcbca14f10b702c4ea,en,Answer:, 1234,1.0,9182,52,,2wikimqa,['1234'],"Question: When did Thomas Of Galloway (Bastard)'s father die?
+",2wikimqa
+5ff6349ea0b2ecb882f535ff3cec2f9c012d3468fb7b912e,en,Answer:," Queen of Denmark and Norway, Louise of Mecklenburg-Güstrow's mother-in-law is Queen Louise of Denmark and Norway, who was the wife of King Frederick IV of Denmark. However, based on the provided passages, the mother-in-law of Louise",1.0,5695,52,,2wikimqa,['Charlotte Amalie of Hesse-Kassel'],"Question: Who is the mother-in-law of Louise Of Mecklenburg-Güstrow?
+",2wikimqa
+cab5465c3f7663e5d72c15a32bc04c8a917dac3c03828814,en,Answer:," The composer of the film ""Miracle of Marcelino"" is Pablo Sorozábal. According to the provided passages, there is no specific information about the place of death of Pablo Sorozábal. Therefore, the answer is: Not enough information provided",1.0,2868,52,,2wikimqa,['Madrid'],"Question: Where was the place of death of the composer of film Miracle Of Marcelino?
+",2wikimqa
+ddd046530f4979511397f82fe5391d0a646c0aa18225a98e,en,Answer:, London,1.0,3366,52,,2wikimqa,"['Toronto, Ontario']","Question: Where was the husband of Maude Smith born?
+",2wikimqa
+acb93469117282f2d0131e19f6210e007d681bc7a78e7b64,en,Answer:," The question contains a name that does not match any of the individuals mentioned in the provided passages. ""Rameshwari Nehru"" is not mentioned in any of the passages. Therefore, the answer cannot be determined from the given information.",1.0,4103,52,,2wikimqa,['Oxford'],"Question: Where did Rameshwari Nehru's husband graduate from?
+",2wikimqa
+ec4ba162decfc8dd03ccbca7832f3cecf985a5542e70dec1,en,Answer:," Gene Raymond (as Bill Graham) is the spouse of the director of film Ann Carver's Profession. The film's director was Edward Buzzell, and his spouse was Gene Raymond, who played the role of Bill Graham in the film.",1.0,11373,52,,2wikimqa,['Ona Munson'],"Question: Who is the spouse of the director of film Ann Carver'S Profession?
+",2wikimqa
+2e86241a9d27925aa52e039067fa83e27e305301188daef7,en,Answer:, Sandflow,1.0,1945,52,,2wikimqa,['Sandflow'],"Question: Which film has the director who died first, Folgore Division or Sandflow?
+",2wikimqa
+cf5321576ab8cc1b8453991abac66aa5d46155d8ffa7ee17,en,Answer:," The director of the film ""Port of Seven Seas"" was James Whale. He died by drowning himself in his swimming pool on May 29, 1957, due to his mental health struggles and the personal agony he was experiencing.",1.0,8169,52,,2wikimqa,['drowning'],"Question: Why did the director of film Port Of Seven Seas die?
+",2wikimqa
+977f59ef09f7cc4ad6c71fc18d8b60e818e07a43cd7bee92,en,Answer:, Dr. Socrates,1.0,4218,52,,2wikimqa,['Dr. Socrates'],"Question: Which film was released first, Vacations In Majorca or Dr. Socrates?
+",2wikimqa
+d0b11838d26195f89d1568431f88a02b4f4d8c9cdf99e04a,en,Answer:," The director of the film ""Eisenstein in Guanajuato"" is Peter Greenaway, who was born in Newport, Monmouthshire, Wales.",1.0,3945,52,,2wikimqa,"['Newport, Wales']","Question: Where was the director of film Eisenstein In Guanajuato born?
+",2wikimqa
+62453a76a4867b6d09ac435581e1a327ec5b55cf231c79f9,en,Answer:, Bomgay,1.0,4261,52,,2wikimqa,['Bomgay'],"Question: Which film has the director who died earlier, Il Gaucho or Bomgay?
+",2wikimqa
+ef73e58876b94a997d928ee13b7ac7cdb8b8aa0bac856a92,en,Answer:, La Belle Américaine,1.0,4142,52,,2wikimqa,['La Belle Américaine'],"Question: Which film has the director who died later, The Great Man'S Lady or La Belle Américaine?
+",2wikimqa
