@@ -237,82 +237,58 @@ def _page_attn_kernel_v1(
 
 
 @triton.jit
-def _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
-               sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page, qt_ptr, qbase,
-               HGP: tl.constexpr, D: tl.constexpr, CBLK: tl.constexpr,
-               STRIDE: tl.constexpr, B: tl.constexpr, BOFF: tl.constexpr,
-               W: tl.constexpr, LO: tl.constexpr):
-    ci = tl.arange(0, CBLK)
-    hg = tl.arange(0, HGP)
-    bitpos = ci * W
-    addr = (pbase + rows[:, None].to(tl.int64) * STRIDE + BOFF
-            + (bitpos >> 3)[None, :])
-    b0 = tl.load(pay_ptr + addr, mask=live_r[:, None], other=0).to(tl.int32)
-    b1 = tl.load(pay_ptr + addr + 1, mask=live_r[:, None],
-                 other=0).to(tl.int32)
-    code = ((b0 | (b1 << 8)) >> (bitpos & 7)[None, :]) & ((1 << W) - 1)
-    lev = tl.load(lut_ptr + hlut + LO + code, mask=live_r[:, None],
-                  other=0.0)
-    coord = B * CBLK + ci
-    sid = tl.load(sigma_id_ptr + sbase + s_in_page[:, None] * D
-                  + coord[None, :], mask=live_r[:, None], other=0.0)
-    sdc = tl.load(sigma_dct_ptr + sbase + s_in_page[:, None] * D
-                  + coord[None, :], mask=live_r[:, None], other=0.0)
-    sig = tl.where(kind[:, None] == 2, sdc, sid)
-    deq = (lev * sig).to(tl.float16)
-    qb = tl.load(qt_ptr + qbase + hg[:, None] * D
-                 + coord[None, :]).to(tl.float16)
-    return u + tl.dot(qb, tl.trans(deq))
-
-
-@triton.jit
 def _seg_u_kernel(
     pay_ptr, tok_ptr, pay_off_ptr, tok_off_ptr, n_ptr,
+    stride_ptr, w_ptr, lo_ptr,
     lut_ptr, LUTN: tl.constexpr,
     sigma_id_ptr, sigma_dct_ptr, kind_ptr, qt_ptr, u_ptr,
     T, HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
-    PTOK: tl.constexpr, CBLK: tl.constexpr, STRIDE: tl.constexpr,
-    W0: tl.constexpr, W1: tl.constexpr, W2: tl.constexpr, W3: tl.constexpr,
-    L0: tl.constexpr, L1: tl.constexpr, L2: tl.constexpr, L3: tl.constexpr,
+    PTOK: tl.constexpr, CBLK: tl.constexpr,
 ):
-    """Phase A for one rung: coalesced (64-row, constexpr-stride) payload
-    tiles -> dequant -> q-dot -> scatter u[h, hg, t]. One compiled variant
-    per rung (constexpr widths + LUT bases)."""
+    """Phase A for one rung: coalesced (64-row) payload tiles -> dequant ->
+    q-dot -> scatter u[h, hg, t]. Widths / stride / LUT bases are loaded
+    per (rung, head) as program-uniform scalars (Qwen shares profiles per
+    HEAD, so heads carry different width rows for the same rung id);
+    coalescing is unaffected because head is a grid axis."""
     tile = tl.program_id(0)
     h = tl.program_id(1)
     n = tl.load(n_ptr + h)
     rows = tile * PTOK + tl.arange(0, PTOK)
     live_r = rows < n
+    stride = tl.load(stride_ptr + h).to(tl.int64)
     pbase = tl.load(pay_off_ptr + h)
     tbase = tl.load(tok_off_ptr + h)
     tok = tl.load(tok_ptr + tbase + rows, mask=live_r, other=0)
     s_in_page = tok % PTOK
     kind = tl.load(kind_ptr + tok // PTOK, mask=live_r, other=1)
+    ci = tl.arange(0, CBLK)
     hg = tl.arange(0, HGP)
-    hlut = h * LUTN
-    sbase = h * PTOK * D
-    qbase = h * HGP * D
     u = tl.zeros((HGP, PTOK), dtype=tl.float32)
-    if W0 > 0:
-        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
-                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
-                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
-                       0, 0, W0, L0)
-    if W1 > 0:
-        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
-                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
-                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
-                       1, (W0 * CBLK) // 8, W1, L1)
-    if W2 > 0:
-        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
-                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
-                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
-                       2, ((W0 + W1) * CBLK) // 8, W2, L2)
-    if W3 > 0:
-        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
-                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
-                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
-                       3, ((W0 + W1 + W2) * CBLK) // 8, W3, L3)
+    boff = 0
+    for b in tl.static_range(4):
+        w = tl.load(w_ptr + h * 4 + b)
+        lo = tl.load(lo_ptr + h * 4 + b)
+        bitpos = ci * w
+        addr = (pbase + rows[:, None].to(tl.int64) * stride + boff
+                + (bitpos >> 3)[None, :])
+        live = live_r[:, None] & (w > 0)
+        b0 = tl.load(pay_ptr + addr, mask=live, other=0).to(tl.int32)
+        b1 = tl.load(pay_ptr + addr + 1, mask=live, other=0).to(tl.int32)
+        code = ((b0 | (b1 << 8)) >> (bitpos & 7)[None, :]) & ((1 << w) - 1)
+        lev = tl.load(lut_ptr + h * LUTN + lo + code, mask=live, other=0.0)
+        coord = b * CBLK + ci
+        sid = tl.load(sigma_id_ptr + h * PTOK * D
+                      + s_in_page[:, None] * D + coord[None, :],
+                      mask=live_r[:, None], other=0.0)
+        sdc = tl.load(sigma_dct_ptr + h * PTOK * D
+                      + s_in_page[:, None] * D + coord[None, :],
+                      mask=live_r[:, None], other=0.0)
+        sig = tl.where(kind[:, None] == 2, sdc, sid)
+        deq = tl.where(live, lev * sig, 0.0).to(tl.float16)
+        qb = tl.load(qt_ptr + h * HGP * D + hg[:, None] * D
+                     + coord[None, :]).to(tl.float16)
+        u += tl.dot(qb, tl.trans(deq))
+        boff += (w * CBLK) >> 3
     uptr = u_ptr + (h * HG + hg[:, None]) * T + tok[None, :]
     tl.store(uptr, u, mask=(hg[:, None] < HG) & live_r[None, :])
 
@@ -426,7 +402,8 @@ def _page_attn_from_u_vq_kernel(
 
 
 def page_attention_v2(gm: dict, pages_per_split: int = 16,
-                      num_warps: int = 4, v_int2: bool = False) -> torch.Tensor:
+                      num_warps: int = 4, v_int2: bool = False,
+                      return_partials: bool = False):
     """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys;
     v_int2=True additionally needs golden.add_v_int2 buffers (vq/vqs/vqz)
     and serves values from INT2 codes (the torch tier still reads gm['v'],
@@ -436,32 +413,26 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
     dev = gm["qt"].device
     u = torch.zeros(H * hg, T, device=dev, dtype=torch.float32)
     if "_launch_plan" not in gm:
-        bw, strides = gm["bw_host"], gm["strides_host"]
-        lut_off = gm["lut_off"].cpu()
         seg_n = gm["seg_n"].cpu()
+        strides = gm["seg_stride"].cpu()
         plan = []
-        for r in range(bw.shape[0]):
-            stride = int(strides[r])
+        for r in range(seg_n.shape[0]):
             nmax = int(seg_n[r].max())
-            if stride == 0 or nmax == 0:
+            if nmax == 0 or int(strides[r].max()) == 0:
                 continue
-            ws = [int(w) for w in bw[r]]
-            los = [int(lut_off[w]) if w > 0 else 0 for w in ws]
-            plan.append((r, stride, nmax, ws, los))
+            plan.append((r, nmax))
         gm["_launch_plan"] = plan
-    for r, stride, nmax, ws, los in gm["_launch_plan"]:
+    for r, nmax in gm["_launch_plan"]:
         grid = ((nmax + ptok - 1) // ptok, H)
         _seg_u_kernel[grid](
             gm["seg_pay"], gm["seg_tok"],
             gm["seg_pay_off"][r], gm["seg_tok_off"][r], gm["seg_n"][r],
+            gm["seg_stride"][r], gm["seg_w"][r], gm["seg_lo"][r],
             gm["lut"], gm["lut"].shape[1],
             gm["sigma_id"], gm["sigma_dct"], gm["kind_dense"],
             gm["qt"], u,
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok,
-            CBLK=d // gm["bw_host"].shape[1],
-            STRIDE=stride,
-            W0=ws[0], W1=ws[1], W2=ws[2], W3=ws[3],
-            L0=los[0], L1=los[1], L2=los[2], L3=los[3],
+            CBLK=d // gm["seg_w"].shape[2],
             num_warps=num_warps,
         )
     npages = int(gm["pages"].numel())
@@ -483,6 +454,8 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             npages, pages_per_split, gm["sm_scale"],
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
         )
+    if return_partials:
+        return m_p, l_p, acc_p
     ti = gm["tier_idx"]
     if ti.numel():
         zt = gm["z_tier"] * gm["sm_scale"]

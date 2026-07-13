@@ -197,6 +197,11 @@ def fabricate_segmented(gm, dev, seed=1):
     gm = dict(gm)
     kd = torch.ones(T // ptok, dtype=torch.int8)
     kd[gm["pages"].long().cpu()] = gm["page_kind"].cpu()
+    lut_off = gm["lut_off"].cpu()
+    seg_w = [[int(w) for w in bw[r]] for r in range(R) for _ in range(H)]
+    seg_lo = [[int(lut_off[w]) if w > 0 else 0 for w in row]
+              for row in seg_w]
+    seg_stride = [int(strides[r]) for r in range(R) for _ in range(H)]
     gm.update({
         "seg_pay": torch.cat(pay).to(dev),
         "seg_tok": torch.cat(tok).to(dev),
@@ -206,6 +211,12 @@ def fabricate_segmented(gm, dev, seed=1):
                                     device=dev).reshape(R, H),
         "seg_n": torch.tensor(seg_n, dtype=torch.int32,
                               device=dev).reshape(R, H),
+        "seg_stride": torch.tensor(seg_stride, dtype=torch.int32,
+                                   device=dev).reshape(R, H),
+        "seg_w": torch.tensor(seg_w, dtype=torch.int32,
+                              device=dev).reshape(R, H, 4),
+        "seg_lo": torch.tensor(seg_lo, dtype=torch.int32,
+                               device=dev).reshape(R, H, 4),
         "kind_dense": kd.to(dev),
         "bw_host": bw, "strides_host": strides})
     return gm

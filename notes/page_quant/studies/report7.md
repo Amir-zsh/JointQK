@@ -30,14 +30,17 @@ bench_pgq_decode.json)
 
 | context | pgq v2 | pgq v1 | dense fp16 | SDPA flash | OSCAR INT2 | ×dense | ×SDPA | ×OSCAR |
 |---|---|---|---|---|---|---|---|---|
-| 8k | 0.160 | 0.270 | 0.894 | 0.114 | 0.042 | 5.59 | 0.72 | 0.26 |
-| 32k | 0.261 | 0.683 | 0.971 | 0.392 | 0.078 | 3.72 | 1.50 | 0.30 |
-| 80k | **0.622** | 1.107 | 2.645 | 0.990 | 0.217 | **4.25** | **1.59** | 0.35 |
-| 128k | 0.966 | 1.805 | 3.946 | 1.545 | 0.260 | 4.08 | 1.60 | 0.27 |
+| 8k | 0.185 | 0.270 | 0.885 | 0.114 | 0.040 | 4.80 | 0.62 | 0.22 |
+| 32k | 0.301 | 0.683 | 0.973 | 0.394 | 0.078 | 3.24 | 1.31 | 0.26 |
+| 80k | **0.737** | 1.107 | 2.512 | 0.973 | 0.173 | **3.41** | **1.32** | 0.23 |
+| 128k | 1.144 | 1.805 | 3.625 | 1.530 | 0.295 | 3.17 | 1.34 | 0.26 |
 
-**Pre-registered bar (≥2.5× vs dense fp16 @80k bs=1): PASS at 4.25×.**
+**Pre-registered bar (≥2.5× vs dense fp16 @80k bs=1): PASS at 3.41×.**
 From 32k up the quantized-resident path also beats flash SDPA fp16 by
-1.5-1.6×.
+~1.3×. (An earlier constexpr-width variant measured 0.62 ms @80k / 4.25×,
+but was only correct for SHARED profiles — Llama's prof_share=layer regime;
+the shipped kernel loads per-(rung, head) tables, the K4 bug-fix below, at
+a ~15% latency cost. Both artifacts are in bench_pgq_decode.json history.)
 
 ## The iteration that got there (recorded per plan)
 
@@ -81,11 +84,48 @@ tensor-core tiles wastes 4x of every dot (OSCAR's grouped kernel packs
 real query heads) — not format bytes. V-INT2 stays in the tree for when
 the compute side is tuned to bandwidth.
 
-## Next steps
+## K4 — end-to-end quantized-resident decode on Qwen3-8B: DONE
 
-1. K4 end-to-end quantized-resident Qwen demo (F1 parity row-paired,
-   tokens/s, peak memory) — the committed deliverable.
-2. Kernel compute-structure iteration if the OSCAR gap matters: pack real
+`pipelines/kernels/k4_decode_demo.py` (plan7 R3 standalone-loop form):
+after a normal HF prefill, the prompt's K cache (layers >= 1) is
+compressed with the SHIPPING codec (pgq_dctlmrw_rdo@2.0, bundle 2cf29a8a),
+packed into the kernel layout, and the fp16 prefix K is FREED; decode
+attention runs the fused kernel on packed bytes merged with an fp16 ring
+(layer 0, sink page, partial tail, generated tokens) via softmax partials.
+Wired through transformers 5.x's attention registry + a ring Cache
+subclass — the packed prefix never materializes. 6011-token prompt,
+48 greedy tokens (artifacts/kernels/k4_decode_demo.json):
+
+- **G1 (plumbing): 1.000** — the custom loop reproduces HF generate
+  token-for-token with an uncompressed ring.
+- **Self-check: 1.5e-4** — kernel vs exact torch on the served rows, real
+  Qwen weights/keys/queries.
+- **G2 (the kernel IS the format): 1.000** — the quantized-resident arm is
+  token-identical to the Mode-A control (exact attention over dequantized
+  K-hat), i.e. the committed F1 numbers price this path exactly.
+- Memory: prefix K 443 MB -> 67 MB packed+ring (**6.6x**); peak 20 GB.
+- Quantized vs full-fp16 greedy agreement at 6k/48: 0.458 (1.000 at 1.4k)
+  — pure quantization effect (G2 pins the kernel blameless); greedy chains
+  amplify small logit shifts, while the row-paired F1 evidence (report8:
+  +0.52 tie at 2.0, 48.80 vs 48.29) is the calibrated quality statement.
+- tokens/s: fp16 loop 25.0 | dequant control 15.7 | kernel-resident 14.7 —
+  the demo loop is python-glue-bound (35 layers x per-step partial merges,
+  no CUDA graphs in the loop); kernel-level latency is the K3 story.
+- Page-seal (encode+pack, torch, one-off): 1492 s for 6k x 35 layers —
+  GPU pack kernels remain the recorded K5 item.
+
+A real bug this stage caught: Qwen's per-HEAD profiles (prof_share=head)
+were mis-served by the segmented layout (head 0's width tables used for
+all heads — G2 was 0.02). Every synthetic test used shared profiles; the
+fix (per-(rung, head) stride/width/LUT tables as program-uniform scalars)
+kept coalescing and all 12 kernel tests green. Lesson recorded: the
+kernel test matrix must span BOTH prof_share regimes.
+
+## Next steps (post-K4)
+
+1. Kernel compute-structure iteration if the OSCAR gap matters: pack real
    query heads across KV heads into full tiles (removes the 4x pad waste),
    fuse phase A/B via persistent programs, then re-evaluate V-INT2 (it
    pays only near the bandwidth limit).
+2. GPU page-seal kernels (encode is 25 min in torch for 6k x 35 layers).
+3. CUDA-graph the demo loop / SGLang integration (K5, user go/no-go).

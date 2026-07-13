@@ -192,7 +192,9 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
     H, T, ptok = gm["H"], gm["T"], gm["ptok"]
     dev = gm["payload"].device
     R = packeds[0]["block_widths"].shape[0]
+    lut_off = gm["lut_off"].cpu()
     pay, tok, pay_off, tok_off, seg_n = [], [], [], [], []
+    seg_stride, seg_w, seg_lo = [], [], []
     off_p = off_t = 0
     for r in range(R):
         for h in range(H):
@@ -201,6 +203,12 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
             pay_off.append(off_p)
             tok_off.append(off_t)
             seg_n.append(int(toks.numel()))
+            # per-HEAD profile tables (Qwen: prof_share=head — heads carry
+            # DIFFERENT width rows for the same rung id)
+            ws = [int(w) for w in packeds[h]["block_widths"][r]]
+            seg_stride.append(int(packeds[h]["strides"][r]))
+            seg_w.append(ws)
+            seg_lo.append([int(lut_off[w]) if w > 0 else 0 for w in ws])
             pay.append(buf.reshape(-1))
             tok.append(toks.to(torch.int32))
             off_p += int(buf.numel())
@@ -221,6 +229,12 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
         "seg_n": torch.tensor(seg_n, dtype=torch.int32,
                               device=dev).reshape(R, H),
         "kind_dense": kind_dense.to(dev),
+        "seg_stride": torch.tensor(seg_stride, dtype=torch.int32,
+                                   device=dev).reshape(R, H),
+        "seg_w": torch.tensor(seg_w, dtype=torch.int32,
+                              device=dev).reshape(R, H, 4),
+        "seg_lo": torch.tensor(seg_lo, dtype=torch.int32,
+                               device=dev).reshape(R, H, 4),
         "bw_host": packeds[0]["block_widths"].cpu(),
         "strides_host": packeds[0]["strides"].cpu(),
     })

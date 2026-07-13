@@ -1,0 +1,20 @@
+{
+ "prompt_tokens": 6011,
+ "new_tokens": 48,
+ "G1_plumbing_vs_hf": 1.0,
+ "G2_kernel_vs_control": 1.0,
+ "quant_vs_fp16_agreement": 0.4583333333333333,
+ "tps": {
+  "fp16_loop": 24.989681108993125,
+  "control_dequant": 15.715069791686913,
+  "kernel_resident": 14.696422955802678
+ },
+ "prefix_k_bytes": {
+  "fp16": 443179008,
+  "packed_plus_ring": 66752483
+ },
+ "page_seal_s": 1491.7110178470612,
+ "peak_mem_gb": 20.047459328,
+ "bundle": "2cf29a8a",
+ "method": "pgq_dctlmrw_rdo@2.0"
+}
