@@ -198,6 +198,15 @@ def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11,
 
 
 @cuda
+def test_attention_v2_torch_phase_b():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True)
+    o = page_attention_v2(gm, phase_b="torch")
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
 def test_attention_v2_int2_values():
     from kvq.kernels.pgq_decode_attn import page_attention_v2
     gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True,

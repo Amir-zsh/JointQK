@@ -497,7 +497,7 @@ def _page_attn_from_u_vq_kernel(
 def page_attention_v2(gm: dict, pages_per_split: int = 16,
                       num_warps: int = 4, v_int2: bool = False,
                       return_partials: bool = False,
-                      phase_a: str = "rt"):
+                      phase_a: str = "rt", phase_b: str = "kernel"):
     """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys;
     v_int2=True additionally needs golden.add_v_int2 buffers (vq/vqs/vqz)
     and serves values from INT2 codes (the torch tier still reads gm['v'],
@@ -560,6 +560,39 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             CBLK=d // gm["seg_w"].shape[2],
             num_warps=num_warps, num_stages=3,
         )
+    if phase_b == "torch":
+        # plan9 S3b: phase B as dense batched torch under the same CUDA
+        # graph — one cuBLAS GEMM applies the page DCT to every DCT page at
+        # once, then an EXACT full softmax (no split partials, no stage 2)
+        # and one bmm for p @ V. Correct because u already holds every
+        # served row's coefficient logit.
+        if "_tb" not in gm:
+            # index prep cached ONCE (host syncs here are fine — this runs
+            # during warmup, never inside CUDA graph capture)
+            pages = gm["pages"].long()
+            kinds = gm["page_kind"]
+            ar = torch.arange(ptok, device=dev)
+            dctp = pages[kinds == 2]
+            idp = pages[kinds != 2]
+            gm["_tb"] = {
+                "di": (dctp[:, None] * ptok + ar[None, :]) if dctp.numel()
+                      else None,
+                "ii": (idp[:, None] * ptok + ar[None, :]) if idp.numel()
+                      else None,
+                "ti": gm["tier_idx"] if gm["tier_idx"].numel() else None,
+                "vf": gm["v"].float(),
+            }
+        tb = gm["_tb"]
+        uv = u.view(H, hg, T)
+        z = torch.full_like(uv, float("-inf"))
+        if tb["di"] is not None:
+            z[:, :, tb["di"]] = uv[:, :, tb["di"]] @ gm["dct_t"]
+        if tb["ii"] is not None:
+            z[:, :, tb["ii"]] = uv[:, :, tb["ii"]]
+        if tb["ti"] is not None:
+            z[:, :, tb["ti"]] = gm["z_tier"].float()
+        att = torch.softmax(z * gm["sm_scale"], dim=2)
+        return torch.bmm(att.reshape(H, hg, T), tb["vf"])
     npages = int(gm["pages"].numel())
     nsplit = max(1, (npages + pages_per_split - 1) // pages_per_split)
     m_p = torch.empty(H, nsplit, hgp, device=dev)
@@ -608,6 +641,39 @@ def page_attention_v1(gm: dict, pages_per_split: int = 8,
     H, T, d, ptok = gm["H"], gm["T"], gm["d"], gm["ptok"]
     hg, hgp = gm["hg"], gm["hgp"]
     dev = gm["qt"].device
+    if phase_b == "torch":
+        # plan9 S3b: phase B as dense batched torch under the same CUDA
+        # graph — one cuBLAS GEMM applies the page DCT to every DCT page at
+        # once, then an EXACT full softmax (no split partials, no stage 2)
+        # and one bmm for p @ V. Correct because u already holds every
+        # served row's coefficient logit.
+        if "_tb" not in gm:
+            # index prep cached ONCE (host syncs here are fine — this runs
+            # during warmup, never inside CUDA graph capture)
+            pages = gm["pages"].long()
+            kinds = gm["page_kind"]
+            ar = torch.arange(ptok, device=dev)
+            dctp = pages[kinds == 2]
+            idp = pages[kinds != 2]
+            gm["_tb"] = {
+                "di": (dctp[:, None] * ptok + ar[None, :]) if dctp.numel()
+                      else None,
+                "ii": (idp[:, None] * ptok + ar[None, :]) if idp.numel()
+                      else None,
+                "ti": gm["tier_idx"] if gm["tier_idx"].numel() else None,
+                "vf": gm["v"].float(),
+            }
+        tb = gm["_tb"]
+        uv = u.view(H, hg, T)
+        z = torch.full_like(uv, float("-inf"))
+        if tb["di"] is not None:
+            z[:, :, tb["di"]] = uv[:, :, tb["di"]] @ gm["dct_t"]
+        if tb["ii"] is not None:
+            z[:, :, tb["ii"]] = uv[:, :, tb["ii"]]
+        if tb["ti"] is not None:
+            z[:, :, tb["ti"]] = gm["z_tier"].float()
+        att = torch.softmax(z * gm["sm_scale"], dim=2)
+        return torch.bmm(att.reshape(H, hg, T), tb["vf"])
     npages = int(gm["pages"].numel())
     nsplit = max(1, (npages + pages_per_split - 1) // pages_per_split)
     m_p = torch.empty(H, nsplit, hgp, device=dev)

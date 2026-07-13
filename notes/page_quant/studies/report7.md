@@ -164,8 +164,17 @@ best (GPU 4, graphs, all-arm rerun): fp16-V 0.939 ms @128k vs OSCAR 0.261
   NEGATIVE — 0.53 vs 0.32 ms @32k; ~56 small launches serialize in the
   graph and starve occupancy. Code kept behind phase_a="cw"; default "rt".
 
-Remaining path to B1 (unchanged in kind, sharpened in detail): true A+B
-fusion with 128-token tiles (halve iteration counts, make INT2-V pay),
-multi-stream graph capture if launch shaping returns, and only then
-tuning. This is the deep restructure — next session's block; the quality
-stack and the 3.4x-vs-dense / 1.6x-vs-flash results are unaffected.
+- S3b (phase B as dense batched torch under the graph: one GEMM for the
+  page DCT, exact full softmax, bmm for pV): NEGATIVE — 4.19 vs 0.94 ms
+  @128k; advanced-indexing scatters + full-T softmax lose badly to the
+  flash-style online-softmax kernel. Kept behind phase_b="torch" as a
+  documented control.
+
+With constexpr launches, byte diets, dtype cuts, torch offload, and
+parallelism all measured out, the cheap-lever space is exhausted. B1 now
+provably requires the deep restructure: (a) planar bit-plane payload
+layout in the segment path (turns 256 byte-gathers/row into ~w word loads
++ register shifts — the instruction wall of phase A), and (b) a fused
+single kernel over 128-token tiles (halves phase-B iteration overheads and
+finally makes INT2-V pay). Next session's block; the quality stack and the
+3.4x-vs-dense / 1.6x-vs-flash results are unaffected.
