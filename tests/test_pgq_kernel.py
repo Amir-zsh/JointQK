@@ -198,6 +198,35 @@ def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11,
 
 
 @cuda
+def test_attention_v2_planar_phase_a():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True)
+    o = page_attention_v2(gm, phase_a="pl")
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
+def test_attention_v2_two_page_tiles():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True)
+    for pps in (3, 16):                      # odd range exercises the tail
+        o = page_attention_v2(gm, pps, phase_b="kernel2")
+        err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+        assert err < 1e-2, (pps, err)
+
+
+@cuda
+def test_attention_v2_two_page_int2():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True,
+                     v_int2=True)
+    o = page_attention_v2(gm, 3, phase_b="kernel2", v_int2=True)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
 def test_attention_v2_torch_phase_b():
     from kvq.kernels.pgq_decode_attn import page_attention_v2
     gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True)

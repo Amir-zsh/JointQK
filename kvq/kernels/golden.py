@@ -183,6 +183,31 @@ def add_v_int2(gm: dict) -> dict:
     return gm
 
 
+def planarize(buf: torch.Tensor, ws: list[int]) -> torch.Tensor:
+    """plan9 fusion step 1: re-pack a dense rung-segment payload (n, stride
+    bytes; blocks of 32 codes little-endian at widths ws) into bit-plane
+    words: block b stores ws[b] uint32 planes, plane j = bit j of all 32
+    codes (code i -> bit i). Same byte count; kernel unpack becomes w word
+    loads + register shifts instead of 256 byte-gathers per row."""
+    from kvq.kernels.pgq_pack import _unpack_bits
+    n = buf.shape[0]
+    if n == 0:
+        return torch.zeros(0, dtype=torch.int32)
+    lanes = torch.arange(32, dtype=torch.int64)
+    out, off = [], 0
+    for w in ws:
+        if w == 0:
+            continue
+        nb = 32 * w // 8
+        codes = _unpack_bits(buf[:, off:off + nb], w, 32).to(torch.int64)
+        for j in range(w):
+            bits = (codes >> j) & 1
+            out.append((bits << lanes).sum(1).to(torch.int32))
+        off += nb
+    return (torch.stack(out, 1).contiguous() if out
+            else torch.zeros(n, 0, dtype=torch.int32))
+
+
 def segment_layout(gm: dict, packeds: list[dict]) -> dict:
     """K2c' coalesced layout on top of a stack_heads dict: per (rung, head)
     dense payload matrices (n, stride) — pack_sequence already builds them —
@@ -195,7 +220,8 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
     lut_off = gm["lut_off"].cpu()
     pay, tok, pay_off, tok_off, seg_n = [], [], [], [], []
     seg_stride, seg_w, seg_lo = [], [], []
-    off_p = off_t = 0
+    pay_pl, pl_off = [], []
+    off_p = off_t = off_pl = 0
     for r in range(R):
         for h in range(H):
             buf = packeds[h]["payload"][r]
@@ -213,6 +239,10 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
             tok.append(toks.to(torch.int32))
             off_p += int(buf.numel())
             off_t += int(toks.numel())
+            pl = planarize(buf.cpu(), ws)
+            pay_pl.append(pl.reshape(-1))
+            pl_off.append(off_pl)
+            off_pl += int(pl.numel())
     P = (T + ptok - 1) // ptok
     kind_dense = torch.ones(P, dtype=torch.int8)
     kind_dense[gm["pages"].long().cpu()] = gm["page_kind"].cpu()
@@ -234,6 +264,10 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
         "sig_cat": torch.stack([gm["sigma_id"], gm["sigma_dct"]],
                                dim=1).half().contiguous(),
         "lut16": gm["lut"].half().contiguous(),
+        "seg_pay_pl": (torch.cat(pay_pl) if off_pl else
+                       torch.zeros(0, dtype=torch.int32)).to(dev),
+        "seg_pl_off": torch.tensor(pl_off, dtype=torch.int64,
+                                   device=dev).reshape(R, H),
         "seg_stride": torch.tensor(seg_stride, dtype=torch.int32,
                                    device=dev).reshape(R, H),
         "seg_w": torch.tensor(seg_w, dtype=torch.int32,

@@ -194,6 +194,20 @@ def fabricate_segmented(gm, dev, seed=1):
             tok.append(idx)
             op += n * s
             ot += n
+    from kvq.kernels.golden import planarize
+    pay_pl, pl_off, off_pl = [], [], 0
+    i = 0
+    for r in range(R):
+        ws = [int(w) for w in bw[r]]
+        for h in range(H):
+            n = seg_n[i]
+            sbytes = int(strides[r])
+            buf = pay[i].reshape(max(n, 0), sbytes) if sbytes else                 torch.zeros(n, 0, dtype=torch.uint8)
+            pl = planarize(buf, ws)
+            pl_off.append(off_pl)
+            pay_pl.append(pl.reshape(-1))
+            off_pl += int(pl.numel())
+            i += 1
     gm = dict(gm)
     kd = torch.ones(T // ptok, dtype=torch.int8)
     kd[gm["pages"].long().cpu()] = gm["page_kind"].cpu()
@@ -221,6 +235,10 @@ def fabricate_segmented(gm, dev, seed=1):
         "sig_cat": torch.stack([gm["sigma_id"], gm["sigma_dct"]],
                                dim=1).half().contiguous(),
         "lut16": gm["lut"].half().contiguous(),
+        "seg_pay_pl": (torch.cat(pay_pl) if off_pl else
+                       torch.zeros(0, dtype=torch.int32)).to(dev),
+        "seg_pl_off": torch.tensor(pl_off, dtype=torch.int64,
+                                   device=dev).reshape(R, H),
         "bw_host": bw, "strides_host": strides})
     return gm
 

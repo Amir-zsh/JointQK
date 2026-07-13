@@ -178,3 +178,39 @@ layout in the segment path (turns 256 byte-gathers/row into ~w word loads
 single kernel over 128-token tiles (halves phase-B iteration overheads and
 finally makes INT2-V pay). Next session's block; the quality stack and the
 3.4x-vs-dense / 1.6x-vs-flash results are unaffected.
+
+## plan9 fusion block (2026-07-13 pm) — ledger
+
+Measured on GPU 4 (Samuel's jobs own 0-3), graphs, 27/27 tests green:
+
+- **w==0 block skip in phase A** (dominant rungs carry 1-2 empty blocks;
+  the kernel was loading sigma/LUT and running zero dots for them):
+  step 0.939 -> 0.790 ms @128k (**-16%**). The single best fix of the block.
+- **B128 (2 pages per online-softmax iteration, separate tiles, no joins):
+  +10-15% at 128k** (0.70 ms best-config), neutral-to-negative below 80k —
+  context-dependent option (phase_b="kernel2"). A first join/permute
+  variant spilled registers (negative, replaced).
+- **Planar bit-plane payload: NEGATIVE** — the dynamic per-plane loop
+  serializes; byte-gathers coalesce better than the instruction-count
+  model predicted (phase_a="pl" kept as control). Model falsified.
+- **INT2-V at B128: wash** (0.81 vs 0.85 @128k) — first non-regression,
+  no win: cutting 235 MB of V traffic moves nothing.
+
+Bench rerun (B64 defaults): 0.834/0.538 ms @128k/80k = **4.9x dense,
+1.8x flash SDPA @80k (bar PASS at 4.91x)**; OSCAR 0.265 -> ours 0.32x.
+
+**Revised bottleneck statement (third revision, each time narrower):** the
+step is NOT HBM-bound anywhere — ~0.7 ms of per-row pipeline work persists
+regardless of bytes. What remains vs OSCAR is per-row constants our format
+pays and theirs doesn't: variable-width unpack + LUT gather + per-row
+sigma vs their fixed 3-op INT2 unpack; plus our u round-trip. True
+single-kernel fusion removes the round-trip (~small) but not the per-row
+dequant work. Honest framing: some of the residual ~2.5-3x at bs=1 is the
+LATENCY PRICE OF THE ADAPTIVE FORMAT (rungs, LUTs, per-row scales) — the
+same properties that buy the F1/rate wins. Two framings matter for a
+paper: (1) vs the fp16 baselines the format is strictly faster (1.8x over
+flash) AND higher-quality-per-bit than OSCAR; (2) at batch > 1 the
+per-row constants amortize across the batch dimension exactly like
+OSCAR's, so the bs=1 gap is expected to narrow — the H100/batched sweep
+(Samuel's next-steps list too) is the right venue, not more bs=1 A100
+tuning. B1 recorded as NOT MET at bs=1/A100 with this decomposition.
