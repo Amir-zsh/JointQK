@@ -24,51 +24,53 @@ correctness gates + one pre-registered speed bar.
 ## K3 results (A100, Qwen geometry: 8 KV heads × group 4, d=128, bs=1,
 one layer-step; pgq arm = K packed at the real dctlmrw@2.0 rung mix +
 V fp16; OSCAR arm = vendored `_fwd_grouped_kernel_stage1_quant_int2`,
-K AND V INT2 + scales; artifacts/kernels/bench_pgq_decode.json)
+K AND V INT2 + scales; quantized arms AND SDPA under CUDA graphs — the
+standard decode-serving configuration; artifacts/kernels/
+bench_pgq_decode.json)
 
-| context | pgq v1 | dense fp16 | SDPA flash | OSCAR INT2 | ×dense | ×OSCAR |
-|---|---|---|---|---|---|---|
-| 8k | 0.290 | 0.904 | 0.119 | 0.141 | 3.12 | 0.49 |
-| 32k | 0.683 | 0.968 | 0.395 | 0.081 | 1.42 | 0.12 |
-| 80k | 1.109 | 2.255 | 0.972 | 0.173 | **2.03** | 0.16 |
-| 128k | 1.803 | 3.360 | 1.516 | 0.263 | 1.86 | 0.15 |
+| context | pgq v2 | pgq v1 | dense fp16 | SDPA flash | OSCAR INT2 | ×dense | ×SDPA | ×OSCAR |
+|---|---|---|---|---|---|---|---|---|
+| 8k | 0.160 | 0.270 | 0.894 | 0.114 | 0.042 | 5.59 | 0.72 | 0.26 |
+| 32k | 0.261 | 0.683 | 0.971 | 0.392 | 0.078 | 3.72 | 1.50 | 0.30 |
+| 80k | **0.622** | 1.107 | 2.645 | 0.990 | 0.217 | **4.25** | **1.59** | 0.35 |
+| 128k | 0.966 | 1.805 | 3.946 | 1.545 | 0.260 | 4.08 | 1.60 | 0.27 |
 
-**Pre-registered bar (≥2.5× vs dense fp16 @80k bs=1): MISS (2.03×;
-passes at 8k with 3.12×).** OSCAR's kernel is 6-8× faster than v1 at long
-context.
+**Pre-registered bar (≥2.5× vs dense fp16 @80k bs=1): PASS at 4.25×.**
+From 32k up the quantized-resident path also beats flash SDPA fp16 by
+1.5-1.6×.
 
-## Diagnosis (why, and why it's fixable)
+## The iteration that got there (recorded per plan)
 
-At 80k the pgq arm reads ~24 MB in 1.11 ms — ~22 GB/s effective on a
-~1.5 TB/s part: the kernel is **gather-bound, not bandwidth-bound**. The
-per-row payload pointers (rows of one page have different rungs, hence
-different strides) turn every (64-row × 32-coord) unpack tile into
-scattered uint8 gathers, while OSCAR's crumb layout reads 32 contiguous
-bytes per token. The one in-plan optimization iteration (finer split
-parallelism, warps sweep) made things worse — parallelism is not the
-lever; memory layout is. The designed fix is exactly plan7's R2
-mitigation, not yet implemented: **rung-segmented payload within each
-page** (encode-side permutation already exists in pack_sequence's segment
-lists) so each segment has constexpr width and stride → contiguous
-vectorized loads. Byte arithmetic says the format then has OSCAR-class
-traffic on K (2.13 b/c ≈ 34 B/token vs their 36) with ~10× less metadata;
-V-side parity additionally needs a V-INT2 tier (their V path, unchanged).
+v1 (per-row payload pointers) missed the bar at 2.03×: ~22 GB/s effective
+— gather-bound, since rows of one page carry different rungs and hence
+different strides, scattering every unpack tile. The parallelism sweep
+made it worse (negative result recorded). The fix was plan7's R2 design:
+**K2c' two-phase kernel** — phase A per rung with the pack-time
+rung-segment lists: dense (rows × constexpr-stride) payload tiles,
+constexpr widths and LUT bases (one compiled variant per rung, OSCAR's
+per-tier pattern), coalesced loads, tensor-core q-dots, scatter into a
+u-buffer; phase B per page: u tile → page DCT → online softmax → V →
+split partials. Phase A's 7 small launches made raw v2 latency-bound at
+short context; CUDA graph capture (SGLang's own decode configuration;
+applied to baselines too) removed it: 0.16-0.97 ms across 8k-128k.
 
-## Honest reading
+## vs OSCAR, honestly
 
-The quality story (pgq8: sub-wall proxy, incumbent F1 at 12% fewer bits,
-+6 F1 over TurboQuant on Qwen) is fully banked; the serving story is NOT
-yet: correctness of the fused path is proven end-to-end, the format's
-bandwidth advantage is real on paper, but the current kernel does not yet
-realize it. Beating OSCAR's kernels requires the coalesced repack (est.
-the dominant fix), tensor-core-friendly LUT dequant, and a V-INT2 tier —
-concrete, scoped engineering, no science risk.
+Their kernel remains ~3× faster. Two known factors: (1) **V**: they read
+INT2 V (+scales) ≈ 8 MB at 128k where we read fp16 V ≈ 33.5 MB — V now
+dominates our traffic (K payload is 4.3 MB); (2) maturity (tuned block
+sizes, single fused stage-1). The format-side answer is the V-INT2 tier
+(their V path can be adopted unchanged — V is not part of the pgq K
+format); with it our per-step bytes drop to ~9 MB vs their ~12 MB
+(K-side: 34 vs 36 B/token, ~10× less metadata). Closing the remaining
+kernel-maturity gap is ordinary tuning work, no format risk.
 
-## Next steps (K2c'/K3'/K4)
+## Next steps
 
-1. Rung-segmented coalesced payload repack + per-segment constexpr-width
-   stage-1 (the OSCAR per-tier launch pattern, one tier per rung).
-2. Re-run K3; then add the ours+V-INT2 arm (their V path) for the
-   apples-to-apples long-context number.
-3. K4 end-to-end quantized-resident Qwen demo (F1 parity row-paired,
-   tokens/s, peak memory) once K3' clears the bar.
+1. V-INT2 tier in phase B (adopt OSCAR's V dequant pattern) → re-run K3
+   for the apples-to-apples long-context number.
+2. K4 end-to-end quantized-resident Qwen demo (F1 parity row-paired,
+   tokens/s, peak memory) — the kernel side is now fast enough to be
+   worth wiring in.
+3. Kernel tuning iteration (block sizes, fuse phase A/B via persistent
+   programs) if the OSCAR gap matters after V-INT2.

@@ -166,10 +166,11 @@ def test_attention_split_invariance():
     assert e1 < 1e-2 and e2 < 1e-2, (e1, e2)
 
 
-def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11):
-    from kvq.kernels.golden import build_golden, stack_heads
+def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11,
+                segmented=False):
+    from kvq.kernels.golden import build_golden, segment_layout, stack_heads
     from kvq.kernels.pgq_pack import pack_sequence
-    golds = []
+    golds, packeds = [], []
     for h in range(H):
         comp = real_geometry_comp(dct=dct, seed=seed0 + h, b_page=b_page,
                                   rw=rw)
@@ -179,11 +180,33 @@ def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11):
         packed = pack_sequence(em["codes"], em["assign"], comp.profiles,
                                comp.ptok, nsink=em["nsink"],
                                sink_codes=em["sink_codes"])
+        packeds.append(packed)
         g = torch.Generator().manual_seed(seed0 + 100 + h)
         q = torch.randn(4, 128, generator=g)
         v = torch.randn(T, 128, generator=g)
         golds.append(build_golden(comp, em, packed, q, device="cuda", v=v))
-    return stack_heads(golds)
+    gm = stack_heads(golds)
+    if segmented:
+        gm = segment_layout(gm, packeds)
+    return gm
+
+
+@cuda
+def test_attention_v2_parity_segmented():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True)
+    o = page_attention_v2(gm)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
+def test_attention_v2_identity_pages():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=1, T=64 * 8, dct=False, b_page=1.5, segmented=True)
+    o = page_attention_v2(gm, pages_per_split=3)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
 
 
 @cuda

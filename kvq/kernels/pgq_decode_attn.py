@@ -236,6 +236,199 @@ def _page_attn_kernel_v1(
              + dj[None, :], acc)
 
 
+@triton.jit
+def _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
+               sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page, qt_ptr, qbase,
+               HGP: tl.constexpr, D: tl.constexpr, CBLK: tl.constexpr,
+               STRIDE: tl.constexpr, B: tl.constexpr, BOFF: tl.constexpr,
+               W: tl.constexpr, LO: tl.constexpr):
+    ci = tl.arange(0, CBLK)
+    hg = tl.arange(0, HGP)
+    bitpos = ci * W
+    addr = (pbase + rows[:, None].to(tl.int64) * STRIDE + BOFF
+            + (bitpos >> 3)[None, :])
+    b0 = tl.load(pay_ptr + addr, mask=live_r[:, None], other=0).to(tl.int32)
+    b1 = tl.load(pay_ptr + addr + 1, mask=live_r[:, None],
+                 other=0).to(tl.int32)
+    code = ((b0 | (b1 << 8)) >> (bitpos & 7)[None, :]) & ((1 << W) - 1)
+    lev = tl.load(lut_ptr + hlut + LO + code, mask=live_r[:, None],
+                  other=0.0)
+    coord = B * CBLK + ci
+    sid = tl.load(sigma_id_ptr + sbase + s_in_page[:, None] * D
+                  + coord[None, :], mask=live_r[:, None], other=0.0)
+    sdc = tl.load(sigma_dct_ptr + sbase + s_in_page[:, None] * D
+                  + coord[None, :], mask=live_r[:, None], other=0.0)
+    sig = tl.where(kind[:, None] == 2, sdc, sid)
+    deq = (lev * sig).to(tl.float16)
+    qb = tl.load(qt_ptr + qbase + hg[:, None] * D
+                 + coord[None, :]).to(tl.float16)
+    return u + tl.dot(qb, tl.trans(deq))
+
+
+@triton.jit
+def _seg_u_kernel(
+    pay_ptr, tok_ptr, pay_off_ptr, tok_off_ptr, n_ptr,
+    lut_ptr, LUTN: tl.constexpr,
+    sigma_id_ptr, sigma_dct_ptr, kind_ptr, qt_ptr, u_ptr,
+    T, HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
+    PTOK: tl.constexpr, CBLK: tl.constexpr, STRIDE: tl.constexpr,
+    W0: tl.constexpr, W1: tl.constexpr, W2: tl.constexpr, W3: tl.constexpr,
+    L0: tl.constexpr, L1: tl.constexpr, L2: tl.constexpr, L3: tl.constexpr,
+):
+    """Phase A for one rung: coalesced (64-row, constexpr-stride) payload
+    tiles -> dequant -> q-dot -> scatter u[h, hg, t]. One compiled variant
+    per rung (constexpr widths + LUT bases)."""
+    tile = tl.program_id(0)
+    h = tl.program_id(1)
+    n = tl.load(n_ptr + h)
+    rows = tile * PTOK + tl.arange(0, PTOK)
+    live_r = rows < n
+    pbase = tl.load(pay_off_ptr + h)
+    tbase = tl.load(tok_off_ptr + h)
+    tok = tl.load(tok_ptr + tbase + rows, mask=live_r, other=0)
+    s_in_page = tok % PTOK
+    kind = tl.load(kind_ptr + tok // PTOK, mask=live_r, other=1)
+    hg = tl.arange(0, HGP)
+    hlut = h * LUTN
+    sbase = h * PTOK * D
+    qbase = h * HGP * D
+    u = tl.zeros((HGP, PTOK), dtype=tl.float32)
+    if W0 > 0:
+        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
+                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
+                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
+                       0, 0, W0, L0)
+    if W1 > 0:
+        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
+                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
+                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
+                       1, (W0 * CBLK) // 8, W1, L1)
+    if W2 > 0:
+        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
+                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
+                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
+                       2, ((W0 + W1) * CBLK) // 8, W2, L2)
+    if W3 > 0:
+        u = _seg_block(u, pay_ptr, pbase, rows, live_r, lut_ptr, hlut, kind,
+                       sigma_id_ptr, sigma_dct_ptr, sbase, s_in_page,
+                       qt_ptr, qbase, HGP, D, CBLK, STRIDE,
+                       3, ((W0 + W1 + W2) * CBLK) // 8, W3, L3)
+    uptr = u_ptr + (h * HG + hg[:, None]) * T + tok[None, :]
+    tl.store(uptr, u, mask=(hg[:, None] < HG) & live_r[None, :])
+
+
+@triton.jit
+def _page_attn_from_u_kernel(
+    u_ptr, dct_ptr, pages_ptr, kind_ptr, v_ptr,
+    m_out_ptr, l_out_ptr, acc_out_ptr,
+    NPAGES, PPS, sm_scale,
+    T, HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
+    PTOK: tl.constexpr,
+):
+    """Phase B: per (split, head) — load u page tiles, apply the page DCT
+    where flagged, online softmax + V, emit split partials."""
+    split = tl.program_id(0)
+    h = tl.program_id(1)
+    hg = tl.arange(0, HGP)
+    tt = tl.arange(0, PTOK)
+    dj = tl.arange(0, D)
+    m = tl.full((HGP,), float("-inf"), dtype=tl.float32)
+    l = tl.zeros((HGP,), dtype=tl.float32)
+    acc = tl.zeros((HGP, D), dtype=tl.float32)
+    for pi in range(split * PPS, tl.minimum((split + 1) * PPS, NPAGES)):
+        page = tl.load(pages_ptr + pi)
+        kind = tl.load(kind_ptr + pi)
+        t0 = page * PTOK
+        u = tl.load(u_ptr + (h * HG + hg[:, None]) * T + t0 + tt[None, :],
+                    mask=(hg < HG)[:, None], other=0.0)
+        if kind == 2:
+            dt = tl.load(dct_ptr + tt[:, None] * PTOK
+                         + tt[None, :]).to(tl.float16)
+            u = tl.dot(u.to(tl.float16), dt)
+        z = u * sm_scale
+        z = tl.where((hg < HG)[:, None], z, float("-inf"))
+        m_new = tl.maximum(m, tl.max(z, axis=1))
+        alpha = tl.where(m == float("-inf"), 0.0, tl.exp(m - m_new))
+        p = tl.exp(z - m_new[:, None])
+        l = l * alpha + tl.sum(p, axis=1)
+        vt = tl.load(v_ptr + h * T * D + (t0 + tt)[:, None] * D
+                     + dj[None, :])
+        acc = acc * alpha[:, None] + tl.dot(p.to(tl.float16), vt)
+        m = m_new
+    S = tl.num_programs(0)
+    tl.store(m_out_ptr + (h * S + split) * HGP + hg, m)
+    tl.store(l_out_ptr + (h * S + split) * HGP + hg, l)
+    tl.store(acc_out_ptr + ((h * S + split) * HGP + hg[:, None]) * D
+             + dj[None, :], acc)
+
+
+def page_attention_v2(gm: dict, pages_per_split: int = 16,
+                      num_warps: int = 4) -> torch.Tensor:
+    """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys."""
+    H, T, d, ptok = gm["H"], gm["T"], gm["d"], gm["ptok"]
+    hg, hgp = gm["hg"], gm["hgp"]
+    dev = gm["qt"].device
+    u = torch.zeros(H * hg, T, device=dev, dtype=torch.float32)
+    if "_launch_plan" not in gm:
+        bw, strides = gm["bw_host"], gm["strides_host"]
+        lut_off = gm["lut_off"].cpu()
+        seg_n = gm["seg_n"].cpu()
+        plan = []
+        for r in range(bw.shape[0]):
+            stride = int(strides[r])
+            nmax = int(seg_n[r].max())
+            if stride == 0 or nmax == 0:
+                continue
+            ws = [int(w) for w in bw[r]]
+            los = [int(lut_off[w]) if w > 0 else 0 for w in ws]
+            plan.append((r, stride, nmax, ws, los))
+        gm["_launch_plan"] = plan
+    for r, stride, nmax, ws, los in gm["_launch_plan"]:
+        grid = ((nmax + ptok - 1) // ptok, H)
+        _seg_u_kernel[grid](
+            gm["seg_pay"], gm["seg_tok"],
+            gm["seg_pay_off"][r], gm["seg_tok_off"][r], gm["seg_n"][r],
+            gm["lut"], gm["lut"].shape[1],
+            gm["sigma_id"], gm["sigma_dct"], gm["kind_dense"],
+            gm["qt"], u,
+            T, HG=hg, HGP=hgp, D=d, PTOK=ptok,
+            CBLK=d // gm["bw_host"].shape[1],
+            STRIDE=stride,
+            W0=ws[0], W1=ws[1], W2=ws[2], W3=ws[3],
+            L0=los[0], L1=los[1], L2=los[2], L3=los[3],
+            num_warps=num_warps,
+        )
+    npages = int(gm["pages"].numel())
+    nsplit = max(1, (npages + pages_per_split - 1) // pages_per_split)
+    m_p = torch.empty(H, nsplit, hgp, device=dev)
+    l_p = torch.empty(H, nsplit, hgp, device=dev)
+    acc_p = torch.empty(H, nsplit, hgp, d, device=dev)
+    _page_attn_from_u_kernel[(nsplit, H)](
+        u.reshape(H, hg, T), gm["dct_t"], gm["pages"], gm["page_kind"],
+        gm["v"], m_p, l_p, acc_p,
+        npages, pages_per_split, gm["sm_scale"],
+        T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
+    )
+    ti = gm["tier_idx"]
+    if ti.numel():
+        zt = gm["z_tier"] * gm["sm_scale"]
+        mt = torch.full((H, 1, hgp), float("-inf"), device=dev)
+        lt = torch.zeros(H, 1, hgp, device=dev)
+        at = torch.zeros(H, 1, hgp, d, device=dev)
+        mt[:, 0, :hg] = zt.max(dim=2).values
+        pt = torch.exp(zt - mt[:, 0, :hg, None])
+        lt[:, 0, :hg] = pt.sum(2)
+        at[:, 0, :hg] = pt @ gm["v"][:, ti].float()
+        m_p = torch.cat([m_p, mt], 1)
+        l_p = torch.cat([l_p, lt], 1)
+        acc_p = torch.cat([acc_p, at], 1)
+    m_star = m_p.max(1).values
+    w = torch.exp(m_p - m_star[:, None, :]).nan_to_num(0.0)
+    l_star = (l_p * w).sum(1).clamp_min(1e-30)
+    o = (acc_p * w[..., None]).sum(1) / l_star[..., None]
+    return o[:, :hg]
+
+
 def page_attention_v1(gm: dict, pages_per_split: int = 8,
                       num_warps: int = 4) -> torch.Tensor:
     """Multi-head v1 path over a stack_heads dict; returns (H, Hg, d)."""

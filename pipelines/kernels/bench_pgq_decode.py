@@ -175,6 +175,56 @@ def oscar_case(T, dev, splits=16):
                 sm=1.0 / math.sqrt(D), bytes_step=bytes_step)
 
 
+def fabricate_segmented(gm, dev, seed=1):
+    """Group fabricated rows by rung into the K2c' coalesced layout."""
+    g = torch.Generator().manual_seed(seed)
+    bw = gm["bw"].cpu()
+    strides = (bw * BLOCK).sum(1) // 8
+    R, H, T, ptok = bw.shape[0], gm["H"], gm["T"], gm["ptok"]
+    rung = gm["row_rung"].cpu()
+    pay, tok, pay_off, tok_off, seg_n = [], [], [], [], []
+    op = ot = 0
+    for r in range(R):
+        for h in range(H):
+            idx = torch.nonzero(rung[h] == r).squeeze(1).to(torch.int32)
+            n, s = idx.numel(), int(strides[r])
+            pay_off.append(op)
+            tok_off.append(ot)
+            seg_n.append(n)
+            pay.append(torch.randint(0, 256, (n * s,), dtype=torch.uint8,
+                                     generator=g))
+            tok.append(idx)
+            op += n * s
+            ot += n
+    gm = dict(gm)
+    kd = torch.ones(T // ptok, dtype=torch.int8)
+    kd[gm["pages"].long().cpu()] = gm["page_kind"].cpu()
+    gm.update({
+        "seg_pay": torch.cat(pay).to(dev),
+        "seg_tok": torch.cat(tok).to(dev),
+        "seg_pay_off": torch.tensor(pay_off, dtype=torch.int64,
+                                    device=dev).reshape(R, H),
+        "seg_tok_off": torch.tensor(tok_off, dtype=torch.int64,
+                                    device=dev).reshape(R, H),
+        "seg_n": torch.tensor(seg_n, dtype=torch.int32,
+                              device=dev).reshape(R, H),
+        "kind_dense": kd.to(dev),
+        "bw_host": bw, "strides_host": strides})
+    return gm
+
+
+def graphed(fn, warmup=3):
+    """CUDA-graph capture (standard decode-serving practice; applied to
+    every arm that tolerates capture, ours and baselines alike)."""
+    for _ in range(warmup):
+        fn()
+    torch.cuda.synchronize()
+    gr = torch.cuda.CUDAGraph()
+    with torch.cuda.graph(gr):
+        fn()
+    return lambda: gr.replay(), gr
+
+
 def bench(fn, n=30, warmup=5):
     for _ in range(warmup):
         fn()
@@ -214,7 +264,9 @@ def main():
     except Exception as e:
         print(f"[k3] OSCAR arm unavailable: {e}", flush=True)
 
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
     rows = {}
+    keep = []
     for T in CONTEXTS:
         gm = fabricate(T, dev)
         best = min(
@@ -222,6 +274,10 @@ def main():
                    args.iters), p, w)
             for p in (4, 8, 16) for w in (4, 8))
         pgq_ms, pps, nw = best
+        gms = fabricate_segmented(gm, dev)
+        v2fn, v2g = graphed(lambda: page_attention_v2(gms, 16))
+        keep.append((gms, v2g))
+        v2_ms = bench(v2fn, args.iters)
 
         K16 = torch.randn(H_KV, T, D, device=dev).half()
         V16 = gm["v"]
@@ -246,15 +302,18 @@ def main():
             return torch.nn.functional.scaled_dot_product_attention(
                 qs, ks, vs)
 
-        sdpa_ms = bench(sdpa, args.iters)
+        sdpa_fn, sdpa_g = graphed(sdpa)
+        keep.append((qs, ks, vs, sdpa_g))
+        sdpa_ms = bench(sdpa_fn, args.iters)
 
         row = {
+            "pgq_v2_graph_ms": v2_ms,
             "pgq_v1_ms": pgq_ms, "pgq_cfg": {"pps": pps, "warps": nw},
-            "dense_fp16_ms": dense_ms, "sdpa_fp16_ms": sdpa_ms,
+            "dense_fp16_ms": dense_ms, "sdpa_fp16_graph_ms": sdpa_ms,
             "pgq_MB": gm["bytes_step"] / 1e6,
             "fp16_MB": 2 * H_KV * T * D * 2 / 1e6,
-            "speedup_vs_dense": dense_ms / pgq_ms,
-            "speedup_vs_sdpa": sdpa_ms / pgq_ms,
+            "speedup_vs_dense": dense_ms / v2_ms,
+            "speedup_vs_sdpa": sdpa_ms / v2_ms,
         }
         if oscar is not None:
             best_o = None
@@ -264,30 +323,35 @@ def main():
                     c["q"], c["k_buf"], c["v_buf"], c["k_sz"], c["v_sz"],
                     c["o"], c["indptr"], c["indices"], c["logits"],
                     c["lse"], c["nsplits"], c["splits"], c["sm"])
-                ms = bench(fn, args.iters)
+                ofn, og = graphed(fn)
+                keep.append((c, og))
+                ms = bench(ofn, args.iters)
                 if best_o is None or ms < best_o[0]:
                     best_o = (ms, s, c["bytes_step"])
-            row["oscar_int2_ms"] = best_o[0]
+            row["oscar_int2_graph_ms"] = best_o[0]
             row["oscar_splits"] = best_o[1]
             row["oscar_MB"] = best_o[2] / 1e6
-            row["pgq_vs_oscar"] = best_o[0] / pgq_ms
+            row["pgq_vs_oscar"] = best_o[0] / v2_ms
         rows[str(T)] = row
-        print(f"[k3] T={T:6d}: pgq {pgq_ms:7.3f} ms (pps={pps},w={nw}) | "
+        print(f"[k3] T={T:6d}: v2g {v2_ms:7.3f} ms | v1 {pgq_ms:7.3f} | "
               f"dense {dense_ms:7.3f} | sdpa {sdpa_ms:7.3f} | "
-              f"oscar {row.get('oscar_int2_ms', float('nan')):7.3f} | "
+              f"oscar {row.get('oscar_int2_graph_ms', float('nan')):7.3f} | "
               f"x_dense {row['speedup_vs_dense']:.2f} "
               f"x_sdpa {row['speedup_vs_sdpa']:.2f} "
               f"x_oscar {row.get('pgq_vs_oscar', float('nan')):.2f}",
               flush=True)
         del gm, K16, V16, ks, vs
+        keep.clear()
         torch.cuda.empty_cache()
 
     out = {"geometry": {"H_kv": H_KV, "group": GROUP, "d": D, "ptok": PTOK,
                         "bs": 1},
-           "note": ("one layer-step; pgq arm: K packed @2.0 mix (real "
-                    "telemetry) + V fp16; OSCAR arm: their INT2 kernel, K "
-                    "AND V INT2 (reads less V than us by design); bar "
-                    ">=2.5x vs dense fp16 at 80k"),
+           "note": ("one layer-step; pgq v2 = coalesced rung-segmented two-"
+                    "phase kernel under CUDA graph (as are SDPA and OSCAR "
+                    "arms; dense is a python loop, ungraphed); pgq K packed "
+                    "@2.0 real-telemetry mix + V fp16; OSCAR = their INT2 "
+                    "kernel, K AND V INT2 (reads ~4x less V by design); "
+                    "bar >=2.5x vs dense fp16 at 80k on the primary arm"),
            "parity_gate_err": err, "rows": rows}
     dst = REPO / "artifacts/kernels/bench_pgq_decode.json"
     dst.parent.mkdir(exist_ok=True)

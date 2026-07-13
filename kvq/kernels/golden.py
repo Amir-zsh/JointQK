@@ -149,6 +149,50 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
             for k, v in out.items()}
 
 
+def segment_layout(gm: dict, packeds: list[dict]) -> dict:
+    """K2c' coalesced layout on top of a stack_heads dict: per (rung, head)
+    dense payload matrices (n, stride) — pack_sequence already builds them —
+    concatenated into one buffer, plus token-index lists and a dense
+    per-page kind map. Phase-A kernels read these fully coalesced with
+    constexpr widths; the original per-row buffers stay for v0/v1."""
+    H, T, ptok = gm["H"], gm["T"], gm["ptok"]
+    dev = gm["payload"].device
+    R = packeds[0]["block_widths"].shape[0]
+    pay, tok, pay_off, tok_off, seg_n = [], [], [], [], []
+    off_p = off_t = 0
+    for r in range(R):
+        for h in range(H):
+            buf = packeds[h]["payload"][r]
+            toks = packeds[h]["rung_tokens"][r]
+            pay_off.append(off_p)
+            tok_off.append(off_t)
+            seg_n.append(int(toks.numel()))
+            pay.append(buf.reshape(-1))
+            tok.append(toks.to(torch.int32))
+            off_p += int(buf.numel())
+            off_t += int(toks.numel())
+    P = (T + ptok - 1) // ptok
+    kind_dense = torch.ones(P, dtype=torch.int8)
+    kind_dense[gm["pages"].long().cpu()] = gm["page_kind"].cpu()
+    gm = dict(gm)
+    gm.update({
+        "seg_pay": (torch.cat(pay) if off_p else
+                    torch.zeros(0, dtype=torch.uint8)).to(dev),
+        "seg_tok": (torch.cat(tok) if off_t else
+                    torch.zeros(0, dtype=torch.int32)).to(dev),
+        "seg_pay_off": torch.tensor(pay_off, dtype=torch.int64,
+                                    device=dev).reshape(R, H),
+        "seg_tok_off": torch.tensor(tok_off, dtype=torch.int64,
+                                    device=dev).reshape(R, H),
+        "seg_n": torch.tensor(seg_n, dtype=torch.int32,
+                              device=dev).reshape(R, H),
+        "kind_dense": kind_dense.to(dev),
+        "bw_host": packeds[0]["block_widths"].cpu(),
+        "strides_host": packeds[0]["strides"].cpu(),
+    })
+    return gm
+
+
 def stack_heads(golds: list[dict], hgp: int = 16) -> dict:
     """Stack per-head golden dicts (same T/ptok/page structure) into the
     multi-head layout of the v1 kernel: payload concatenated with per-head

@@ -6,76 +6,80 @@
   "ptok": 64,
   "bs": 1
  },
- "note": "one layer-step; pgq arm: K packed @2.0 mix (real telemetry) + V fp16; OSCAR arm: their INT2 kernel, K AND V INT2 (reads less V than us by design); bar >=2.5x vs dense fp16 at 80k",
+ "note": "one layer-step; pgq v2 = coalesced rung-segmented two-phase kernel under CUDA graph (as are SDPA and OSCAR arms; dense is a python loop, ungraphed); pgq K packed @2.0 real-telemetry mix + V fp16; OSCAR = their INT2 kernel, K AND V INT2 (reads ~4x less V by design); bar >=2.5x vs dense fp16 at 80k on the primary arm",
  "parity_gate_err": 0.00032477983040735126,
  "rows": {
   "8192": {
-   "pgq_v1_ms": 0.2899964650472005,
+   "pgq_v2_graph_ms": 0.1598993937174479,
+   "pgq_v1_ms": 0.27027130126953125,
    "pgq_cfg": {
-    "pps": 8,
+    "pps": 4,
     "warps": 4
    },
-   "dense_fp16_ms": 0.9042501449584961,
-   "sdpa_fp16_ms": 0.11873245239257812,
+   "dense_fp16_ms": 0.8936882019042969,
+   "sdpa_fp16_graph_ms": 0.11436939239501953,
    "pgq_MB": 18.653109,
    "fp16_MB": 33.554432,
-   "speedup_vs_dense": 3.118141956700466,
-   "speedup_vs_sdpa": 0.40942724033981914,
-   "oscar_int2_ms": 0.1408656438191732,
-   "oscar_splits": 16,
+   "speedup_vs_dense": 5.589065606361829,
+   "speedup_vs_sdpa": 0.715258449304175,
+   "oscar_int2_graph_ms": 0.04180272420247396,
+   "oscar_splits": 32,
    "oscar_MB": 5.24288,
-   "pgq_vs_oscar": 0.48574952041655256
+   "pgq_vs_oscar": 0.2614314115308151
   },
   "32768": {
-   "pgq_v1_ms": 0.6833553314208984,
+   "pgq_v2_graph_ms": 0.2613067626953125,
+   "pgq_v1_ms": 0.6829818089803059,
    "pgq_cfg": {
     "pps": 8,
     "warps": 4
    },
-   "dense_fp16_ms": 0.9679555892944336,
-   "sdpa_fp16_ms": 0.3947257995605469,
+   "dense_fp16_ms": 0.9708881378173828,
+   "sdpa_fp16_graph_ms": 0.39233366648356116,
    "pgq_MB": 74.616073,
    "fp16_MB": 134.217728,
-   "speedup_vs_dense": 1.4164747749633662,
-   "speedup_vs_sdpa": 0.5776289163352174,
-   "oscar_int2_ms": 0.08114973704020183,
+   "speedup_vs_dense": 3.7155109489051097,
+   "speedup_vs_sdpa": 1.5014294403892943,
+   "oscar_int2_graph_ms": 0.07802645365397134,
    "oscar_splits": 32,
    "oscar_MB": 20.97152,
-   "pgq_vs_oscar": 0.11875188984253252
+   "pgq_vs_oscar": 0.2986009732360097
   },
   "81920": {
-   "pgq_v1_ms": 1.109131177266439,
+   "pgq_v2_graph_ms": 0.6224711736043295,
+   "pgq_v1_ms": 1.1074225107828777,
    "pgq_cfg": {
     "pps": 16,
     "warps": 4
    },
-   "dense_fp16_ms": 2.2550344467163086,
-   "sdpa_fp16_ms": 0.9716272354125977,
+   "dense_fp16_ms": 2.644991874694824,
+   "sdpa_fp16_graph_ms": 0.9896119435628256,
    "pgq_MB": 186.547573,
    "fp16_MB": 335.54432,
-   "speedup_vs_dense": 2.0331539613502336,
-   "speedup_vs_sdpa": 0.8760255372202835,
-   "oscar_int2_ms": 0.17340977986653647,
+   "speedup_vs_dense": 4.2491796999680815,
+   "speedup_vs_sdpa": 1.5898116820938397,
+   "oscar_int2_graph_ms": 0.21677017211914062,
    "oscar_splits": 32,
    "oscar_MB": 52.4288,
-   "pgq_vs_oscar": 0.15634740364428457
+   "pgq_vs_oscar": 0.34824130226619854
   },
   "131072": {
-   "pgq_v1_ms": 1.8026431401570637,
+   "pgq_v2_graph_ms": 0.9660402933756511,
+   "pgq_v1_ms": 1.8046220143636067,
    "pgq_cfg": {
     "pps": 16,
     "warps": 4
    },
-   "dense_fp16_ms": 3.360319137573242,
-   "sdpa_fp16_ms": 1.5156110127766926,
+   "dense_fp16_ms": 3.946065902709961,
+   "sdpa_fp16_graph_ms": 1.5450000762939453,
    "pgq_MB": 298.484341,
    "fp16_MB": 536.870912,
-   "speedup_vs_dense": 1.864106690179654,
-   "speedup_vs_sdpa": 0.8407715198941915,
-   "oscar_int2_ms": 0.26277701059977215,
+   "speedup_vs_dense": 4.084783967883116,
+   "speedup_vs_sdpa": 1.5993122511435058,
+   "oscar_int2_graph_ms": 0.2604961395263672,
    "oscar_splits": 32,
    "oscar_MB": 83.88608,
-   "pgq_vs_oscar": 0.1457731731511077
+   "pgq_vs_oscar": 0.26965349304024483
   }
  }
 }
