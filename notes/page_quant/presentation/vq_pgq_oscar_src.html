@@ -1,0 +1,466 @@
+<title>Three Ways to Compress a KV Cache: VQ vs pgq vs OSCAR</title>
+<style>
+:root{
+  --paper:#f6f6f4; --ink:#1c2026; --ink2:#4a5261; --line:#d8dade;
+  --card:#ffffff; --accent:#2456c8; --accent2:#b8860b; --good:#1d7a4f;
+  --bad:#b03434; --warn:#8a6d1a; --chip:#eceef2; --code:#eef0f4;
+  --vq:#7a52a8; --pgq:#2456c8; --osc:#b03434;
+}
+@media (prefers-color-scheme: dark){:root{
+  --paper:#15171c; --ink:#e6e7ea; --ink2:#9aa2b1; --line:#32363f;
+  --card:#1d2027; --accent:#7aa2f7; --accent2:#d9a441; --good:#4fbf8b;
+  --bad:#e07070; --warn:#cfa93f; --chip:#262a33; --code:#232732;
+  --vq:#a98ed6; --pgq:#7aa2f7; --osc:#e07070;
+}}
+:root[data-theme="light"]{
+  --paper:#f6f6f4; --ink:#1c2026; --ink2:#4a5261; --line:#d8dade;
+  --card:#ffffff; --accent:#2456c8; --accent2:#b8860b; --good:#1d7a4f;
+  --bad:#b03434; --warn:#8a6d1a; --chip:#eceef2; --code:#eef0f4;
+  --vq:#7a52a8; --pgq:#2456c8; --osc:#b03434;
+}
+:root[data-theme="dark"]{
+  --paper:#15171c; --ink:#e6e7ea; --ink2:#9aa2b1; --line:#32363f;
+  --card:#1d2027; --accent:#7aa2f7; --accent2:#d9a441; --good:#4fbf8b;
+  --bad:#e07070; --warn:#cfa93f; --chip:#262a33; --code:#232732;
+  --vq:#a98ed6; --pgq:#7aa2f7; --osc:#e07070;
+}
+body{background:var(--paper);color:var(--ink);margin:0;
+  font:16px/1.68 -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:24px 20px 96px}
+h1,h2,h3,h4{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif;
+  line-height:1.25;text-wrap:balance}
+h1{font-size:2.0rem;margin:.4em 0 .2em}
+h2{font-size:1.45rem;margin-top:2.3em;border-bottom:1px solid var(--line);padding-bottom:.25em}
+h3{font-size:1.14rem;margin-top:1.7em}
+p, li{max-width:76ch}
+.lead{font-size:1.1rem;color:var(--ink2)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em;
+  background:var(--code);padding:1px 5px;border-radius:4px}
+.eqm{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:12px 18px;margin:16px 0;overflow-x:auto}
+.eqm math{font-size:1.1rem}
+math{font-family:"STIX Two Math","Latin Modern Math","Cambria Math","Times New Roman",serif}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin:16px 0}
+table{border-collapse:collapse;margin:14px 0;font-variant-numeric:tabular-nums;width:100%}
+.tblwrap{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:6px 12px;text-align:right;font-size:.92rem}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600;letter-spacing:.03em;font-size:.82rem;text-transform:uppercase}
+.sig{color:var(--good);font-weight:600}
+.tie{color:var(--ink2)}
+.bad{color:var(--bad);font-weight:600}
+.stage{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start;margin:12px 0}
+.stage .n{width:32px;height:32px;border-radius:50%;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;margin-top:2px}
+.stage h4{margin:.05em 0 .25em;font-size:1.0rem}
+.stage p{margin:.2em 0;color:var(--ink2);font-size:.94rem}
+.vq .n{background:var(--vq)} .pgq .n{background:var(--pgq)} .osc .n{background:var(--osc)}
+figure{margin:22px 0}
+figcaption{font-size:.85rem;color:var(--ink2);margin-top:8px;max-width:78ch}
+svg text{font-family:-apple-system,"Segoe UI",Roboto,sans-serif}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.83rem;margin:6px 2px;color:var(--ink2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;
+  margin-right:5px;background:var(--c)}
+.note{font-size:.9rem;color:var(--ink2);border-left:3px solid var(--accent2);
+  padding:2px 0 2px 14px;margin:14px 0}
+.verdict{border-left:3px solid var(--good)}
+.threecol{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media (max-width:800px){.threecol{grid-template-columns:1fr}}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.78rem;
+  font-weight:700;color:#fff;letter-spacing:.03em}
+</style>
+
+<div class="wrap">
+
+<h1>Three Ways to Compress a KV Cache</h1>
+<p class="lead">One question — <em>a page of keys must shrink 8×; what do you
+store?</em> — and three answers: <span class="pill" style="background:var(--osc)">OSCAR</span>
+adapts a uniform grid to each token, <span class="pill" style="background:var(--vq)">group&nbsp;VQ</span>
+(Samuel's study) replaces coordinates with learned codebook indices, and
+<span class="pill" style="background:var(--pgq)">pgq</span> (this repo) spends a bit
+budget non-uniformly across transformed rows. Each is explained step by step with
+its math, then compared on measured quality and speed — including a row-paired
+cross-repo comparison on shared evaluation rows.</p>
+
+<h2 id="shared">1 · The shared problem, and what all three agree on</h2>
+<p>Per (layer, KV-head), a key cache \(K \in \mathbb{R}^{T \times d}\)
+(\(d = 128\)) must be stored at ≈ 2 bits per coordinate — 8× below bf16 — such
+that future queries' attention, \( \operatorname{softmax}(q K^{\top}/\sqrt d)V \),
+survives. Every method here reads its compressed form directly at decode
+(no fp16 re-materialization), and all were evaluated under one protocol:
+V = TurboQuant 2-bit, layer 0 fp16, 400-prompt calibration where calibration is
+used, LongBench F1 on Qwen3-8B and Llama-3.1-8B.</p>
+<p>Two of the three (VQ and pgq) share the same first move — the calibrated
+<b>Q-weighted PCA basis</b>: since the damage a key error \(e\) does to logits is
+exactly \( \mathbb{E}_q[(q\cdot e)^2] = e\,\Sigma_Q\,e^{\top} \), keys are encoded
+as \( r = (k-\mu)F \) in a basis where plain squared error <em>equals</em> that
+query-weighted damage and energy concentrates in the leading coordinates. OSCAR
+uses a weaker, query-covariance + Hadamard rotation — swapping only the rotation
+under an identical quantizer costs it 5.9× in proxy error (measured in this
+repo). The three approaches then diverge on <em>what redundancy they exploit</em>:</p>
+
+<figure>
+<svg viewBox="0 0 900 200" width="100%" role="img" aria-label="three pipelines">
+<g font-size="12" fill="var(--ink)">
+<rect x="8" y="14" width="284" height="170" rx="10" fill="var(--card)" stroke="var(--osc)"/>
+<text x="150" y="36" text-anchor="middle" font-weight="700" fill="var(--osc)">OSCAR</text>
+<text x="150" y="58" text-anchor="middle" fill="var(--ink2)">rotate (U_Q·H)</text>
+<text x="150" y="80" text-anchor="middle" fill="var(--ink2)">per-token clip + standardize</text>
+<text x="150" y="102" text-anchor="middle" fill="var(--ink2)">Lloyd-Max INT2, every coord</text>
+<text x="150" y="124" text-anchor="middle" fill="var(--ink2)">store crumbs + scale/zero per token</text>
+<text x="150" y="146" text-anchor="middle" fill="var(--ink2)">bf16 sink/recent windows</text>
+<text x="150" y="172" text-anchor="middle" font-size="11" font-style="italic">adapts to each token; sees no structure</text>
+<rect x="308" y="14" width="284" height="170" rx="10" fill="var(--card)" stroke="var(--vq)"/>
+<text x="450" y="36" text-anchor="middle" font-weight="700" fill="var(--vq)">Group VQ (Samuel)</text>
+<text x="450" y="58" text-anchor="middle" fill="var(--ink2)">QPCA basis + rank-stratified perm</text>
+<text x="450" y="80" text-anchor="middle" fill="var(--ink2)">4-coord groups, water-filled bits</text>
+<text x="450" y="102" text-anchor="middle" fill="var(--ink2)">k-means codebook per group</text>
+<text x="450" y="124" text-anchor="middle" fill="var(--ink2)">store nearest-centroid indices</text>
+<text x="450" y="146" text-anchor="middle" fill="var(--ink2)">fp16 sink/recent band (4/32)</text>
+<text x="450" y="172" text-anchor="middle" font-size="11" font-style="italic">exploits cross-coordinate structure</text>
+<rect x="608" y="14" width="284" height="170" rx="10" fill="var(--card)" stroke="var(--pgq)"/>
+<text x="750" y="36" text-anchor="middle" font-weight="700" fill="var(--pgq)">pgq (this repo)</text>
+<text x="750" y="58" text-anchor="middle" fill="var(--ink2)">QPCA basis + page DCT over tokens</text>
+<text x="750" y="80" text-anchor="middle" fill="var(--ink2)">per-row width profiles (0–6 bits/coord)</text>
+<text x="750" y="102" text-anchor="middle" fill="var(--ink2)">per-page λ-RDO fills fixed bytes</text>
+<text x="750" y="124" text-anchor="middle" fill="var(--ink2)">store packed codes + 3-bit rung id</text>
+<text x="750" y="146" text-anchor="middle" fill="var(--ink2)">sink escape + recency window</text>
+<text x="750" y="172" text-anchor="middle" font-size="11" font-style="italic">exploits cross-coordinate AND cross-token structure</text>
+</g></svg>
+<figcaption><b>Fig 1.</b> The three pipelines. OSCAR buys per-token robustness
+with per-token metadata; VQ buys cross-coordinate structure with codebooks; pgq
+buys cross-coordinate and cross-token structure with a transform and a
+rate–distortion allocator.</figcaption>
+</figure>
+
+<h2 id="oscar">2 · OSCAR, step by step</h2>
+<p><b>Intuition.</b> Don't learn anything about the data offline — instead make
+each token carry its own tiny normalizer, so any token, however unusual, lands on
+a fixed 4-level grid reasonably scaled. Robustness through per-token adaptivity;
+the cost is metadata on every token, fetched inside the attention loop.</p>
+<div class="card">
+<div class="stage osc"><div class="n">1</div><div><h4>Rotate</h4>
+<p>\( k' = k\,R \) with \( R = U_Q H \): the query-covariance eigenbasis composed
+with a Hadamard, per layer. Data-light (one eigendecomposition), query-aware only
+through second moments of \(q\), not the \(k\)-vs-\(q\) interaction.</p></div></div>
+<div class="stage osc"><div class="n">2</div><div><h4>Per-token standardize</h4>
+<p>Each token computes its own statistics and clips outliers:
+\( \tilde k_j = (k'_j - m_t)/s_t \) with \( m_t, s_t \) the token's own mean/std.
+This is the load-bearing trick — and the metadata source.</p></div></div>
+<div class="stage osc"><div class="n">3</div><div><h4>Lloyd-Max INT2</h4>
+<p>Every coordinate snaps to the 4-level optimal-Gaussian grid:
+\( c_j = \operatorname{arg\,min}_{i \in \{0..3\}} |\tilde k_j - \ell_i| \).
+Uniform 2 bits for every coordinate of every token — no allocation.</p></div></div>
+<div class="stage osc"><div class="n">4</div><div><h4>Store</h4>
+<p>Codes packed 4-per-byte (quarter-interleaved "crumbs", 32 B/token) plus the
+per-token \((s_t, z_t)\) — <b>32 bits of metadata per token-group</b>. Decode:
+\( \hat k_j = s_t\,\ell_{c_j} + z_t \), then rotate back (folded).</p></div></div>
+<div class="stage osc"><div class="n">5</div><div><h4>Protect</h4>
+<p>First 64 (sink) and last 256 (recent) tokens stay bf16. Replication in this
+repo confirmed these windows are a <em>requirement</em>: without them sinks
+corrupt and quality collapses. All-in rate: ≈ 2.28 b/coord at 128k context,
+≈ 3.47 at short context (the windows amortize).</p></div></div>
+</div>
+
+<h2 id="vq">3 · Samuel's group VQ, step by step</h2>
+<p><b>Intuition.</b> A scalar quantizer treats each coordinate alone; but
+coordinates are correlated and their joint distribution has shape. Quantizing
+<em>small vectors</em> (groups of 4 coordinates) against a learned codebook
+captures three classical gains at once — correlation ("memory"), distribution
+shape, and sphere-packing — and decode becomes the cheapest primitive there is:
+a table lookup.</p>
+<div class="card">
+<div class="stage vq"><div class="n">1</div><div><h4>Basis + stratified grouping</h4>
+<p>Same QPCA basis \( r = (k-\mu)F \). Coordinates are then permuted by energy
+rank so that rank \(\rho\) goes to group \( \rho \bmod N_G \) (\(N_G = d/G = 32\)
+groups of \(G{=}4\)): every group gets one high-energy coordinate, one mid, two
+tail — no group hoards the spectrum. The permutation folds into \(F\)'s columns,
+so it is free.</p></div></div>
+<div class="stage vq"><div class="n">2</div><div><h4>Water-filled codebook sizes</h4>
+<p>Per-coordinate bits from reverse water-filling the QPCA energies \(\Lambda_j\):
+\[ b_j = \max\!\Big(0,\ \tfrac{1}{2}\log_2 \frac{\Lambda_j}{\theta}\Big),
+   \qquad \theta \ \text{chosen so}\ \textstyle\sum_j b_j = 2d, \]
+then summed within each group and rounded: group \(g\) gets a codebook of
+\( K_g = 2^{b_g} \) entries, average held at 2.0 b/coord. Important groups get
+bigger codebooks.</p></div></div>
+<div class="stage vq"><div class="n">3</div><div><h4>Learn codebooks (offline)</h4>
+<p>Per (layer, head, group), Lloyd's k-means on calibration residual groups:
+\[ \min_{C_g}\ \sum_{t} \big\lVert r_g(t) - C_g[\,i_g(t)\,] \big\rVert^2,
+   \qquad i_g(t) = \operatorname{arg\,min}_{c} \lVert r_g(t) - C_g[c] \rVert^2 , \]
+with empty-cluster reseeding (calibration has ~8k tokens/head vs up to 4096
+centroids). An entropy-constrained variant (ECVQ: penalize assignments by
+\( \lambda(-\log_2 p_i) \)) was tested and landed within noise — honest negative,
+not shipped. Centroids stored in fp8.</p></div></div>
+<div class="stage vq"><div class="n">4</div><div><h4>Encode / decode</h4>
+<p>Encode = nearest-centroid search per group (calibration-static codebooks).
+Payload per token: \( \sum_g b_g = 256 \) bits — indices only, <b>zero per-token
+metadata</b>. Decode = index <b>gather</b>: \( \hat r_g = C_g[i_g] \).</p></div></div>
+<div class="stage vq"><div class="n">5</div><div><h4>Protect</h4>
+<p>fp16 band on the first 4 + last 32 prompt tokens (OSCAR's idea, sized 10×
+smaller): ≈ +0.12 b/coord at 4k context, shrinking as \(1/T\). This band is
+load-bearing: without it his Llama mean drops from 45.4 to 38.4.</p></div></div>
+</div>
+<p><b>Why this can beat scalar coding — the math of the three VQ gains.</b> At a
+fixed rate, vector quantization of dimension-\(G\) blocks beats per-coordinate
+scalar quantization by (i) the <em>memory gain</em> — it codes the joint
+distribution, so residual correlation the basis missed still helps; (ii) the
+<em>shape gain</em> — codewords concentrate where the density actually lives
+(for a Gaussian source, worth up to 2.81 dB over a uniform scalar grid); and
+(iii) the <em>space-filling gain</em> — \(G\)-dimensional Voronoi cells pack space
+better than cubes (up to 1.53 dB as \(G \to \infty\), a fraction of that at
+\(G{=}4\)). The QPCA basis already removes second-order correlation, so (i) is
+small here — which is why his measured VQ sits near, not above, the
+entropy-coding frontier.</p>
+
+<h2 id="pgq">4 · pgq, step by step</h2>
+<p><b>Intuition.</b> Don't spend bits equally: spend them where queries will
+look. Rotate so error = attention damage; mix the 64 tokens of a page with a DCT
+so redundant tokens become near-empty rows; then let a per-page rate–distortion
+optimizer hand each row one of 8 width profiles, from "6 bits on hot
+coordinates" down to "nothing". Full derivations live in the
+<a style="color:var(--accent)" href="https://claude.ai/code/artifact/d488201c-399f-4cd4-96a3-737ba4667968">arc report</a>;
+the five equations that define the method:</p>
+<div class="card">
+<div class="stage pgq"><div class="n">1</div><div><h4>Metric &amp; basis</h4>
+<p>\( \mathbb{E}_q[(q\cdot e)^2] = e\,\Sigma_Q e^{\top} \); the basis
+\( F = W^{\top}V \) (with \( \Sigma_Q = W^{\top}W \)) makes code-space squared
+error EQUAL this quantity — the allocator's numbers are attention damage by
+construction.</p></div></div>
+<div class="stage pgq"><div class="n">2</div><div><h4>Page transform</h4>
+<p>\( Y = D\,R_{\text{page}} \), orthonormal DCT-II across the 64 tokens.
+Token-axis correlation is 0.70–0.79 at lag 1 and long-range; the DCT
+concentrates 76–83% of page energy into 16 of 64 rows, and stationarity makes
+the fixed DCT ≈ the optimal transform (within 2%).</p></div></div>
+<div class="stage pgq"><div class="n">3</div><div><h4>Per-page RDO</h4>
+<p>Each row picks one of ≤8 monotone width profiles by a Lagrangian solved per
+page: \( \rho(t) = \operatorname{arg\,min}_{\rho} D_{t,\rho} + \lambda R_{\rho} \),
+with \(\lambda\) bisected until the page exactly fits its fixed byte budget
+(headers, ids, escapes all charged). Distortions are measured post-snap, so
+grid overload prices itself.</p></div></div>
+<div class="stage pgq"><div class="n">4</div><div><h4>Grids &amp; protections</h4>
+<p>Lloyd-Max levels scaled by per-(row, coord) calibrated \(\sigma\); positions
+0–3 escape to an absolute 8-bit grid; the last 4 prompt pages ride the top rung.
+Both triggers are pure position — zero metadata.</p></div></div>
+<div class="stage pgq"><div class="n">5</div><div><h4>Serve</h4>
+<p>\( \tilde q = q\,G^{\top} \) once per step; the fused kernel dots integer
+codes and applies \( z = D^{\top}(\hat Y \tilde q^{\top}) \) per page. Per-token
+metadata: a 3-bit rung id. Verified end-to-end: the quantized-resident decode
+is token-identical to the reference semantics (G2 = 1.000).</p></div></div>
+</div>
+
+<h2 id="concept">5 · Conceptual comparison</h2>
+<div class="tblwrap"><table>
+<tr><th></th><th style="color:var(--osc)">OSCAR</th><th style="color:var(--vq)">group VQ</th><th style="color:var(--pgq)">pgq</th></tr>
+<tr><td>redundancy exploited</td><td>none (per-token scale only)</td><td>cross-coordinate (groups of 4)</td><td>cross-coordinate + <b>cross-token</b></td></tr>
+<tr><td>bit allocation</td><td>uniform 2 b everywhere</td><td>static per group (water-filled offline)</td><td><b>dynamic per row</b> (λ-RDO per page)</td></tr>
+<tr><td>adaptivity to hard tokens</td><td>per-token scale/zero</td><td>none (band only)</td><td>per-row rung choice, measured D</td></tr>
+<tr><td>per-token metadata</td><td>32 bits</td><td><b>0 bits</b></td><td>3 bits</td></tr>
+<tr><td>calibration artifacts</td><td>rotation only</td><td>rotation + ~256 codebooks/layer (fp8)</td><td>rotation + scale maps + 8 profiles</td></tr>
+<tr><td>decode primitive</td><td>shift/mask + scale·add</td><td>index gather (codebook in cache)</td><td>bit-unpack + LUT + tensor-core dot</td></tr>
+<tr><td>outlier story</td><td>bf16 windows 64/256 (required)</td><td>fp16 band 4/32 (load-bearing)</td><td>8-bit sink escape + top-rung window (rate-charged, in-page)</td></tr>
+<tr><td>worst case (uncorrelated data)</td><td>unchanged</td><td>falls back to k-means scalar-ish</td><td>RDO returns uniform widths; DCT is orthonormal (no loss)</td></tr>
+</table></div>
+<p class="note">Convergent evolution worth noticing: all three ended up with a
+positional full-precision protection for sinks and recent tokens — three
+independent rediscoveries that softmax denominators and recency dominate
+long-context quality.</p>
+
+<h2 id="quality">6 · Performance (measured)</h2>
+
+<div class="card">
+<h3 style="margin-top:0">How to read the numbers below (no prior context needed)</h3>
+<p>Every benchmark question gets an F1 score between 0 and 100 for each
+method (how well the generated answer matches the reference). To compare two
+methods we use <b>row-paired differencing</b>: both methods answered the
+<em>same</em> questions, so for each question \(i\) we compute the per-question
+difference \( \delta_i = F1^{A}_i - F1^{B}_i \), and report:</p>
+<ul>
+<li><b>"mean Δ (A − B)"</b> — the average of those per-question differences, in
+F1 points. Positive = method A better. "Pooled" means averaged over all shared
+questions across the three tasks (850 in total).</li>
+<li><b>"95% CI" (confidence interval)</b> — how far that average could
+plausibly move if we had drawn different questions. Computed by the
+<b>percentile bootstrap</b>, exactly this procedure:
+<ol style="margin:.4em 0">
+<li>Start from the per-question differences of one task,
+\( \delta_1, \dots, \delta_n \) (e.g. \(n{=}500\) for lcc).</li>
+<li>For each of \( B = 10{,}000 \) rounds: draw \(n\) indices
+\( j_1, \dots, j_n \) uniformly <em>with replacement</em> from
+\( \{1..n\} \) (so some questions appear twice, some not at all — a
+simulated "alternative sample" of the benchmark), and record that round's mean
+\[ \Delta^{*}_{b} \;=\; \frac{1}{n} \sum_{i=1}^{n} \delta_{j_i} . \]</li>
+<li>For the <b>pooled</b> number, do step 2 for each task with its own rows and
+average the three task means within the same round:
+\( \Delta^{*}_{b} = \tfrac{1}{3}(\Delta^{*}_{b,\text{lcc}} +
+\Delta^{*}_{b,\text{2wiki}} + \Delta^{*}_{b,\text{musique}}) \)
+— tasks weighted equally, matching how the headline mean is formed.</li>
+<li>Sort the 10,000 values \( \Delta^{*}_{1..B} \); the reported interval is
+their 2.5th and 97.5th percentiles:
+\[ \text{95% CI} \;=\; \big[\, \Delta^{*}_{(250)},\ \Delta^{*}_{(9750)} \,\big]. \]</li>
+</ol>
+No distributional assumption (no normality, no variance formula) — the spread
+of the resampled means IS the uncertainty estimate. The random seed is fixed,
+so the numbers are reproducible. If the interval <b>contains 0</b> the data
+cannot rule out "no real difference" — we call that a <b>tie</b> (the point
+estimate is still the best guess). If it lies entirely above or below 0, the
+difference is <b>significant (SIG)</b>.</li>
+</ul>
+<p><b>Why pair instead of just comparing the two averages?</b> Question
+difficulty varies enormously (some rows score 0 for every method, some 100),
+and that variation swamps method differences: Samuel's unpaired intervals are
+±3.1 points wide — his top four methods are statistically indistinguishable
+that way. Differencing on the same question cancels the question's difficulty,
+leaving only the methods' disagreement; the intervals shrink to roughly
+±1–1.6, narrow enough to rank methods. Pairing across the two repos is valid
+because we first verified the two evaluation harnesses agree: scoring OUR
+uncompressed run against HIS uncompressed run on the same questions gives
+−0.01 [−0.55, +0.55] — i.e. identical.</p>
+</div>
+
+<p><b>Tier 1 — row-paired on shared questions</b> (the strong evidence).
+Qwen3-8B, his 3 tasks (lcc n=500, 2wikimqa n=200, musique n=150 questions),
+rates are honest all-in bits per coordinate:</p>
+<div class="tblwrap"><table>
+<tr><th>contrast: A vs B</th><th>mean Δ (A − B), F1 pts</th><th>95% confidence interval</th><th>verdict</th></tr>
+<tr><td><b>pgq dctlmrw@2.0</b> (2.06 b/c) vs <b>VQ G4 + band</b> (2.12 b/c)</td>
+<td>+0.98</td><td>[−0.59, +2.54]</td><td class="tie">tie — CI contains 0; pgq ahead on all 3 tasks and at fewer bits</td></tr>
+<tr><td><b>pgq dctlmrw@1.75</b> (<b>1.82 b/c</b>) vs VQ (2.12)</td>
+<td>+0.36</td><td>[−1.27, +1.97]</td><td class="tie">tie — same quality at <b>14% fewer bits</b></td></tr>
+<tr><td>pgq dctlmrw@2.0 vs his EC-rANS (1.94)</td>
+<td>+0.15</td><td>[−1.68, +1.94]</td><td class="tie">tie overall; on lcc alone +1.81 [+0.24, +3.43] <span class="sig">SIG</span> for pgq</td></tr>
+</table></div>
+<p><b>Tier 2 — his published point estimates</b> (unpaired, so intervals are
+±3.1 wide and his top four methods mutually overlap — which is exactly why
+Tier 1 matters):</p>
+<figure><div id="qchart"></div>
+<div class="legend"><span style="--c:var(--pgq)">pgq</span>
+<span style="--c:var(--vq)">VQ / EC (Samuel)</span>
+<span style="--c:var(--osc)">OSCAR</span>
+<span style="--c:#9aa2b1">baselines</span></div>
+<figcaption><b>Fig 2.</b> Qwen3-8B, 3-task mean F1 (his tasks; pgq points computed
+from our committed cells on the same rows). Bars annotated with honest all-in
+rate. OSCAR pays 3.47 b/c at this context length for 44.5 F1 — both calibrated
+approaches beat it by ~2 F1 at ~60% of its bits.</figcaption></figure>
+<p>On Llama his study shows the same ordering (VQ+band 45.39, EC 44.07, OSCAR
+41.25, TQ 42.40 vs BF16 45.69, ±3.0 unpaired; no row-paired cross-repo run was
+done there). Note also what the band does to his VQ: without it, 46.5 → 38.4
+(Llama) — the positional protection carries a large share of the headline, as
+our window ablations found on the pgq side (+1.8–2.0 SIG).</p>
+
+<h2 id="speed">7 · Speed (measured, two harnesses)</h2>
+<p>The two repos time different units — his: one fused decode+attend pass at
+T = 65,536; ours: one attention layer-step under CUDA graphs — so the fair
+comparison is each method <em>against its own harness's bf16 baseline</em>:</p>
+<figure><div id="schart"></div>
+<div class="legend"><span style="--c:var(--pgq)">pgq (our harness)</span>
+<span style="--c:var(--vq)">Samuel's harness</span>
+<span style="--c:var(--osc)">OSCAR kernels</span></div>
+<figcaption><b>Fig 3.</b> Decode-path speedup vs each harness's own bf16
+baseline (log scale; higher is better). The entropy coders are the cautionary
+tale: same reconstruction as scalar EC, 500–3600 ms serial decode — 0.002–0.01×.
+The vendored OSCAR kernel measured in OUR harness (4× faster than our kernel)
+reflects kernel maturity, not format bytes — see the diagnosis.</figcaption></figure>
+<div class="tblwrap"><table>
+<tr><th>arm</th><th>harness</th><th>latency</th><th>vs its bf16</th><th>bound by</th></tr>
+<tr><td>EC rANS / Exp-Golomb</td><td>his, 65k</td><td>3655 / 560 ms</td><td class="bad">0.002× / 0.012×</td><td>serial decode</td></tr>
+<tr><td>VQ (G=4, fp8)</td><td>his, 65k</td><td>4.74 ms</td><td>1.43×</td><td>codebook gathers</td></tr>
+<tr><td>INT2 scalar</td><td>his, 65k</td><td>3.95 ms</td><td>1.71×</td><td>bandwidth-ish</td></tr>
+<tr><td>OSCAR (his impl)</td><td>his, 65k</td><td>4.50 ms</td><td>1.50×</td><td>—</td></tr>
+<tr><td><b>pgq fused (v2)</b></td><td>ours, 80k/layer</td><td>0.74 ms</td><td><b>3.4× vs dense · 1.3× vs flash SDPA</b></td><td>compute structure</td></tr>
+<tr><td>OSCAR (vendored kernels)</td><td>ours, 80k/layer</td><td>0.17 ms</td><td>14.5× vs dense</td><td>bandwidth (mature)</td></tr>
+</table></div>
+<p><b>Diagnosis.</b> Three different ceilings. The EC family is disqualified
+outright by serial decode — Samuel's numbers quantify the premise this whole
+repo was built on. His VQ decodes via gathers into per-group codebooks: cheap
+per element but random-access, hence its speedup trails scalar INT2 in his own
+table; large-K codebooks also stress L2. Our kernel reads the fewest K bytes
+(34/token, 3-bit metadata) and uses tensor-core dots, but currently wastes 4×
+of every dot padding GQA group-4 queries into 16-row tiles — the measured
+reason OSCAR's production kernels are still ~4× ahead of us on raw latency
+despite reading more bytes. That gap is kernel engineering with a designed fix
+(pack real query heads across KV heads), not a format property; conversely,
+OSCAR's format cannot recover the ~2 F1 both calibrated methods hold over it.</p>
+
+<h2 id="verdict">8 · Verdict &amp; the obvious synthesis</h2>
+<div class="card verdict"><p style="margin:.3em 0">
+<b>Quality:</b> pgq ≥ VQ ≥ OSCAR. Row-paired, pgq@2.06 leads VQ@2.12 by +0.98
+(CI ∋ 0) on every task, and pgq matches VQ with 14% fewer bits; both calibrated
+methods clearly beat OSCAR (~+2 F1 at ~60% of its bits). VQ's real achievement:
+EC-class quality with a constant-time decoder and zero per-token metadata.<br>
+<b>Speed:</b> OSCAR's kernels > pgq's kernel > VQ ≥ scalar ≫ EC. The format
+byte-ledger favors pgq; the kernel-maturity ledger favors OSCAR; VQ's gather
+decode is fundamentally cheap but not bandwidth-optimal.<br>
+<b>Rate flexibility:</b> only pgq has a per-page allocator, which is what turns
+its proxy wins into "same F1, fewer bits" — an axis neither uniform INT2 nor
+static codebooks can express.</p></div>
+<p>The approaches are more complementary than competing:</p>
+<ul>
+<li><b>VQ × DCT:</b> his group-VQ quantizes token rows; our DCT produces
+coefficient rows with the same shape. K-means codebooks on DCT coefficient
+groups + our per-row RDO is a well-posed joint experiment — his codebook
+machinery, our transform and allocator, either repo's harness.</li>
+<li><b>His throughput harness, our formats:</b> a single-harness kernel
+shoot-out (his fused decode unit) would remove the two-harness caveat in §7.</li>
+<li><b>Method hygiene both ways:</b> our row-paired bootstraps sharpen his
+±3 CIs into decidable contrasts (done above, on his own committed cells); his
+full-decode latency unit and H100 plan are the right next measurements for our
+kernel too.</li>
+</ul>
+
+<p class="note">Sources — his: <code>/vault/samuel/…/JointQK</code> commit
+52e4875 (report, codecs, committed cells; read-only). Ours: branches pgq4–pgq8,
+reports 4–8, kernel bench + K4 demo artifacts. Row-paired numbers computed
+2026-07-13 on shared row ids; harness equivalence verified (offset −0.01
+[−0.55, +0.55]). All rates all-in.</p>
+</div>
+
+<script>
+(function(){
+// Fig 2: Qwen 3-task means with rate annotations
+const rows=[
+ ["BF16 (his run)",49.47,16,"#9aa2b1"],
+ ["pgq dctlmrw@2.0",47.07,2.06,"var(--pgq)"],
+ ["EC rANS (Samuel)",47.51,1.94,"var(--vq)"],
+ ["VQ G4 + band (Samuel)",46.67,2.12,"var(--vq)"],
+ ["pgq dctlmrw@1.75",46.45,1.82,"var(--pgq)"],
+ ["OSCAR",44.48,3.47,"var(--osc)"],
+ ["INT2 / QPCA-fixed",41.65,2.00,"#9aa2b1"],
+ ["KIVI",40.69,2.00,"#9aa2b1"],
+ ["TurboQuant",39.60,2.125,"#9aa2b1"],
+];
+const W=880,RH=34,BL=190,H=rows.length*RH+30;
+const x=v=>BL+(v-38)/(50.5-38)*(W-BL-120);
+let s='<svg viewBox="0 0 '+W+' '+H+'" width="100%">';
+rows.forEach((r,i)=>{const y=8+i*RH;
+ s+='<text x="'+(BL-8)+'" y="'+(y+16)+'" text-anchor="end" font-size="12" fill="var(--ink)">'+r[0]+'</text>';
+ s+='<rect x="'+BL+'" y="'+y+'" width="'+(x(r[1])-BL)+'" height="22" rx="4" fill="'+r[3]+'" opacity="0.85"><title>'+r[1]+' F1 @ '+r[2]+' b/coord</title></rect>';
+ s+='<text x="'+(x(r[1])+6)+'" y="'+(y+16)+'" font-size="12" font-weight="600" fill="var(--ink)">'+r[1].toFixed(2)+'</text>';
+ s+='<text x="'+(x(r[1])+52)+'" y="'+(y+16)+'" font-size="11" fill="var(--ink2)">'+(r[2]===16?"16 b":r[2]+" b/c")+'</text>';});
+s+='<line x1="'+x(49.47)+'" x2="'+x(49.47)+'" y1="4" y2="'+(H-20)+'" stroke="var(--ink2)" stroke-dasharray="4 4"/>';
+s+='</svg>';
+document.getElementById('qchart').innerHTML=s;
+
+// Fig 3: speedups vs own bf16, log scale
+const arms=[
+ ["EC rANS",0.00185,"var(--vq)"],["Exp-Golomb",0.0121,"var(--vq)"],
+ ["VQ G4",1.43,"var(--vq)"],["OSCAR (his impl)",1.50,"var(--osc)"],
+ ["INT2 scalar",1.71,"var(--vq)"],
+ ["pgq fused (vs dense)",3.41,"var(--pgq)"],
+ ["OSCAR vendored (vs dense)",14.5,"var(--osc)"],
+];
+const W2=880,RH2=32,BL2=210,H2=arms.length*RH2+40;
+const lx=v=>BL2+(Math.log10(v)+3)/(Math.log10(20)+3)*(W2-BL2-90);
+let t='<svg viewBox="0 0 '+W2+' '+H2+'" width="100%">';
+[[0.01,"0.01×"],[0.1,"0.1×"],[1,"1×"],[10,"10×"]].forEach(g=>{
+ t+='<line x1="'+lx(g[0])+'" x2="'+lx(g[0])+'" y1="6" y2="'+(H2-26)+'" stroke="var(--line)" stroke-dasharray="3 4"/>';
+ t+='<text x="'+lx(g[0])+'" y="'+(H2-10)+'" text-anchor="middle" font-size="11" fill="var(--ink2)">'+g[1]+'</text>';});
+arms.forEach((r,i)=>{const y=8+i*RH2;
+ t+='<text x="'+(BL2-8)+'" y="'+(y+15)+'" text-anchor="end" font-size="12" fill="var(--ink)">'+r[0]+'</text>';
+ t+='<rect x="'+lx(0.001)+'" y="'+y+'" width="'+(lx(r[1])-lx(0.001))+'" height="20" rx="4" fill="'+r[2]+'" opacity="0.85"><title>'+r[1]+'× vs its bf16</title></rect>';
+ t+='<text x="'+(lx(r[1])+6)+'" y="'+(y+15)+'" font-size="12" font-weight="600" fill="var(--ink)">'+r[1]+'×</text>';});
+t+='<line x1="'+lx(1)+'" x2="'+lx(1)+'" y1="6" y2="'+(H2-26)+'" stroke="var(--ink2)"/>';
+t+='</svg>';
+document.getElementById('schart').innerHTML=t;
+})();
+</script>

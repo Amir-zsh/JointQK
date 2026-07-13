@@ -121,6 +121,23 @@ fix (per-(rung, head) stride/width/LUT tables as program-uniform scalars)
 kept coalescing and all 12 kernel tests green. Lesson recorded: the
 kernel test matrix must span BOTH prof_share regimes.
 
+## Diagnosis revision (2026-07-13, byte-ledger accounting)
+
+Computing effective bandwidth per arm from the bench artifact corrects the
+earlier attribution. At 128k: pgq 298 MB / 1.14 ms = 261 GB/s vs OSCAR
+84 MB / 0.30 ms = 285 GB/s — the kernels run at ESSENTIALLY EQUAL memory
+efficiency; OSCAR's ~3.9x latency win is ~3.5x BYTES (our fp16 V = 268 of
+298 MB) x ~1.1x efficiency. The padded-GQA compute waste flagged earlier is
+real but small (~30 us of tensor work in a 1.14 ms step). The V-INT2 arm is
+the decisive datum: fewest bytes of all (72 MB) yet 49 GB/s — 5x below our
+own fp16-V efficiency — i.e. the V-INT2 CONCEPT is right and the phase-B
+implementation (4 narrow dots + dual fp32 sigma loads/row) is the problem;
+at nominal efficiency that arm computes to ~0.28 ms, FASTER than OSCAR.
+Both kernels sit at ~20% of A100 peak — no one is at a physical wall.
+Conclusion: no fundamental limit; matching/beating OSCAR = (1) their V
+pattern done properly, (2) halve/quarter sigma traffic (fp16, single-map),
+(3) fuse phase A/B + q-head packing, (4) tuning tables.
+
 ## Next steps (post-K4)
 
 1. Kernel compute-structure iteration if the OSCAR gap matters: pack real

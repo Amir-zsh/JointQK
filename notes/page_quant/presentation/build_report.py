@@ -22,8 +22,8 @@ SRC = HERE / "pgq_arc_report_src.html"
 OUT = HERE / "pgq_arc_report.html"
 
 
-def build() -> None:
-    text = SRC.read_text()
+def build(src: Path = SRC, out: Path = OUT) -> None:
+    text = src.read_text()
     errors: list[str] = []
 
     def conv(display: str):
@@ -46,9 +46,12 @@ def build() -> None:
     leftovers = re.findall(r"\\[\[(]", text)
     if leftovers:
         sys.exit(f"{len(leftovers)} unconverted math delimiters remain")
-    OUT.write_text(text)
-    print(f"wrote {OUT} ({len(text)/1024:.0f} KiB)")
+    out.write_text(text)
+    print(f"wrote {out} ({len(text)/1024:.0f} KiB)")
 
 
 if __name__ == "__main__":
-    build()
+    if len(sys.argv) == 3:
+        build(Path(sys.argv[1]), Path(sys.argv[2]))
+    else:
+        build()
