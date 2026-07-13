@@ -10,76 +10,92 @@
  "parity_gate_err": 0.00032477983040735126,
  "rows": {
   "8192": {
-   "pgq_v2_graph_ms": 0.1598993937174479,
-   "pgq_v1_ms": 0.27027130126953125,
+   "pgq_v2_vint2_graph_ms": 0.22983551025390625,
+   "pgq_vint2_MB": 4.497333,
+   "speedup_vint2_vs_dense": 3.8770746887966805,
+   "pgq_v2_graph_ms": 0.1598358154296875,
+   "pgq_v1_ms": 0.2717256546020508,
    "pgq_cfg": {
     "pps": 4,
     "warps": 4
    },
-   "dense_fp16_ms": 0.8936882019042969,
-   "sdpa_fp16_graph_ms": 0.11436939239501953,
+   "dense_fp16_ms": 0.8910894393920898,
+   "sdpa_fp16_graph_ms": 0.11374950408935547,
    "pgq_MB": 18.653109,
    "fp16_MB": 33.554432,
-   "speedup_vs_dense": 5.589065606361829,
-   "speedup_vs_sdpa": 0.715258449304175,
-   "oscar_int2_graph_ms": 0.04180272420247396,
+   "speedup_vs_dense": 5.575029832935561,
+   "speedup_vs_sdpa": 0.711664677804296,
+   "oscar_int2_graph_ms": 0.040459632873535156,
    "oscar_splits": 32,
    "oscar_MB": 5.24288,
-   "pgq_vs_oscar": 0.2614314115308151
+   "pgq_vs_oscar": 0.2531324582338902,
+   "pgq_vint2_vs_oscar": 0.17603734439834026
   },
   "32768": {
-   "pgq_v2_graph_ms": 0.2613067626953125,
-   "pgq_v1_ms": 0.6829818089803059,
+   "pgq_v2_vint2_graph_ms": 0.3814299901326497,
+   "pgq_vint2_MB": 17.992969,
+   "speedup_vint2_vs_dense": 2.554016043337848,
+   "pgq_v2_graph_ms": 0.2615531285603841,
+   "pgq_v1_ms": 0.6858587265014648,
    "pgq_cfg": {
     "pps": 8,
     "warps": 4
    },
-   "dense_fp16_ms": 0.9708881378173828,
-   "sdpa_fp16_graph_ms": 0.39233366648356116,
+   "dense_fp16_ms": 0.9741783142089844,
+   "sdpa_fp16_graph_ms": 0.39296944936116535,
    "pgq_MB": 74.616073,
    "fp16_MB": 134.217728,
-   "speedup_vs_dense": 3.7155109489051097,
-   "speedup_vs_sdpa": 1.5014294403892943,
-   "oscar_int2_graph_ms": 0.07802645365397134,
+   "speedup_vs_dense": 3.724590562425937,
+   "speedup_vs_sdpa": 1.502445990702197,
+   "oscar_int2_graph_ms": 0.07812182108561198,
    "oscar_splits": 32,
    "oscar_MB": 20.97152,
-   "pgq_vs_oscar": 0.2986009732360097
+   "pgq_vs_oscar": 0.29868433046701715,
+   "pgq_vint2_vs_oscar": 0.20481300135430777
   },
   "81920": {
-   "pgq_v2_graph_ms": 0.6224711736043295,
-   "pgq_v1_ms": 1.1074225107828777,
+   "pgq_v2_vint2_graph_ms": 0.8823712666829427,
+   "pgq_vint2_MB": 44.989813,
+   "speedup_vint2_vs_dense": 3.0178063191267066,
+   "pgq_v2_graph_ms": 0.6224314371744791,
+   "pgq_v1_ms": 1.1082887649536133,
    "pgq_cfg": {
     "pps": 16,
     "warps": 4
    },
-   "dense_fp16_ms": 2.644991874694824,
-   "sdpa_fp16_graph_ms": 0.9896119435628256,
+   "dense_fp16_ms": 2.662825584411621,
+   "sdpa_fp16_graph_ms": 0.9892622629801432,
    "pgq_MB": 186.547573,
    "fp16_MB": 335.54432,
-   "speedup_vs_dense": 4.2491796999680815,
-   "speedup_vs_sdpa": 1.5898116820938397,
-   "oscar_int2_graph_ms": 0.21677017211914062,
+   "speedup_vs_dense": 4.278102655771195,
+   "speedup_vs_sdpa": 1.5893513789581206,
+   "oscar_int2_graph_ms": 0.21653970082600912,
    "oscar_splits": 32,
    "oscar_MB": 52.4288,
-   "pgq_vs_oscar": 0.34824130226619854
+   "pgq_vs_oscar": 0.34789325842696633,
+   "pgq_vint2_vs_oscar": 0.24540656410995423
   },
   "131072": {
-   "pgq_v2_graph_ms": 0.9660402933756511,
-   "pgq_v1_ms": 1.8046220143636067,
+   "pgq_v2_vint2_graph_ms": 1.3695081075032551,
+   "pgq_vint2_MB": 71.991925,
+   "speedup_vint2_vs_dense": 2.8903402892226273,
+   "pgq_v2_graph_ms": 0.9639739990234375,
+   "pgq_v1_ms": 1.8084685007731118,
    "pgq_cfg": {
     "pps": 16,
     "warps": 4
    },
-   "dense_fp16_ms": 3.946065902709961,
-   "sdpa_fp16_graph_ms": 1.5450000762939453,
+   "dense_fp16_ms": 3.9583444595336914,
+   "sdpa_fp16_graph_ms": 1.5427668889363606,
    "pgq_MB": 298.484341,
    "fp16_MB": 536.870912,
-   "speedup_vs_dense": 4.084783967883116,
-   "speedup_vs_sdpa": 1.5993122511435058,
-   "oscar_int2_graph_ms": 0.2604961395263672,
+   "speedup_vs_dense": 4.106277206173328,
+   "speedup_vs_sdpa": 1.6004237567603217,
+   "oscar_int2_graph_ms": 0.2604166666666667,
    "oscar_splits": 32,
    "oscar_MB": 83.88608,
-   "pgq_vs_oscar": 0.26965349304024483
+   "pgq_vs_oscar": 0.270149056852658,
+   "pgq_vint2_vs_oscar": 0.19015343190733736
   }
  }
 }

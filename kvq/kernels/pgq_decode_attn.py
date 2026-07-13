@@ -362,9 +362,75 @@ def _page_attn_from_u_kernel(
              + dj[None, :], acc)
 
 
+@triton.jit
+def _page_attn_from_u_vq_kernel(
+    u_ptr, dct_ptr, pages_ptr, kind_ptr,
+    vq_ptr, vs_ptr, vz_ptr,
+    m_out_ptr, l_out_ptr, acc_out_ptr,
+    NPAGES, PPS, sm_scale,
+    T, HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
+    PTOK: tl.constexpr,
+):
+    """Phase B with INT2 values: quarter-interleaved codes unpack in
+    registers; per-token (scale, zero) fold algebraically —
+    sum_t p_t (s_t c_t + z_t) = (p*s) @ c + (sum_t p_t z_t) * 1 — so V is
+    never materialized: 4 tensor-core dots + one rank-1 term per page."""
+    split = tl.program_id(0)
+    h = tl.program_id(1)
+    Q: tl.constexpr = D // 4
+    hg = tl.arange(0, HGP)
+    tt = tl.arange(0, PTOK)
+    qj = tl.arange(0, Q)
+    m = tl.full((HGP,), float("-inf"), dtype=tl.float32)
+    l = tl.zeros((HGP,), dtype=tl.float32)
+    a0 = tl.zeros((HGP, Q), dtype=tl.float32)
+    a1 = tl.zeros((HGP, Q), dtype=tl.float32)
+    a2 = tl.zeros((HGP, Q), dtype=tl.float32)
+    a3 = tl.zeros((HGP, Q), dtype=tl.float32)
+    az = tl.zeros((HGP,), dtype=tl.float32)
+    for pi in range(split * PPS, tl.minimum((split + 1) * PPS, NPAGES)):
+        page = tl.load(pages_ptr + pi)
+        kind = tl.load(kind_ptr + pi)
+        t0 = page * PTOK
+        u = tl.load(u_ptr + (h * HG + hg[:, None]) * T + t0 + tt[None, :],
+                    mask=(hg < HG)[:, None], other=0.0)
+        if kind == 2:
+            dt = tl.load(dct_ptr + tt[:, None] * PTOK
+                         + tt[None, :]).to(tl.float16)
+            u = tl.dot(u.to(tl.float16), dt)
+        z = u * sm_scale
+        z = tl.where((hg < HG)[:, None], z, float("-inf"))
+        m_new = tl.maximum(m, tl.max(z, axis=1))
+        alpha = tl.where(m == float("-inf"), 0.0, tl.exp(m - m_new))
+        p = tl.exp(z - m_new[:, None])
+        l = l * alpha + tl.sum(p, axis=1)
+        vqb = tl.load(vq_ptr + h * T * Q + (t0 + tt)[:, None] * Q
+                      + qj[None, :]).to(tl.int32)              # (PTOK, Q)
+        vs = tl.load(vs_ptr + h * T + t0 + tt)                 # (PTOK,)
+        vz = tl.load(vz_ptr + h * T + t0 + tt)
+        ps = (p * vs[None, :]).to(tl.float16)
+        az = az * alpha + tl.sum(p * vz[None, :], axis=1)
+        a0 = a0 * alpha[:, None] + tl.dot(ps, ((vqb >> 0) & 3).to(tl.float16))
+        a1 = a1 * alpha[:, None] + tl.dot(ps, ((vqb >> 2) & 3).to(tl.float16))
+        a2 = a2 * alpha[:, None] + tl.dot(ps, ((vqb >> 4) & 3).to(tl.float16))
+        a3 = a3 * alpha[:, None] + tl.dot(ps, ((vqb >> 6) & 3).to(tl.float16))
+        m = m_new
+    S = tl.num_programs(0)
+    tl.store(m_out_ptr + (h * S + split) * HGP + hg, m)
+    tl.store(l_out_ptr + (h * S + split) * HGP + hg, l)
+    base = ((h * S + split) * HGP + hg[:, None]) * D
+    tl.store(acc_out_ptr + base + 0 * Q + qj[None, :], a0 + az[:, None])
+    tl.store(acc_out_ptr + base + 1 * Q + qj[None, :], a1 + az[:, None])
+    tl.store(acc_out_ptr + base + 2 * Q + qj[None, :], a2 + az[:, None])
+    tl.store(acc_out_ptr + base + 3 * Q + qj[None, :], a3 + az[:, None])
+
+
 def page_attention_v2(gm: dict, pages_per_split: int = 16,
-                      num_warps: int = 4) -> torch.Tensor:
-    """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys."""
+                      num_warps: int = 4, v_int2: bool = False) -> torch.Tensor:
+    """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys;
+    v_int2=True additionally needs golden.add_v_int2 buffers (vq/vqs/vqz)
+    and serves values from INT2 codes (the torch tier still reads gm['v'],
+    which must then be the dequantized v_hat)."""
     H, T, d, ptok = gm["H"], gm["T"], gm["d"], gm["ptok"]
     hg, hgp = gm["hg"], gm["hgp"]
     dev = gm["qt"].device
@@ -403,12 +469,20 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
     m_p = torch.empty(H, nsplit, hgp, device=dev)
     l_p = torch.empty(H, nsplit, hgp, device=dev)
     acc_p = torch.empty(H, nsplit, hgp, d, device=dev)
-    _page_attn_from_u_kernel[(nsplit, H)](
-        u.reshape(H, hg, T), gm["dct_t"], gm["pages"], gm["page_kind"],
-        gm["v"], m_p, l_p, acc_p,
-        npages, pages_per_split, gm["sm_scale"],
-        T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
-    )
+    if v_int2:
+        _page_attn_from_u_vq_kernel[(nsplit, H)](
+            u.reshape(H, hg, T), gm["dct_t"], gm["pages"], gm["page_kind"],
+            gm["vq"], gm["vqs"], gm["vqz"], m_p, l_p, acc_p,
+            npages, pages_per_split, gm["sm_scale"],
+            T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
+        )
+    else:
+        _page_attn_from_u_kernel[(nsplit, H)](
+            u.reshape(H, hg, T), gm["dct_t"], gm["pages"], gm["page_kind"],
+            gm["v"], m_p, l_p, acc_p,
+            npages, pages_per_split, gm["sm_scale"],
+            T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
+        )
     ti = gm["tier_idx"]
     if ti.numel():
         zt = gm["z_tier"] * gm["sm_scale"]

@@ -167,8 +167,10 @@ def test_attention_split_invariance():
 
 
 def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11,
-                segmented=False):
-    from kvq.kernels.golden import build_golden, segment_layout, stack_heads
+                segmented=False, v_int2=False):
+    from kvq.kernels.golden import (add_v_int2, build_golden,
+                                    quantize_v_int2, segment_layout,
+                                    stack_heads)
     from kvq.kernels.pgq_pack import pack_sequence
     golds, packeds = [], []
     for h in range(H):
@@ -184,11 +186,28 @@ def build_multi(H=2, T=64 * 9, dct=True, b_page=2.0, rw=0, seed0=11,
         g = torch.Generator().manual_seed(seed0 + 100 + h)
         q = torch.randn(4, 128, generator=g)
         v = torch.randn(T, 128, generator=g)
+        if v_int2:
+            v = quantize_v_int2(v)[3]        # goldens built on v_hat
         golds.append(build_golden(comp, em, packed, q, device="cuda", v=v))
     gm = stack_heads(golds)
     if segmented:
         gm = segment_layout(gm, packeds)
+    if v_int2:
+        gm = add_v_int2(gm)
     return gm
+
+
+@cuda
+def test_attention_v2_int2_values():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_multi(H=2, T=64 * 9 + 21, dct=True, rw=4, segmented=True,
+                     v_int2=True)
+    o = page_attention_v2(gm, v_int2=True)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+    o16 = page_attention_v2(gm, v_int2=False)     # fp16 tier on same v_hat
+    err16 = float((o - o16).norm() / o16.norm())
+    assert err16 < 5e-3, err16
 
 
 @cuda

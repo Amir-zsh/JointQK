@@ -276,6 +276,13 @@ def main():
         v2fn, v2g = graphed(lambda: page_attention_v2(gms, 16))
         keep.append((gms, v2g))
         v2_ms = bench(v2fn, args.iters)
+        gms["vq"] = torch.randint(0, 256, (H_KV, T, D // 4),
+                                  dtype=torch.uint8, device=dev)
+        gms["vqs"] = torch.rand(H_KV, T, device=dev) * 0.05
+        gms["vqz"] = torch.rand(H_KV, T, device=dev) * 0.02
+        vqfn, vqg = graphed(lambda: page_attention_v2(gms, 16, v_int2=True))
+        keep.append(vqg)
+        vq_ms = bench(vqfn, args.iters)
 
         K16 = torch.randn(H_KV, T, D, device=dev).half()
         V16 = gm["v"]
@@ -305,6 +312,10 @@ def main():
         sdpa_ms = bench(sdpa_fn, args.iters)
 
         row = {
+            "pgq_v2_vint2_graph_ms": vq_ms,
+            "pgq_vint2_MB": (gm["bytes_step"] - H_KV * T * D * 2
+                             + H_KV * T * (D // 4 + 8)) / 1e6,
+            "speedup_vint2_vs_dense": dense_ms / vq_ms,
             "pgq_v2_graph_ms": v2_ms,
             "pgq_v1_ms": pgq_ms, "pgq_cfg": {"pps": pps, "warps": nw},
             "dense_fp16_ms": dense_ms, "sdpa_fp16_graph_ms": sdpa_ms,
@@ -330,8 +341,9 @@ def main():
             row["oscar_splits"] = best_o[1]
             row["oscar_MB"] = best_o[2] / 1e6
             row["pgq_vs_oscar"] = best_o[0] / v2_ms
+            row["pgq_vint2_vs_oscar"] = best_o[0] / vq_ms
         rows[str(T)] = row
-        print(f"[k3] T={T:6d}: v2g {v2_ms:7.3f} ms | v1 {pgq_ms:7.3f} | "
+        print(f"[k3] T={T:6d}: v2g {v2_ms:7.3f} ms | vI2 {vq_ms:7.3f} | "
               f"dense {dense_ms:7.3f} | sdpa {sdpa_ms:7.3f} | "
               f"oscar {row.get('oscar_int2_graph_ms', float('nan')):7.3f} | "
               f"x_dense {row['speedup_vs_dense']:.2f} "

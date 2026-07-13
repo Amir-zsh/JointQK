@@ -65,12 +65,27 @@ format); with it our per-step bytes drop to ~9 MB vs their ~12 MB
 (K-side: 34 vs 36 B/token, ~10× less metadata). Closing the remaining
 kernel-maturity gap is ordinary tuning work, no format risk.
 
+## V-INT2 tier (built, parity-tested — and a measured negative)
+
+Phase B gained an INT2-V variant (quarter-interleaved codes, per-token
+scale/zero folded algebraically: sum_t p_t(s_t c_t + z_t) = (p*s)@c +
+(sum p_t z_t)*1 — V never materialized; parity 12/12 incl. cross-check vs
+the fp16 tier on identical v_hat). Benchmarked: **SLOWER than fp16-V at
+the current operating point** — 0.882 vs 0.622 ms @80k, 1.370 vs 0.964
+@128k — despite reading ~26 MB less. Diagnosis: phase B is not
+bandwidth-bound (the whole step runs ~40 GB/s effective), so removing V
+bytes buys nothing while the in-register unpack + 4 narrow dots add
+compute. This REVISES the OSCAR-gap attribution: the remaining ~3x is
+kernel compute structure — leading term: GQA group 4 padded to 16-row
+tensor-core tiles wastes 4x of every dot (OSCAR's grouped kernel packs
+real query heads) — not format bytes. V-INT2 stays in the tree for when
+the compute side is tuned to bandwidth.
+
 ## Next steps
 
-1. V-INT2 tier in phase B (adopt OSCAR's V dequant pattern) → re-run K3
-   for the apples-to-apples long-context number.
-2. K4 end-to-end quantized-resident Qwen demo (F1 parity row-paired,
-   tokens/s, peak memory) — the kernel side is now fast enough to be
-   worth wiring in.
-3. Kernel tuning iteration (block sizes, fuse phase A/B via persistent
-   programs) if the OSCAR gap matters after V-INT2.
+1. K4 end-to-end quantized-resident Qwen demo (F1 parity row-paired,
+   tokens/s, peak memory) — the committed deliverable.
+2. Kernel compute-structure iteration if the OSCAR gap matters: pack real
+   query heads across KV heads into full tiles (removes the 4x pad waste),
+   fuse phase A/B via persistent programs, then re-evaluate V-INT2 (it
+   pays only near the bandwidth limit).

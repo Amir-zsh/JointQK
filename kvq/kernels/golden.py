@@ -145,6 +145,44 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
             for k, v in out.items()}
 
 
+def quantize_v_int2(v: torch.Tensor):
+    """Per-token min-max INT2 for values (OSCAR's V scheme). v (T, d) with
+    d a multiple of 4. Returns (packed (T, d/4) uint8 quarter-interleaved:
+    byte j holds coords j, d/4+j, 2d/4+j, 3d/4+j in bit pairs 0/2/4/6 —
+    register-only unpack, no gathers), s (T,), z (T,), v_hat (T, d)."""
+    T, d = v.shape
+    vmin = v.min(dim=1).values
+    vmax = v.max(dim=1).values
+    s = ((vmax - vmin) / 3.0).clamp_min(1e-8)
+    z = vmin
+    codes = torch.round((v - z[:, None]) / s[:, None]).clamp(0, 3).to(
+        torch.uint8)
+    q = d // 4
+    packed = (codes[:, :q] | (codes[:, q:2 * q] << 2)
+              | (codes[:, 2 * q:3 * q] << 4) | (codes[:, 3 * q:] << 6))
+    v_hat = codes.float() * s[:, None] + z[:, None]
+    return packed, s.float(), z.float(), v_hat
+
+
+def add_v_int2(gm: dict) -> dict:
+    """Attach INT2-V buffers to a stacked golden dict. gm['v'] must already
+    hold the DEQUANTIZED v_hat (build the goldens with v = v_hat so o_ref
+    is exact w.r.t. what the kernel serves)."""
+    dev = gm["qt"].device
+    pk, ss, zz = [], [], []
+    for h in range(gm["H"]):
+        p, s, z, vh = quantize_v_int2(gm["v"][h].float())
+        assert torch.allclose(vh.half(), gm["v"][h], atol=2e-3), \
+            "pass v_hat (from quantize_v_int2) as v when building goldens"
+        pk.append(p)
+        ss.append(s)
+        zz.append(z)
+    gm = dict(gm)
+    gm.update({"vq": torch.stack(pk).to(dev), "vqs": torch.stack(ss).to(dev),
+               "vqz": torch.stack(zz).to(dev)})
+    return gm
+
+
 def segment_layout(gm: dict, packeds: list[dict]) -> dict:
     """K2c' coalesced layout on top of a stack_heads dict: per (rung, head)
     dense payload matrices (n, stride) — pack_sequence already builds them —
