@@ -85,13 +85,11 @@ def fabricate(T, dev, seed=0):
         total += int(row_len[h].sum())
     payload = torch.randint(0, 256, (total + 1,), dtype=torch.uint8,
                             generator=g)
-    # codes must stay in-alphabet for LUT indexing: mask each byte pattern
-    # is unnecessary — widths <= 6 index <= 63 < lut size only if code in
-    # range; clamp via lut padding instead:
+    # random payload bytes can index one past the width-6 table (code 63 of
+    # a 63-level grid); a zero-padded LUT absorbs it without masking
     lut, lut_off = build_lut_bench(dev)
     lut_pad = torch.zeros(256 + 91, device=dev)
     lut_pad[:91] = lut
-    from kvq.kernels.golden import WIDTH_SET  # noqa: F401
 
     kinds = torch.full((P,), 2, dtype=torch.int8)
     kinds[0] = 1

@@ -32,9 +32,6 @@ import torch
 
 from kvq.kernels.pgq_pack import BLOCK, block_widths
 
-WIDTH_SET = (2, 3, 4, 6)
-
-
 def build_lut(comp) -> tuple[torch.Tensor, torch.Tensor]:
     """Unit dequant levels per width; top-width alpha folded in."""
     assert comp.grid == "lm", "golden v0 targets the shipping LM grids"
@@ -84,7 +81,6 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
             payload[int(row_ptr[t]): int(row_ptr[t]) + L] = buf[j]
 
     tmask = emit.get("tmask")
-    nfull = emit.get("nfull", P - (1 if T % ptok else 0))
     is_dct = tmask is not None and bool(tmask.any())
     pages, kinds = [], []
     for p in range(P):

@@ -113,7 +113,8 @@ studies on Llama-3.1-8B and Qwen3-8B.</p>
   <div class="chip"><b>pgq4</b> profile-rung codec, ties entropy coding @ 2 b/c</div>
   <div class="chip"><b>pgq5</b> Qwen3-8B transfer, +6.2 F1 over TurboQuant</div>
   <div class="chip"><b>pgq6</b> merged pages: free at parity, −28% error @ 1 b/c</div>
-  <div class="chip"><b>pgq7</b> Triton kernel port (in progress)</div>
+  <div class="chip"><b>pgq8</b> page DCT: breaks the EC proxy wall; same F1 at 12% fewer bits</div>
+  <div class="chip"><b>pgq7</b> fused Triton kernel: 4.3× vs dense, 1.6× vs flash @80k</div>
 </div>
 
 <div class="card toc">
@@ -125,8 +126,10 @@ studies on Llama-3.1-8B and Qwen3-8B.</p>
 <a href="#grids">6 · Quantizers, sinks, and the recency window</a><br>
 <a href="#serve">7 · Serving: the fold identity</a><br>
 <a href="#merge">8 · Token merging (pgq6), exactly</a><br>
-<a href="#results">9 · Results (including vs OSCAR)</a><br>
-<a href="#concl">10 · Conclusions, takeaways, next steps</a>
+<a href="#pagedct">9 · The page-level transform (pgq8), exactly</a><br>
+<a href="#kernel">10 · Making it fast: the fused decode kernel (pgq7)</a><br>
+<a href="#results">11 · Results (including vs OSCAR)</a><br>
+<a href="#concl">12 · Conclusions, takeaways, next steps</a>
 </div>
 
 <p class="note">How to read this: every technical section opens with a plain-language
@@ -724,9 +727,175 @@ accounted for in §8.2. Our evaluation harness serves the replication form
 (centroid repeated at each member position), which by this identity is
 <em>mathematically identical</em> to the deployment form — so measured F1 is
 deployment F1, verified end-to-end by a direct attention-output check
-(§9.6).</p>
+(§11.6).</p>
 
-<h2 id="results">9 · Results</h2>
+<h2 id="pagedct">9 · The page-level transform (pgq8), exactly</h2>
+
+<h3>9.1 · The idea</h3>
+<p><b>Intuition.</b> Everything so far treats each token's key as an
+independent object to compress. But neighboring tokens are highly redundant —
+merging (§8) proved it, crudely, by making some neighbors <em>share one row</em>.
+The sharper move, proposed as a direction change mid-arc: <b>apply a transform at
+the page level, so the transform output mixes information about every token
+inside the page — then quantize that</b>. This is what image codecs do when a
+DCT mixes all pixels of a block: correlated inputs become a few high-energy
+coefficients plus many near-zero ones, and the allocator (§5, reused unchanged)
+starves the near-zero ones automatically. Merging becomes the crude special
+case — keeping only "average" coefficients and discarding the rest — while the
+transform keeps <em>graded</em> detail at low cost. It is also the first design
+in the arc that steps outside the class of coders the §11.1 entropy-coding wall
+actually bounds: that wall is a bound on coding tokens <em>independently</em>.</p>
+
+<h3>9.2 · Construction, and why nothing downstream breaks</h3>
+<p>A page in code space is a matrix \(R \in \mathbb{R}^{64 \times d}\)
+(rows = tokens, already in the §4 basis). Take the orthonormal DCT-II along the
+<em>token</em> axis:</p>
+\[ Y = D\,R, \qquad D D^{\top} = I, \qquad
+   \hat R = D^{\top} \hat Y \ \ \text{(decode)} , \]
+<p>and feed Y's <em>coefficient rows</em> — instead of token rows — through the
+existing width-profile rung RDO. Two invariances make this a drop-in:</p>
+<ul>
+<li><b>The metric survives.</b> Orthogonality gives
+\( \lVert Y - \hat Y \rVert_F^2 = \lVert R - \hat R \rVert_F^2 \), and §4's
+isometry already equates that with query-weighted logit damage. Every
+distortion the allocator computes keeps its exact meaning.</li>
+<li><b>The fold identity survives.</b> Page logits become
+\[ z_{\text{page}} \;=\; \hat R\, \tilde q^{\top}
+   \;=\; D^{\top} \big( \hat Y\, \tilde q^{\top} \big) , \]
+one extra 64-point inverse transform per (page, query head) — measured later at
+±6% kernel cost, i.e. free.</li>
+</ul>
+<p>What does change: grids need per-<em>(coefficient-row, coord)</em> scales
+\(\sigma_{sj}\) (the DC row carries ~8× a token row's scale), fitted from the
+same calibration pool — the ONLY refit; basis, profiles, ladder, and rate
+accounting stay frozen. Protected pages stay out entirely: page 0 (sinks),
+recency-window pages, partial tails, and decode-ring chunks are identity-coded —
+per-token protections remain per-token, bit-identical to pgq4 there
+(test-pinned).</p>
+
+<h3>9.3 · Why the DCT specifically (measure first, build second)</h3>
+<p>Before implementing anything, a probe measured the token-axis structure on
+both models' calibration pools (530k+ pages each; selection rows untouched).
+Three facts picked the design:</p>
+<ol>
+<li><b>The correlation is large and long-range.</b> Lag-1 correlation of code
+rows is 0.70 (Llama) / 0.79 (Qwen), decaying to only 0.48/0.63 at lag 16. Slow
+decay is precisely where a graded transform beats a hard 2:1 merge. (RoPE, the
+obvious worry, scrambles only ~10–15% of this structure — measured by analytic
+de-rotation.)</li>
+<li><b>The process is stationary → the DCT is already optimal.</b> The pooled
+64×64 token covariance is Toeplitz to cv ≈ 0.015, and the best possible fixed
+transform (the pooled-covariance KLT) beats the DCT by under 2% in coding gain
+— the classical "DCT is the KLT of stationary sources" result, verified in the
+data. So: a hardcoded matrix, no calibration, no sideband.</li>
+<li><b>The gain is worth real bits.</b> Coding gain (the AM/GM ratio of
+coefficient-row energies; high-rate theory: bits saved per sample
+= \( \tfrac{1}{2}\log_2 G \)) is 2.50/5.96 ⇒ ~0.66/1.29 bits per coordinate.
+A matched-rate simulation — same allocator, same grids, only the row basis
+changed — predicted SE ratios of 0.58–0.65, which the real screening then
+reproduced almost exactly (§11.5).</li>
+</ol>
+
+<figure class="card">
+<h3 style="margin-top:0">Interactive: why mixing correlated tokens saves bits</h3>
+<p style="font-size:.93rem;color:var(--ink2)">A 64-token page whose rows follow
+an AR(1) process with correlation ρ (the real measured lag-1 is ≈ 0.70–0.79).
+Bars = energy of each DCT coefficient row. Drag ρ: as correlation grows, energy
+drains out of the detail rows into the leading few — and the §5 allocator,
+unchanged, gives the drained rows 0–2 bits. Bits saved per coordinate =
+½·log₂(AM/GM).</p>
+<div class="slider-row">
+  <label for="rslider"><b>token correlation ρ</b></label>
+  <input type="range" id="rslider" min="0" max="0.95" step="0.01" value="0.75">
+  <span class="readout" id="rread"></span>
+</div>
+<div id="dctspec"></div>
+<figcaption><b>Fig 6.</b> Token-axis DCT energy spectrum vs correlation. At the
+measured ρ, the top 16 of 64 rows hold 76–83% of page energy (vs 25%
+untransformed) — that asymmetry is the entire mechanism of pgq8.</figcaption>
+</figure>
+
+<h3>9.4 · Transform vs merging vs zero bits — one family, three strengths</h3>
+<p>All three "give up" information; they differ in what survives. Zero bits
+(§5) collapses a token to the <em>corpus</em> mean — everything lost. Merging
+(§8) collapses it to its <em>run's</em> mean — within-run differences lost, a
+hard 0/1 choice, only adjacent near-duplicates qualify. The transform keeps a
+<em>graded</em> decomposition: smooth long-range structure lands in cheap
+low-frequency rows, and detail is attenuated coordinate-wise rather than
+discarded token-wise. The data ranked them exactly that way at 1.0 b/c: proxy
+error 0.0123 (widths only) → 0.0089 (merging, −28%) → 0.0062 (transform, −50%).
+Merging keeps one advantage the transform lacks — it reduces the ROW COUNT
+(fewer dot products, smaller V) — so the two compose in principle (deferred
+direction).</p>
+
+<h2 id="kernel">10 · Making it fast: the fused decode kernel (pgq7)</h2>
+
+<h3>10.1 · What "fast" requires</h3>
+<p><b>Intuition.</b> Long-context decode is a memory-bandwidth race: every
+generated token must read every cached token once. A compressed cache only
+helps if the kernel <em>reads the compressed bytes directly</em> — decompressing
+to fp16 first would spend the very bandwidth being saved. So the deliverable is
+a fused kernel: unpack + dequantize + attend in one pass, mirroring the
+architecture of NVIDIA's OSCAR (whose entire INT2 path is plain Triton — proof
+this needs no custom CUDA). The full per-token read is: packed codes (2–6
+bits/coordinate as the rung dictates) plus a 3-bit rung id. Everything else —
+basis, scales, grids, the DCT matrix — is calibration-static and folds into
+per-step constants.</p>
+
+<h3>10.2 · From bytes to attention output, step by step</h3>
+<div class="card">
+<div class="stage"><div class="n">1</div><div>
+<h4>Pack (once, at page seal)</h4>
+<p>Each row's codes pack little-endian in 32-coord blocks (width w → 4w bytes,
+byte-aligned by construction for the ladder {2,3,4,6}). Rows are grouped by
+rung, so every rung-segment is a dense (rows × constant-stride) byte matrix.
+Golden-vector tests pin pack → unpack → dequant to BIT-identity against the
+compressor, for token rows and coefficient rows alike.</p>
+</div></div>
+<div class="stage"><div class="n">2</div><div>
+<h4>Fold (once per decode step)</h4>
+<p>\( \tilde q = q\,G^{\top} \) per (layer, head-group) — §7's identity, now per
+coefficient row: the kernel computes
+\( u_s = (\tilde q \odot \sigma_s)\cdot \hat c_s \) from integer LUT codes
+\(\hat c_s\), then \( z = u\,D \) per transformed page.</p>
+</div></div>
+<div class="stage"><div class="n">3</div><div>
+<h4>Phase A — dequantize, coalesced (one launch per rung)</h4>
+<p>Because a rung-segment is dense with a compile-time stride, a 64-row tile is
+one contiguous read; widths and LUT bases are compile-time constants (one
+compiled kernel variant per rung — OSCAR's per-tier launch pattern, one tier
+per rung). Bit-extraction, LUT lookup, scale multiply, then a tensor-core dot
+against the folded-query tile; results scatter into a per-token logit
+buffer u.</p>
+</div></div>
+<div class="stage"><div class="n">4</div><div>
+<h4>Phase B — transform, softmax, values (per page)</h4>
+<p>Load the page's u tile, apply \( z = u\,D \) where the page is transformed
+(one 64×64 tensor-core dot), run the online-softmax update, accumulate
+\( p\,V \) (V in fp16 for now), and emit split-K partials. A reduction merges
+splits plus the torch-served tier (sinks, partial tail) — the same
+shift-invariant softmax merge used everywhere in this document.</p>
+</div></div>
+<div class="stage"><div class="n">5</div><div>
+<h4>Capture the whole step in one CUDA graph</h4>
+<p>Phase A is ~7 small launches; at short contexts, launch overhead dominated.
+One CUDA graph replays the entire step — standard decode-serving practice
+(SGLang runs decode under graphs), and every baseline in the benchmark gets the
+same treatment.</p>
+</div></div>
+</div>
+
+<h3>10.3 · The negative results that shaped it (kept on the record)</h3>
+<p>The first correct kernel (v1: per-row payload pointers) ran at ~22 GB/s
+effective on a 1.5 TB/s GPU — <em>gather-bound</em>: rows of a page carry
+different rungs, hence different strides, so every unpack tile scattered its
+reads. The pre-registered "one optimization iteration" (more split parallelism)
+made it <em>worse</em> — the lever was memory layout, not occupancy. The
+phase-A/phase-B split above is the fix, and it was already designed into the
+pack format's segment lists. A second negative worth keeping: the in-kernel DCT
+costs ±6% — reverting pgq8 would buy zero speed.</p>
+
+<h2 id="results">11 · Results</h2>
 <p><b>Protocol for every F1 number.</b> LongBench, 5 tasks (lcc = code completion,
 musique / 2wikimqa / hotpotqa = multi-hop QA, qasper = scientific QA), 150–500 rows
 per task; all layers' keys compressed except layer 0 (kept fp16 — anomalous
@@ -736,25 +905,28 @@ bootstrap confidence intervals (10,000 resamples on shared rows) — "SIG" means
 95% CI excludes zero. Every CI below was recomputed with the corrected gold parser
 (§9.8).</p>
 
-<h3>9.1 · The rate–distortion picture</h3>
+<h3>11.1 · The rate–distortion picture</h3>
 <figure>
 <div id="rdchart"></div>
 <div class="legend">
 <span style="--c:#4173d9">profile codec (proflm)</span>
 <span style="--c:#d9a441">merged pages (mrg)</span>
+<span style="--c:#1d7a4f">page DCT (pgq8)</span>
 <span style="--c:#7a52a8">entropy coding (ecu)</span>
 <span style="--c:#5a8a68">RVQ</span>
 <span style="--c:#b03434">TurboQuant K2 (2.125)</span>
 </div>
 <figcaption><b>Fig 3.</b> Held-out logit error (log scale, lower is better) vs
 bits/coordinate <em>per original token</em>, Llama selection rows. Hover points for
-values. Three structural facts: the fixed-width profile codec reaches the
+values. Four structural facts: the fixed-width profile codec reaches the
 entropy-coding frontier at 2.0; merging strictly dominates the width-only codec
-below 1.5 (−28% at 1.0) but does not break the EC wall; TurboQuant sits an order of
+below 1.5 (−28% at 1.0) but does not break the EC wall; <b>the page DCT (green)
+crosses to the wall's far side at both 1.0 and 1.5</b> — the first coder outside
+the per-token-independent class the wall bounds; TurboQuant sits an order of
 magnitude off-frontier at its own operating point.</figcaption>
 </figure>
 
-<h3>9.2 · pgq4 on Llama-3.1-8B (corrected CIs)</h3>
+<h3>11.2 · pgq4 on Llama-3.1-8B (corrected CIs)</h3>
 <div class="tblwrap"><table>
 <tr><th>claim @ 2.0–2.13 b/c</th><th>Δ pooled-5</th><th>95% CI</th><th>verdict</th></tr>
 <tr><td>proflmrw vs entropy coding (ecu)</td><td>−1.34</td><td>[−3.09, +0.45]</td><td class="tie">tie — <span class="tag hold">holds</span></td></tr>
@@ -768,7 +940,7 @@ variable-rate entropy coding at 2 b/c — the claim that motivated the format �
 the positional recency window is the one allocation signal with a significant F1
 effect on Llama.</p>
 
-<h3 id="oscarcmp">9.3 · Comparison with OSCAR</h3>
+<h3 id="oscarcmp">11.3 · Comparison with OSCAR</h3>
 <p>OSCAR (NVIDIA) is the strongest published system in this format class — INT2/INT4
 KV quantization inside SGLang with fused Triton decode kernels — and it is both our
 main quality baseline among fixed-width formats and the architectural template for
@@ -802,20 +974,17 @@ that gap positionally (50.05 vs 50.19) while keeping the non-lcc advantage
 <em>identical</em> quantizer and allocator, swapping our basis for OSCAR's raises
 logit error <b>5.9×</b> — the query-aware basis, not the quantizer, is where the
 quality comes from.</p>
-<h4>What has not been compared yet: speed</h4>
-<p>OSCAR's headline is systems performance (~3× decode throughput at long context
-from its fused kernels); all pgq results so far are quality measurements from the
-research stack, which decompresses to fp16 rather than decoding in-kernel. The
-byte arithmetic above says pgq reads slightly fewer K-bytes per token with far
-less metadata traffic inside the loop, so the bandwidth argument favors it on
-paper — but that claim is only worth what a kernel measures. That measurement is
-the currently-running pgq7 stage: a Triton port mirroring OSCAR's own FlashDecoding
-architecture, benchmarked head-to-head against the vendored OSCAR kernels on
-identical Qwen3-8B geometry, with a pre-registered bar (≥ 2.5× stage-1 latency vs
-bf16 at 80k context) and an end-to-end quantized-resident decode demo. Until those
-numbers exist, "faster than OSCAR" is a hypothesis, not a result.</p>
+<h4>Speed: measured — see §11.9</h4>
+<p>The fused pgq kernel now exists and is benchmarked head-to-head against the
+vendored OSCAR kernels on identical Qwen3-8B geometry (§11.9): the
+pre-registered bar (≥2.5× vs dense fp16 at 80k) passes at 4.25×, the
+quantized-resident path beats flash fp16 attention by 1.6× — and OSCAR's kernel
+remains ~3× faster still, for a reason the byte ledger makes explicit: their V
+is INT2 while ours is still fp16 (33.5 of our 38 MB of traffic at 128k).
+Adopting their V path is the recorded next step; K-side, the pgq format already
+reads fewer bytes with ~10× less metadata.</p>
 
-<h3>9.4 · pgq5: does the format transfer? (Qwen3-8B)</h3>
+<h3>11.4 · pgq5: does the format transfer? (Qwen3-8B)</h3>
 <p>Everything structural — page size, ladders, rate targets, grids, escapes,
 window — was frozen byte-for-byte from the Llama study; only the per-model
 statistics (\(\Sigma_Q, \mu\), profiles, scales) were refit, from just 12
@@ -839,7 +1008,37 @@ Retention of full precision: 0.952 (the incumbent manages 0.831). Window effect
 +1.83 [+0.95, +2.73] SIG, with the lcc recency structure reproducing exactly
 (+7.0). The format is model-generic; only cheap statistics are per-model.</p></div>
 
-<h3>9.5 · pgq6: what merging did and didn't do</h3>
+<h3>11.5 · pgq8: the page transform, screened and benchmarked</h3>
+<p><b>Proxy (held-out selection rows, real queries; Llama).</b> The dct arm
+dominates the width codec at every rate — error ratios 0.50 / 0.59 / 0.65 /
+0.69 at 1.0 / 1.25 / 1.5 / 2.0, within a few points of the probe simulation's
+prediction — and crosses the closure bars that every previous challenger lost
+to: 0.00621 &lt; ecu@1.0's 0.00646 and <b>0.00313 &lt; ecu@1.5's 0.00318</b>.
+Held-out gates clean at every arm (rates exact, overflow 0, sinkCE 0.002-0.003,
+normR 0.972-0.985). The registered crossover rule ("lowest rate whose proxy
+error ≤ the incumbent's at 2.0") selected <b>1.75 b/c on both models
+independently</b>.</p>
+<p><b>F1 (row-paired 10k bootstraps, corrected parser).</b></p>
+<div class="tblwrap"><table>
+<tr><th>contrast</th><th>Llama-3.1-8B</th><th>Qwen3-8B</th></tr>
+<tr><td>dctlmrw@2.0 vs incumbent proflmrw@2.0 (same rate)</td>
+<td>+0.56 [−0.77, +1.86] tie</td><td>+0.52 [−0.66, +1.73] tie</td></tr>
+<tr><td><b>dctlmrw@1.75 vs incumbent @2.0</b> (12% fewer honest bits)</td>
+<td><b>−0.50 [−1.80, +0.76] tie</b></td><td><b>−0.19 [−1.46, +1.10] tie</b></td></tr>
+<tr><td>dctlmrw@1.75 vs TurboQuant K2V2</td><td>—</td>
+<td class="sig">+5.97 [+3.72, +8.22] SIG at 14% fewer bits</td></tr>
+<tr><td>dctlmrw@1.75 vs entropy coding @2.0</td>
+<td class="neg">−1.84 [−3.61, −0.07] SIG</td><td>—</td></tr>
+</table></div>
+<p>Reading: the transform is free at the shipping rate (positive point
+estimates, no task hurt) and cashes out as <b>rate</b> — the same F1 as the
+incumbent with ~12% fewer honest bits, replicated across two models with zero
+per-model tuning beyond the scale-map refit. The honest limit is the last row:
+the proxy sub-wall does NOT convert to F1 <em>superiority</em> over entropy
+coding in the saturated regime — EC keeps a small F1 edge concentrated in
+musique/2wikimqa, the sharpest open question left on the quality side.</p>
+
+<h3>11.6 · pgq6: what merging did and didn't do</h3>
 <div class="tblwrap"><table>
 <tr><th>question (pre-registered)</th><th>measurement</th><th>verdict</th></tr>
 <tr><td>Does merging break the 1.5 b/c entropy-coding wall?</td>
@@ -869,7 +1068,7 @@ rate-pressure response, uniform across content types, worth 15–20% fewer store
 rows.</figcaption>
 </figure>
 
-<h3>9.6 · The signal-policy result (why no attention statistics in the format)</h3>
+<h3>11.7 · The signal-policy result (why no attention statistics in the format)</h3>
 <p>A standing design argument in this space: shouldn't the allocator protect the
 tokens that <em>receive the most attention</em> (as SnapKV-class methods do)? The
 project's policy was to allow only <b>phase-symmetric</b> signals in the format —
@@ -884,7 +1083,7 @@ deployable signal set isn't a compromise accepted for engineering reasons — it
 the better allocator, and the two positional rules (sinks, recency) capture what
 attention-awareness was supposed to buy.</p>
 
-<h3>9.7 · Integrity note: the gold-parsing correction</h3>
+<h3>11.8 · Integrity note: the gold-parsing correction</h3>
 <p>While cross-checking pgq6's parity numbers, the paired-bootstrap tool was found
 to be silently corrupting multi-answer ground truths (answers stored as a
 numpy-repr string <code>['a' 'b']</code> parse under <code>literal_eval</code> as
@@ -895,21 +1094,51 @@ pgq4's "significantly better than RVQ" became a tie (+0.99 [−0.62, +2.63]) —
 is corrected in the study reports; the pgq5 and pgq6 headline verdicts were
 unaffected.</p>
 
-<h2 id="concl">10 · Conclusion, takeaways, next steps</h2>
+<h3>11.9 · The kernel: measured decode latency (pgq7 K3)</h3>
+<figure><div id="benchchart"></div>
+<div class="legend">
+<span style="--c:#2456c8">pgq fused kernel (quantized-resident)</span>
+<span style="--c:#9aa2b1">dense fp16 torch</span>
+<span style="--c:#7a52a8">flash SDPA fp16</span>
+<span style="--c:#b03434">OSCAR INT2 (K+V INT2)</span>
+</div>
+<figcaption><b>Fig 7.</b> One decode layer-step, Qwen3-8B geometry (8 KV heads ×
+GQA 4, d = 128), bs = 1, A100; quantized arms and SDPA under CUDA graphs. Log-log:
+lower is better.</figcaption></figure>
+<div class="tblwrap"><table>
+<tr><th>context</th><th>pgq (ms)</th><th>dense fp16</th><th>flash SDPA</th>
+<th>OSCAR INT2</th><th>× dense</th><th>× SDPA</th></tr>
+<tr><td>8k</td><td>0.160</td><td>0.894</td><td>0.114</td><td>0.042</td><td>5.6</td><td>0.7</td></tr>
+<tr><td>32k</td><td>0.261</td><td>0.971</td><td>0.392</td><td>0.078</td><td>3.7</td><td>1.5</td></tr>
+<tr><td>80k</td><td><b>0.622</b></td><td>2.645</td><td>0.990</td><td>0.217</td><td><b>4.25</b></td><td><b>1.59</b></td></tr>
+<tr><td>128k</td><td>0.966</td><td>3.946</td><td>1.545</td><td>0.260</td><td>4.1</td><td>1.60</td></tr>
+</table></div>
+<div class="card verdict">
+<p style="margin:.3em 0"><b>The pre-registered bar (≥2.5× vs dense fp16 at 80k,
+bs 1) passes at 4.25×</b>, and from 32k up the quantized-resident path beats
+flash fp16 attention by 1.5–1.6× — while serving the pgq8 format whose quality
+is measured above, with kernel outputs within 3·10⁻⁴ of the exact reference.
+OSCAR's kernel remains ~3× faster: its V is INT2 (~8 MB at 128k) where ours is
+still fp16 (33.5 MB — now the dominant term in our 38 MB step). The V tier is
+not part of the pgq K format; adopting OSCAR's V path unchanged is the next
+step, after which the byte ledger favors pgq (~9 vs ~12 MB per step).</p></div>
+
+<h2 id="concl">12 · Conclusion, takeaways, next steps</h2>
 <h3>Conclusion</h3>
 <p>The arc set out to build a next-generation OSCAR: page-unit K quantization in
 which bits vary across tokens, so that uniform quantization and eviction become
-interior points of one format. That format now exists, is frozen, and is
-evidenced: a query-aware rotation that makes cheap scalar quantization
-attention-optimal (and is worth ~6× over OSCAR's rotation on its own), a two-level
-allocator — offline width profiles, online per-page λ-RDO — that spends a
-fixed-byte page's bits token by token, Gaussian-optimal grids with two positional
-safety rails, token merging as a page-level option that extends the format below
-the width ladder's floor, and a fold identity that reduces decode metadata to a
-3-bit id per token. It ties entropy coding at 2 b/c on Llama, beats the OSCAR
-format emulation by +1.1 F1 at a lower rate on the same rows, transfers to
-Qwen3-8B with a +6.2 F1 significant margin over the strongest incumbent, and
-degrades gracefully to 1.0 b/c, where merging buys back 28% of the error.</p>
+interior points of one format. That format now exists in its strongest form —
+the page-level DCT codec — and is evidenced end to end: a query-aware rotation
+that makes cheap scalar quantization attention-optimal (worth ~6× over OSCAR's
+rotation on its own); a two-level allocator (offline width profiles, online
+per-page λ-RDO) that spends a fixed-byte page's bits row by row; a token-axis
+transform that converts inter-token redundancy into allocator-visible energy
+compaction, breaking the entropy-coding proxy frontier at 1.0–1.5 b/c and
+delivering the incumbent's F1 at ~12% fewer bits on BOTH models; and a fused
+Triton decode kernel that serves the packed format directly — 4.25× faster than
+dense fp16 attention and 1.6× faster than flash SDPA at 80k context, outputs
+within 3·10⁻⁴ of exact, with every decode-side constant folded into one
+per-step query transform and a 3-bit id per row.</p>
 <h3>Takeaways</h3>
 <ul>
 <li><b>The basis is the battle.</b> Rotation quality dominates quantizer quality
@@ -955,11 +1184,12 @@ cross-page merging; preferring fewer rows at equal distortion (FLOPs win);
 SGLang integration following OSCAR's pool/backend pattern.</li>
 </ol>
 
-<p class="note">Sources: studies pgq4–pgq6 (pre-registered plans, reports, freezes,
-and per-cell artifacts under <code>notes/page_quant/</code> and
-<code>artifacts/page_quant2/</code>, branches pgq4/pgq5/pgq6/pgq7). All CIs:
-row-paired 10k bootstraps, corrected parser. Llama-3.1-8B-Instruct &amp; Qwen3-8B,
-A100-SXM4-40GB. Math rendered as native MathML (no external resources).</p>
+<p class="note">Sources: studies pgq4–pgq8 (pre-registered plans, reports,
+freezes, per-cell artifacts under <code>notes/page_quant/</code>,
+<code>artifacts/page_quant2/</code>, <code>artifacts/kernels/</code>; branches
+pgq4…pgq8). All CIs: row-paired 10k bootstraps, corrected parser.
+Llama-3.1-8B-Instruct &amp; Qwen3-8B, A100-SXM4-40GB, triton 3.6. Math rendered
+as native MathML (no external resources).</p>
 </div>
 
 <script>
@@ -1021,6 +1251,7 @@ render();
 const series=[
  {n:'proflm',c:'#4173d9',pts:[[1.0,0.01233],[1.25,0.00728],[1.5,0.00483],[2.0,0.00272]]},
  {n:'mrg',c:'#d9a441',pts:[[1.0,0.00894],[1.25,0.00679],[1.5,0.00482],[2.0,0.00273]]},
+ {n:'dct (pgq8)',c:'#1d7a4f',pts:[[1.0,0.00621],[1.25,0.00433],[1.5,0.00313],[1.6,0.00281],[1.75,0.00239],[2.0,0.00188]]},
  {n:'ecu',c:'#7a52a8',pts:[[1.0,0.00646],[1.5,0.00318],[2.0,0.00155]]},
  {n:'rvq',c:'#5a8a68',pts:[[1.5,0.00405],[2.0,0.00238],[2.5,0.00203]]},
  {n:'TurboQuant K2',c:'#b03434',pts:[[2.125,0.02623]]},
@@ -1061,6 +1292,68 @@ bars.forEach((r,i)=>{
 b2+='<line x1="'+bx(50.70)+'" x2="'+bx(50.70)+'" y1="10" y2="'+(BH-BB)+'" stroke="var(--ink2)" stroke-dasharray="4 4"/>';
 b2+='</svg>';
 document.getElementById('qwenchart').innerHTML=b2;
+
+// ---------- Fig 6: DCT compaction demo ----------
+(function(){
+  const N=64;
+  // orthonormal DCT-II
+  const Dm=[];
+  for(let k=0;k<N;k++){Dm.push([]);
+    for(let t=0;t<N;t++){Dm[k].push(Math.cos(Math.PI*(2*t+1)*k/(2*N))*Math.sqrt(2/N)*(k===0?1/Math.SQRT2:1));}}
+  function spec(rho){
+    // AR(1) covariance C_ij = rho^|i-j|; e_k = (D C D^T)_kk
+    const e=[];let am=0, gm=0;
+    for(let k=0;k<N;k++){let s=0;
+      for(let i=0;i<N;i++){for(let j=0;j<N;j++){s+=Dm[k][i]*Math.pow(rho,Math.abs(i-j))*Dm[k][j];}}
+      e.push(s); am+=s/N; gm+=Math.log(Math.max(s,1e-12))/N;}
+    return {e, gain: am/Math.exp(gm)};
+  }
+  const el=document.getElementById('dctspec');
+  function draw(){
+    const rho=parseFloat(document.getElementById('rslider').value);
+    const {e,gain}=spec(rho);
+    const W=880,H=230,ML=46,MB=30;
+    const ymax=Math.max(...e)*1.05;
+    let sv='<svg viewBox="0 0 '+W+' '+H+'" width="100%">';
+    const bw=(W-ML-10)/N;
+    e.forEach((v,k)=>{const h=(v/ymax)*(H-16-MB);
+      sv+='<rect x="'+(ML+k*bw+1)+'" width="'+(bw-2)+'" y="'+(H-MB-h)+'" height="'+h+'" fill="'+(k<16?'#1d7a4f':'var(--w3)')+'"><title>coeff '+k+': '+v.toFixed(2)+'</title></rect>';});
+    sv+='<text x="'+(ML)+'" y="'+(H-8)+'" font-size="11" fill="var(--ink2)">coefficient row 0..63 (green = top 16)</text>';
+    sv+='</svg>';
+    el.innerHTML=sv;
+    const top16=e.slice().sort((a,b)=>b-a).slice(0,16).reduce((a,x)=>a+x,0)/e.reduce((a,x)=>a+x,0);
+    document.getElementById('rread').textContent='ρ = '+rho.toFixed(2)+' · gain '+gain.toFixed(2)+' · '+(0.5*Math.log2(gain)).toFixed(2)+' bits/coord saved · top-16 share '+(100*top16).toFixed(0)+'%';
+  }
+  document.getElementById('rslider').addEventListener('input',draw);
+  draw();
+})();
+
+// ---------- Fig 7: kernel bench ----------
+(function(){
+  const ctx=[8192,32768,81920,131072];
+  const series=[
+    {n:'pgq fused',c:'#2456c8',ms:[0.160,0.261,0.622,0.966]},
+    {n:'dense fp16',c:'#9aa2b1',ms:[0.894,0.971,2.645,3.946]},
+    {n:'flash SDPA',c:'#7a52a8',ms:[0.114,0.392,0.990,1.545]},
+    {n:'OSCAR INT2',c:'#b03434',ms:[0.042,0.078,0.217,0.260]},
+  ];
+  const W=880,H=320,ML=58,MB=40,MT=12,MR=14;
+  const x=v=>ML+(Math.log2(v)-13)/(17.05-13)*(W-ML-MR);
+  const y=v=>MT+(1-(Math.log10(v)-Math.log10(0.03))/(Math.log10(5)-Math.log10(0.03)))*(H-MT-MB);
+  let sv='<svg viewBox="0 0 '+W+' '+H+'" width="100%">';
+  for(const g of [0.05,0.1,0.2,0.5,1,2,4]){
+    sv+='<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+y(g)+'" y2="'+y(g)+'" stroke="var(--line)" stroke-dasharray="3 4"/>';
+    sv+='<text x="'+(ML-6)+'" y="'+(y(g)+4)+'" text-anchor="end" font-size="11" fill="var(--ink2)">'+g+'</text>';}
+  ctx.forEach(t=>{sv+='<text x="'+x(t)+'" y="'+(H-MB+18)+'" text-anchor="middle" font-size="11" fill="var(--ink2)">'+(t/1024)+'k</text>';});
+  sv+='<text x="'+(W/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="12" fill="var(--ink2)">context length (bs = 1)</text>';
+  sv+='<text transform="rotate(-90)" x="'+(-H/2)+'" y="14" text-anchor="middle" font-size="12" fill="var(--ink2)">ms / layer-step (log)</text>';
+  for(const s2 of series){
+    sv+='<polyline fill="none" stroke="'+s2.c+'" stroke-width="2.5" points="'+s2.ms.map((v,i)=>x(ctx[i])+','+y(v)).join(' ')+'"/>';
+    s2.ms.forEach((v,i)=>{sv+='<circle cx="'+x(ctx[i])+'" cy="'+y(v)+'" r="4.5" fill="'+s2.c+'"><title>'+s2.n+' @'+(ctx[i]/1024)+'k: '+v+' ms</title></circle>';});
+  }
+  sv+='</svg>';
+  document.getElementById('benchchart').innerHTML=sv;
+})();
 
 // ---------- Fig 5: merge engagement ----------
 const tasks=['hotpotqa','multi_news','musique','pass_retr','qasper','qmsum','repobench','triviaqa'];
