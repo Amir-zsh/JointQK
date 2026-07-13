@@ -135,10 +135,17 @@ rate–distortion allocator.</figcaption>
 </figure>
 
 <h2 id="oscar">2 · OSCAR, step by step</h2>
-<p><b>Intuition.</b> Don't learn anything about the data offline — instead make
-each token carry its own tiny normalizer, so any token, however unusual, lands on
-a fixed 4-level grid reasonably scaled. Robustness through per-token adaptivity;
-the cost is metadata on every token, fetched inside the attention loop.</p>
+<p><b>Intuition.</b> OSCAR splits the offline/runtime line differently from the
+other two: its <em>rotation</em> is learned offline from calibration covariance
+spectra (that is the paper's title — <em>Offline Spectral Covariance-Aware
+Rotation</em>, Zhou et al., arXiv:2605.17757), but its <em>quantizer</em> learns
+nothing offline — no calibrated grids, scales, or codebooks. Instead every token
+carries its own tiny normalizer computed at runtime, so any token, however
+unusual, lands on a fixed 4-level grid reasonably scaled. Robustness through
+per-token adaptivity; the cost is that the normalizer is metadata on every
+token, fetched inside the attention loop — exactly the 32 bits/token that VQ
+and pgq replace with offline-calibrated codebooks/grids (0 and 3 bits of
+per-token metadata respectively).</p>
 <div class="card">
 <div class="stage osc"><div class="n">1</div><div><h4>Rotate</h4>
 <p><math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><msup><mi>k</mi><mi>&#x02032;</mi></msup><mo>&#x0003D;</mo><mi>k</mi><mspace width="0.167em" /><mi>R</mi></mrow></math> with <math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi>R</mi><mo>&#x0003D;</mo><msub><mi>U</mi><mi>Q</mi></msub><mi>H</mi></mrow></math>: the query-covariance eigenbasis composed

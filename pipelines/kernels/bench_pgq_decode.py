@@ -218,6 +218,9 @@ def fabricate_segmented(gm, dev, seed=1):
         "seg_lo": torch.tensor(seg_lo, dtype=torch.int32,
                                device=dev).reshape(R, H, 4),
         "kind_dense": kd.to(dev),
+        "sig_cat": torch.stack([gm["sigma_id"], gm["sigma_dct"]],
+                               dim=1).half().contiguous(),
+        "lut16": gm["lut"].half().contiguous(),
         "bw_host": bw, "strides_host": strides})
     return gm
 

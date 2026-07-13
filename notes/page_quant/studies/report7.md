@@ -146,3 +146,26 @@ pattern done properly, (2) halve/quarter sigma traffic (fp16, single-map),
    pays only near the bandwidth limit).
 2. GPU page-seal kernels (encode is 25 min in torch for 6k x 35 layers).
 3. CUDA-graph the demo loop / SGLang integration (K5, user go/no-go).
+
+## plan9 S1-S3 status (2026-07-13, interim — B1 NOT yet met)
+
+Bars: B1 = match vendored OSCAR at 128k bs=1; B2 = 0.8x at 32k. Current
+best (GPU 4, graphs, all-arm rerun): fp16-V 0.939 ms @128k vs OSCAR 0.261
+-> 0.28x. Measured stage outcomes, kept per house rules:
+
+- S1 (OSCAR-pattern V-INT2, bf16 pre-dot zero fold, num_stages=3):
+  improved the arm 1.48 -> 1.22 ms @128k but it STILL trails fp16-V
+  (0.94) — at PTOK=64 tiles, phase B is iteration-bound, not V-byte-bound.
+- S2 (fp16 single-select sigma map + fp16 LUT): full step 0.964 -> 0.939
+  @128k; phase split now A ~0.59 / B ~0.35 — BOTH phases individually
+  exceed OSCAR's whole step; phase A sits ~3x above its memory budget
+  (instruction-bound unpack).
+- S3a (constexpr widths per (rung, head), one launch each, graphed):
+  NEGATIVE — 0.53 vs 0.32 ms @32k; ~56 small launches serialize in the
+  graph and starve occupancy. Code kept behind phase_a="cw"; default "rt".
+
+Remaining path to B1 (unchanged in kind, sharpened in detail): true A+B
+fusion with 128-token tiles (halve iteration counts, make INT2-V pay),
+multi-stream graph capture if launch shaping returns, and only then
+tuning. This is the deep restructure — next session's block; the quality
+stack and the 3.4x-vs-dense / 1.6x-vs-flash results are unaffected.

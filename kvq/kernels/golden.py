@@ -229,6 +229,11 @@ def segment_layout(gm: dict, packeds: list[dict]) -> dict:
         "seg_n": torch.tensor(seg_n, dtype=torch.int32,
                               device=dev).reshape(R, H),
         "kind_dense": kind_dense.to(dev),
+        # plan9 S2: fp16 single-select scale map [H, 2(id|dct), PTOK, D]
+        # + fp16 LUT for the segment path (v0/v1 keep the fp32 originals)
+        "sig_cat": torch.stack([gm["sigma_id"], gm["sigma_dct"]],
+                               dim=1).half().contiguous(),
+        "lut16": gm["lut"].half().contiguous(),
         "seg_stride": torch.tensor(seg_stride, dtype=torch.int32,
                                    device=dev).reshape(R, H),
         "seg_w": torch.tensor(seg_w, dtype=torch.int32,
