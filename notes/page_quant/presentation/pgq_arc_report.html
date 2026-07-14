@@ -107,7 +107,7 @@ summary{cursor:pointer;color:var(--accent);font-weight:600}
 <p class="lead">A self-contained explanation of the pgq codec family — what problem it
 solves, how each stage works (intuition first, then the exact math), how the
 rate–distortion optimizer and the token-merging mechanism operate, how the format
-compares to NVIDIA's OSCAR, and the measured evidence from the pgq4 → pgq5 → pgq6
+compares to OSCAR (Zhou et al., arXiv:2605.17757), and the measured evidence from the pgq4 → pgq5 → pgq6
 studies on Llama-3.1-8B and Qwen3-8B.</p>
 <div class="chips">
   <div class="chip"><b>pgq4</b> profile-rung codec, ties entropy coding @ 2 b/c</div>
@@ -187,7 +187,7 @@ kernel never has to.)</li>
 
 <h3>1.4 · The thesis: bits should vary across tokens</h3>
 <p>Two families of prior work bracket the design space. <b>Uniform quantization</b>
-(NVIDIA's OSCAR, KIVI, TurboQuant) gives every token the same low precision, e.g.
+(OSCAR, KIVI, TurboQuant) gives every token the same low precision, e.g.
 INT2. <b>Eviction</b> (SnapKV, H2O, Expected Attention) keeps some tokens at full
 precision and deletes the rest — implicitly, 16 bits or 0 bits. Both are extreme
 points of one decision: <em>how many bits does each token get?</em> Eviction's
@@ -811,7 +811,7 @@ generated token must read every cached token once. A compressed cache only
 helps if the kernel <em>reads the compressed bytes directly</em> — decompressing
 to fp16 first would spend the very bandwidth being saved. So the deliverable is
 a fused kernel: unpack + dequantize + attend in one pass, mirroring the
-architecture of NVIDIA's OSCAR (whose entire INT2 path is plain Triton — proof
+architecture of OSCAR (Zhou et al., arXiv:2605.17757; its entire INT2 path is plain Triton — proof
 this needs no custom CUDA). The full per-token read is: packed codes (2–6
 bits/coordinate as the rung dictates) plus a 3-bit rung id. Everything else —
 basis, scales, grids, the DCT matrix — is calibration-static and folds into
@@ -916,7 +916,7 @@ the positional recency window is the one allocation signal with a significant F1
 effect on Llama.</p>
 
 <h3 id="oscarcmp">11.3 · Comparison with OSCAR</h3>
-<p>OSCAR (NVIDIA) is the strongest published system in this format class — INT2/INT4
+<p>OSCAR (Zhou et al., arXiv:2605.17757) is the strongest published system in this format class — INT2/INT4
 KV quantization inside SGLang with fused Triton decode kernels — and it is both our
 main quality baseline among fixed-width formats and the architectural template for
 our own kernel port. The formats differ in three load-bearing ways:</p>
@@ -952,7 +952,7 @@ quality comes from.</p>
 <h4>Speed: measured — see §11.9</h4>
 <p>The fused pgq kernel now exists and is benchmarked head-to-head against the
 vendored OSCAR kernels on identical Qwen3-8B geometry (§11.9): the
-pre-registered bar (≥2.5× vs dense fp16 at 80k) passes at 4.25×, the
+pre-registered bar (≥2.5× vs dense fp16 at 80k) passes at 4.91×, the
 quantized-resident path beats flash fp16 attention by 1.6× — and OSCAR's kernel
 remains ~3× faster still, for a reason the byte ledger makes explicit: their V
 is INT2 while ours is still fp16 (33.5 of our 38 MB of traffic at 128k).
@@ -1083,20 +1083,24 @@ lower is better.</figcaption></figure>
 <div class="tblwrap"><table>
 <tr><th>context</th><th>pgq (ms)</th><th>dense fp16</th><th>flash SDPA</th>
 <th>OSCAR INT2</th><th>× dense</th><th>× SDPA</th></tr>
-<tr><td>8k</td><td>0.160</td><td>0.894</td><td>0.114</td><td>0.042</td><td>5.6</td><td>0.7</td></tr>
-<tr><td>32k</td><td>0.261</td><td>0.971</td><td>0.392</td><td>0.078</td><td>3.7</td><td>1.5</td></tr>
-<tr><td>80k</td><td><b>0.622</b></td><td>2.645</td><td>0.990</td><td>0.217</td><td><b>4.25</b></td><td><b>1.59</b></td></tr>
-<tr><td>128k</td><td>0.966</td><td>3.946</td><td>1.545</td><td>0.260</td><td>4.1</td><td>1.60</td></tr>
+<tr><td>8k</td><td>0.149</td><td>0.838</td><td>0.114</td><td>0.041</td><td>5.6</td><td>0.8</td></tr>
+<tr><td>32k</td><td>0.286</td><td>1.222</td><td>0.404</td><td>0.100</td><td>4.3</td><td>1.4</td></tr>
+<tr><td>80k</td><td><b>0.538</b></td><td>2.645</td><td>0.985</td><td>0.217</td><td><b>4.91</b></td><td><b>1.83</b></td></tr>
+<tr><td>128k</td><td>0.834</td><td>3.371</td><td>1.518</td><td>0.265</td><td>4.0</td><td>1.82</td></tr>
 </table></div>
 <div class="card verdict">
 <p style="margin:.3em 0"><b>The pre-registered bar (≥2.5× vs dense fp16 at 80k,
-bs 1) passes at 4.25×</b>, and from 32k up the quantized-resident path beats
-flash fp16 attention by 1.5–1.6× — while serving the pgq8 format whose quality
+bs 1) passes at 4.91×</b>, and from 32k up the quantized-resident path beats
+flash fp16 attention by 1.4–1.8× — while serving the pgq8 format whose quality
 is measured above, with kernel outputs within 3·10⁻⁴ of the exact reference.
-OSCAR's kernel remains ~3× faster: its V is INT2 (~8 MB at 128k) where ours is
-still fp16 (33.5 MB — now the dominant term in our 38 MB step). The V tier is
-not part of the pgq K format; adopting OSCAR's V path unchanged is the next
-step, after which the byte ledger favors pgq (~9 vs ~12 MB per step).</p></div>
+OSCAR's kernel remains ~3× faster at bs = 1. An extensive, fully measured
+optimization campaign (report7) decomposed that residual: it is NOT bytes —
+INT2-V and byte-diet variants were built, parity-tested, and measured as
+washes — but per-row constants of the adaptive format itself
+(variable-width unpack, LUT dequant, per-row scales vs OSCAR's fixed 3-op
+INT2 unpack). That is partly the latency price of the properties that buy
+the quality wins; it amortizes across batch, making batched/H100 decode the
+right venue for the remaining gap rather than more bs=1 tuning.</p></div>
 
 <h2 id="concl">12 · Conclusion, takeaways, next steps</h2>
 <h3>Conclusion</h3>
@@ -1110,7 +1114,7 @@ per-page λ-RDO) that spends a fixed-byte page's bits row by row; a token-axis
 transform that converts inter-token redundancy into allocator-visible energy
 compaction, breaking the entropy-coding proxy frontier at 1.0–1.5 b/c and
 delivering the incumbent's F1 at ~12% fewer bits on BOTH models; and a fused
-Triton decode kernel that serves the packed format directly — 4.25× faster than
+Triton decode kernel that serves the packed format directly — 4.9× faster than
 dense fp16 attention and 1.6× faster than flash SDPA at 80k context, outputs
 within 3·10⁻⁴ of exact, with every decode-side constant folded into one
 per-step query transform and a 3-bit id per row.</p>
@@ -1307,10 +1311,10 @@ document.getElementById('qwenchart').innerHTML=b2;
 (function(){
   const ctx=[8192,32768,81920,131072];
   const series=[
-    {n:'pgq fused',c:'#2456c8',ms:[0.160,0.261,0.622,0.966]},
-    {n:'dense fp16',c:'#9aa2b1',ms:[0.894,0.971,2.645,3.946]},
-    {n:'flash SDPA',c:'#7a52a8',ms:[0.114,0.392,0.990,1.545]},
-    {n:'OSCAR INT2',c:'#b03434',ms:[0.042,0.078,0.217,0.260]},
+    {n:'pgq fused',c:'#2456c8',ms:[0.149,0.286,0.538,0.834]},
+    {n:'dense fp16',c:'#9aa2b1',ms:[0.838,1.222,2.645,3.371]},
+    {n:'flash SDPA',c:'#7a52a8',ms:[0.114,0.404,0.985,1.518]},
+    {n:'OSCAR INT2',c:'#b03434',ms:[0.041,0.100,0.217,0.265]},
   ];
   const W=880,H=320,ML=58,MB=40,MT=12,MR=14;
   const x=v=>ML+(Math.log2(v)-13)/(17.05-13)*(W-ML-MR);

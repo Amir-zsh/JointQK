@@ -374,7 +374,7 @@ reflects kernel maturity, not format bytes — see the diagnosis.</figcaption></
 <tr><td>VQ (G=4, fp8)</td><td>his, 65k</td><td>4.74 ms</td><td>1.43×</td><td>codebook gathers</td></tr>
 <tr><td>INT2 scalar</td><td>his, 65k</td><td>3.95 ms</td><td>1.71×</td><td>bandwidth-ish</td></tr>
 <tr><td>OSCAR (his impl)</td><td>his, 65k</td><td>4.50 ms</td><td>1.50×</td><td>—</td></tr>
-<tr><td><b>pgq fused (v2)</b></td><td>ours, 80k/layer</td><td>0.74 ms</td><td><b>3.4× vs dense · 1.3× vs flash SDPA</b></td><td>compute structure</td></tr>
+<tr><td><b>pgq fused (v2)</b></td><td>ours, 80k/layer</td><td>0.54 ms</td><td><b>4.9× vs dense · 1.8× vs flash SDPA</b></td><td>per-row format constants</td></tr>
 <tr><td>OSCAR (vendored kernels)</td><td>ours, 80k/layer</td><td>0.17 ms</td><td>14.5× vs dense</td><td>bandwidth (mature)</td></tr>
 </table></div>
 <p><b>Diagnosis.</b> Three different ceilings. The EC family is disqualified
@@ -453,7 +453,7 @@ const arms=[
  ["EC rANS",0.00185,"var(--vq)"],["Exp-Golomb",0.0121,"var(--vq)"],
  ["VQ G4",1.43,"var(--vq)"],["OSCAR (his impl)",1.50,"var(--osc)"],
  ["INT2 scalar",1.71,"var(--vq)"],
- ["pgq fused (vs dense)",3.41,"var(--pgq)"],
+ ["pgq fused (vs dense)",4.91,"var(--pgq)"],
  ["OSCAR vendored (vs dense)",14.5,"var(--osc)"],
 ];
 const W2=880,RH2=32,BL2=210,H2=arms.length*RH2+40;
