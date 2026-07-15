@@ -366,8 +366,9 @@ comparison is each method <em>against its own harness's bf16 baseline</em>:</p>
 <figcaption><b>Fig 3.</b> Decode-path speedup vs each harness's own bf16
 baseline (log scale; higher is better). The entropy coders are the cautionary
 tale: same reconstruction as scalar EC, 500–3600 ms serial decode — 0.002–0.01×.
-The vendored OSCAR kernel measured in OUR harness (4× faster than our kernel)
-reflects kernel maturity, not format bytes — see the diagnosis.</figcaption></figure>
+The vendored OSCAR kernel measured in OUR harness (~2.5× faster than our
+kernel at 80k) reflects its fixed-format simplicity, not format bytes — see
+the diagnosis.</figcaption></figure>
 <div class="tblwrap"><table>
 <tr><th>arm</th><th>harness</th><th>latency</th><th>vs its bf16</th><th>bound by</th></tr>
 <tr><td>EC rANS / Exp-Golomb</td><td>his, 65k</td><td>3655 / 560 ms</td><td class="bad">0.002× / 0.012×</td><td>serial decode</td></tr>
@@ -375,18 +376,19 @@ reflects kernel maturity, not format bytes — see the diagnosis.</figcaption></
 <tr><td>INT2 scalar</td><td>his, 65k</td><td>3.95 ms</td><td>1.71×</td><td>bandwidth-ish</td></tr>
 <tr><td>OSCAR (his impl)</td><td>his, 65k</td><td>4.50 ms</td><td>1.50×</td><td>—</td></tr>
 <tr><td><b>pgq fused (v2)</b></td><td>ours, 80k/layer</td><td>0.54 ms</td><td><b>4.9× vs dense · 1.8× vs flash SDPA</b></td><td>per-row format constants</td></tr>
-<tr><td>OSCAR (vendored kernels)</td><td>ours, 80k/layer</td><td>0.17 ms</td><td>14.5× vs dense</td><td>bandwidth (mature)</td></tr>
+<tr><td>OSCAR (vendored kernels)</td><td>ours, 80k/layer</td><td>0.22 ms</td><td>12.2× vs dense</td><td>bandwidth (mature)</td></tr>
 </table></div>
 <p><b>Diagnosis.</b> Three different ceilings. The EC family is disqualified
 outright by serial decode — Samuel's numbers quantify the premise this whole
 repo was built on. His VQ decodes via gathers into per-group codebooks: cheap
 per element but random-access, hence its speedup trails scalar INT2 in his own
 table; large-K codebooks also stress L2. Our kernel reads the fewest K bytes
-(34/token, 3-bit metadata) and uses tensor-core dots, but currently wastes 4×
-of every dot padding GQA group-4 queries into 16-row tiles — the measured
-reason OSCAR's production kernels are still ~4× ahead of us on raw latency
-despite reading more bytes. That gap is kernel engineering with a designed fix
-(pack real query heads across KV heads), not a format property; conversely,
+(34/token, 3-bit metadata) and uses tensor-core dots; after the plan9 fusion
+round the residual ~2.5–3× that OSCAR's production kernels hold on raw
+latency is measured to be the per-row constants of our adaptive format
+(variable-width unpack + LUT + σ scale vs their fixed 3-op INT2 dequant) plus
+the two-phase u round-trip — a latency price of the format's quality/rate
+wins at bs=1, expected to narrow at batch&gt;1 and on H100; conversely,
 OSCAR's format cannot recover the ~2 F1 both calibrated methods hold over it.</p>
 
 <h2 id="verdict">8 · Verdict &amp; the obvious synthesis</h2>
@@ -454,7 +456,7 @@ const arms=[
  ["VQ G4",1.43,"var(--vq)"],["OSCAR (his impl)",1.50,"var(--osc)"],
  ["INT2 scalar",1.71,"var(--vq)"],
  ["pgq fused (vs dense)",4.91,"var(--pgq)"],
- ["OSCAR vendored (vs dense)",14.5,"var(--osc)"],
+ ["OSCAR vendored (vs dense)",12.2,"var(--osc)"],
 ];
 const W2=880,RH2=32,BL2=210,H2=arms.length*RH2+40;
 const lx=v=>BL2+(Math.log10(v)+3)/(Math.log10(20)+3)*(W2-BL2-90);
