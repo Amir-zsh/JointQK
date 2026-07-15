@@ -69,6 +69,7 @@ PGQ2_BUNDLE="${PGQ2_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq2_bundle__qpca
 PGQ3_BUNDLE="${PGQ3_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/pgq3_bundle__qpca_unc__compact8train60r400.pt}"
 PGQ4_BUNDLE="${PGQ4_BUNDLE:-$PGQ4_BUNDLE_DEFAULT}"
 PGQ8_BUNDLE="${PGQ8_BUNDLE:-$PGQ8_BUNDLE_DEFAULT}"
+VQG_BUNDLE="${VQG_BUNDLE:-${REPO_ROOT}/artifacts/page_quant2/vqg_bundle__${MODEL_TAG}_flat.pt}"
 OUT_BASE="${REPO_ROOT}/artifacts/bench_pgq/${MODEL_TAG}"
 LOG_DIR="${REPO_ROOT}/logs/bench_pgq_${MODEL_TAG}"
 
@@ -102,6 +103,11 @@ for cell in "${CELL_ARR[@]}"; do
     elif [[ "$kind" == pgq_nd_* || "$kind" == pgq_rvq_* ]]; then
         # pgq2 arms; for *_uni the value is the rung/stage index, else b/c
         BUNDLE="$PGQ2_BUNDLE"
+        [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
+        K_METHOD="$kind"; K_BITS="$rate"
+    elif [[ "$kind" == pgq_vqg* ]]; then
+        # pgq10 arms: Samuel's group VQ (ported); rate baked into the codebook
+        BUNDLE="$VQG_BUNDLE"
         [[ -f "$BUNDLE" ]] || { echo "ERROR: missing $BUNDLE" >&2; exit 1; }
         K_METHOD="$kind"; K_BITS="$rate"
     elif [[ "$kind" == pgq_dct* ]]; then
