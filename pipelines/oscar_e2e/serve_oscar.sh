@@ -64,6 +64,10 @@ ARGS=(
     # max_running_requests * ring_size across all 36 layers).
     --max-total-tokens "${MAX_TOKENS:-140000}"
     --max-running-requests "${MAX_REQS:-8}"
+    # Eval rows are unique prompts: the radix cache only RETAINS finished
+    # requests' BF16 prefix windows until the HP-prefix pool exhausts
+    # (observed after ~3200 rows); no reuse to gain, so disable it.
+    --disable-radix-cache
 )
 
 if [[ "$MODE" == "int2" ]]; then
