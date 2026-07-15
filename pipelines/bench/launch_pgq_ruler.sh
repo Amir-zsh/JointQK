@@ -21,9 +21,12 @@ FRACTION="${EVAL_FRACTION:-1.0}"
 CELLS=""
 CTXS_CSV="${CTXS_CSV:-8192,16384,32768,65536}"
 MODEL_TAG="${MODEL_TAG:-qwen3_8b}"
+# "niah" (local regenerated RULER-NIAH, 8k-64k) or "ruler" (HF, caps at 16k)
+DATASET="${DATASET:-niah}"
 DRY_RUN=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --dataset) DATASET="$2"; shift 2 ;;
         --cells) CELLS="$2"; shift 2 ;;
         --ctxs) CTXS_CSV="$2"; shift 2 ;;
         --gpus) GPUS="$2"; shift 2 ;;
@@ -95,11 +98,11 @@ for cell in "${CELL_ARR[@]}"; do
         SHA=$(sha8 "$BUNDLE")
     fi
     for ctx in "${CTXS[@]}"; do
-        label="pgqr__${kind}__b${rate}__${SHA}__ctx${ctx}"
+        label="pgqr__${DATASET}__${kind}__b${rate}__${SHA}__ctx${ctx}"
         [[ "$FRACTION" == "1.0" ]] || label="${label}__f${FRACTION}"
         BUNDLE="$BUNDLE" K_METHOD="$K_METHOD" K_BITS="$K_BITS" ctx="$ctx" \
         label="$label" CCA="$CCA" VST="$VST" FRACTION="$FRACTION" \
-        OUT_BASE="$OUT_BASE" \
+        DATASET="$DATASET" OUT_BASE="$OUT_BASE" \
         .venv/bin/python - <<'PY' >> "$CMDS"
 import json, os
 e = os.environ
@@ -122,7 +125,7 @@ print(json.dumps({
     "_label": e["label"],
     "press_name": "jointqk",
     "press_kwargs": kw,
-    "dataset": "ruler",
+    "dataset": e["DATASET"],
     "data_dir": e["ctx"],
     "fraction": float(e["FRACTION"]),
     "output_dir": f'{e["OUT_BASE"]}/{e["label"]}',

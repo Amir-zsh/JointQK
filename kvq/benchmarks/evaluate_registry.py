@@ -20,9 +20,17 @@ from benchmarks.ruler.calculate_metrics import calculate_metrics as ruler_scorer
 from benchmarks.zero_scrolls.calculate_metrics import calculate_metrics as zero_scrolls_scorer  # noqa: E402
 
 
+import pathlib as _pathlib
+
+_REPO_ROOT = _pathlib.Path(__file__).resolve().parents[2]
+
 DATASET_REGISTRY = {
     "loogle": "simonjegou/loogle",
     "ruler": "simonjegou/ruler",
+    # RULER-NIAH regenerated at 8k-64k (simonjegou/ruler caps at 16k): Samuel's
+    # gen_niah rows (see third_party/samuel_vq/PROVENANCE.md), converted to a
+    # local parquet folder; data_dir = context length, same schema as ruler.
+    "niah": str(_REPO_ROOT / "artifacts" / "niah_bench"),
     "zero_scrolls": "simonjegou/zero_scrolls",
     "infinitebench": "MaxJeblick/InfiniteBench",
     "longbench": "Xnhyacinth/LongBench",
@@ -36,6 +44,7 @@ DATASET_REGISTRY = {
 SCORER_REGISTRY = {
     "loogle": loogle_scorer,
     "ruler": ruler_scorer,
+    "niah": ruler_scorer,
     "zero_scrolls": zero_scrolls_scorer,
     "infinitebench": infinite_bench_scorer,
     "longbench": longbench_scorer,

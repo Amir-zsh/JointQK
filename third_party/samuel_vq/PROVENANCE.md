@@ -13,3 +13,11 @@ permission (user-authorized copy-with-attribution); the source repo was not modi
 | vq_press.py | /vault/samuel/efficient-llm/JointQK/kvq/presses/vq_press.py | 2026-07-14 14:49:50 | 9f74f379a307a4f052db49c6dbdc66cd38364e8addf0fd747fe98cebf79e3ac1 |
 | vqa_G4_strat_flat_fair_fp8.pt | /vault/samuel/efficient-llm/JointQK/entropy_coding/vqa_G4_strat_flat_fair_fp8.pt | 2026-07-11 14:09:11 | 8e216e60f2a404ba07fece60311fc090d500edc546906037eb950fb14ad105c1 |
 | vqa_G4_strat_flat_llama_fp8.pt | /vault/samuel/efficient-llm/JointQK/entropy_coding/vqa_G4_strat_flat_llama_fp8.pt | 2026-07-11 14:09:13 | 72bc94492f087c5932493fc97a8a1dde977feecdef00484790c24b16a63408a6 |
+
+## NIAH benchmark data (added 2026-07-15)
+
+`artifacts/niah_bench/<ctx>/test.parquet` (gitignored) are parquet conversions
+of Samuel's regenerated RULER-NIAH datasets (`gen_niah.py`, uncommitted) read
+from `/vault/samuel/efficient-llm/JointQK/artifacts/niah/{8192,16384,32768,65536}`
+(HF save_to_disk format, 800 rows = 8 subtasks x 100 each). Same schema as
+simonjegou/ruler (which caps at 16k); scorer = vendored ruler scorer.
