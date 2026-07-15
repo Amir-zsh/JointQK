@@ -452,7 +452,8 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
     if k_method.startswith("pgq_vqg"):
         from kvq.compression.group_vq import load_vqg_compressors
         return load_vqg_compressors(blob, path, k_method, b_page)
-    if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg", "pgq_dct")):
+    if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg", "pgq_dct",
+                            "pgq_dvq")):
         return _load_pgq4(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
         return _load_pgq3(blob, path, k_method, b_page)
@@ -581,6 +582,7 @@ def _load_pgq4(blob, path, k_method, k_bits):
     fam, variant = k_method.split("_")[1], k_method.split("_")[2]
     family = ("fold" if fam.startswith("fold")
               else "mrg" if fam.startswith("mrg")
+              else "dvq" if fam.startswith("dvq")
               else "dct" if fam.startswith("dct") else "prof")
     mods, rest = set(), fam[len(family):]
     while rest:
@@ -597,6 +599,12 @@ def _load_pgq4(blob, path, k_method, k_bits):
             raise ValueError(f"pgq_dct supports only lm/rw mods, got {mods}")
         if "dct_std" not in blob:
             raise ValueError(f"pgq_dct needs a pgq8 bundle with dct_std: {path}")
+    if family == "dvq":
+        if mods - {"rw"}:
+            raise ValueError(f"pgq_dvq supports only the rw mod, got {mods}")
+        if "dvq_codebooks" not in blob or "dct_std" not in blob:
+            raise ValueError(
+                f"pgq_dvq needs a pgq10 bundle with dvq_codebooks+dct_std: {path}")
     basis = "oscar" if "ob" in mods else ("r_sym" if "rs" in mods
                                           else "qpca_unc")
     L, H = blob["n_layers"], blob["n_kv_heads"]
@@ -653,6 +661,11 @@ def _load_pgq4(blob, path, k_method, k_bits):
                 from kvq.compression.pgq8_dct import PageDCTCompressor
                 cls = PageDCTCompressor
                 extra["dct_std"] = blob["dct_std"][l, h]
+            elif family == "dvq":
+                from kvq.compression.pgq8_dct import PageDCTVQCompressor
+                cls = PageDCTVQCompressor
+                extra["dct_std"] = blob["dct_std"][l, h]
+                extra["dvq_codebooks"] = blob["dvq_codebooks"][(l, h)]
             else:
                 cls = FoldedScalarPagedCompressor
             comps[(l, h)] = cls(
@@ -708,9 +721,13 @@ def _load_pgq3(blob, path, k_method, k_bits):
     for l in range(1, L):
         for h in range(H):
             if fam == "oscar":
+                # (d, d) legacy Hadamard, or (L, d, d) per-layer rotation
+                # (pgq10: the authors' RotationZoo checkpoint)
+                mix = blob["oscar_mixer"]
+                mix_l = mix[l] if mix.dim() == 3 else mix
                 comps[(l, h)] = OscarArmCompressor(
-                    forward_map=blob["oscar_mixer"],
-                    inverse_map=blob["oscar_mixer"].t().contiguous(),
+                    forward_map=mix_l,
+                    inverse_map=mix_l.t().contiguous(),
                     mu=torch.zeros(blob["head_dim"]),
                     mu_q=blob["mu_q"][l, h],
                     width=blob["oscar_widths"][uniform_sel],

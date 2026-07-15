@@ -244,3 +244,202 @@ class PageDCTCompressor(FoldedScalarPagedCompressor):
 
         out = r_hat @ self.inverse_map + self.mu
         return out.reshape(shape).to(states.dtype)
+
+
+def _vq_chunked_assign(x: torch.Tensor, cent: torch.Tensor) -> torch.Tensor:
+    """Nearest-centroid indices with bounded (block, K) distance matrices."""
+    N = x.shape[0]
+    K = cent.shape[0]
+    block = max(4096, int(2e8 // max(K, 1)))
+    out = torch.empty(N, dtype=torch.long, device=x.device)
+    for s in range(0, N, block):
+        out[s:s + block] = torch.cdist(x[s:s + block], cent).argmin(1)
+    return out
+
+
+# pgq10 D6 rung ladder: bits/coord -> (group_size, K). The 3 b/c rung uses
+# 2-coord groups so its codebook stays k-means-trainable and L1-small
+# (64 x 2 fp16 = 256 B) instead of the 4096 x 4 a G=4 ladder would need.
+DVQ_LADDER = ((0, None, 0), (1, 4, 16), (2, 4, 256), (3, 2, 64))
+
+
+class PageDCTVQCompressor(PageDCTCompressor):
+    """pgq10 D6: token-axis DCT rows quantized by group VQ (Samuel's codec
+    lifted to coefficient rows) under the same paged lambda-RDO. Rows are
+    normalized by the pgq8 sigma map (dct_std on transformed rows, code_std
+    on identity rows), so one codebook set per (l, h) serves every
+    coefficient row; a rung = one uniform bits/coord level of DVQ_LADDER.
+    Rate: bpc*d payload per row + the parent's header/id side bits. Sinks
+    keep the 8-bit scalar escape. No packed/emit kernel format yet — this
+    codec is the quality/proxy arm (B-D2); serving reuses the vqk kernel
+    family once a rate point is chosen."""
+
+    def __init__(self, dvq_codebooks=None, **kw):
+        super().__init__(**kw)
+        assert dvq_codebooks is not None
+        # dvq_codebooks: {bpc: (NG, K, G) fp16/fp8 tensor}
+        self.dvq_cb = {int(b): cb for b, cb in dvq_codebooks.items()}
+        for bpc, g, k in DVQ_LADDER[1:]:
+            cb = self.dvq_cb[bpc]
+            assert cb.shape[1] == k and cb.shape[2] == g, (bpc, cb.shape)
+
+    @torch.no_grad()
+    def roundtrip(self, states: torch.Tensor,
+                  start_pos: int = 0, emit: dict | None = None) -> torch.Tensor:
+        assert emit is None, "pgq10 D6 has no packed emit format yet"
+        self._maybe_migrate(states)
+        for b in list(self.dvq_cb):
+            if self.dvq_cb[b].device != states.device:
+                self.dvq_cb[b] = self.dvq_cb[b].to(states.device)
+        shape = states.shape
+        d = shape[-1]
+        k = states.reshape(-1, d).float()
+        T = k.shape[0]
+        dev = k.device
+        r = (k - self.mu) @ self.forward_map
+        ptok = self.ptok
+        P = (T + ptok - 1) // ptok
+        pad = P * ptok - T
+        nfull = P - (1 if pad else 0)
+
+        nsink = min(4, T) if start_pos == 0 else 0
+        nforce = 0
+        if start_pos == 0 and self.force_recent_pages > 0 and P > 1:
+            nforce = min(self.force_recent_pages, P - 1)
+
+        tmask = torch.zeros(max(nfull, 1), dtype=torch.bool, device=dev)
+        if start_pos == 0 and nfull > 0:
+            tmask[:nfull] = True
+            tmask[0] = False
+            if nforce:
+                tmask[max(0, P - nforce):] = False
+
+        y = r
+        sigma = self.code_std.unsqueeze(0).expand(T, d)
+        if tmask.any():
+            y = r.clone()
+            sigma = sigma.clone()
+            yp = y[: nfull * ptok].reshape(nfull, ptok, d)
+            yp[tmask[:nfull]] = torch.einsum(
+                "st,ptd->psd", self.dct_m,
+                r[: nfull * ptok].reshape(nfull, ptok, d)[tmask[:nfull]])
+            sp = sigma[: nfull * ptok].reshape(nfull, ptok, d)
+            sp[tmask[:nfull]] = self.dct_std
+
+        # per-rung group-VQ of the normalized rows
+        yn = y / sigma
+        R = len(DVQ_LADDER)
+        dq_by_r = {0: torch.zeros_like(y)}
+        err2_by_r = {0: y.square()}
+        rung_rate_l = [0.0]
+        for bpc, g, K in DVQ_LADDER[1:]:
+            cb = self.dvq_cb[bpc].float()
+            ng = d // g
+            yhat_n = torch.empty_like(yn)
+            for gi in range(ng):
+                seg = yn[:, gi * g:(gi + 1) * g]
+                idx = _vq_chunked_assign(seg, cb[gi])
+                yhat_n[:, gi * g:(gi + 1) * g] = cb[gi][idx]
+            dq = yhat_n * sigma
+            dq_by_r[bpc] = dq
+            err2_by_r[bpc] = (y - dq).square()
+            rung_rate_l.append(float(bpc * d))
+        rung_rates = torch.tensor(rung_rate_l, device=dev)
+
+        Dmat = torch.stack([err2_by_r[b].sum(1)
+                            for b, _g, _k in DVQ_LADDER], dim=1)
+        Rmat = rung_rates.unsqueeze(0).expand(T, R)
+
+        sink_bits = nsink * SINK_BITS * d
+        ntok = torch.full((P,), float(ptok), dtype=torch.float64, device=dev)
+        if pad:
+            ntok[-1] = ptok - pad
+        Dw64, R64 = Dmat.double(), Rmat.double().clone()
+        if pad:
+            z = torch.zeros(pad, R, dtype=torch.float64, device=dev)
+            Dw64 = torch.cat([Dw64, z])
+            R64 = torch.cat([R64, z.clone()])
+        budgets = (self.b_page * d * ntok
+                   - torch.as_tensor([self._side_bits(int(n))
+                                      for n in ntok.tolist()],
+                                     dtype=torch.float64, device=dev))
+        Dp = Dw64.reshape(P, ptok, R).clone()
+        Rp = R64.reshape(P, ptok, R).clone()
+        budgets = budgets.clone()
+        if nsink:
+            Dp[0, :nsink] = 0.0
+            Rp[0, :nsink] = 0.0
+            budgets[0] -= sink_bits
+        top = R - 1
+        forced_bits = 0.0
+        if nforce:
+            for p in range(P - nforce, P):
+                cost = float(Rp[p, :, top].sum())
+                forced_bits += cost
+                budgets[p] -= cost
+                Dp[p] = 0.0
+                Rp[p] = 0.0
+        assign_p = _paged_lambda_assign(Dp, Rp, budgets, ptok)
+        if nsink:
+            assign_p[0, :nsink] = top
+        if nforce:
+            assign_p[P - nforce:] = top
+
+        used = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2).sum(1)
+        left = budgets - used
+        for _ in range(8):
+            cur_d = Dp.gather(2, assign_p.unsqueeze(2)).squeeze(2)
+            cur_r = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2)
+            gain_m = cur_d.unsqueeze(2) - Dp
+            cost = Rp - cur_r.unsqueeze(2)
+            ok = (cost > 0) & (cost <= left.view(P, 1, 1)) & (gain_m > 0)
+            score = torch.where(ok, gain_m / cost, torch.zeros_like(gain_m))
+            best = score.view(P, -1).argmax(1)
+            best_score = score.view(P, -1).gather(
+                1, best.unsqueeze(1)).squeeze(1)
+            pi = torch.nonzero(best_score > 0).squeeze(1)
+            if pi.numel() == 0:
+                break
+            bt = (best[pi] // R).long()
+            bw = (best[pi] % R).long()
+            cur_w = assign_p[pi, bt]
+            ar = torch.arange(pi.numel(), device=dev)
+            old_r = Rp[pi, bt][ar, cur_w]
+            new_r = Rp[pi, bt][ar, bw]
+            assign_p[pi, bt] = bw
+            left[pi] -= (new_r - old_r)
+
+        assign = assign_p.reshape(-1)[:T]
+        used = Rp.gather(2, assign_p.unsqueeze(2)).squeeze(2).sum(1)
+        n_over = P - nforce if nforce else P
+        overflow = int((used[:n_over] > budgets[:n_over]).sum())
+        payload = float(used.sum()) + sink_bits + forced_bits
+        side = float(sum(self._side_bits(int(n)) for n in ntok.tolist()))
+
+        y_hat = torch.zeros_like(y)
+        for ri, (bpc, _g, _k) in enumerate(DVQ_LADDER):
+            msk = assign == ri
+            if msk.any():
+                y_hat[msk] = dq_by_r[bpc][msk]
+        if nsink:
+            sidx = (torch.round(r[:nsink] / self.sink_scale)
+                    .clamp_(-SINK_LIM, SINK_LIM))
+            y_hat[:nsink] = sidx * self.sink_scale
+
+        r_hat = y_hat
+        if tmask.any():
+            rp = r_hat[: nfull * ptok].reshape(nfull, ptok, d)
+            rp[tmask[:nfull]] = torch.einsum(
+                "st,psd->ptd", self.dct_m, rp[tmask[:nfull]])
+
+        self.pages_total += int(P)
+        self.pages_overflow += int(overflow)
+        self.bits_payload += float(payload)
+        self.bits_side += float(side)
+        self.tokens_total += T
+        binc = torch.bincount(assign[nsink:], minlength=R)
+        for ri in range(min(R, len(self.rung_hist))):
+            self.rung_hist[ri] += int(binc[ri])
+
+        out = r_hat @ self.inverse_map + self.mu
+        return out.reshape(shape).to(states.dtype)

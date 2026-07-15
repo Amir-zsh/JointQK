@@ -209,3 +209,63 @@ def test_loader_routing(tmp_path):
     torch.save(blob, p)
     with pytest.raises(ValueError):
         load_pgq_compressors_from_bundle(str(p), "pgq_dctlm_rdo", 2.0)
+
+
+# ---- pgq10 D6: PageDCTVQCompressor -----------------------------------------
+
+def make_dvq_comp(b_page=2.0, dct_std=None):
+    from kvq.compression.pgq8_dct import DVQ_LADDER, PageDCTVQCompressor
+    g = torch.Generator().manual_seed(23)
+    cbs = {}
+    for bpc, gg, K in DVQ_LADDER[1:]:
+        cbs[bpc] = torch.randn(D // gg, K, gg, generator=g)
+    base = make_comp(b_page=b_page)
+    if dct_std is None:
+        dct_std = base.code_std.unsqueeze(0).repeat(base.ptok, 1)
+    comp = PageDCTVQCompressor(
+        dvq_codebooks=cbs,
+        dct_std=dct_std,
+        forward_map=base.forward_map, inverse_map=base.inverse_map,
+        mu=base.mu, mu_q=base.mu_q, code_std=base.code_std,
+        profiles=base.profiles, alphas=base.alphas,
+        sink_scale=base.sink_scale, b_page=b_page, grid=base.grid,
+        lm_cents=base.lm_cents, ptok=base.ptok, mode="rdo",
+        force_recent_pages=base.force_recent_pages)
+    return comp
+
+
+def _rel_code_err(comp, k, out):
+    r, r_hat = code_err(comp, k, out)
+    return float((r - r_hat).square().sum() / r.square().sum())
+
+
+def test_dvq_roundtrip_shape_rate():
+    comp = make_dvq_comp(b_page=2.0)
+    k = gauss_keys(64 * 8, comp, seed=5)
+    out = comp.roundtrip(k)
+    assert out.shape == k.shape and out.dtype == k.dtype
+    rate = (comp.bits_payload + comp.bits_side) / (comp.tokens_total * D)
+    assert rate <= 2.02, rate
+    err = _rel_code_err(comp, k, out)
+    assert 0 < err < 1.0, err
+
+
+def test_dvq_redundant_pages_win():
+    # dct_std must be FIT to the data distribution (as fit_pgq8_stats does) —
+    # it is what normalizes the DC-heavy coefficient rows for the codebooks.
+    probe = make_dvq_comp(b_page=2.0)
+    _kf, rf = redundant_keys(probe, 64 * 16, seed=11)
+    comp = make_dvq_comp(b_page=2.0, dct_std=fit_dct_std(probe, rf))
+    k, _r = redundant_keys(comp, 64 * 8)
+    err = _rel_code_err(comp, k, comp.roundtrip(k))
+    comp2 = make_dvq_comp(b_page=2.0)
+    kg = gauss_keys(64 * 8, comp2, seed=6)
+    errg = _rel_code_err(comp2, kg, comp2.roundtrip(kg))
+    assert err < errg, (err, errg)
+
+
+def test_dvq_decode_chunk_identity_rows():
+    comp = make_dvq_comp(b_page=2.0)
+    k = gauss_keys(40, comp, seed=9)
+    out = comp.roundtrip(k, start_pos=128)
+    assert out.shape == k.shape

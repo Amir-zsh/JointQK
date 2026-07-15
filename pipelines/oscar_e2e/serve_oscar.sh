@@ -1,0 +1,86 @@
+#!/bin/bash
+# Serve production OSCAR INT2-KV (authors' sglang-research stack, vendored) on
+# one GPU. A100 note: the documented fa3-prefill path is Hopper-only; the
+# triton/triton backend combo is the supported alternative accepted by
+# _unified_mixed_kv_active (recorded caveat vs the paper's H100/fa3 numbers).
+#
+#   bash pipelines/oscar_e2e/serve_oscar.sh [--gpu 5] [--port 30800] [--bf16]
+#
+# --bf16 serves the SAME stack without INT2 (the serving-stack control arm).
+set -euo pipefail
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$REPO_ROOT"
+
+GPU=5
+PORT=30800
+MODE=int2
+CTX=73728          # RULER-64K + generation headroom; 131072 arenas OOM on A100-40GB
+MEM_FRAC=0.78
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --gpu) GPU="$2"; shift 2 ;;
+        --port) PORT="$2"; shift 2 ;;
+        --bf16) MODE=bf16; shift ;;
+        --ctx) CTX="$2"; shift 2 ;;
+        --mem-frac) MEM_FRAC="$2"; shift 2 ;;
+        *) echo "Unknown flag: $1" >&2; exit 1 ;;
+    esac
+done
+
+ROT_DIR="$REPO_ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128"
+CUDA128="/vault/amir/.conda/envs/cuda128"
+
+export CUDA_VISIBLE_DEVICES=$GPU
+export CUDA_HOME="$CUDA128"
+export PATH="$CUDA128/bin:$PATH"
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# System gcc is 9.4; their JIT kernels use C++20 <concepts> -> conda gcc-12.
+GCC12="/vault/amir/.conda/envs/gcc12"
+if [[ -x "$GCC12/bin/x86_64-conda-linux-gnu-g++" ]]; then
+    export CC="$GCC12/bin/x86_64-conda-linux-gnu-gcc"
+    export CXX="$GCC12/bin/x86_64-conda-linux-gnu-g++"
+    export CUDAHOSTCXX="$CXX"
+    export PATH="$GCC12/bin:$PATH"
+    # nvcc ignores $CXX and host-compiles with /usr/bin/c++ (gcc 9.4, no
+    # <concepts>) unless -ccbin is injected.
+    export NVCC_PREPEND_FLAGS="-ccbin $CXX"
+    # dlopen of the JIT .so needs gcc-12's libstdc++ (system one lacks
+    # GLIBCXX_3.4.29) and tvm_ffi's own lib dir.
+    export LD_LIBRARY_PATH="$GCC12/lib:$REPO_ROOT/.venv-oscar/lib/python3.12/site-packages/tvm_ffi/lib:$CUDA128/lib:${LD_LIBRARY_PATH:-}"
+fi
+
+ARGS=(
+    --model-path Qwen/Qwen3-8B
+    --host 127.0.0.1 --port "$PORT"
+    --trust-remote-code
+    --prefill-attention-backend triton
+    --decode-attention-backend triton
+    --context-length "$CTX"
+    --mem-fraction-static "$MEM_FRAC"
+    --cuda-graph-max-bs 8
+    # A100-40GB: the unified INT2 pool's HP/scale arenas land on top of the
+    # mem-fraction budget (sized for H100-80GB); pin the token pool directly
+    # AND the request slots (the fp16 HP recent-ring arena scales with
+    # max_running_requests * ring_size across all 36 layers).
+    --max-total-tokens "${MAX_TOKENS:-140000}"
+    --max-running-requests "${MAX_REQS:-8}"
+)
+
+if [[ "$MODE" == "int2" ]]; then
+    # Serve-time parameters exactly as the authors' eval driver sets them
+    # (64/256 band + clips live in the DRIVER env, not the code defaults).
+    export SGLANG_ENABLE_MIXED_KV_WINDOWS=1
+    export SGLANG_OSCAR_K_ROTATION_PATH="$ROT_DIR/k_rotation_qqt_r_h_pbr.pt"
+    export SGLANG_OSCAR_V_ROTATION_PATH="$ROT_DIR/v_rotation_sst_r_h_pbr.pt"
+    export SGLANG_OSCAR_K_CLIP_RATIO=0.96
+    export SGLANG_OSCAR_V_CLIP_RATIO=0.92
+    export SGLANG_OSCAR_ABSORB_V_ROTATION=1
+    export SGLANG_MIXED_KV_PREFIX_TOKENS=64
+    export SGLANG_MIXED_KV_RECENT_TOKENS=256
+    export SGLANG_MIXED_KV_HP_DTYPE=bfloat16
+    export SGLANG_MIXED_KV_SCALE_DTYPE=float32
+    export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+    ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
+fi
+
+exec "$REPO_ROOT/.venv-oscar/bin/python" -m sglang.launch_server "${ARGS[@]}"

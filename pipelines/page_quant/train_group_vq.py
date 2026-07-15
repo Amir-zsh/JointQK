@@ -72,6 +72,67 @@ def subsample(x: torch.Tensor, n: int, gen: torch.Generator) -> torch.Tensor:
     return x[idx]
 
 
+def train_dvq(args, spec, blob):
+    """pgq10 D6: DVQ_LADDER codebooks on dct_std-normalized DCT coefficient
+    rows (transform-eligible interior pages only), one codebook set per
+    (l, h). Output: pgq8 bundle + dvq_codebooks (self-contained pgq10 bundle)."""
+    from kvq.compression.pgq8_dct import DVQ_LADDER, dct_matrix
+
+    L, H, d = blob["n_layers"], blob["n_kv_heads"], blob["head_dim"]
+    ptok = int(blob["ptok"])
+    F = blob["bases"]["qpca_unc"]["forward"]
+    mu = blob["mu"]
+    dct_std = blob["dct_std"].float().clamp_min(1e-12)
+    dct_m = dct_matrix(ptok)
+    dev = args.device
+    raw_root = REPO / spec["raw_root"]
+    fit = load_rows(raw_root, blob["pgq8_fit_rows"])
+    t0 = time.time()
+    print(f"[dvqtrain] {args.model_tag} L={L} H={H} ladder={DVQ_LADDER}",
+          flush=True)
+    dm = dct_m.to(dev)
+    dvq = {}
+    for l in range(L):
+        Fl = F[l].to(dev).float()
+        mul = mu[l].to(dev).float()
+        for h in range(H):
+            rows = []
+            for _p, kp in fit:
+                r = (kp[l, h].float().to(dev) - mul[h]) @ Fl[h]
+                nfull = r.shape[0] // ptok
+                if nfull < 6:
+                    continue
+                pages = r[: nfull * ptok].reshape(nfull, ptok, d)
+                pages = pages[1: nfull - 4]          # skip sink + rw analog
+                y = torch.einsum("st,ptd->psd", dm, pages)
+                rows.append((y / dct_std[l, h].to(dev)).reshape(-1, d))
+            yn = torch.cat(rows)
+            sets = {}
+            for bpc, g, K in DVQ_LADDER[1:]:
+                ng = d // g
+                cbs = [_kmeans(yn[:, gi * g:(gi + 1) * g], K,
+                               iters=args.iters,
+                               seed=args.seed + l * H + h + bpc * 100000)
+                       for gi in range(ng)]
+                sets[bpc] = torch.stack(cbs).half().cpu()
+            dvq[(l, h)] = sets
+        if l % 4 == 0 or l == L - 1:
+            print(f"[dvqtrain] layer {l}/{L} ({time.time()-t0:.0f}s)",
+                  flush=True)
+
+    out_blob = dict(blob)
+    out_blob["dvq_codebooks"] = dvq
+    out_blob["dvq_provenance"] = dict(
+        ladder=[list(x) for x in DVQ_LADDER], seed=args.seed,
+        iters=args.iters, source_bundle=str(spec["bundle"]),
+        trained_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
+    out = REPO / args.out
+    out.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(out_blob, out)
+    print(f"[dvqtrain] SAVED {out} sha8={sha8(out)} "
+          f"({time.time()-t0:.0f}s total)", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model-tag", required=True, choices=list(MODELS))
@@ -87,12 +148,17 @@ def main():
     ap.add_argument("--gate-tol", type=float, default=0.05)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--device", default="cuda:0")
+    ap.add_argument("--dvq", action="store_true",
+                    help="train D6 DCT-row VQ codebooks instead (pgq10 bundle)")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
     spec = MODELS[args.model_tag]
     bundle_path = REPO / spec["bundle"]
     blob = torch.load(bundle_path, map_location="cpu", weights_only=False)
+    if args.dvq:
+        train_dvq(args, spec, blob)
+        return
     L, H, d = blob["n_layers"], blob["n_kv_heads"], blob["head_dim"]
     F = blob["bases"]["qpca_unc"]["forward"].clone()      # (L,H,d,d)
     inv = blob["bases"]["qpca_unc"]["inverse"].clone()
