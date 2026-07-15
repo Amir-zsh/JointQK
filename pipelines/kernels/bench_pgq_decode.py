@@ -316,6 +316,28 @@ def main():
         keep.append(vqg)
         vq_ms = bench(vqfn, args.iters)
 
+        # pgq10 S5: fixed-rate group-VQ K (32 uint8 group indices/token ->
+        # L1-resident codebook gather; no unpack/LUT/sigma). Random codes/cb
+        # (values don't affect timing); B128 phase B; fp16-V and INT2-V tiers.
+        gms["vq_codes"] = torch.randint(
+            0, 256, (H_KV, T, D // 4), dtype=torch.uint8, device=dev)
+        gms["vq_cb"] = (torch.randn(H_KV, D // 4, 256, 4, device=dev) * 0.05
+                        ).half().contiguous()
+        vkfn, vkg = graphed(lambda: page_attention_v2(
+            gms, 16, phase_a="vqk", phase_b="kernel2"))
+        keep.append(vkg)
+        vqk_ms = bench(vkfn, args.iters)
+        vkifn, vkig = graphed(lambda: page_attention_v2(
+            gms, 16, phase_a="vqk", phase_b="kernel2", v_int2=True))
+        keep.append(vkig)
+        vqk_i2_ms = bench(vkifn, args.iters)
+        gms["vq_cb64"] = gms["vq_cb"].view(torch.int64).squeeze(-1).contiguous()
+        gms["qt_vq"] = gms["qt"]        # random qt: permutation timing-neutral
+        vk64fn, vk64g = graphed(lambda: page_attention_v2(
+            gms, 16, phase_a="vqk64", phase_b="kernel2", v_int2=True))
+        keep.append(vk64g)
+        vqk64_i2_ms = bench(vk64fn, args.iters)
+
         K16 = torch.randn(H_KV, T, D, device=dev).half()
         V16 = gm["v"]
         Q16 = gm["qt"][:, :GROUP].half()
@@ -355,6 +377,13 @@ def main():
             "fp16_MB": 2 * H_KV * T * D * 2 / 1e6,
             "speedup_vs_dense": dense_ms / v2_ms,
             "speedup_vs_sdpa": sdpa_ms / v2_ms,
+            "vqk_graph_ms": vqk_ms,
+            "vqk_vint2_graph_ms": vqk_i2_ms,
+            "vqk64_vint2_graph_ms": vqk64_i2_ms,
+            "vqk_MB": (H_KV * T * (D // 4) + H_KV * T * D * 2) / 1e6,
+            "vqk_vint2_MB": (H_KV * T * (D // 4) * 2 + H_KV * T * 8) / 1e6,
+            "speedup_vqk_vs_dense": dense_ms / vqk_ms,
+            "speedup_vqk_vs_sdpa": sdpa_ms / vqk_ms,
         }
         if oscar is not None:
             best_o = None
@@ -374,13 +403,19 @@ def main():
             row["oscar_MB"] = best_o[2] / 1e6
             row["pgq_vs_oscar"] = best_o[0] / v2_ms
             row["pgq_vint2_vs_oscar"] = best_o[0] / vq_ms
+            row["vqk_vs_oscar"] = best_o[0] / vqk_ms
+            row["vqk_vint2_vs_oscar"] = best_o[0] / vqk_i2_ms
+            row["vqk64_vint2_vs_oscar"] = best_o[0] / vqk64_i2_ms
         rows[str(T)] = row
         print(f"[k3] T={T:6d}: v2g {v2_ms:7.3f} ms | vI2 {vq_ms:7.3f} | "
+              f"vqk {vqk_ms:7.3f} | vqkI2 {vqk_i2_ms:7.3f} | "
+              f"vqk64I2 {vqk64_i2_ms:7.3f} | "
               f"dense {dense_ms:7.3f} | sdpa {sdpa_ms:7.3f} | "
               f"oscar {row.get('oscar_int2_graph_ms', float('nan')):7.3f} | "
               f"x_dense {row['speedup_vs_dense']:.2f} "
               f"x_sdpa {row['speedup_vs_sdpa']:.2f} "
-              f"x_oscar {row.get('pgq_vs_oscar', float('nan')):.2f}",
+              f"x_oscar {row.get('pgq_vs_oscar', float('nan')):.2f} "
+              f"x_oscar_vqkI2 {row.get('vqk_vint2_vs_oscar', float('nan')):.2f}",
               flush=True)
         del gm, K16, V16, ks, vs
         keep.clear()

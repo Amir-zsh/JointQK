@@ -145,6 +145,69 @@ def build_golden(comp, emit: dict, packed: dict, q: torch.Tensor,
             for k, v in out.items()}
 
 
+def build_vq_gm(comps, ks, qs, vs, ptok: int = 64, hgp: int = 16,
+                device: str = "cuda") -> dict:
+    """pgq10 S5: golden dict for the fixed-rate group-VQ phase-A path
+    (phase_a="vqk"). comps: per-head GroupVQCompressor with FLAT allocation
+    (equal K per group — the kernel indexes one (NG, K, G) codebook tensor);
+    ks/qs/vs per head: (T, d) keys, (Hg, d) queries, (T, d) values. Every
+    token is VQ-coded (band/outlier fp16 tokens live in the ring tier in
+    deployment) and every page is identity-kind, so phase B never applies
+    the DCT tile. References use the fp16-cast codebook + fp16-cast qt the
+    kernel reads. The k-mean fold term (q . mean) is a per-query constant
+    over tokens, hence softmax-invariant and omitted from z."""
+    import math
+    H = len(comps)
+    T, d = ks[0].shape
+    assert T % ptok == 0, "vqk serves whole pages; pad T to a page multiple"
+    NG = len(comps[0].bounds)
+    kset = {cb.shape[0] for c in comps for cb in c.codebooks}
+    assert len(kset) == 1, "vqk kernel requires equal K per group (flat alloc)"
+    G = comps[0].bounds[0][1] - comps[0].bounds[0][0]
+    Hg = qs[0].shape[0]
+    sm = 1.0 / math.sqrt(d)
+    codes, cbs, qts, zrefs, v16, orefs = [], [], [], [], [], []
+    for c, k, q, v in zip(comps, ks, qs, vs):
+        idx = c.encode_idx(k.float())
+        codes.append(torch.stack(idx, 1).to(torch.uint8))
+        cbs.append(torch.stack([cb.half() for cb in c.codebooks]))
+        r_hat = torch.empty(T, d)
+        for (s, e, _b), cbi, ic in zip(c.bounds, c.codebooks, idx):
+            r_hat[:, s:e] = cbi.half().float()[ic]
+        qt = q.float() @ c.inverse_map.float().t()
+        z = qt.half().float() @ r_hat.t()
+        qts.append(qt)
+        zrefs.append(z)
+        v16.append(v.half())
+        orefs.append(torch.softmax(z * sm, 1) @ v.float())
+    qt_p = torch.zeros(H, hgp, d)
+    qt_p[:, :Hg] = torch.stack(qts)
+    # vqk64 companions: codewords as one int64 per (group, entry), and qt
+    # columns permuted to the kernel's join interleave (g*4 + [0,2,1,3]).
+    cb_t = torch.stack(cbs)                                  # (H, NG, K, G)
+    cb64 = cb_t.contiguous().view(torch.int64).squeeze(-1).contiguous()
+    jperm = torch.tensor([0, 2, 1, 3])
+    colperm = (torch.arange(d // 4)[:, None] * 4 + jperm[None, :]).reshape(-1)
+    P = T // ptok
+    gm = {
+        "H": H, "T": T, "d": d, "ptok": ptok, "hg": Hg, "hgp": hgp,
+        "vq_codes": torch.stack(codes).contiguous(),
+        "vq_cb": cb_t.contiguous(),
+        "vq_cb64": cb64,
+        "qt_vq": qt_p[:, :, colperm].contiguous(),
+        "qt": qt_p.contiguous(), "sm_scale": sm,
+        "dct_t": torch.eye(ptok),
+        "pages": torch.arange(P, dtype=torch.int32),
+        "page_kind": torch.ones(P, dtype=torch.int8),
+        "tier_idx": torch.empty(0, dtype=torch.int64),
+        "z_tier": torch.zeros(H, Hg, 0),
+        "v": torch.stack(v16),
+        "z_ref": torch.stack(zrefs), "o_ref": torch.stack(orefs),
+    }
+    return {k: (v.to(device) if torch.is_tensor(v) else v)
+            for k, v in gm.items()}
+
+
 def quantize_v_int2(v: torch.Tensor):
     """Per-token min-max INT2 for values (OSCAR's V scheme). v (T, d) with
     d a multiple of 4. Returns (packed (T, d/4) uint8 quarter-interleaved:

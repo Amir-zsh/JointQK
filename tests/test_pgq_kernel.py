@@ -296,3 +296,81 @@ def test_kernel_parity_real_bundle_cell():
     comp = comps[(8, 3)]
     err, gold = run_case(comp, T=64 * 20)
     assert err < 1e-2, err
+
+
+# ---- pgq10 S5: fixed-rate group-VQ phase A (vqk) ---------------------------
+
+_VQ_CB_PATH = Path(__file__).resolve().parents[1] / \
+    "third_party/samuel_vq/codebooks/vqa_G4_strat_flat_fair_fp8.pt"
+_vq_payload_cache = {}
+
+
+def _vq_payload():
+    if "p" not in _vq_payload_cache:
+        _vq_payload_cache["p"] = torch.load(_VQ_CB_PATH, map_location="cpu",
+                                            weights_only=False)
+    return _vq_payload_cache["p"]
+
+
+def build_vq_multi(H=2, T=64 * 9, seed0=31, v_int2=False):
+    from kvq.compression.group_vq import GroupVQCompressor
+    from kvq.kernels.golden import add_v_int2, build_vq_gm, quantize_v_int2
+    pl = _vq_payload()
+    comps, ks, qs, vs = [], [], [], []
+    for h in range(H):
+        l_h = (2 + 3 * h, (5 * h + 1) % 8)   # distinct real (layer, head) cells
+        comps.append(GroupVQCompressor(
+            pl["forward"][l_h], pl["inverse"][l_h], pl["mean"][l_h],
+            list(pl["codebooks"][l_h]), pl["bounds"]))
+        g = torch.Generator().manual_seed(seed0 + h)
+        ks.append(torch.randn(T, 128, generator=g) * 3)
+        qs.append(torch.randn(4, 128, generator=g))
+        v = torch.randn(T, 128, generator=g)
+        if v_int2:
+            v = quantize_v_int2(v)[3]
+        vs.append(v)
+    gm = build_vq_gm(comps, ks, qs, vs)
+    if v_int2:
+        gm = add_v_int2(gm)
+    return gm
+
+
+@cuda
+@pytest.mark.skipif(not _VQ_CB_PATH.exists(), reason="snapshot codebook absent")
+def test_attention_vqk_parity():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_vq_multi(H=2, T=64 * 9)
+    o = page_attention_v2(gm, phase_a="vqk")
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
+@pytest.mark.skipif(not _VQ_CB_PATH.exists(), reason="snapshot codebook absent")
+def test_attention_vqk_full_heads_kernel2():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_vq_multi(H=8, T=64 * 13)
+    for pps in (4, 16):
+        o = page_attention_v2(gm, pps, phase_a="vqk", phase_b="kernel2")
+        err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+        assert err < 1e-2, (pps, err)
+
+
+@cuda
+@pytest.mark.skipif(not _VQ_CB_PATH.exists(), reason="snapshot codebook absent")
+def test_attention_vqk_int2_v():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_vq_multi(H=2, T=64 * 9, v_int2=True)
+    o = page_attention_v2(gm, 3, phase_a="vqk", phase_b="kernel2", v_int2=True)
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err
+
+
+@cuda
+@pytest.mark.skipif(not _VQ_CB_PATH.exists(), reason="snapshot codebook absent")
+def test_attention_vqk64_parity():
+    from kvq.kernels.pgq_decode_attn import page_attention_v2
+    gm = build_vq_multi(H=8, T=64 * 13)
+    o = page_attention_v2(gm, 16, phase_a="vqk64", phase_b="kernel2")
+    err = float((o - gm["o_ref"]).norm() / gm["o_ref"].norm())
+    assert err < 1e-2, err

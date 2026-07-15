@@ -295,6 +295,78 @@ def _seg_u_kernel(
 
 
 @triton.jit
+def _seg_u_vqk_kernel(
+    codes_ptr, cb_ptr, qt_ptr, u_ptr,
+    T, NG: tl.constexpr, K: tl.constexpr, G: tl.constexpr,
+    HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
+    PTOK: tl.constexpr, CBLK: tl.constexpr,
+):
+    """pgq10 S5: fixed-rate group-VQ phase A. Per row: NG uint8 group indices
+    -> per-head codebook gather (L1-resident: NG*K*G fp16 = 64 KB at the
+    G=4/K=256 operating point) -> q-dot. No variable-width unpack, no LUT,
+    no sigma map — the per-row adaptive-format constants of _seg_u_kernel
+    are structurally absent. codes: (H, T, NG) uint8; cb: (H, NG, K, G) fp16;
+    rows are dense (every token VQ-coded), so there is no token indirection."""
+    tile = tl.program_id(0)
+    h = tl.program_id(1)
+    rows = tile * PTOK + tl.arange(0, PTOK)
+    live = rows < T
+    hg = tl.arange(0, HGP)
+    ci = tl.arange(0, CBLK)
+    u = tl.zeros((HGP, PTOK), dtype=tl.float32)
+    for b in tl.static_range(4):
+        coord = b * CBLK + ci
+        g = coord // G
+        j = coord % G
+        code = tl.load(codes_ptr + (h * T + rows[:, None]).to(tl.int64) * NG
+                       + g[None, :], mask=live[:, None], other=0).to(tl.int32)
+        deq = tl.load(cb_ptr + ((h * NG + g[None, :]) * K + code) * G
+                      + j[None, :], mask=live[:, None], other=0.0)
+        qb = tl.load(qt_ptr + h * HGP * D + hg[:, None] * D
+                     + coord[None, :]).to(tl.float16)
+        u += tl.dot(qb, tl.trans(deq))
+    uptr = u_ptr + (h * HG + hg[:, None]) * T + rows[None, :]
+    tl.store(uptr, u, mask=(hg[:, None] < HG) & live[None, :])
+
+
+@triton.jit
+def _seg_u_vqk64_kernel(
+    codes_ptr, cb64_ptr, qt_ptr, u_ptr,
+    T, NG: tl.constexpr, K: tl.constexpr,
+    HG: tl.constexpr, HGP: tl.constexpr, D: tl.constexpr,
+    PTOK: tl.constexpr, GBLK: tl.constexpr,
+):
+    """vqk with Samuel's VEC trick: one int64 gather per codeword (4 fp16
+    coords) instead of four fp16 gathers — 4x fewer LSU ops. Planes are
+    re-interleaved via nested tl.join, which lands coords in order
+    g*4 + [0,2,1,3]; qt must be column-permuted to match (golden's qt_vq)."""
+    tile = tl.program_id(0)
+    h = tl.program_id(1)
+    rows = tile * PTOK + tl.arange(0, PTOK)
+    live = rows < T
+    hg = tl.arange(0, HGP)
+    gi = tl.arange(0, GBLK)
+    u = tl.zeros((HGP, PTOK), dtype=tl.float32)
+    for b in tl.static_range(4):
+        g = b * GBLK + gi
+        code = tl.load(codes_ptr + (h * T + rows[:, None]).to(tl.int64) * NG
+                       + g[None, :], mask=live[:, None], other=0).to(tl.int32)
+        w = tl.load(cb64_ptr + (h * NG + g[None, :]) * K + code,
+                    mask=live[:, None], other=0)
+        h0 = ((w >> 0) & 0xFFFF).to(tl.uint16).to(tl.float16, bitcast=True)
+        h1 = ((w >> 16) & 0xFFFF).to(tl.uint16).to(tl.float16, bitcast=True)
+        h2 = ((w >> 32) & 0xFFFF).to(tl.uint16).to(tl.float16, bitcast=True)
+        h3 = ((w >> 48) & 0xFFFF).to(tl.uint16).to(tl.float16, bitcast=True)
+        deq = tl.join(tl.join(h0, h1), tl.join(h2, h3)).reshape(PTOK, 4 * GBLK)
+        qb = tl.load(qt_ptr + h * HGP * D + hg[:, None] * D
+                     + (b * 4 * GBLK + tl.arange(0, 4 * GBLK))[None, :]
+                     ).to(tl.float16)
+        u += tl.dot(qb, tl.trans(deq))
+    uptr = u_ptr + (h * HG + hg[:, None]) * T + rows[None, :]
+    tl.store(uptr, u, mask=(hg[:, None] < HG) & live[None, :])
+
+
+@triton.jit
 def _seg_u_kernel_pl(
     pay32_ptr, tok_ptr, pl_off_ptr, tok_off_ptr, n_ptr,
     stride32_ptr, w_ptr, lo_ptr,
@@ -740,6 +812,24 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
                 CBLK=d // gm["seg_w"].shape[2],
                 num_warps=num_warps, num_stages=3,
             )
+    elif phase_a == "vqk":
+        cb = gm["vq_cb"]
+        grid = ((T + ptok - 1) // ptok, H)
+        _seg_u_vqk_kernel[grid](
+            gm["vq_codes"], cb, gm["qt"], u,
+            T, NG=cb.shape[1], K=cb.shape[2], G=cb.shape[3],
+            HG=hg, HGP=hgp, D=d, PTOK=ptok, CBLK=d // 4,
+            num_warps=num_warps, num_stages=3,
+        )
+    elif phase_a == "vqk64":
+        cb64 = gm["vq_cb64"]
+        grid = ((T + ptok - 1) // ptok, H)
+        _seg_u_vqk64_kernel[grid](
+            gm["vq_codes"], cb64, gm["qt_vq"], u,
+            T, NG=cb64.shape[1], K=cb64.shape[2],
+            HG=hg, HGP=hgp, D=d, PTOK=ptok, GBLK=cb64.shape[1] // 4,
+            num_warps=num_warps, num_stages=3,
+        )
     elif phase_a == "cw":
         if "_cw_plan" not in gm:
             seg_n = gm["seg_n"].cpu()
