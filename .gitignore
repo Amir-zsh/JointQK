@@ -45,3 +45,4 @@ artifacts/calibration/*/logs/
 # Per-shard pooled-sweep accumulator logs (the merged.json + launcher.log are kept)
 artifacts/calibration/*/05_reports/pooled_n50/shard_*.log
 
+third_party/samuel_vq/codebooks/*.pt

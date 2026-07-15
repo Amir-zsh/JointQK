@@ -449,6 +449,9 @@ def load_pgq_compressors_from_bundle(path, k_method, b_page):
     by construction); otherwise k_bits is the page budget in bits/coord.
     """
     blob = torch.load(path, map_location="cpu", weights_only=False)
+    if k_method.startswith("pgq_vqg"):
+        from kvq.compression.group_vq import load_vqg_compressors
+        return load_vqg_compressors(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_fold", "pgq_prof", "pgq_mrg", "pgq_dct")):
         return _load_pgq4(blob, path, k_method, b_page)
     if k_method.startswith(("pgq_tcq_", "pgq_e8_", "pgq_oscar_")):
