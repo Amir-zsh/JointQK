@@ -157,10 +157,55 @@ production + Samuel's table; low information), page-RDO variable-rate VQ
 and 3 bpc arms (the 32K same-protocol gap to OSCAR is ~5 points — these
 levers are the natural next iteration if the gap matters).
 
-## PENDING (waves in flight)
+## BF16-served control — the attribution (closes O4)
 
-- BF16-served control (all 11 sets) → serving-stack delta + RoPE-extrapolation
-  attribution at 64K.
-- L7 Llama transfer: codebooks gated (1.006); LongBench cells running;
-  vs existing pgq_oscar_uni Llama cells.
-- R8: comparison-page update + republish.
+| | 8K | 16K | 32K | 64K | LB-5 | math500 | aime25 |
+|---|---|---|---|---|---|---|---|
+| BF16 served (their stack) | 99.9 | 99.5 | 98.3 | 86.3 | 50.93 | 74.8 | 20.0 |
+| INT2 served (production OSCAR) | 97.6 | 95.8 | 74.2 | 23.4 | 47.39 | 72.4 | 16.7 |
+| fp16, our harness | — | — | 98.5 | 85.2 | — | — | — |
+| OSCAR same-protocol, our harness | — | — | 94.4 | 67.9 | 45.8 | — | — |
+
+Three conclusions:
+1. **The serving stack is innocent.** BF16-served ≈ our fp16 arm ≈ Samuel's
+   BF16 anchors at every context (agreement ≤0.4 pt at 32K). The 64K drop
+   (86 vs 98) is RoPE extrapolation past Qwen's 40960 window, equally in
+   both stacks.
+2. **Streaming quantization is production OSCAR's real cost.** In its own
+   stack, INT2 loses 24.1 pts at 32K and 62.9 at 64K vs BF16-served; the
+   SAME recipe quantized post-hoc (Mode A) loses only 4.1 / 17.3. Chunked
+   prefill over already-quantized keys compounds error massively at long
+   context. Our Mode-A protocol numbers are therefore FAVORABLE to OSCAR —
+   the +3.37/+2.37 SIG margins for our codec and VQ are conservative
+   relative to what deployment-vs-deployment would show.
+3. Math tasks barely feel INT2 at these lengths (−2.4 pts math500).
+
+## L7 — Llama-3.1-8B transfer (quality)
+
+Codebooks retrained from the Llama pool (gate ratio 1.006 vs Samuel's
+reference). LongBench 5-task means: vqgbo05 47.00, dctlmrw@2.0 46.43,
+vqgb 46.35, oscar_uni (Hadamard emulation, pgq3 bundle) 44.79. Row-paired
+vqgbo05 − oscar: +1.57 [−0.99, +4.21] — positive, not CI-separated (Llama
+variance; SGLang/RotationZoo unsupported for Llama, stated limitation).
+Direction matches Qwen; D1's quality conclusion transfers.
+
+## Amendment A10-1: Samuel's post-snapshot VQ supersedes our ported config
+at long context
+
+Samuel's shared table (n=800, same NIAH data + scorer; our BF16 anchors
+reproduce his to ≤0.9 pt) shows VQ at 96.6/79.5 (32/64K) using two levers
+added AFTER our snapshot: per-token RMS normalization (codebook trained
+in normalized space; ~+0.06 b/c for the stored scale) and long-context
+calibration. Our ported flat-config cells (87.6–89.2 / 65.8–69.1) measure
+the SNAPSHOT config; the Q3 honesty note "same-protocol OSCAR beats VQ at
+32K" is config-bound and flips under his levers. Reproduction of his
+config in our harness (trainer --pertoken-norm + long-ctx pool) is the
+top open follow-up.
+
+## Loose ends (recorded)
+
+- NIAH 8/16K cells for our arms (low information; production + BF16 controls
+  cover the regime).
+- pertoken-norm retrain + 32/64K rerun (Amendment A10-1 reproduction).
+- Page-RDO variable-rate VQ + 3 bpc arms (unspent 32K levers).
+- Batched/H100 kernel shoot-out (both repos' agreed venue for the speed gap).

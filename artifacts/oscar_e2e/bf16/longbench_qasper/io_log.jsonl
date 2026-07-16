@@ -1,0 +1,150 @@
+{"rid": 0, "response": " The ground truth for fake news is established through manual annotation by an expert."}
+{"rid": 1, "response": " By 68.8% to 71.8%"}
+{"rid": 3, "response": " FoxNews, CNN, ESPN, New York Times, Time magazine, Huffington Post Weird News, The Guardian, Cartoon Network, Cooking Light, Home Cooking Adventure, Justin Bieber, Nickelodeon, Spongebob, Disney."}
+{"rid": 2, "response": " Context tweets and their textual features are proposed as additional features."}
+{"rid": 4, "response": " yes"}
+{"rid": 5, "response": " An extrinsic evaluation using peer summaries and manual responsiveness scores."}
+{"rid": 6, "response": " The datasets used for evaluation are CNN/DailyMail, NYT, and XSum."}
+{"rid": 7, "response": " The proposed approach outperforms existing WSD approaches on benchmark datasets."}
+{"rid": 8, "response": " The ensemble method works by averaging the predictions from selected single models."}
+{"rid": 9, "response": " The sources of the datasets are Friends TV sitcom scripts and Facebook messenger chats."}
+{"rid": 10, "response": " English"}
+{"rid": 11, "response": " IMDb dataset of movie reviews."}
+{"rid": 12, "response": " The proposed system outperforms strong baseline systems."}
+{"rid": 13, "response": " yes"}
+{"rid": 14, "response": " unanswerable"}
+{"rid": 15, "response": " RNN-based NMT, Transformer-NMT, and SMT models."}
+{"rid": 16, "response": " The article does not specify the exact amount of improvement."}
+{"rid": 17, "response": " By enabling sparser and more adaptable attention distributions, leading to clearer head specializations and behaviors."}
+{"rid": 18, "response": " the baseline was a context-agnostic MT system trained on 6m instances."}
+{"rid": 19, "response": " XNLI test accuracy and Labeled Attachment Scores (LAS) for dependency parsing."}
+{"rid": 20, "response": " yes"}
+{"rid": 21, "response": " unanswerable"}
+{"rid": 22, "response": " They look at 22,880 users."}
+{"rid": 23, "response": " They create labels for symptoms and their attributes."}
+{"rid": 24, "response": " four machine translation tasks"}
+{"rid": 25, "response": " The improvement in performance for Estonian in the NER task is significant compared to fastText embeddings."}
+{"rid": 27, "response": " yes"}
+{"rid": 26, "response": " They have backgrounds in various disciplines including the humanities, social sciences, and computational methods."}
+{"rid": 28, "response": " The Nguni languages and the Sotho languages are similar to each other."}
+{"rid": 29, "response": " They compared 6-layers and 9-layers sMBR models."}
+{"rid": 30, "response": " The dataset consists of 29,794 articles."}
+{"rid": 31, "response": " A group of 50 native people who were well-versed in both English and Tamil languages acted as annotators for the evaluation."}
+{"rid": 32, "response": " yes"}
+{"rid": 33, "response": " Models are evaluated based on token retention rate and sentence reconstruction accuracy."}
+{"rid": 34, "response": " The source domain is the domain with labeled data, and the target domain is the new domain with few or no labeled data."}
+{"rid": 35, "response": " NeuronBlocks includes modules such as embedding layers, neural network layers (RNN, CNN, Transformer, etc.), loss functions, and metrics."}
+{"rid": 36, "response": " The Carnegie Mellon Pronouncing Dictionary and the multilingual pronunciation corpus from Wiktionary."}
+{"rid": 37, "response": " unanswerable"}
+{"rid": 38, "response": " English, Spanish, and Finnish."}
+{"rid": 39, "response": " They test their method on Named Entity Recognition, POS tagging, text classification, and language modeling."}
+{"rid": 40, "response": " unanswerable"}
+{"rid": 41, "response": " n-grams of order 7."}
+{"rid": 42, "response": " The Twitter dataset consists of 1,873 conversation threads with roughly 14,000 tweets."}
+{"rid": 43, "response": " The model is applied to the expanded `Conversations Gone Awry' dataset and the ChangeMyView (CMV) dataset."}
+{"rid": 44, "response": " unanswerable"}
+{"rid": 46, "response": " They combine audio and text sequences using dual RNNs and a feed-forward neural model."}
+{"rid": 45, "response": " The quality of the data is empirically evaluated through sanity checks including BLEU scores, perplexity measurements, character ratio analysis, and similarity scores using LASER embeddings."}
+{"rid": 47, "response": " BERT performs best by itself."}
+{"rid": 48, "response": " The data was collected using crowdsourcing."}
+{"rid": 49, "response": " Logistic Regression and deep learning models."}
+{"rid": 50, "response": " The benchmark dataset is the Social Honeypot dataset, and its quality is high."}
+{"rid": 51, "response": " The decoder has an LSTM architecture with an attention mechanism."}
+{"rid": 52, "response": " unanswerable"}
+{"rid": 53, "response": " The best performing model among the authors' submissions was ranked 3rd in the FLC task."}
+{"rid": 54, "response": " the baseline was the M2M Transformer NMT model (b3)."}
+{"rid": 55, "response": " 0.7033"}
+{"rid": 56, "response": " Word embedding techniques such as word2vec and second-order co-occurrence vectors."}
+{"rid": 57, "response": " CNN-RNN for painting embedding and seq2seq with global attention for language style transfer."}
+{"rid": 58, "response": " The transformer layer works better."}
+{"rid": 59, "response": " They addressed personal attack, racism, and sexism."}
+{"rid": 60, "response": " Three different types of entities exist in the dataset."}
+{"rid": 61, "response": " unanswerable"}
+{"rid": 62, "response": " They use BIBREF17, BIBREF18, TensiStrength, TwitterNLP, CogComp-NLP, and Stanford NLP NER."}
+{"rid": 63, "response": " SQuAD dataset"}
+{"rid": 64, "response": " existing approaches include bag-of-words representations, manual evaluations, and some vector space embeddings."}
+{"rid": 65, "response": " yes"}
+{"rid": 66, "response": " IMDb movie review dataset"}
+{"rid": 67, "response": " yes"}
+{"rid": 68, "response": " unanswerable"}
+{"rid": 69, "response": " The invertibility condition requires the neural projector to have an invertible transformation with a non-zero and differentiable Jacobian determinant."}
+{"rid": 70, "response": " The sizes of the datasets are 89,042 sentence pairs for the training set and 100 pairs for the test set in WikiSmall, and 296,402 sentence pairs for the training set in WikiLarge."}
+{"rid": 71, "response": " GloVe, Edinburgh embeddings, and Emoji embeddings."}
+{"rid": 72, "response": " Their results showed that personalized models outperformed baselines in generating plausible, coherent, and user-preferred recipes."}
+{"rid": 73, "response": " The combination of rewards for reinforcement learning includes the irony reward and the sentiment reward."}
+{"rid": 74, "response": " The authors demonstrate that the generated English poem may not work well with Shakespeare style transfer when the style transfer dataset lacks similar words in the training set."}
+{"rid": 75, "response": " Affective Text dataset, Fairy Tales dataset, and ISEAR dataset."}
+{"rid": 76, "response": " The dataset of hashtags is sourced from the Stanford Sentiment Analysis Dataset."}
+{"rid": 77, "response": " unanswerable"}
+{"rid": 78, "response": " A compact and meaningful representation of the context of the corresponding text."}
+{"rid": 79, "response": " unanswerable"}
+{"rid": 80, "response": " The SemEval-2016 \u201cSentiment Analysis in Twitter\u201d dataset."}
+{"rid": 81, "response": " They use small BERT."}
+{"rid": 82, "response": " yes"}
+{"rid": 83, "response": " Their performance on emotion detection achieved competitive or even state-of-the-art results for some emotion labels."}
+{"rid": 84, "response": " The tagging scheme employed is a three-tag scheme consisting of {INLINEFORM0}."}
+{"rid": 85, "response": " no"}
+{"rid": 86, "response": " InferSent, Universal Sentence Encoder, average GloVe embeddings."}
+{"rid": 87, "response": " The method improves F1 scores by +0.29 on CoNLL2003 and +0.96 on OntoNotes5.0 for English datasets, and by +0.97 on MSRA and +2.36 on OntoNotes4.0 for Chinese datasets."}
+{"rid": 88, "response": " The core component for KBQA is the improved relation detection model."}
+{"rid": 89, "response": " The baseline models are a simple Encoder-Decoder baseline with ingredient attention."}
+{"rid": 90, "response": " The methods considered include manual inspection, part-of-speech tagging, and coreference graph analysis with Louvain clustering."}
+{"rid": 91, "response": " They explore French, Spanish, Italian, Portuguese, Hebrew, Arabic, and German."}
+{"rid": 92, "response": " no"}
+{"rid": 93, "response": " The authors experimented with ILP-based summarization and algorithms from the Sumy package."}
+{"rid": 94, "response": " The previous state of the art for this task was the hierarchical LSTM (hLSTM) model with attention ablated but with access to the complete context."}
+{"rid": 95, "response": " unanswerable"}
+{"rid": 96, "response": " The corpus used for the task is DTA18 and DTA19."}
+{"rid": 97, "response": " Kannada, Hindi, Telugu, Malayalam, Bengali, and English."}
+{"rid": 98, "response": " The model achieves competitive performance on target language reading comprehension."}
+{"rid": 99, "response": " The proposed model outperforms baselines significantly."}
+{"rid": 100, "response": " The article does not provide specific numerical data on the exact amount of improvement gained from ARAML."}
+{"rid": 101, "response": " The authors present evidence that the model can detect biases in data collection and annotation by examining misclassification patterns and analyzing the impact of dataset biases on model performance."}
+{"rid": 102, "response": " yes"}
+{"rid": 103, "response": " The dataset contains 64% training, 16% development, and 20% test sets."}
+{"rid": 104, "response": " The method improvements of F1 for paraphrase identification include replacing the training objective with DSC loss, which increases F1 score by +0.58 for MRPC and +0.73 for QQP."}
+{"rid": 105, "response": " The datasets used include ERP components, eye-tracking data, and self-paced reading time data."}
+{"rid": 106, "response": " The article does not specify the exact data presented to the subjects to elicit event-related responses."}
+{"rid": 108, "response": " Traditional machine learning classifiers and neural network based models."}
+{"rid": 107, "response": " Pointer-Gen, Pointer-Gen+RL+ROUGE, Pointer-Gen+RL-SEN, Pointer-Gen+ARL-SEN."}
+{"rid": 109, "response": " Bi-directional and uni-directional language model architectures."}
+{"rid": 110, "response": " Weights are dynamically adjusted by associating each training example with a weight proportional to $(1-p)$, which changes as training proceeds."}
+{"rid": 111, "response": " An individual model consists of a Bayesian model for each language."}
+{"rid": 112, "response": " Non-standard pronunciation is identified through annotations of disfluencies, noises, and mispronunciations."}
+{"rid": 113, "response": " Bulgarian, Croatian, Czech, Danish, English, French, German, Indonesian, Italian, Norwegian, Persian, Polish, Portuguese, Slovenian, Spanish, and Swedish."}
+{"rid": 114, "response": " NCEL consistently outperforms various baselines with a favorable generalization ability."}
+{"rid": 115, "response": " yes"}
+{"rid": 116, "response": " The baseline used was the error detection system by Rei2016."}
+{"rid": 117, "response": " The annotated clinical notes were obtained from the 2010 i2b2/VA CE task."}
+{"rid": 118, "response": " Masking words in the decoder helps the model focus on one word at a time, leveraging BERT's contextualized representations for more accurate and natural summary generation."}
+{"rid": 119, "response": " unanswerable"}
+{"rid": 120, "response": " TF-IDF features are used."}
+{"rid": 121, "response": " The dataset is annotated with 9,473 annotations for 9,300 tweets, each labeled as no evidence of depression or evidence of depression, with further annotations for depressive symptoms."}
+{"rid": 122, "response": " eight publicly available biomedical NER tasks"}
+{"rid": 123, "response": " The training data was translated into Spanish using the machine translation platform Apertium."}
+{"rid": 124, "response": " A multinomial Naive Bayes classifier."}
+{"rid": 125, "response": " They compare with baselines that do not adopt joint learning."}
+{"rid": 126, "response": " The tweets are in English."}
+{"rid": 127, "response": " The UTCNN model has three convolutional layers."}
+{"rid": 128, "response": " The Natura 2000 dataset and the ScenicOrNot dataset."}
+{"rid": 129, "response": " The clinical datasets used in the paper are NUBes-PHI and MEDDOCAN."}
+{"rid": 130, "response": " Unigrams and pragmatic features."}
+{"rid": 132, "response": " yes"}
+{"rid": 131, "response": " Coverage and Avg. MCC and avg. +ve F1 score."}
+{"rid": 133, "response": " Experiments on irony generation, including automatic and human evaluations, error analysis, and additional experiments on transforming ironic sentences to non-ironic sentences."}
+{"rid": 134, "response": " Gaussian-masked directional multi-head attention works by applying a Gaussian weight matrix to adjust attention scores based on character distances and directional information."}
+{"rid": 135, "response": " Facebook and tweets."}
+{"rid": 136, "response": " The network's baseline features are the features extracted from the baseline CNN model used for sarcasm detection."}
+{"rid": 137, "response": " The number of clusters and the type of word vectors."}
+{"rid": 138, "response": " The corpus consists of 53 documents."}
+{"rid": 139, "response": " yes"}
+{"rid": 140, "response": " Text categorization and sentiment classification."}
+{"rid": 141, "response": " The training sets of these versions of ELMo are significantly larger compared to the previous ones."}
+{"rid": 142, "response": " 6946 sentences."}
+{"rid": 143, "response": " They compare to MLP, Eusboost, and MWMOTE."}
+{"rid": 144, "response": " yes"}
+{"rid": 145, "response": " unanswerable"}
+{"rid": 146, "response": " Their highest MRR score was 0.6103."}
+{"rid": 147, "response": " The Wall Street Journal (WSJ) portion of the Penn Treebank."}
+{"rid": 148, "response": " The authors evidence this claim by stating that building models under these frameworks requires a large overhead of mastering these framework details."}
+{"rid": 149, "response": " On SimpleQuestions and WebQSP benchmarks."}

@@ -391,7 +391,46 @@ the two-phase u round-trip — a latency price of the format's quality/rate
 wins at bs=1, expected to narrow at batch&gt;1 and on H100; conversely,
 OSCAR's format cannot recover the ~2 F1 both calibrated methods hold over it.</p>
 
-<h2 id="verdict">8 · Verdict &amp; the obvious synthesis</h2>
+<h2 id="pgq10">8 · pgq10 addendum: the port, production OSCAR, and closed questions</h2>
+<p>The pgq10 study (branch <code>pgq10</code>, report10.md) removed this page's
+two-harness caveats: Samuel's VQ was ported into our repo (bit-exact vs his
+codec; codebooks retrained from our pool, held-out gates 1.042 Qwen / 1.006
+Llama) and OSCAR was upgraded from reimplementation to <b>the authors' released
+rotation</b> (RotationZoo) in our protocol AND <b>their actual SGLang stack served
+end-to-end</b> (INT2 KV, A100, triton backends). All comparisons below are
+row-paired on identical prompts.</p>
+<div class="tblwrap"><table>
+<tr><th>Qwen3-8B, LongBench-5</th><th>b/coord (eff.)</th><th>mean F1</th><th>row-paired vs OSCAR (authors' rotation)</th></tr>
+<tr><td><b>pgq DCT+RDO @2.0</b></td><td>2.13</td><td><b>48.80</b></td><td><b>+3.37 [+1.11, +5.67] SIG</b></td></tr>
+<tr><td>VQ (band + 5% outlier)</td><td>~2.4</td><td>48.74</td><td><b>+2.37 [+0.46, +4.31] SIG</b></td></tr>
+<tr><td>OSCAR, authors' rotation, same protocol</td><td>~2.25+win</td><td>45.79</td><td>—</td></tr>
+<tr><td>OSCAR, production stack (served)</td><td>~2.3+win</td><td>47.39</td><td>different execution path, same rows</td></tr>
+</table></div>
+<p><b>Long context (NIAH 8-subtask mean, 32K / 64K):</b> fp16 98.5/85.2 ·
+pgq DCT 96.1/65.6 · OSCAR same-protocol 94.4/67.9 · VQ+outlier 89.2/69.1 ·
+<b>production OSCAR 74.2/23.4</b>. The BF16-served control (98.3/86.3) matches
+our fp16 arm, so the production collapse is NOT the serving stack: it is
+<b>streaming quantization</b> — chunked prefill attends over already-quantized
+keys and compounds error (−24/−63 pts in-stack vs −4/−17 for the same recipe
+quantized post-hoc). Our Mode-A comparisons are therefore conservative in
+OSCAR's favour. Note (Samuel, post-snapshot): per-token RMS normalization +
+long-context calibration lifts his VQ to 96.6/79.5 — the snapshot-config VQ
+rows above are superseded at long context; reproduction in our harness is the
+top follow-up.</p>
+<p><b>Speed, one harness, matched INT2-V (@128k, bs=1, A100):</b> vendored
+OSCAR kernel <b>0.261 ms</b> · pgq fused 0.836 (fp16-V) / 1.115 (INT2-V) ·
+VQ-K best (int64 codeword gathers) 0.971. Fixed-rate VQ beats the adaptive
+scalar format by 13% like-for-like — but stays 3.7× behind OSCAR: the
+codebook gather is architectural (Samuel's L1 diagnosis, reproduced
+independently). The §7 table's 5% VQ-vs-OSCAR gap was an artifact of fp16-V
+flooring both arms.</p>
+<p><b>Closed:</b> VQ×DCT (the "obvious synthesis" below) was built and gated —
+<b>NO-GO</b>: 2.2–2.7× worse proxy distortion than scalar-DCT at every rate.
+QPCA+DCT decorrelates both axes; nothing is left for the codebook to exploit.
+The two methods are substitutes, not complements. Math tasks (math-verify):
+production OSCAR INT2 costs only −2.4 pts on math500 (72.4 vs 74.8 served-BF16).</p>
+
+<h2 id="verdict">9 · Verdict &amp; the obvious synthesis (original, pre-pgq10)</h2>
 <div class="card verdict"><p style="margin:.3em 0">
 <b>Quality:</b> pgq ≥ VQ ≥ OSCAR. Row-paired, pgq@2.06 leads VQ@2.12 by +0.98
 (CI ∋ 0) on every task, and pgq matches VQ with 14% fewer bits; both calibrated
