@@ -1,0 +1,8 @@
+{
+  "correct": 5,
+  "answered": 22,
+  "accuracy": 0.16666666666666666,
+  "accuracy_boxed_exact": 0.16666666666666666,
+  "scorer": "math_verify",
+  "total": 30
+}

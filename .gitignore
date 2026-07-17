@@ -47,3 +47,4 @@ artifacts/calibration/*/05_reports/pooled_n50/shard_*.log
 
 third_party/samuel_vq/codebooks/*.pt
 artifacts/niah_bench/
+artifacts/prompt_rows/

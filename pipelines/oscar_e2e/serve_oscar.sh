@@ -31,6 +31,9 @@ ROT_DIR="$REPO_ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group1
 CUDA128="/vault/amir/.conda/envs/cuda128"
 
 export CUDA_VISIBLE_DEVICES=$GPU
+# Needed in BOTH modes: ctx 66560 exceeds Qwen3-8B's derived 40960 (RoPE
+# extrapolation, matching the transformers-harness behaviour at 64K).
+export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
 export CUDA_HOME="$CUDA128"
 export PATH="$CUDA128/bin:$PATH"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
