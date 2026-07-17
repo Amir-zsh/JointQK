@@ -67,6 +67,10 @@ ARGS=(
     --trust-remote-code
     --prefill-attention-backend triton
     --decode-attention-backend triton
+    # flashinfer's sampling kernel JIT-compiles on the first temperature>0
+    # request and fails on this box (cuda128 conda env has no curand.h);
+    # greedy runs never hit it. torch sampling is fine at bs<=8.
+    --sampling-backend pytorch
     --context-length "$CTX"
     --mem-fraction-static "$MEM_FRAC"
     --cuda-graph-max-bs 8
