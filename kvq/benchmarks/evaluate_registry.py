@@ -9,6 +9,7 @@
 
 import kvq.benchmarks  # noqa: F401  — side-effect: adds vendor/kvpress/evaluation/ to sys.path
 
+from kvq.benchmarks.gpqa_adapter import calculate_metrics as gpqa_scorer  # noqa: E402
 from kvq.benchmarks.math_verify_scorer import calculate_metrics as math_verify_scorer  # noqa: E402
 from benchmarks.infinite_bench.calculate_metrics import calculate_metrics as infinite_bench_scorer  # noqa: E402
 from benchmarks.longbench.calculate_metrics import calculate_metrics as longbench_scorer  # noqa: E402
@@ -39,6 +40,9 @@ DATASET_REGISTRY = {
     "needle_in_haystack": "alessiodevoto/paul_graham_essays",
     "aime25": "alessiodevoto/aime25",
     "math500": "alessiodevoto/math500",
+    # simple-evals CSV via kvq.benchmarks.gpqa_adapter.load_gpqa_df (not a HF
+    # dataset id) — the exporter special-cases this key.
+    "gpqa": "gpqa_adapter:diamond",
 }
 
 SCORER_REGISTRY = {
@@ -55,4 +59,5 @@ SCORER_REGISTRY = {
     # regex accuracy is reported alongside as accuracy_boxed_exact.
     "aime25": math_verify_scorer,
     "math500": math_verify_scorer,
+    "gpqa": gpqa_scorer,
 }

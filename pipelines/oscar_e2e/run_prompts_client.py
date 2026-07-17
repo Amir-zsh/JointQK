@@ -31,19 +31,22 @@ sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "vendor" / "kvpress"))
 
 
-def generate(base, rec, timeout, retries=3):
-    payload = {
-        "text": rec["prompt"],
-        "sampling_params": {
-            "temperature": 0.0,
-            "max_new_tokens": int(rec["max_new_tokens"]),
-        },
+def generate(base, rec, timeout, sampling, retries=3):
+    params = {
+        "max_new_tokens": int(rec["max_new_tokens"]),
+        **sampling,
     }
+    payload = {"text": rec["prompt"], "sampling_params": params}
     for attempt in range(retries):
         try:
             r = requests.post(f"{base}/generate", json=payload, timeout=timeout)
             r.raise_for_status()
-            return r.json()["text"]
+            out = r.json()
+            meta = out.get("meta_info", {})
+            return out["text"], {
+                "completion_tokens": meta.get("completion_tokens"),
+                "finish_reason": (meta.get("finish_reason") or {}).get("type"),
+            }
         except Exception as exc:
             if attempt == retries - 1:
                 raise
@@ -58,12 +61,32 @@ def main():
     ap.add_argument("--port", type=int, default=30800)
     ap.add_argument("--threads", type=int, default=8)
     ap.add_argument("--timeout", type=float, default=1800.0)
+    # Sampling: defaults follow the OSCAR authors' long-horizon eval driver
+    # (temperature 1.0, top_p 0.95, top_k 40) when --samples > 1; the
+    # single-sample default stays greedy for the existing NIAH/LB cells.
+    ap.add_argument("--samples", type=int, default=1,
+                    help="K independent samples per row (acc@K)")
+    ap.add_argument("--temperature", type=float, default=None,
+                    help="default: 0.0 when --samples 1, else 1.0")
+    ap.add_argument("--top-p", type=float, default=0.95)
+    ap.add_argument("--top-k", type=int, default=40)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
+
+    temperature = args.temperature
+    if temperature is None:
+        temperature = 0.0 if args.samples == 1 else 1.0
+    sampling = {"temperature": temperature}
+    if temperature > 0:
+        sampling.update({"top_p": args.top_p, "top_k": args.top_k})
 
     from kvq.benchmarks.evaluate_registry import SCORER_REGISTRY
 
     recs = [json.loads(l) for l in Path(args.rows).open()]
+    if args.samples > 1:
+        recs = [dict(r, sample_k=k) for k in range(args.samples) for r in recs]
+    else:
+        recs = [dict(r, sample_k=0) for r in recs]
     base = f"http://{args.host}:{args.port}"
     info = requests.get(f"{base}/get_server_info", timeout=30).json()
     t0 = time.time()
@@ -75,9 +98,13 @@ def main():
     log = (out / "io_log.jsonl").open("w")
 
     done = [0]
+    metas = {}
     def run_one(rec):
-        text = generate(base, rec, args.timeout)
-        log.write(json.dumps({"rid": rec["rid"], "response": text}) + "\n")
+        text, meta = generate(base, rec, args.timeout, sampling)
+        key = (rec["rid"], rec["sample_k"])
+        metas[key] = meta
+        log.write(json.dumps({"rid": rec["rid"], "sample_k": rec["sample_k"],
+                              "response": text, **meta}) + "\n")
         done[0] += 1
         if done[0] % 25 == 0:
             print(f"[client] {done[0]}/{len(recs)} ({time.time()-t0:.0f}s)", flush=True)
@@ -90,10 +117,28 @@ def main():
     df = pd.DataFrame(recs).drop(columns=["prompt"])
     df["predicted_answer"] = preds
     df["compression_ratio"] = None
+    df["completion_tokens"] = [metas[(r["rid"], r["sample_k"])]["completion_tokens"] for r in recs]
+    df["finish_reason"] = [metas[(r["rid"], r["sample_k"])]["finish_reason"] for r in recs]
     df.to_csv(out / "predictions.csv", index=False)
 
     dataset = recs[0]["dataset"]
-    metrics = SCORER_REGISTRY[dataset](df)
+    scorer = SCORER_REGISTRY[dataset]
+    if args.samples > 1:
+        per_k = [scorer(df[df.sample_k == k].reset_index(drop=True))
+                 for k in range(args.samples)]
+        metrics = {
+            "samples": args.samples,
+            "sampling": {**sampling, "top_p": args.top_p, "top_k": args.top_k},
+            "per_k": per_k,
+            "accuracy_avg_at_k": sum(m["accuracy"] for m in per_k) / len(per_k),
+            "cap_hit_rate": float((df.finish_reason == "length").mean()),
+            "mean_completion_tokens": float(df.completion_tokens.mean()),
+            "total": int((df.sample_k == 0).sum()),
+        }
+    else:
+        metrics = scorer(df)
+        metrics["cap_hit_rate"] = float((df.finish_reason == "length").mean())
+        metrics["mean_completion_tokens"] = float(df.completion_tokens.mean())
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2))
     (out / "server_info.json").write_text(json.dumps(info, indent=2, default=str))
     print(f"[client] metrics: {json.dumps(metrics)[:300]}", flush=True)

@@ -34,8 +34,14 @@ from kvq.benchmarks.evaluate_registry import DATASET_REGISTRY  # noqa: E402
 
 
 def prepare_df(dataset, data_dir, fraction, seed, exclude_indices_file):
-    df = load_dataset(DATASET_REGISTRY[dataset], data_dir=data_dir or None,
-                      split="test").to_pandas()
+    if dataset == "gpqa":
+        from kvq.benchmarks.gpqa_adapter import load_gpqa_df
+        # data_dir carries the variant (default diamond); row selection is
+        # whole-set, so fraction/exclude machinery below still applies.
+        df = load_gpqa_df(variant=data_dir or "diamond")
+    else:
+        df = load_dataset(DATASET_REGISTRY[dataset], data_dir=data_dir or None,
+                          split="test").to_pandas()
     if exclude_indices_file:
         exclude_map = json.loads(Path(exclude_indices_file).read_text())
         task_key = data_dir if data_dir is not None else dataset
@@ -68,6 +74,9 @@ def main():
     ap.add_argument("--exclude-indices-file", default=None)
     ap.add_argument("--max-new-tokens", type=int, default=None,
                     help="override; default = per-row dataset value")
+    ap.add_argument("--enable-thinking", action="store_true",
+                    help="open the <think> block in the chat template "
+                         "(Qwen3 thinking mode) for long-horizon tasks")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -81,7 +90,8 @@ def main():
     with out.open("w") as fh:
         for rid, row in df.iterrows():
             prompt = build_prompt(tok, row["context"], row.get("question", ""),
-                                  row.get("answer_prefix", ""))
+                                  row.get("answer_prefix", ""),
+                                  enable_thinking=args.enable_thinking)
             rec = {k: v for k, v in row.items() if k != "context"}
             for k, v in list(rec.items()):
                 if hasattr(v, "tolist"):
