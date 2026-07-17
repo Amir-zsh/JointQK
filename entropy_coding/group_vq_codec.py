@@ -8,15 +8,13 @@ codebook -- none of them trains one, so the 0.71/0.96 top-1/top-5 numbers in
 `notes/entropy_coding_throughput_report.md` don't trace to any script here.
 
 Groups the QPCA-transformed residual r = (k - mean) @ F into consecutive
-chunks of G=6 coordinates (matching vq_fused.cu's convention: 2 bits/coord *
-6 = 12 bits/group -> K=4096-entry codebook) and trains one codebook per
-(layer, kv_head, group) via batched Lloyd's algorithm (k-means) on the
-calibration residuals. d=128 doesn't divide evenly by 6 (128 = 21*6 + 2); the
-existing timing prototypes silently drop the trailing 2 coords (d_eff=126).
-For accuracy this trainer instead gives the trailing 2 coords their own small
-group at K=16 (2 bits/coord * 2 = 4 bits), covering all 128 dims while
-keeping the exact 2.0 bits/coord budget -- a documented improvement over the
-timing scripts' d_eff=126, to reconcile in the unified timing harness (B2).
+chunks of G coordinates (deployment default G=4: 2 bits/coord * 4 = 8 bits/group
+-> K=256-entry codebook; 2 KB/head fp16 or 256 B/head with fp8 codebook -- fits
+L1 for the fastest gather path in `fused_decode_all.py` VEC/VEC8). d=128 is
+evenly divisible by G=4 (128 = 32*4), no trailing remainder group needed.
+Alternate configs: G=6 (K=4096, ~1MB/head, exceeds 192KB L1 -> L2 gather, ~5x
+slower). The original G=6 prototypes silently dropped the trailing 2 coords
+(d_eff=126); this trainer handles remainder groups via `group_boundaries`.
 
 roundtrip(k) interface matches PerCoordCompressor's, so a GroupVQCompressor
 plugs directly into test_codec_on_data.py's `comps[method][b][(l,h)]`.
@@ -26,21 +24,20 @@ from __future__ import annotations
 import torch
 
 
-def group_boundaries(d: int, G: int) -> list[tuple[int, int, int]]:
+def group_boundaries(d: int, G: int, bpc: int = 2) -> list[tuple[int, int, int]]:
     """Return (start, end, bits_for_group) for each group covering [0, d).
 
-    Full groups get G coords at K=4096 (12 bits, exactly 2 bits/coord).
-    A trailing remainder group (if d % G != 0) gets its own K=4**rem
-    codebook (2 bits/coord for that group too), so the whole vector is
-    covered at a uniform 2.0 bits/coord.
+    Each full group gets G coords at `bpc` bits/coord (K = 2**(bpc*G)); a
+    trailing remainder group (if d % G != 0) gets bpc*rem bits, so the whole
+    vector is covered at a uniform `bpc` bits/coord. Default bpc=2.
     """
     bounds = []
     n_full = d // G
     for i in range(n_full):
-        bounds.append((i * G, (i + 1) * G, 2 * G))
+        bounds.append((i * G, (i + 1) * G, bpc * G))
     rem = d - n_full * G
     if rem > 0:
-        bounds.append((n_full * G, d, 2 * rem))
+        bounds.append((n_full * G, d, bpc * rem))
     return bounds
 
 
@@ -141,12 +138,19 @@ class GroupVQCompressor:
     forward_map; recon = (r_hat @ inverse_map) + mean.
     """
 
-    def __init__(self, forward_map, inverse_map, mean, codebooks, bounds):
+    def __init__(self, forward_map, inverse_map, mean, codebooks, bounds, pertoken_norm=False):
         self.forward_map = forward_map
         self.inverse_map = inverse_map
         self.mean = mean
         self.codebooks = codebooks   # list of (K_i, g_i)
         self.bounds = bounds         # list of (start, end, bits)
+        # OSCAR/KIVI-style per-token dynamic scale: divide each token's residual by
+        # its own RMS before the codebook lookup, multiply back on decode. Keeps the
+        # fixed codebook in-distribution at any context length (a token at RoPE
+        # position 60k is scaled back to the calibrated scale). Costs 1 scalar/token
+        # of metadata (~0.06 b/coord at fp8); the codebook must be trained with the
+        # same normalization (train_group_vq_alloc --pertoken-norm).
+        self.pertoken_norm = pertoken_norm
 
     def to(self, device):
         self.forward_map = self.forward_map.to(device)
@@ -181,10 +185,15 @@ class GroupVQCompressor:
         lead = k.shape[:-1]
         kf = k.reshape(-1, k.shape[-1])
         r = (kf.double() - self.mean.double()) @ self.forward_map.double()
+        if self.pertoken_norm:
+            scale = r.pow(2).mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
+            r = r / scale
         r_hat = torch.empty_like(r)
         for (s, e, _bits), cb in zip(self.bounds, self.codebooks):
             idx = _assign(r[:, s:e], cb.double())
             r_hat[:, s:e] = cb.double()[idx]
+        if self.pertoken_norm:
+            r_hat = r_hat * scale
         k_hat = r_hat @ self.inverse_map.double() + self.mean.double()
         return k_hat.reshape(*lead, k.shape[-1]).to(dtype)
 
@@ -194,7 +203,7 @@ class GroupVQCompressor:
         return sum(b for _, _, b in self.bounds) / d
 
 
-def train_group_vq_compressors(F, inv, k_mean, fetch_calib, L, Hkv, d, G=6,
+def train_group_vq_compressors(F, inv, k_mean, fetch_calib, L, Hkv, d, G=4,
                                 iters=25, device="cuda", seed=0, verbose=True):
     """Train one GroupVQCompressor per (layer, kv_head).
 
@@ -247,4 +256,43 @@ class SinkRecentWrap:
             return k                                  # whole (short) seq protected
         out = k.clone()
         out[..., s:S - r, :] = self.inner.roundtrip(k[..., s:S - r, :])
+        return out
+
+
+class OutlierProtectWrap:
+    """Content-based (not positional) outlier protection: quantize every token
+    with the wrapped compressor, then restore the `frac` fraction of tokens with
+    the largest reconstruction error to full precision. Targets atypical keys a
+    fixed codebook can't represent (e.g. a NIAH needle) -- the variable-rate
+    behaviour that a fixed-rate VQ otherwise lacks. Stacks on top of a
+    SinkRecentWrap (positional band) so the two protections compose; the band's
+    exact tokens have ~0 error so they're never double-counted. k: (..., S, d),
+    sequence axis is dim -2. `.roundtrip`/`.to` mirror GroupVQCompressor.
+
+    Rate cost: `frac` of tokens stored at `store_bits` b/coord instead of the
+    codec's base rate -> +frac*(store_bits - base) b/coord (fp8 store_bits=8)."""
+
+    def __init__(self, inner, frac: float = 0.0):
+        self.inner = inner
+        self.frac = float(frac)
+        self.forward_map = getattr(inner, "forward_map", None)
+
+    def to(self, device):
+        self.inner.to(device)
+        return self
+
+    def roundtrip(self, k):
+        out = self.inner.roundtrip(k)
+        if self.frac <= 0 or k.dim() < 2:
+            return out
+        S = k.shape[-2]
+        n = int(self.frac * S)
+        if n <= 0:
+            return out
+        err = ((k.double() - out.double()) ** 2).sum(-1)         # (..., S)
+        idx = err.topk(n, dim=-1).indices                        # worst-n token positions
+        # emulate an fp8 side-buffer for the protected keys (realistic rate, not fp16 ceiling)
+        prot = k.gather(-2, idx.unsqueeze(-1).expand(*idx.shape, k.shape[-1]))
+        prot = prot.to(torch.float8_e4m3fn).to(out.dtype)
+        out.scatter_(-2, idx.unsqueeze(-1).expand(*idx.shape, k.shape[-1]), prot)
         return out

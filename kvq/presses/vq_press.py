@@ -33,7 +33,7 @@ from kvq.presses.jointqk_press import JointQKPress
 _EC_DIR = Path(__file__).resolve().parents[2] / "entropy_coding"
 if str(_EC_DIR) not in sys.path:
     sys.path.insert(0, str(_EC_DIR))
-from group_vq_codec import GroupVQCompressor, SinkRecentWrap  # noqa: E402
+from group_vq_codec import GroupVQCompressor, SinkRecentWrap, OutlierProtectWrap  # noqa: E402
 
 
 @dataclass
@@ -44,6 +44,9 @@ class VQPress(JointQKPress):
     # Sized far below OSCAR's 64/256 so the bit-rate cost stays small.
     vq_sink: int = 0
     vq_recent: int = 0
+    # Content-based outlier protection: restore the worst-reconstructed `vq_outlier_frac`
+    # fraction of tokens to fp8 (stacks on top of the positional band). 0 = off.
+    vq_outlier_frac: float = 0.0
 
     _vq_loaded: bool = field(default=False, init=False, repr=False)
 
@@ -58,15 +61,19 @@ class VQPress(JointQKPress):
             bounds, cbs = payload["bounds"], payload["codebooks"]
             L, Hkv = F.shape[0], F.shape[1]
             self._n_layers, self._n_kv_heads = L, Hkv
+            ptn = bool(payload.get("pertoken_norm", False))
             for l in range(L):
                 if l == 0 and self.layer0_full_precision:
                     continue
                 for h in range(Hkv):
                     gvq = GroupVQCompressor(
-                        F[l, h], inv[l, h], mean[l, h], list(cbs[(l, h)]), bounds)
-                    self._k_compressors[(l, h)] = (
-                        SinkRecentWrap(gvq, self.vq_sink, self.vq_recent)
-                        if (self.vq_sink or self.vq_recent) else gvq)
+                        F[l, h], inv[l, h], mean[l, h], list(cbs[(l, h)]), bounds,
+                        pertoken_norm=ptn)
+                    comp = (SinkRecentWrap(gvq, self.vq_sink, self.vq_recent)
+                            if (self.vq_sink or self.vq_recent) else gvq)
+                    if self.vq_outlier_frac > 0:
+                        comp = OutlierProtectWrap(comp, self.vq_outlier_frac)
+                    self._k_compressors[(l, h)] = comp
             self._vq_loaded = True
 
         # V side + bookkeeping: run the parent with quantize_k masked off so it only

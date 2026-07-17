@@ -249,7 +249,7 @@ if __name__ == "__main__":
     ap.add_argument("--n-heads", type=int, default=288)
     ap.add_argument("--Ts", type=int, nargs="+", default=[16384, 65536])
     ap.add_argument("--n-splits", type=int, default=32)
-    ap.add_argument("--G", type=int, default=6, help="VQ group size; codebook/head = 256*2^(2G) bytes -> L1 cliff at G>=5")
+    ap.add_argument("--G", type=int, default=4, help="VQ group size; deployment default: G=4 (fp8 codebook, L1-resident, int32-gather VEC path); G=6 exceeds L1 (192KB) and runs at L2 speed (~5x slower).")
     args = ap.parse_args()
     torch.manual_seed(0); H = args.n_heads; ns = args.n_splits
     G = args.G; NG = d // G; K = 1 << (2 * G); Dk = NG * G      # rate 2 bits/coord -> K=2^(2G)

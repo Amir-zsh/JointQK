@@ -17,7 +17,7 @@ folded into the query (RoPE), so keys stay in the coded space at decode.
 | file | method / role |
 |---|---|
 | `run_pca_ec_deadzone.py` | **core lib** — `calib_moments`, `build_qpca_basis`, `build_qpca_fixed_deadzone` (INT2), `build_qpca_ec` (EC delta+model), `UniformECRoundtrip`, `_dz_round/_dz_dequant` |
-| `group_vq_codec.py` | **VQ** — `GroupVQCompressor`, `_kmeans` (chunked Lloyd), `SinkRecentWrap` (fp16 band), `group_boundaries` |
+| `group_vq_codec.py` | **VQ** — `GroupVQCompressor` (with optional `pertoken_norm=True` for OSCAR-style per-token RMS normalization), `_kmeans` (chunked Lloyd, optional ECVQ rate penalty), `SinkRecentWrap` (fp16 band), `OutlierProtectWrap` (content-based outlier band), `group_boundaries` |
 | `oscar_codec.py` | **OSCAR** — `build_oscar_rotation`, `OSCARCompressor` (Lloyd-Max INT2 + sink/recent) |
 | `expgolomb_codec.py` | **Exp-Golomb** coder (`estimate_bits_per_coord`, `choose_k_per_coord`, GPU decode) |
 | `kvq_codec.py` (+`rans_interleaved.py`) | **rANS** paged codec (`PageCodecRANS[CUDA]`, `BatchRANS{En,De}coder`) |
@@ -26,7 +26,7 @@ folded into the query (RoPE), so keys stay in the coded space at decode.
 | file | what it builds |
 |---|---|
 | `capture_basis_moments.py` | 400-prompt pooled Σ (`capture`/`merge`); per-example q/k pools (`codepool`) |
-| `train_group_vq_alloc.py` | VQ codebooks (`vqa_*.pt`) — grouping/allocation knobs |
+| `train_group_vq_alloc.py` | VQ codebooks (`vqa_*.pt`) — `--G` (default 4, deployment config), `--grouping`, `--allocation`, `--pertoken-norm` (train on per-token-normalized residuals; codebook decodes with the same normalization at inference — matches OSCAR/KIVI's per-token dynamic scale approach), `--ecvq-lambda`, `--qtau` |
 | `build_method_bundles.py` | scalar-INT2 / OSCAR / EC compressor bundles (`mb_*.pt`) |
 | `make_fp8.py` | fp8-quantize a VQ codebook (`--fmt e4m3|e5m2`) |
 
@@ -43,7 +43,9 @@ folded into the query (RoPE), so keys stay in the coded space at decode.
 
 **Fused decode kernels** (Triton + CUDA; keep for the **H100** extension)
 `fused_decode_all.py` (BF16/INT2/OSCAR/VQ + fp8 `VQ8` path, correctness-gated,
-`--G 4`), `fused_decode_vark.py` (variable-K), `vq_fused.cu`, `vq_decode.cu`,
+**`--G 4` is the deployment default** — L1-resident codebook, int32-gather VEC
+path; `--G 6` exceeds L1 and runs ~5× slower at L2 speed),
+`fused_decode_vark.py` (variable-K), `vq_fused.cu`, `vq_decode.cu`,
 `rans_{decode,encode,decode_lut}.cu`, `expgolomb_decode.cu`.
 
 `_archive/` — superseded prototypes/micro-benchmarks (safe to delete).
@@ -83,7 +85,16 @@ python3 pipelines/bench/worker.py --model $Q --commands-file <cells.jsonl> \
 python3 entropy_coding/aggregate_f1.py artifacts/<run>          # -> the F1 table
 
 # 4) decode throughput (A100; correctness-gated; prints BF16/INT2/OSCAR/VQ/VQ8)
-CUDA_VISIBLE_DEVICES=0 python3 entropy_coding/fused_decode_all.py --G 4 --Ts 65536
+# `--G 4` is now the default (deployment config); safe to omit.
+CUDA_VISIBLE_DEVICES=0 python3 entropy_coding/fused_decode_all.py --Ts 65536
+
+# 4b) fair-conditions timing: VQ8 vs OSCAR with BOTH K and V at INT2 (matches OSCAR's own
+#     benchmark setup; V=fp16 in step 4 above dilutes K-compression ratios toward 1×).
+CUDA_VISIBLE_DEVICES=0 python3 entropy_coding/bench_vint2.py --Ts 131072
+#     Expected on A100, bs=1, T=128K, 288 heads: VQ8 ≈ 10.9 ms, OSCAR ≈ 11.4 ms
+#     (VQ8 slightly faster; both around 0.30–0.32 ms/layer). Under matched Triton
+#     kernels the two are within 5% — the ~4× gap Amir reported is OSCAR's native
+#     CUDA kernel vs a non-VEC/L2-resident VQ (G=6, K=4096), NOT VQ8 (G=4, fp8, L1).
 
 # 5) fidelity proxy + EG rate
 python3 entropy_coding/proxy_score.py --eval-idx 20 21 22 23 \

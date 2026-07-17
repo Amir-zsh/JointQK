@@ -104,6 +104,9 @@ if __name__ == "__main__":
     ap.add_argument("--G", type=int, default=4)
     ap.add_argument("--grouping", choices=["consecutive", "stratified"], default="consecutive")
     ap.add_argument("--allocation", choices=["flat", "waterfill"], default="flat")
+    ap.add_argument("--bpc", type=int, default=2, help="target bits/coord (flat: uniform; waterfill: average)")
+    ap.add_argument("--qtau", type=float, default=1.0, help="Sigma_Q whitening temperature (1=full QPCA, <1 tempers toward Sigma_K PCA)")
+    ap.add_argument("--pertoken-norm", action="store_true", help="OSCAR/KIVI-style per-token RMS normalization before k-means (codebook sees unit-scale vectors)")
     ap.add_argument("--whiten", action="store_true")
     ap.add_argument("--max-k-bits", type=int, default=13)
     ap.add_argument("--iters", type=int, default=25)
@@ -129,7 +132,7 @@ if __name__ == "__main__":
     else:
         sq, sk, km, kc, meta = base.calib_moments(root, man, code_idx)
     L, Hkv, d = meta["n_layers"], meta["n_kv_heads"], meta["d_head"]
-    qc = base.build_qpca_basis(sq, kc); qc["sigma_k"] = sk
+    qc = base.build_qpca_basis(sq, kc, tau=args.qtau); qc["sigma_k"] = sk
     F, inv, score = qc["forward"].clone(), qc["inverse"].clone(), qc["score"].clone()  # (L,Hkv,d,d)/(L,Hkv,d)
     std = qc["std"].clone()
 
@@ -147,7 +150,7 @@ if __name__ == "__main__":
         inv = inv * std.unsqueeze(-1)                  # scale rows of inv by std
         score = torch.ones_like(score)                 # whitened -> flat score (all unit var)
 
-    bounds = group_boundaries(d, args.G)
+    bounds = group_boundaries(d, args.G, args.bpc)
     fetch = base._codes_for_idx(root, man, code_idx, F, km, L, Hkv, d)
 
     print(f"cfg G={args.G} grouping={args.grouping} alloc={args.allocation} whiten={args.whiten} "
@@ -158,8 +161,10 @@ if __name__ == "__main__":
     for l in range(L):
         for h in range(Hkv):
             r = fetch(l, h).to(dev)                    # (N, d) permuted+whitened residual
+            if args.pertoken_norm:                     # OSCAR/KIVI-style per-token RMS scale
+                r = r / r.pow(2).mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
             if args.allocation == "waterfill":
-                gbits = group_bit_alloc(score[l, h], bounds, avg_bits=2, max_k_bits=args.max_k_bits)
+                gbits = group_bit_alloc(score[l, h], bounds, avg_bits=args.bpc, max_k_bits=args.max_k_bits)
             else:
                 gbits = [b for (_, _, b) in bounds]     # flat 2*len(group)
             cbs = []
@@ -178,6 +183,7 @@ if __name__ == "__main__":
     payload = dict(forward=F.cpu(), inverse=inv.cpu(), mean=km.cpu(), codebooks=comps_cb,
                    bounds=bounds, G=args.G, grouping=args.grouping, allocation=args.allocation,
                    whiten=args.whiten, ecvq_lambda=args.ecvq_lambda,
+                   pertoken_norm=args.pertoken_norm,
                    bits_per_coord=float(sum(bpc_acc) / len(bpc_acc)))
     torch.save(payload, args.out)
     print(f"SAVED {args.out} | real avg bits/coord = {payload['bits_per_coord']:.4f}", flush=True)

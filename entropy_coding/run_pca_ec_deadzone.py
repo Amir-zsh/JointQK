@@ -218,12 +218,18 @@ def build_jointqk_basis(sigma_q, sigma_k, eps=EPS):
     return {"forward": forward, "inverse": inverse, "score": q_diag * k_diag, "std": k_diag.sqrt()}
 
 
-def build_qpca_basis(sigma_q, sigma_k):
+def build_qpca_basis(sigma_q, sigma_k, tau=1.0):
+    # tau tempers the Sigma_Q whitening: forward = Sigma_Q^(tau/2) V. tau=1 is full
+    # QPCA (code-space is exactly Sigma_Q-whitened -> Euclidean == softmax-logit
+    # distortion, but low-variance query directions are starved); tau->0 backs off
+    # toward plain Sigma_K PCA (uniform resolution across directions). Rate/throughput
+    # unchanged -- the inverse folds into the query as always.
     sq = _sym(sigma_q.to(torch.float64))
     sk = _sym(sigma_k.to(torch.float64))
     ev, U = torch.linalg.eigh(sq)
-    sqrt_mq = U @ torch.diag_embed(ev.sqrt()) @ U.transpose(-1, -2)
-    isqrt_mq = U @ torch.diag_embed(ev.rsqrt()) @ U.transpose(-1, -2)
+    ev = ev.clamp_min(1e-30)
+    sqrt_mq = U @ torch.diag_embed(ev.pow(0.5 * tau)) @ U.transpose(-1, -2)
+    isqrt_mq = U @ torch.diag_embed(ev.pow(-0.5 * tau)) @ U.transpose(-1, -2)
     A = _sym(sqrt_mq @ sk @ sqrt_mq)
     lam, V = torch.linalg.eigh(A)
     order = torch.argsort(lam, dim=-1, descending=True)
