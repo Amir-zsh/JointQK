@@ -1,0 +1,9 @@
+{
+  "relmse_ours": 0.180002841300198,
+  "relmse_ref": 0.0407787638417046,
+  "ratio": 4.414131875084168,
+  "tol": 0.05,
+  "ref_codebook": "third_party/samuel_vq/codebooks/vqa_G4_strat_flat_fair_fp8.pt",
+  "n_cells": 280,
+  "gate_pass": false
+}

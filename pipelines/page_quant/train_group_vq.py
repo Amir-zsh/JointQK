@@ -252,7 +252,8 @@ def main():
     for l in range(1, L):                        # layer-0 excluded (headline convention)
         for h in range(H):
             ours = GroupVQCompressor(F[l, h], inv[l, h], mu[l, h],
-                                     [c for c in comps_cb[(l, h)]], bounds).to(dev)
+                                     [c for c in comps_cb[(l, h)]], bounds,
+                                     pertoken_norm=bool(args.pertoken_norm)).to(dev)
             his = GroupVQCompressor(ref["forward"][l, h], ref["inverse"][l, h],
                                     ref["mean"][l, h],
                                     list(ref["codebooks"][(l, h)]),
