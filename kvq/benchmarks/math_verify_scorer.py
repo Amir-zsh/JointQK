@@ -16,14 +16,19 @@ from math_verify import parse, verify
 
 
 def _mv_correct(pred_answer, true_answer) -> bool:
+    # Gold answers in these datasets are bare latex ("\\left( 3, \\frac..."),
+    # which parse() can MISparse to a bare number while still returning a
+    # truthy result (tuples come back as their first scalar), so the wrapped
+    # "$...$" parse must always be tried too — not only as a fallback on
+    # empty. Accept if either gold reading verifies.
     try:
-        gold = parse(str(true_answer))
-        if not gold:
-            gold = parse(f"${true_answer}$")
         pred = parse(str(pred_answer))
-        if not gold or not pred:
+        if not pred:
             return False
-        return bool(verify(gold, pred))
+        for gold in (parse(f"${true_answer}$"), parse(str(true_answer))):
+            if gold and verify(gold, pred):
+                return True
+        return False
     except Exception:
         return False
 
