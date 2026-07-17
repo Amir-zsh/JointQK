@@ -96,9 +96,18 @@ His long-context calibration wins by 8–12 pts → **the vq2 arm ships his
 codebook**. (Also confirms his reported 96.6/79.5 within quarter-sample
 noise.)
 
-**V2 served-quality**: [MORNING] our-codebook NIAH-800 served vs Mode-A
-87.6; his-codebook NIAH-100 served vs Mode-A 95.9 (5-pt bar). Both cells
-under `artifacts/oscar_e2e/{vq2,lh/v2_vq2gpqacc_niah100}`.
+**V2 served-quality — PASS, with a headline**: our-codebook NIAH-32K
+**800-row served = 93.7** vs Mode-A same-codebook 87.6 (f=0.25). The served
+engine — chunked prefill attending over already-quantized keys, decode-time
+aging, the full streaming regime — is 6 points BETTER than the post-hoc
+harness cell (the 64/256 HP band accounts for it). Contrast production
+OSCAR int2 in the same stack: 74.2 served vs ~96 post-hoc Mode-A.
+**Streaming quantization is where OSCAR's int2 loses 20+ points and VQ
+loses nothing.** His-codebook 100-row served gate came back 100.0 but the head-100 slice is
+all `niah_single_1` (rows are grouped by subtask) — every arm aces that
+subtask, so it only proves the gpqacc64k engine path is wired sanely.
+[MORNING: stratified or full 800-row served NIAH on the gpqacc64k server
+for the proper within-5-pts-of-95.9 comparison.]
 
 ## C0-lite gates
 
@@ -125,11 +134,39 @@ under `artifacts/oscar_e2e/{vq2,lh/v2_vq2gpqacc_niah100}`.
 
 ## C1 results [MORNING]
 
+Early landings (raw, CIs pending the full aggregation):
+
+| avg@4 | gpqa | math500 | aime25 |
+|---|---|---|---|
+| bf16 | 0.586 (cap 0%) | 0.901 (cap **19.9%**) | [pending] |
+| int2 | 0.542 (cap 1%)  | [pending] | [pending] |
+| vq2  | [pending] | [pending] | [pending] |
+
+Δ(int2 − bf16) on gpqa = **−4.4 pts** — production OSCAR's quantization
+costs real accuracy at generation time (B-LH2). int2's traces also run
+~500 tokens longer with ~3 pts lower extraction (mild degeneration).
+
+Caveat: math500's 8192 cap hits 19.9% of bf16 traces (the C0 probe was
+gpqa-only; math traces run longer than its mean suggested). Same rows/cap
+across arms, so paired deltas stand; absolutes are deflated a few points.
+[MORNING option: 16384-cap rerun of math500 on all three arms.]
+
 - avg@4 / pass@4 tables per task × arm, aggregate_acck.py output.
 - B-LH1/2/3 verdicts with paired bootstrap CIs.
 - Honest rates: vq2 K = 2.0 b/coord + bf16 ptn scale/token/head + ring;
   int2 = 2 b/coord + scales; both + 64/256 HP band amortized.
 - Telemetry: cap-hit, mean trace length per arm (degeneration signal).
+
+## Mid-run implementation review
+
+A line-by-line review of the engine edits, eval plumbing, and arm symmetry
+was done while the waves ran: see
+[`plan11_review_findings.md`](plan11_review_findings.md). Nothing
+invalidates the comparison; the two mandatory disclosures are **F1** (vq2 K
+memory is 4.5 b/coord as-built vs 2.25 b/coord information — int16 indices
+are a speed choice, packable to parity) and **F2** (both arms' calibrations
+are GPQA-domain — symmetric). F6 lists two engine hardening TODOs (extend
+fallback assert; retraction instead of hard-crash on pool exhaustion).
 
 ## Artifacts
 
