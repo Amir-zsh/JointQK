@@ -1,4 +1,6 @@
 .venv/
+vendor/OSCAR/
+vendor/OSCAR-vq/
 vendor/kvpress/
 vendor/turboquant-pytorch/
 vendor/turboquant_pytorch

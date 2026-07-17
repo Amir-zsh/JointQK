@@ -16,16 +16,25 @@ PORT=30800
 MODE=int2
 CTX=73728          # RULER-64K + generation headroom; 131072 arenas OOM on A100-40GB
 MEM_FRAC=0.78
+VQ_CODEBOOK="${VQ_CODEBOOK:-artifacts/page_quant2/vqg_bundle__qwen3_8b_flat_ptn.pt}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --gpu) GPU="$2"; shift 2 ;;
         --port) PORT="$2"; shift 2 ;;
         --bf16) MODE=bf16; shift ;;
+        --vq2) MODE=vq2; shift ;;
+        --vq-codebook) VQ_CODEBOOK="$2"; shift 2 ;;
         --ctx) CTX="$2"; shift 2 ;;
         --mem-frac) MEM_FRAC="$2"; shift 2 ;;
         *) echo "Unknown flag: $1" >&2; exit 1 ;;
     esac
 done
+
+# All modes run on the vq2-longhorizon clone (vendor/OSCAR-vq) so the three
+# long-horizon arms share one engine stack; the vq2 additions are inert unless
+# SGLANG_VQ_CODEBOOK_PATH is set. PYTHONPATH shadows the editable install of
+# vendor/OSCAR in .venv-oscar.
+export PYTHONPATH="$(cd "$(dirname "$0")/../.." && pwd)/vendor/OSCAR-vq/sglang-research/python:${PYTHONPATH:-}"
 
 ROT_DIR="$REPO_ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128"
 CUDA128="/vault/amir/.conda/envs/cuda128"
@@ -73,7 +82,7 @@ ARGS=(
     --disable-radix-cache
 )
 
-if [[ "$MODE" == "int2" ]]; then
+if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
     # Serve-time parameters exactly as the authors' eval driver sets them
     # (64/256 band + clips live in the DRIVER env, not the code defaults).
     export SGLANG_ENABLE_MIXED_KV_WINDOWS=1
@@ -83,11 +92,20 @@ if [[ "$MODE" == "int2" ]]; then
     export SGLANG_OSCAR_V_CLIP_RATIO=0.92
     export SGLANG_OSCAR_ABSORB_V_ROTATION=1
     export SGLANG_MIXED_KV_PREFIX_TOKENS=64
-    export SGLANG_MIXED_KV_RECENT_TOKENS=256
+    export SGLANG_MIXED_KV_RECENT_TOKENS="${RECENT_TOKENS:-256}"
     export SGLANG_MIXED_KV_HP_DTYPE=bfloat16
     export SGLANG_MIXED_KV_SCALE_DTYPE=float32
     export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
     ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
+fi
+if [[ "$MODE" == "vq2" ]]; then
+    # K quant tier switches to group-VQ (Samuel's fused-gather kernel design);
+    # V and the K clip env above stay on the int2 path (K clip is ignored by
+    # the VQ encoder).
+    case "$VQ_CODEBOOK" in
+        /*) export SGLANG_VQ_CODEBOOK_PATH="$VQ_CODEBOOK" ;;
+        *)  export SGLANG_VQ_CODEBOOK_PATH="$REPO_ROOT/$VQ_CODEBOOK" ;;
+    esac
 fi
 
 exec "$REPO_ROOT/.venv-oscar/bin/python" -m sglang.launch_server "${ARGS[@]}"
