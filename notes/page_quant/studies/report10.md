@@ -209,3 +209,32 @@ top open follow-up.
 - pertoken-norm retrain + 32/64K rerun (Amendment A10-1 reproduction).
 - Page-RDO variable-rate VQ + 3 bpc arms (unspent 32K levers).
 - Batched/H100 kernel shoot-out (both repos' agreed venue for the speed gap).
+
+## Amendment A10-2 (2026-07-17): the 3.7× VQ-vs-OSCAR speed gap was mostly
+OUR harness, not the VQ format
+
+Samuel's bench_vint2.py (his commit 3c65507) times single-kernel fused
+decode with K AND V at 2-bit, whole model per launch (288 head-programs ×
+32 splits), per-layer = ÷36. Reproduced verbatim on our A100 (GPU 5):
+
+| kernel @128k/layer, bs=1, K+V 2-bit | ms | vs authors' kernel |
+|---|---|---|
+| authors' vendored OSCAR (our K3 bench, best-of-splits) | 0.261 | 1.00× |
+| Samuel's VQ8 fused (G=4, K=256, fp8 codebook, int32/codeword, BT=128) | 0.302 | 1.16× |
+| Samuel's OSCAR reimpl (per-token affine INT2, BT=32) | 0.316 | 1.21× |
+| our vqk64 (two-phase, fp16 codebook, int64/codeword) | 0.971 | 3.72× |
+
+REVISION of the S5/B-S1 interpretation: the B-S1 bars remain NOT MET as
+registered (they were defined on our kernel), but the "VQ is architecturally
+gather-bound at bs=1" reading was over-broad. In a fused single-kernel
+design with enough CTAs (9216 here), warp concurrency hides the codebook
+gather latency EVEN at bs=1: VQ lands within 16% of the authors' production
+kernel. Our 0.971 decomposes mostly into OUR two-phase structure (u-buffer
+round-trip + per-layer phase launches) plus fp16/int64 codewords vs his
+fp8/int32. Corollary for pgq: plan9's unfinished S3 full A+B fusion (dropped
+for register-pressure risk) is worth revisiting — part of our own 3.2× gap
+to OSCAR is likely the same harness structure.
+Checked and negative: switching his int16 indices to uint8 (halving K-code
+bytes) made VQ SLOWER (0.302→0.317) — int16 gathers vectorize better; his
+config is already right. His G=6 concern doesn't apply to our measurement
+(we used G=4/K=256 throughout; 64 KB fp16 codebook, L1-resident).
