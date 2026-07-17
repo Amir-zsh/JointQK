@@ -21,3 +21,15 @@ of Samuel's regenerated RULER-NIAH datasets (`gen_niah.py`, uncommitted) read
 from `/vault/samuel/efficient-llm/JointQK/artifacts/niah/{8192,16384,32768,65536}`
 (HF save_to_disk format, 800 rows = 8 subtasks x 100 each). Same schema as
 simonjegou/ruler (which caps at 16k); scorer = vendored ruler scorer.
+
+## Snapshot refresh (2026-07-17) — commit 3c65507 (PINNED)
+
+Source tree now committed: entropy_coding commit 3c65507 ("per-token-norm VQ,
+G=4 as deployment default, V=INT2 benchmark"). Files above refreshed to the
+committed versions; added bench_vint2.py and the per-token-norm long-context
+codebook:
+
+| file | sha256 |
+|---|---|
+| bench_vint2.py | 3c49584c401ca1a9c85ce03dda313977dac60b6e6895a0f6bd343f289cb5b60d |
+| vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt | b277bddf16f753c5fc31d8e8f1db05c0aaca1007d217ead7b7467214297e6b63 |

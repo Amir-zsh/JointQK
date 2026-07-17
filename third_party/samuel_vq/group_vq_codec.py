@@ -8,15 +8,13 @@ codebook -- none of them trains one, so the 0.71/0.96 top-1/top-5 numbers in
 `notes/entropy_coding_throughput_report.md` don't trace to any script here.
 
 Groups the QPCA-transformed residual r = (k - mean) @ F into consecutive
-chunks of G=6 coordinates (matching vq_fused.cu's convention: 2 bits/coord *
-6 = 12 bits/group -> K=4096-entry codebook) and trains one codebook per
-(layer, kv_head, group) via batched Lloyd's algorithm (k-means) on the
-calibration residuals. d=128 doesn't divide evenly by 6 (128 = 21*6 + 2); the
-existing timing prototypes silently drop the trailing 2 coords (d_eff=126).
-For accuracy this trainer instead gives the trailing 2 coords their own small
-group at K=16 (2 bits/coord * 2 = 4 bits), covering all 128 dims while
-keeping the exact 2.0 bits/coord budget -- a documented improvement over the
-timing scripts' d_eff=126, to reconcile in the unified timing harness (B2).
+chunks of G coordinates (deployment default G=4: 2 bits/coord * 4 = 8 bits/group
+-> K=256-entry codebook; 2 KB/head fp16 or 256 B/head with fp8 codebook -- fits
+L1 for the fastest gather path in `fused_decode_all.py` VEC/VEC8). d=128 is
+evenly divisible by G=4 (128 = 32*4), no trailing remainder group needed.
+Alternate configs: G=6 (K=4096, ~1MB/head, exceeds 192KB L1 -> L2 gather, ~5x
+slower). The original G=6 prototypes silently dropped the trailing 2 coords
+(d_eff=126); this trainer handles remainder groups via `group_boundaries`.
 
 roundtrip(k) interface matches PerCoordCompressor's, so a GroupVQCompressor
 plugs directly into test_codec_on_data.py's `comps[method][b][(l,h)]`.
@@ -205,7 +203,7 @@ class GroupVQCompressor:
         return sum(b for _, _, b in self.bounds) / d
 
 
-def train_group_vq_compressors(F, inv, k_mean, fetch_calib, L, Hkv, d, G=6,
+def train_group_vq_compressors(F, inv, k_mean, fetch_calib, L, Hkv, d, G=4,
                                 iters=25, device="cuda", seed=0, verbose=True):
     """Train one GroupVQCompressor per (layer, kv_head).
 

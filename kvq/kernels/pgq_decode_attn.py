@@ -778,7 +778,8 @@ def _page_attn_from_u_vq_kernel(
 def page_attention_v2(gm: dict, pages_per_split: int = 16,
                       num_warps: int = 4, v_int2: bool = False,
                       return_partials: bool = False,
-                      phase_a: str = "rt", phase_b: str = "kernel"):
+                      phase_a: str = "rt", phase_b: str = "kernel",
+                      num_stages: int = 3):
     """Coalesced two-phase path (K2c'). Needs golden.segment_layout keys;
     v_int2=True additionally needs golden.add_v_int2 buffers (vq/vqs/vqz)
     and serves values from INT2 codes (the torch tier still reads gm['v'],
@@ -810,7 +811,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
                 gm["sig_cat"], gm["kind_dense"], gm["qt"], u,
                 T, HG=hg, HGP=hgp, D=d, PTOK=ptok,
                 CBLK=d // gm["seg_w"].shape[2],
-                num_warps=num_warps, num_stages=3,
+                num_warps=num_warps, num_stages=num_stages,
             )
     elif phase_a == "vqk":
         cb = gm["vq_cb"]
@@ -819,7 +820,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["vq_codes"], cb, gm["qt"], u,
             T, NG=cb.shape[1], K=cb.shape[2], G=cb.shape[3],
             HG=hg, HGP=hgp, D=d, PTOK=ptok, CBLK=d // 4,
-            num_warps=num_warps, num_stages=3,
+            num_warps=num_warps, num_stages=num_stages,
         )
     elif phase_a == "vqk64":
         cb64 = gm["vq_cb64"]
@@ -828,7 +829,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["vq_codes"], cb64, gm["qt_vq"], u,
             T, NG=cb64.shape[1], K=cb64.shape[2],
             HG=hg, HGP=hgp, D=d, PTOK=ptok, GBLK=cb64.shape[1] // 4,
-            num_warps=num_warps, num_stages=3,
+            num_warps=num_warps, num_stages=num_stages,
         )
     elif phase_a == "cw":
         if "_cw_plan" not in gm:
@@ -859,7 +860,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
                 CBLK=d // gm["seg_w"].shape[2], STRIDE=stride,
                 W0=ws[0], W1=ws[1], W2=ws[2], W3=ws[3],
                 L0=los[0], L1=los[1], L2=los[2], L3=los[3],
-                num_warps=num_warps, num_stages=3,
+                num_warps=num_warps, num_stages=num_stages,
             )
     elif "_launch_plan" not in gm:
         seg_n = gm["seg_n"].cpu()
@@ -883,7 +884,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["qt"], u,
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok,
             CBLK=d // gm["seg_w"].shape[2],
-            num_warps=num_warps, num_stages=3,
+            num_warps=num_warps, num_stages=num_stages,
         )
     if phase_b == "torch":
         # plan9 S3b: phase B as dense batched torch under the same CUDA
@@ -929,7 +930,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["vq"], gm["vqs"], gm["vqz"], m_p, l_p, acc_p,
             npages, pages_per_split, gm["sm_scale"],
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
-            num_stages=3,
+            num_stages=num_stages,
         )
     elif phase_b == "kernel2":
         _page_attn_from_u2_kernel[(nsplit, H)](
@@ -937,7 +938,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["v"], m_p, l_p, acc_p,
             npages, pages_per_split, gm["sm_scale"],
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
-            num_stages=3,
+            num_stages=num_stages,
         )
     elif v_int2:
         _page_attn_from_u_vq_kernel[(nsplit, H)](
@@ -945,7 +946,7 @@ def page_attention_v2(gm: dict, pages_per_split: int = 16,
             gm["vq"], gm["vqs"], gm["vqz"], m_p, l_p, acc_p,
             npages, pages_per_split, gm["sm_scale"],
             T, HG=hg, HGP=hgp, D=d, PTOK=ptok, num_warps=num_warps,
-            num_stages=3,
+            num_stages=num_stages,
         )
     else:
         _page_attn_from_u_kernel[(nsplit, H)](

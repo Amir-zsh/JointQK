@@ -1,0 +1,218 @@
+{
+  "32768": {
+    "ours_default": 0.27603308359781903,
+    "ours_best": [
+      0.27600129445393884,
+      {
+        "pps": 64,
+        "warps": 2,
+        "stages": 3,
+        "phase_b": "kernel2",
+        "v_int2": false
+      }
+    ],
+    "ours_top4": [
+      [
+        0.27600129445393884,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 3,
+          "phase_b": "kernel2",
+          "v_int2": false
+        }
+      ],
+      [
+        0.28096040089925134,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 2,
+          "phase_b": "kernel2",
+          "v_int2": false
+        }
+      ],
+      [
+        0.29053688049316406,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 3,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ],
+      [
+        0.29447078704833984,
+        {
+          "pps": 32,
+          "warps": 8,
+          "stages": 4,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ]
+    ],
+    "oscar_default": 0.07885297139485678,
+    "oscar_best": [
+      0.07499853769938152,
+      {
+        "splits": 64,
+        "BLOCK_N": 64,
+        "BLOCK_H": 8,
+        "warps": 4,
+        "stages": 3
+      }
+    ],
+    "oscar_top4": [
+      [
+        0.07499853769938152,
+        {
+          "splits": 64,
+          "BLOCK_N": 64,
+          "BLOCK_H": 8,
+          "warps": 4,
+          "stages": 3
+        }
+      ],
+      [
+        0.07507801055908203,
+        {
+          "splits": 64,
+          "BLOCK_N": 64,
+          "BLOCK_H": 8,
+          "warps": 4,
+          "stages": 4
+        }
+      ],
+      [
+        0.0753641128540039,
+        {
+          "splits": 64,
+          "BLOCK_N": 128,
+          "BLOCK_H": 16,
+          "warps": 4,
+          "stages": 3
+        }
+      ],
+      [
+        0.07580121358235677,
+        {
+          "splits": 64,
+          "BLOCK_N": 128,
+          "BLOCK_H": 16,
+          "warps": 4,
+          "stages": 4
+        }
+      ]
+    ]
+  },
+  "131072": {
+    "ours_default": 0.7688363393147786,
+    "ours_best": [
+      0.6345987319946289,
+      {
+        "pps": 64,
+        "warps": 2,
+        "stages": 3,
+        "phase_b": "kernel",
+        "v_int2": false
+      }
+    ],
+    "ours_top4": [
+      [
+        0.6345987319946289,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 3,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ],
+      [
+        0.6351232528686523,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 2,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ],
+      [
+        0.636156400044759,
+        {
+          "pps": 64,
+          "warps": 2,
+          "stages": 4,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ],
+      [
+        0.6429831186930339,
+        {
+          "pps": 32,
+          "warps": 2,
+          "stages": 4,
+          "phase_b": "kernel",
+          "v_int2": false
+        }
+      ]
+    ],
+    "oscar_default": 0.2609093983968099,
+    "oscar_best": [
+      0.2329111099243164,
+      {
+        "splits": 64,
+        "BLOCK_N": 128,
+        "BLOCK_H": 16,
+        "warps": 4,
+        "stages": 4
+      }
+    ],
+    "oscar_top4": [
+      [
+        0.2329111099243164,
+        {
+          "splits": 64,
+          "BLOCK_N": 128,
+          "BLOCK_H": 16,
+          "warps": 4,
+          "stages": 4
+        }
+      ],
+      [
+        0.23306210835774738,
+        {
+          "splits": 64,
+          "BLOCK_N": 128,
+          "BLOCK_H": 16,
+          "warps": 4,
+          "stages": 3
+        }
+      ],
+      [
+        0.23472309112548828,
+        {
+          "splits": 64,
+          "BLOCK_N": 64,
+          "BLOCK_H": 8,
+          "warps": 4,
+          "stages": 3
+        }
+      ],
+      [
+        0.2360661824544271,
+        {
+          "splits": 64,
+          "BLOCK_N": 64,
+          "BLOCK_H": 8,
+          "warps": 4,
+          "stages": 4
+        }
+      ]
+    ]
+  }
+}

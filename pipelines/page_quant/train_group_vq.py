@@ -142,6 +142,10 @@ def main():
     ap.add_argument("--max-k-bits", type=int, default=13)
     ap.add_argument("--iters", type=int, default=25)
     ap.add_argument("--ecvq-lambda", type=float, default=0.0)
+    ap.add_argument("--pertoken-norm", action="store_true",
+                    help="Samuel 3c65507: train on per-token RMS-normalized "
+                         "residuals; codec renormalizes at decode (~+0.06 b/c "
+                         "for the stored fp8 scale, not charged here)")
     ap.add_argument("--tokens-per-row", type=int, default=5500,
                     help="k-means samples subsampled per calibration row per (l,h)")
     ap.add_argument("--gate-tokens-per-row", type=int, default=2000)
@@ -196,6 +200,8 @@ def main():
                        for (_p, kp) in fit]
             k_lh = torch.cat(r_parts).to(dev)
             r = (k_lh - mul[h]) @ Fl[h]
+            if args.pertoken_norm:
+                r = r / r.pow(2).mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
             if args.allocation == "waterfill":
                 gbits = group_bit_alloc(score[l, h], bounds,
                                         avg_bits=args.bpc,
@@ -223,7 +229,8 @@ def main():
         forward=F.cpu(), inverse=inv.cpu(), mean=mu.cpu(),
         codebooks=comps_cb, bounds=bounds, G=args.G,
         grouping="stratified", allocation="waterfill" if args.allocation == "waterfill" else "flat",
-        whiten=False, ecvq_lambda=args.ecvq_lambda, pertoken_norm=False,
+        whiten=False, ecvq_lambda=args.ecvq_lambda,
+        pertoken_norm=bool(args.pertoken_norm),
         bits_per_coord=float(sum(bpc_acc) / len(bpc_acc)),
         group_bits={f"{l},{h}": g for (l, h), g in gbits_all.items()},
         provenance=dict(
