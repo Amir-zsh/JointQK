@@ -33,6 +33,14 @@ Best configs:
   splits=32 @128K. (Samuel's hand defaults were within 7% of tuned;
   uint8 indices tested separately and REJECTED — int16 gathers vectorize
   better.)
+  [AMENDED 2026-07-17, artifacts/kernels/idx_dtype_ab.json: the uint8
+  rejection was over-broad. Full dtype x config x context A/B: int16 wins
+  ~5-6% under the TUNED config at both contexts, uint8 wins ~11% under the
+  DEFAULT config at 128K — the original 0.302->0.317 does not reproduce for
+  that cell. Effect is second-order and config-sensitive; the 2x index
+  memory of int16 is first-order. uint8 is the right deployable default
+  (as Samuel concluded independently); int16 is a per-config tuning
+  option.]
 
 ## Conclusions
 

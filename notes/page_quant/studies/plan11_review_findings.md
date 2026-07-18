@@ -49,11 +49,14 @@ benchmark at the pinned commit 3c65507 (the 0.303 ms/layer kernel we
 ported) hard-coded int16; our A/B during tuning measured uint8 indices ~5%
 slower (0.302→0.317 ms/layer). His live tree has SINCE switched the
 default to uint8 ("uint8 is the correct/deployable packing" — his comment,
-post-snapshot), accepting the footprint argument. No substantive
-disagreement: uint8 = honest 2 b/coord memory, int16 = small decode-speed
-optimization. Post-study TODO: switch the engine arena to uint8 (two-line
-change: arena dtype + encoder cast; stored values identical, accuracy
-unchanged) and re-tune.
+post-snapshot). RE-MEASURED 2026-07-17 (artifacts/kernels/idx_dtype_ab.json,
+full dtype x config x context grid): the "int16 faster" claim is config-
+dependent and second-order — int16 +5-6% under the tuned config at both
+contexts, uint8 +11% under the default config at 128K; the original
+0.302->0.317 cell does not reproduce. The 2x index-memory cost of int16 is
+first-order and robust -> uint8 is the correct deployable default.
+Post-study TODO: switch the engine arena to uint8 (two-line change; stored
+values identical, accuracy unchanged) and re-tune.
 
 ### F2 (fairness — disclosed, resolved symmetric) calibration domain
 vq2's codebook is calibrated on GPQA-concat traces (gpqacc64k) — same
