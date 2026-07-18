@@ -177,6 +177,56 @@ uint8 index arena (accuracy-identical; our dtype A/B says the speed
 difference is config-dependent second-order —
 artifacts/kernels/idx_dtype_ab.json).
 
+## Speed & timing caveats
+
+How every number was measured, and what it does / does not mean:
+
+1. **Served decode tok/s are end-to-end, not kernel numbers**: bs=1, HTTP
+   client wall time with prefill subtracted (max_new_tokens=1 baseline vs
+   513), after warmup, CUDA-graphed decode, default server split count
+   (`triton_attention_num_kv_splits=8`). They include all engine overheads
+   by design — that's serving reality — and are NOT comparable to the
+   tuned per-kernel ms/layer numbers in report10.
+2. **vq2's 0.90×/0.78× of INT2 is integration overhead, not the kernel.**
+   Tuned-vs-tuned at the kernel level (report10/A10-2): your VQ8 kernel is
+   at parity with the authors' INT2 kernel at 32K (0.073 vs 0.075
+   ms/layer) and 1.21× at 128K. The served gap comes from the per-head
+   q-map GEMMs (INT2's per-layer rotation is one GEMM; vq2 does 8 small
+   ones per layer per step), the eager torch flush-encode every 8 decode
+   steps, and untuned `SGL_VQ2_*` splits. All three are optimizable;
+   none affect accuracy.
+3. **Never compare under shared defaults.** The two kernels tune in
+   opposite directions (INT2 wants big tiles + deep pipelining, VQ wants
+   BT=64/warps=2 around the gather); each has its own env knobs
+   (`SGL_INT2_*` / `SGL_VQ2_*`). Any shared-default comparison
+   structurally mis-serves one side — this is exactly how the retracted
+   "VQ is 3.7× behind, architectural" claim happened (two-phase harness +
+   untuned config; corrected in report10 Amendment A10-2).
+4. **Quantized decode beats bf16 only past ~8–16K context.** Decode
+   attention is bandwidth-bound and grows with context; at 8K the smaller
+   reads roughly cancel dequant overhead (INT2 1.00× of bf16), at 32K
+   INT2 is 1.16× and the gap keeps widening. Below that, the case for
+   quantization is memory capacity, not speed (~144 KB/token bf16 vs
+   ~10× less quantized on Qwen3-8B).
+5. **Prefill**: vq2's chunked torch VQ-encode makes prefill ~1.45× INT2's.
+   At 64K the wall-clock is dominated by something else entirely: only
+   ~2 concurrent 65K prompts fit the 140K-token pool, so throughput is
+   pool-bound, not kernel-bound (TP=2 or an 80 GB card is the fix).
+6. **Wave wall-times reflect both speed and trace length**: GPQA 792
+   traces took bf16 ~4.4 h, INT2 ~4.9 h, vq2 ~7.3 h — vq2's extra time is
+   part decode speed, part its traces averaging ~800 tokens longer. The
+   bs=1 tok/s table understates wave throughput (waves ran continuous
+   batching at ≤8 requests).
+7. **Hardware scope**: A100-40GB, triton/triton backends (fa3 prefill is
+   Hopper-only) — the authors' published numbers are H100. Absolute
+   timings also drift with machine load (our idx-dtype A/B absolutes
+   shifted ~15% with 3 neighbor GPUs busy; within-run relatives held), so
+   compare only within one measurement session.
+8. **int16 vs uint8 indices**: speed difference is second-order and
+   config-dependent (±5–11% either way,
+   `artifacts/kernels/idx_dtype_ab.json`); memory difference (4 vs 2
+   b/coord index stream) is first-order. uint8 is the deployable choice.
+
 ## Caveats and fairness / integrity notes
 
 1. **Memory vs information rate.** As built, vq2's K tier uses **4.5
