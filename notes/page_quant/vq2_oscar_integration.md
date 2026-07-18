@@ -86,34 +86,82 @@ bash pipelines/oscar_e2e/serve_oscar.sh --vq2  --gpu 1 --port 30801 \
     --rows artifacts/prompt_rows/niah_32768_qwen.jsonl --port 30801 \
     --out artifacts/oscar_e2e/vq2/niah_32768
 # long-horizon (K=4, T=1.0/top_p .95/top_k 40 — the OSCAR driver protocol):
-#   add --samples 4; aggregate with pipelines/eval/aggregate_acck.py
+#   add --samples 4
+# aggregate acc@K with paired bootstrap CIs vs the bf16 anchor:
+.venv/bin/python pipelines/eval/aggregate_acck.py \
+    --cells bf16=... int2=... vq2=... --anchor bf16 --out <summary.json>
 ```
+
+Operational notes:
+- **Resume**: an interrupted client run (io_log.jsonl present, metrics.json
+  absent) resumes automatically — completed (row, sample) pairs are skipped
+  and the log is appended. Kill/restart is safe.
+- **Decode window**: `RECENT_TOKENS=<W>` env on serve_oscar.sh overrides the
+  bf16 recent-ring length (default 256 = the OSCAR band). W∈{64,1024} sweep
+  is set up but deferred.
+- **Pool budget**: the mixed-KV pool hard-crashes (no retraction) when
+  concurrency × max_new_tokens outruns `--max-total-tokens` (140K on the
+  A100-40GB). For 32K-token generations run ≤4 concurrent requests; 64K
+  prompts fit only ~2 at a time.
+- **One wave per arm**: `pipelines/oscar_e2e/run_longhorizon_wave.sh --arm
+  {bf16,int2,vq2} --gpu N --port P` runs gpqa+math500+aime25 end to end
+  (resumable per task).
 
 Your codebook bundle loads as-is (fp16 or fp8-e4m3 codebooks both
 handled; snapped to e5m2 at load).
 
-## Status snapshot (as of writing; full numbers in report11)
+## Results (final, 2026-07-17 — full record in report11.md)
 
-- **Integrity gates**: all green. Engine reconstruction within 0.14%
-  distortion of the reference compressor; mixed-tier softmax equivalence
-  2e-4; fused kernel matches a torch reference.
-- **Served NIAH-32K, 800 rows, greedy**: vq2 (our retrained codebook)
-  **93.7** vs 87.6 for the same codebook applied post-hoc — VQ *gains*
-  under real streaming (chunked prefill over already-quantized keys),
-  where production OSCAR int2 drops ~96 → 74.2 in the same stack. Your
-  gpqacc64k codebook reproduced at 95.9/77.6 (32K/64K) in our harness and
-  ships as the evaluated configuration; its full served NIAH run is in
-  flight.
-- **Decode speed** (bs=1, A100): int2 67.5→57.0 tok/s at 8K→32K
-  (1.0×→1.16× of bf16); vq2 60.9→44.6 (0.90×/0.78× of int2). The pure
-  kernel is at int2 parity (report10); the gap is integration overhead —
-  per-head q-map einsum (int2's per-layer rotation is one GEMM), the
-  torch flush encode every 8 steps, untuned splits. All fixable.
-- **Long-horizon (avg@4, K=4 sampled thinking traces)**: GPQA-diamond —
-  bf16 58.6, int2 54.2 (**−4.4, significant**), vq2 57.7 (−0.9, at the
-  anchor; **+3.5 over int2, significant**). math500 — bf16 90.1, int2
-  89.8, vq2 87.0 (**−3.1, significant**). The two methods fail in
-  different places; see fairness note 3.
+**Integrity gates**: all green (roundtrip distortion within 0.14% of the
+reference codec; mixed-tier softmax equivalence 2e-4; kernel vs torch
+reference exact).
+
+**Long-horizon, served, one engine, identical rows** (thinking mode, K=4
+samples at T=1.0/top_p .95/top_k 40, avg@4, paired row-bootstrap CIs;
+GPQA/AIME capped at 32768 per the OSCAR authors' protocol, math500 at 16384
+after an 8K cap breached our cap-hit telemetry rule):
+
+| avg@4 | GPQA-diamond | math500 (n=200) | AIME-25 | 3-task mean |
+|---|---|---|---|---|
+| bf16 | 58.6 | 96.1 | 66.7 | 73.8 |
+| OSCAR INT2 | 54.2 | 95.0 | 65.0 | 71.4 |
+| **vq2 (your codebook)** | **57.7** | **95.3** | **68.3** | **73.8** |
+
+- vq2 is statistically indistinguishable from bf16 on all three tasks
+  (GPQA −0.9 [−4.0, +2.3]; math −0.9 [−2.1, +0.4]; AIME +1.7 [−6.7, +9.2]).
+- Production OSCAR pays **−4.4 [−7.8, −1.1] (significant)** on GPQA and
+  shows a longer-trace degeneration signature on every task.
+- Head-to-head vq2 ≥ INT2 everywhere: +3.5 GPQA (SIG), +0.3 math, +3.3 AIME.
+- Cap sensitivity worth knowing: at a tight 8K math cap vq2 lost −3.1 (SIG)
+  — pure truncation interaction (vq2's traces run slightly longer), gone at
+  16K. Tight generation caps punish VQ before they punish INT2.
+
+**NIAH, served, 800 rows, greedy**:
+
+| mean string-match | 32K | 64K |
+|---|---|---|
+| bf16 | 98.3 | 86.3 |
+| OSCAR INT2 | 74.2 | 23.4 |
+| **vq2 (your codebook)** | **96.6** | **76.8** |
+
+vq2-served matches its own post-hoc numbers (95.9/77.6) within a point at
+both contexts — **the streaming-quantization regime that costs production
+OSCAR 24–63 points costs VQ nothing**. The served 32K number also equals
+your HF-side 96.6 exactly. vq2's remaining 64K gap to bf16 (−9.5) sits in
+multikey_2/3, same as post-hoc — codebook capacity at extreme positions,
+not a serving effect.
+
+**Decode speed** (bs=1, A100): INT2 67.5→57.0 tok/s at 8K→32K
+(1.0×→1.16× of bf16); vq2 60.9→44.6 (0.90×/0.78× of INT2). The pure kernel
+is at parity (report10 tuned-vs-tuned); the gap is integration overhead —
+per-head q-map GEMMs + the torch flush encode — both optimizable.
+
+**Queued next** (relevant to you): mixed-domain 64K-concat codebook
+(GPQA+math+code) as the paper's primary — your gpqacc64k stays as the
+domain ablation; HumanEval + LiveCodeBench v6 for OSCAR-suite parity;
+uint8 index arena (accuracy-identical; our dtype A/B says the speed
+difference is config-dependent second-order —
+artifacts/kernels/idx_dtype_ab.json).
 
 ## Caveats and fairness / integrity notes
 
@@ -135,11 +183,11 @@ handled; snapped to e5m2 at load).
    in-domain for the GPQA eval. We checked the symmetry: the OSCAR
    authors' rotations are *also* calibrated from GPQA prompt dumps (their
    own recipe), so both methods are in-domain on GPQA and equally
-   out-of-domain on math. The long-horizon results fit this: vq2 is at
-   the bf16 anchor on GPQA and pays ~3 pts on math500, while int2 shows
-   the opposite pattern — consistent with codebooks being more
-   domain-specific than orthogonal rotations. A math/mixed-domain
-   codebook retrain is the obvious follow-up.
+   out-of-domain on math. Final resolution: the apparent −3.1 math500 loss
+   at the 8K cap turned out to be cap truncation, not domain — at 16K vq2
+   is at the anchor. Domain sensitivity IS real where we can isolate it
+   (swapping to a LongBench-domain codebook costs 3–12 NIAH points), which
+   is still the argument for a mixed-domain retrain as the paper primary.
 4. **Sampling.** All configurations share one engine build, one sampler
    backend (pytorch — flashinfer's sampling JIT is broken on this box),
    identical prompt files, identical caps. No per-request seeds (SGLang
