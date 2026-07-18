@@ -1,0 +1,9 @@
+{
+  "correct": 20,
+  "accuracy": 0.6666666666666666,
+  "extraction_rate": 1.0,
+  "scorer": "gpqa_simple_evals",
+  "total": 30,
+  "cap_hit_rate": 0.0,
+  "mean_completion_tokens": 6662.5
+}

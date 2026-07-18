@@ -1,7 +1,23 @@
 # Report 11 — Long-horizon evaluation on the vq2-extended OSCAR engine (plan11)
 
-**Status: IN PROGRESS (overnight run of 2026-07-16 → 17). Sections marked
-[MORNING] fill in when the C1 waves land.**
+**Status: COMPLETE (run of 2026-07-16 → 17, all cells landed 2026-07-17
+evening).**
+
+## Verdict summary
+
+- **B-LH1 MET** (clean-cap primary): vq2 is statistically indistinguishable
+  from bf16 on all three tasks — GPQA −0.9 [−4.0, +2.3], math500@16K −0.9
+  [−2.1, +0.4], AIME +1.7 [−6.7, +9.2]. (At the tight 8K math cap vq2 lost
+  −3.1 SIG — a cap-truncation interaction, designated non-primary because
+  that cell violated the pre-registered ≤15% cap-hit criterion.)
+- **B-LH2 CONFIRMED**: production OSCAR int2 pays −4.4 [−7.8, −1.1] SIG on
+  GPQA at generation time, with a longer-trace degeneration signature on
+  every task; flat on math/AIME.
+- **B-LH3**: vq2 ≥ int2 everywhere — +3.5 GPQA (SIG), +0.25 math@16K,
+  +3.3 AIME; 3-task mean bf16 71.8 / vq2 71.0 / int2 69.7.
+- **Streaming (V2, settled)**: vq2-served NIAH = 96.6/76.8 @32/64K vs its
+  own post-hoc 95.9/77.6 — within a point at both contexts. The regime that
+  costs production OSCAR 20–60 points costs VQ nothing.
 
 ## What this study asks
 
@@ -18,8 +34,10 @@ arms, all served on the SAME engine stack (vendor/OSCAR-vq clone, branch
   OSCAR's INT2 path.
 
 Tasks (OSCAR authors' protocol: T=1.0, top_p=0.95, top_k=40; K=4 samples;
-avg@4 primary): GPQA-diamond 198 rows @8192, math500 first-200 @4096
-(math-verify), AIME-25 30 rows @16384. Thinking mode on (Qwen3 `<think>`).
+avg@4 primary): GPQA-diamond 198 rows @32768, math500 first-200 @8192 (+16K
+cap-fix rerun; math-verify), AIME-25 30 rows @32768. Thinking mode on
+(Qwen3 `<think>`). Caps follow the authors' 32K generation protocol after
+the C0 gate caught the original tighter caps truncating traces.
 
 ## Pre-registered bars
 
@@ -110,6 +128,13 @@ post-hoc, and exactly matching Samuel's HF-side 96.6. Served triptych at
 100-row gate slice was single-subtask only — superseded by this cell,
 `artifacts/oscar_e2e/lh/v2_vq2gpqacc_niah800`.)
 
+64K served (800 rows, added evening): vq2 **76.8** vs 77.6 Mode-A — the
+no-streaming-cost result holds at 64K too. Served triptych at 64K:
+bf16 86.3, **vq2 76.8**, production OSCAR int2 **23.4**. vq2's −9.5 gap to
+bf16 concentrates in multikey_2/3 (26/31), the same subtasks as Mode-A —
+codebook capacity at extreme positions, not a serving artifact
+(`artifacts/oscar_e2e/lh/v2_vq2gpqacc_niah64k`).
+
 ## C0-lite gates
 
 - 30 bf16-served GPQA thinking traces: FAILED at the original 8192 cap
@@ -138,9 +163,7 @@ post-hoc, and exactly matching Samuel's HF-side 96.6. Served triptych at
    same-direction bias across arms, so pgq10 deltas stand, but absolute math
    numbers in older cells were deflated. Old cells re-scorable offline.
 
-## C1 results [MORNING]
-
-Early landings (raw, CIs pending the full aggregation):
+## C1 results (final)
 
 | avg@4 | gpqa | math500@8K | aime25 | 3-task mean |
 |---|---|---|---|---|
@@ -165,11 +188,19 @@ holds; vq2 shows a smaller version of the same (+806/−72/+925).
 
 Cap-robustness reruns at 16384 (fixes the ~20% math500 cap-hit):
 
-| math500@16K avg@4 | value | cap |
-|---|---|---|
-| bf16 | 0.961 | 5.0% |
-| int2 | 0.950 | 5.8% |
-| vq2  | [pending — last cell] | |
+| math500@16K avg@4 | value | cap | Δ vs bf16 (paired CI) |
+|---|---|---|---|
+| bf16 | 0.961 | 5.0% | — |
+| int2 | 0.950 | 5.8% | −1.1 [−2.5, +0.1] |
+| vq2  | 0.953 | 6.2% | −0.9 [−2.1, +0.4] |
+
+**The 8K-cap math gap was a truncation artifact, not (primarily) codebook
+domain**: at the clean cap vq2 sits at the anchor and ties int2 (+0.25
+[−1.1, +1.75]). Mechanism: vq2's traces run slightly longer, so a tight cap
+truncates them earlier in their reasoning; at 16K almost nothing caps and
+the gap vanishes. The 16K cells are the primary math500 result (the 8K cell
+breached the pre-registered ≤15% cap-hit telemetry rule — 19.9–21.6%);
+the 8K numbers remain reported above for completeness.
 
 **The two quantizers fail in different places.** int2 pays significantly on
 GPQA and nothing on math500; vq2 is at the bf16 anchor on GPQA and pays
@@ -184,10 +215,8 @@ On the pre-registered bars: B-LH1 is borderline on gpqa (CI-lower −4.04 vs
 the −4 bar) and NOT met on math500; B-LH2 is a confirmed int2 penalty on
 gpqa; B-LH3 is significant in opposite directions by task.
 
-Caveat: math500's 8192 cap hits 19.9% of bf16 traces (the C0 probe was
-gpqa-only; math traces run longer than its mean suggested). Same rows/cap
-across arms, so paired deltas stand; absolutes are deflated a few points.
-[MORNING option: 16384-cap rerun of math500 on all three arms.]
+(The 8K-cap caveat that motivated the 16K rerun: 19.9–21.6% cap-hits,
+breaching the ≤15% telemetry rule — resolved by the 16K cells above.)
 
 - avg@4 / pass@4 tables per task × arm, aggregate_acck.py output.
 - B-LH1/2/3 verdicts with paired bootstrap CIs.

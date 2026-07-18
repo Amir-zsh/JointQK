@@ -420,14 +420,56 @@ VQ-K best (int64 codeword gathers) 0.971. Fixed-rate VQ beats the adaptive
 scalar format by 13% like-for-like — but stays 3.7× behind OSCAR: the
 codebook gather is architectural (Samuel's L1 diagnosis, reproduced
 independently). The §7 table's 5% VQ-vs-OSCAR gap was an artifact of fp16-V
-flooring both arms.</p>
+flooring both arms. <b>[Superseded by A10-2 + plan11:</b> the 3.7× and its "architectural"
+framing were artifacts of our two-phase harness; Samuel's fused single-kernel
+design measures 0.303 ms and <b>tuned-vs-tuned VQ8 reaches parity with the
+authors' kernel at 32K (0.073 vs 0.075 ms/layer) and 1.21× at 128K</b>.
+The L1 diagnosis applied to G=6 codebooks; deployment uses G=4.<b>]</b></p>
 <p><b>Closed:</b> VQ×DCT (the "obvious synthesis" below) was built and gated —
 <b>NO-GO</b>: 2.2–2.7× worse proxy distortion than scalar-DCT at every rate.
 QPCA+DCT decorrelates both axes; nothing is left for the codebook to exploit.
 The two methods are substitutes, not complements. Math tasks (math-verify):
 production OSCAR INT2 costs only −2.4 pts on math500 (72.4 vs 74.8 served-BF16).</p>
 
-<h2 id="verdict">9 · Verdict &amp; the obvious synthesis (original, pre-pgq10)</h2>
+<h2 id="plan11">9 · plan11 addendum: long-horizon generation on a VQ-extended OSCAR engine (served)</h2>
+<p>plan11 (report11.md) put Samuel's group VQ <b>inside</b> the authors' SGLang
+stack as a first-class KV tier ("vq2": his fused gather kernel, his gpqacc64k
+ptn codebook, V on OSCAR's INT2 path, same 64/256 HP windows) and ran three
+served configurations — bf16 / production OSCAR INT2 / vq2 — on one engine
+build, one sampler, identical rows. Thinking mode, K=4 samples, avg@4,
+paired row-bootstrap CIs.</p>
+<div class="tblwrap"><table>
+<tr><th>avg@4 (served)</th><th>GPQA-diamond</th><th>math500 (16K cap)</th><th>AIME-25</th></tr>
+<tr><td>bf16</td><td>58.6</td><td>96.1</td><td>66.7</td></tr>
+<tr><td>OSCAR INT2</td><td>54.2</td><td>95.0</td><td>65.0</td></tr>
+<tr><td><b>vq2</b></td><td><b>57.7</b></td><td><b>95.3</b></td><td><b>68.3</b></td></tr>
+</table></div>
+<p><b>Verdicts:</b> vq2 is statistically indistinguishable from bf16 on all
+three tasks (GPQA −0.9 [−4.0,+2.3]; math −0.9 [−2.1,+0.4]; AIME +1.7 [−6.7,+9.2])
+while production OSCAR pays a significant GPQA penalty (−4.4 [−7.8,−1.1]) and
+shows a longer-trace degeneration signature on every task. Head-to-head, vq2
+&ge; INT2 everywhere (+3.5 GPQA SIG, +0.3 math, +3.3 AIME). Caveat: at a tight
+8K math cap vq2 lost −3.1 SIG — a cap-truncation interaction that vanishes at
+16K; tight generation caps punish VQ's slightly longer traces.</p>
+<p><b>Streaming, settled with VQ served:</b> NIAH mean 32K/64K — bf16-served
+98.3/86.3 · <b>vq2-served 96.6/76.8</b> · production OSCAR 74.2/23.4. vq2
+served matches its own post-hoc numbers (95.9/77.6) within a point: the
+chunked-prefill-over-quantized-keys regime that costs OSCAR 20−60 points
+costs VQ <b>nothing</b>. Reconstruction quality at 2 b/coord, not the serving
+stack, decides who survives streaming.</p>
+<p><b>Speed &amp; rates (served, bs=1):</b> vq2 decodes at 0.90×/0.78× of INT2
+at 8K/32K (gate ≥0.75× met; the pure kernel is at parity — the gap is
+integration overhead: per-head q-map GEMMs + torch flush encode, both
+optimizable). Honest rates: vq2 K carries 2.25 b/coord of information (less
+than INT2's 2.5) but 4.5 b/coord of memory as-built (int16 indices; uint8
+packing reaches parity — Samuel's current default). Calibration: both
+methods calibrate on GPQA-domain data (his 64K-concat codebook, their prompt
+dumps) — symmetric on GPQA; codebooks are the more domain-sensitive artifact
+(swapping to a LongBench-domain codebook costs 3−12 NIAH pts).</p>
+<p>Full record: report11.md, plan11_review_findings.md,
+vq2_oscar_integration.md (integration doc, shareable).</p>
+
+<h2 id="verdict">10 · Verdict &amp; the obvious synthesis (original, pre-pgq10)</h2>
 <div class="card verdict"><p style="margin:.3em 0">
 <b>Quality:</b> pgq ≥ VQ ≥ OSCAR. Row-paired, pgq@2.06 leads VQ@2.12 by +0.98
 (CI ∋ 0) on every task, and pgq matches VQ with 14% fewer bits; both calibrated

@@ -1,0 +1,46 @@
+{
+  "samples": 4,
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 40
+  },
+  "per_k": [
+    {
+      "correct": 179,
+      "answered": 173,
+      "accuracy": 0.895,
+      "accuracy_boxed_exact": 0.6,
+      "scorer": "math_verify",
+      "total": 200
+    },
+    {
+      "correct": 180,
+      "answered": 171,
+      "accuracy": 0.9,
+      "accuracy_boxed_exact": 0.595,
+      "scorer": "math_verify",
+      "total": 200
+    },
+    {
+      "correct": 181,
+      "answered": 172,
+      "accuracy": 0.905,
+      "accuracy_boxed_exact": 0.6,
+      "scorer": "math_verify",
+      "total": 200
+    },
+    {
+      "correct": 181,
+      "answered": 167,
+      "accuracy": 0.905,
+      "accuracy_boxed_exact": 0.61,
+      "scorer": "math_verify",
+      "total": 200
+    }
+  ],
+  "accuracy_avg_at_k": 0.90125,
+  "cap_hit_rate": 0.19875,
+  "mean_completion_tokens": 4550.01125,
+  "total": 200
+}
