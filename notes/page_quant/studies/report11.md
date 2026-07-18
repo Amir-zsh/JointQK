@@ -138,13 +138,30 @@ Early landings (raw, CIs pending the full aggregation):
 
 | avg@4 | gpqa | math500 | aime25 |
 |---|---|---|---|
-| bf16 | 0.586 (cap 0%) | 0.901 (cap **19.9%**) | [pending] |
-| int2 | 0.542 (cap 1%)  | [pending] | [pending] |
-| vq2  | [pending] | [pending] | [pending] |
+| bf16 | 0.586 (cap 0%) | 0.901 (cap 19.9%) | 0.667 (cap 15.8%) |
+| int2 | 0.542 (cap 1%)  | 0.898 (cap 21.0%) | [rerunning] |
+| vq2  | 0.577 (cap 1.3%) | 0.870 (cap 21.6%) | [pending] |
 
-Δ(int2 − bf16) on gpqa = **−4.4 pts** — production OSCAR's quantization
-costs real accuracy at generation time (B-LH2). int2's traces also run
-~500 tokens longer with ~3 pts lower extraction (mild degeneration).
+Paired contrasts (10k row-bootstrap):
+
+| Δ avg@4 | gpqa | math500 |
+|---|---|---|
+| int2 − bf16 (B-LH2) | **−4.4 [−7.8, −1.1] SIG** | −0.4 [−2.0, +1.4] |
+| vq2 − bf16 (B-LH1)  | −0.9 [−4.0, +2.3] | **−3.1 [−5.1, −1.3] SIG** |
+| vq2 − int2 (B-LH3)  | **+3.5 [+0.1, +6.9] SIG** | **−2.8 [−5.0, −0.6] SIG** |
+
+**The two quantizers fail in different places.** int2 pays significantly on
+GPQA and nothing on math500; vq2 is at the bf16 anchor on GPQA and pays
+significantly on math500. Cap-hit rates are near-identical across arms, so
+it is not a truncation artifact. Leading hypothesis (ties to review finding
+F2): the VQ codebook is k-means on GPQA-domain keys — codebooks are more
+domain-specific than an orthogonal rotation, so vq2 excels in-calibration-
+domain and pays out-of-domain, while int2's rotation generalizes flat.
+Testable next: a math-domain (or mixed-domain) codebook retrain.
+
+On the pre-registered bars: B-LH1 is borderline on gpqa (CI-lower −4.04 vs
+the −4 bar) and NOT met on math500; B-LH2 is a confirmed int2 penalty on
+gpqa; B-LH3 is significant in opposite directions by task.
 
 Caveat: math500's 8192 cap hits 19.9% of bf16 traces (the C0 probe was
 gpqa-only; math traces run longer than its mean suggested). Same rows/cap

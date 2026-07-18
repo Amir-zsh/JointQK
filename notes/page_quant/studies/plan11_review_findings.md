@@ -36,13 +36,24 @@ caveats, and hardening TODOs.
 ## Findings
 
 ### F1 (most important — reporting) vq2 K memory ≠ information rate
-As built, K indices are int16 (Samuel's measured speed choice; uint8 was
-slower): 64 B/token/head codes + 8 B scale slots = **4.5 b/coord memory**
-vs int2's 2.5. Information content is **2.25 b/coord** (2.0 codes + fp32
-ptn scale; no zero-point) — slightly BELOW int2's 2.5. Accuracy comparisons
-unaffected; any "same compression ratio" framing must say: equal code
-length, ~1.8× int2's K memory in this implementation, packable to parity at
-a small measured speed cost. → comparison page + report11 honest-rates.
+As built, K indices are int16: 64 B/token/head codes + 8 B scale slots =
+**4.5 b/coord memory** vs int2's 2.5. Information content is **2.25
+b/coord** (2.0 codes + fp32 ptn scale; no zero-point) — slightly BELOW
+int2's 2.5. Accuracy comparisons unaffected; any "same compression ratio"
+framing must say: equal code length, ~1.8× int2's K memory in this
+implementation, packable to parity at a small measured speed cost.
+→ comparison page + report11 honest-rates.
+
+Provenance of the int16 choice (settled 2026-07-17 with Samuel): his
+benchmark at the pinned commit 3c65507 (the 0.303 ms/layer kernel we
+ported) hard-coded int16; our A/B during tuning measured uint8 indices ~5%
+slower (0.302→0.317 ms/layer). His live tree has SINCE switched the
+default to uint8 ("uint8 is the correct/deployable packing" — his comment,
+post-snapshot), accepting the footprint argument. No substantive
+disagreement: uint8 = honest 2 b/coord memory, int16 = small decode-speed
+optimization. Post-study TODO: switch the engine arena to uint8 (two-line
+change: arena dtype + encoder cast; stored values identical, accuracy
+unchanged) and re-tune.
 
 ### F2 (fairness — disclosed, resolved symmetric) calibration domain
 vq2's codebook is calibrated on GPQA-concat traces (gpqacc64k) — same

@@ -118,12 +118,15 @@ handled; snapped to e5m2 at load).
 ## Caveats and fairness / integrity notes
 
 1. **Memory vs information rate.** As built, vq2's K tier uses **4.5
-   bits/coord of memory** (int16 indices — your measured speed choice —
-   plus scale slots) while carrying **2.25 bits/coord of information**
-   (2.0 code + fp32 scale; no zero-point) vs int2's 2.5. Accuracy
-   comparisons are equal-or-lower rate for VQ; memory-footprint claims
-   must say "packable to 2.25 at a small measured speed cost" (uint8
-   gathers were slower in your bench and ours).
+   bits/coord of memory** (int16 indices, matching your bench_vint2 at
+   the pinned commit 3c65507 — the 0.303 ms kernel we ported — plus scale
+   slots) while carrying **2.25 bits/coord of information** (2.0 code +
+   fp32 scale; no zero-point) vs int2's 2.5. Your live tree has since
+   made uint8 the default ("the correct/deployable packing"); our A/B
+   measured uint8 ~5% slower on decode (0.302→0.317 ms/layer). Switching
+   the engine arena to uint8 is a two-line change with identical accuracy
+   (stored values unchanged) — queued post-study. Until then,
+   memory-footprint claims must carry this footnote.
 2. **e5m2 snap.** Decode reconstructs e5m2-snapped centroids, not the
    fp16/e4m3 values your HF evaluations used. Snap cost measured tiny
    (see above) and the encoder is consistent with it, but absolute
