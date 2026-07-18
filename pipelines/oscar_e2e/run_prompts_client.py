@@ -87,6 +87,23 @@ def main():
         recs = [dict(r, sample_k=k) for k in range(args.samples) for r in recs]
     else:
         recs = [dict(r, sample_k=0) for r in recs]
+
+    # Resume: a prior interrupted run leaves io_log.jsonl without
+    # metrics.json. Reload its completed (rid, sample_k) pairs (last entry
+    # wins across client retries), skip them, and append to the same log.
+    prior = {}
+    out_dir = REPO / args.out
+    log_path = out_dir / "io_log.jsonl"
+    if log_path.exists() and not (out_dir / "metrics.json").exists():
+        for line in log_path.open():
+            try:
+                e = json.loads(line)
+                prior[(e["rid"], e.get("sample_k", 0))] = e
+            except (json.JSONDecodeError, KeyError):
+                continue  # torn tail line from the interrupted run
+        if prior:
+            print(f"[client] resume: {len(prior)} completed pairs found, "
+                  f"{len(recs) - len(prior)} to run", flush=True)
     base = f"http://{args.host}:{args.port}"
     info = requests.get(f"{base}/get_server_info", timeout=30).json()
     t0 = time.time()
@@ -95,16 +112,22 @@ def main():
 
     out = REPO / args.out
     out.mkdir(parents=True, exist_ok=True)
-    log = (out / "io_log.jsonl").open("w")
+    log = (out / "io_log.jsonl").open("a" if prior else "w")
 
     done = [0]
     metas = {}
     def run_one(rec):
-        text, meta = generate(base, rec, args.timeout, sampling)
         key = (rec["rid"], rec["sample_k"])
+        if key in prior:
+            e = prior[key]
+            metas[key] = {"completion_tokens": e.get("completion_tokens"),
+                          "finish_reason": e.get("finish_reason")}
+            return e["response"]
+        text, meta = generate(base, rec, args.timeout, sampling)
         metas[key] = meta
         log.write(json.dumps({"rid": rec["rid"], "sample_k": rec["sample_k"],
                               "response": text, **meta}) + "\n")
+        log.flush()
         done[0] += 1
         if done[0] % 25 == 0:
             print(f"[client] {done[0]}/{len(recs)} ({time.time()-t0:.0f}s)", flush=True)
