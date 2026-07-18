@@ -103,19 +103,25 @@ aging, the full streaming regime — is 6 points BETTER than the post-hoc
 harness cell (the 64/256 HP band accounts for it). Contrast production
 OSCAR int2 in the same stack: 74.2 served vs ~96 post-hoc Mode-A.
 **Streaming quantization is where OSCAR's int2 loses 20+ points and VQ
-loses nothing.** His-codebook 100-row served gate came back 100.0 but the head-100 slice is
-all `niah_single_1` (rows are grouped by subtask) — every arm aces that
-subtask, so it only proves the gpqacc64k engine path is wired sanely.
-[MORNING: stratified or full 800-row served NIAH on the gpqacc64k server
-for the proper within-5-pts-of-95.9 comparison.]
+loses nothing.** His-codebook full 800-row served NIAH-32K: **96.6** vs 95.9 Mode-A
+(f=0.25) — within 0.7 pts (bar was 5), again slightly better served than
+post-hoc, and exactly matching Samuel's HF-side 96.6. Served triptych at
+32K: bf16 98.3, **vq2 96.6**, production OSCAR int2 74.2. (The interim
+100-row gate slice was single-subtask only — superseded by this cell,
+`artifacts/oscar_e2e/lh/v2_vq2gpqacc_niah800`.)
 
 ## C0-lite gates
 
-- 30 bf16-served GPQA thinking traces @8192: [MORNING — extraction ≥90%,
-  cap-hit ≤15%].
+- 30 bf16-served GPQA thinking traces: FAILED at the original 8192 cap
+  (cap-hit 30% swallows the answer line, extraction 70%); the OSCAR
+  authors' own GPQA eval uses max_tokens=32768 — at corrected caps
+  (gpqa/aime 32768, math500 8192) the gate PASSES clean: extraction 100%,
+  cap-hit 0%, accuracy 66.7% (mean trace 6.7K tokens).
 - W (recent-tokens) shipped at 256 = production OSCAR's band, keeping the
-  int2 arm apples-to-apples; {64, 1024} sweep runs as an informational
-  side-cell if GPU 5 frees up.
+  int2 comparison apples-to-apples. The {64, 1024} sweep was DEFERRED by
+  user decision (2026-07-17 evening) — servers were booted and torn down;
+  rerun later via `RECENT_TOKENS=<W> serve_oscar.sh --vq2` on 50
+  math500@16K rows per point.
 
 ## Incidents (all fixed, in the open)
 
@@ -136,19 +142,34 @@ for the proper within-5-pts-of-95.9 comparison.]
 
 Early landings (raw, CIs pending the full aggregation):
 
-| avg@4 | gpqa | math500 | aime25 |
-|---|---|---|---|
-| bf16 | 0.586 (cap 0%) | 0.901 (cap 19.9%) | 0.667 (cap 15.8%) |
-| int2 | 0.542 (cap 1%)  | 0.898 (cap 21.0%) | [rerunning] |
-| vq2  | 0.577 (cap 1.3%) | 0.870 (cap 21.6%) | [pending] |
+| avg@4 | gpqa | math500@8K | aime25 | 3-task mean |
+|---|---|---|---|---|
+| bf16 | 0.586 (cap 0%) | 0.901 (cap 19.9%) | 0.667 (cap 15.8%) | 71.8 |
+| int2 | 0.542 (cap 1%)  | 0.898 (cap 21.0%) | 0.650 (cap 15.8%) | 69.7 |
+| vq2  | 0.577 (cap 1.3%) | 0.870 (cap 21.6%) | **0.683** (cap 15.0%) | 71.0 |
 
 Paired contrasts (10k row-bootstrap):
 
-| Δ avg@4 | gpqa | math500 |
+| Δ avg@4 | gpqa | math500@8K | aime25 (n=30, descriptive) |
+|---|---|---|---|
+| int2 − bf16 (B-LH2) | **−4.4 [−7.8, −1.1] SIG** | −0.4 [−2.0, +1.4] | −1.7 [−10.0, +5.8] |
+| vq2 − bf16 (B-LH1)  | −0.9 [−4.0, +2.3] | **−3.1 [−5.1, −1.3] SIG** | +1.7 [−6.7, +9.2] |
+| vq2 − int2 (B-LH3)  | **+3.5 [+0.1, +6.9] SIG** | **−2.8 [−5.0, −0.6] SIG** | +3.3 [−3.3, +10.0] |
+
+On the OSCAR-style multi-task mean, int2 sits −2.1 under bf16 and vq2
+−0.8 — vq2 recovers ~60% of production OSCAR's quality gap while being the
+numerically best method on AIME (above the anchor). int2's traces run
+longer than bf16's on every task (gpqa +507, math +16, aime +1847 mean
+tokens) — a consistent mild-degeneration signature even where its accuracy
+holds; vq2 shows a smaller version of the same (+806/−72/+925).
+
+Cap-robustness reruns at 16384 (fixes the ~20% math500 cap-hit):
+
+| math500@16K avg@4 | value | cap |
 |---|---|---|
-| int2 − bf16 (B-LH2) | **−4.4 [−7.8, −1.1] SIG** | −0.4 [−2.0, +1.4] |
-| vq2 − bf16 (B-LH1)  | −0.9 [−4.0, +2.3] | **−3.1 [−5.1, −1.3] SIG** |
-| vq2 − int2 (B-LH3)  | **+3.5 [+0.1, +6.9] SIG** | **−2.8 [−5.0, −0.6] SIG** |
+| bf16 | 0.961 | 5.0% |
+| int2 | 0.950 | 5.8% |
+| vq2  | [pending — last cell] | |
 
 **The two quantizers fail in different places.** int2 pays significantly on
 GPQA and nothing on math500; vq2 is at the bf16 anchor on GPQA and pays
