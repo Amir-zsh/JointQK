@@ -5,9 +5,23 @@ into the OSCAR authors' SGLang stack as a first-class KV-cache tier, how to
 run it, and every caveat / fairness consideration we are tracking.
 Written 2026-07-17 during the plan11 long-horizon evaluation.
 
+**All paths are on the shared filesystem, repo root =
+`/vault/amir/efficient-llm/teamily-project` (branch `pgq10`). Run commands from that root.**
+
+| what | absolute path |
+|---|---|
+| engine clone (branch `vq2-longhorizon`) | `/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/` |
+| serve script | `/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/serve_oscar.sh` |
+| integrity gates | `/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/verify_vq_engine.py` |
+| client / wave driver | `/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/run_prompts_client.py`, `run_longhorizon_wave.sh` |
+| your codebook (pinned snapshot) | `/vault/amir/efficient-llm/teamily-project/third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt` |
+| exported eval rows | `/vault/amir/efficient-llm/teamily-project/artifacts/prompt_rows/` |
+| all result cells (metrics.json per cell) | `/vault/amir/efficient-llm/teamily-project/artifacts/oscar_e2e/lh/<config>/<task>/`, `/vault/amir/efficient-llm/teamily-project/artifacts/oscar_e2e/{bf16,int2,vq2}/niah_*/` |
+| study report / review / kernel A/B | `/vault/amir/efficient-llm/teamily-project/notes/page_quant/studies/report11.md`, `plan11_review_findings.md`, `/vault/amir/efficient-llm/teamily-project/artifacts/kernels/idx_dtype_ab.json` |
+
 ## Where it lives
 
-- **Engine**: `vendor/OSCAR-vq` — a git clone of the vendored OSCAR
+- **Engine**: `/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq` — a git clone of the vendored OSCAR
   sglang-research tree, branch **`vq2-longhorizon`** (the vendored original
   is untouched). Main commits: `70ba321a8` (the vq2 tier), `6fa08ce3c`
   (fp8-e5m2 packing). The serve script points `PYTHONPATH` at the clone,
@@ -19,7 +33,7 @@ Written 2026-07-17 during the plan11 long-horizon evaluation.
   additions are inert, which is how the bf16 and int2 baselines run on the
   same build.
 
-File-by-file (all paths inside `vendor/OSCAR-vq/sglang-research/python/`):
+File-by-file (all paths inside `/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/`):
 
 | file | change |
 |---|---|
