@@ -45,6 +45,8 @@ if [[ "$REUSE" != "1" ]]; then
         bf16) SERVE_ARGS+=(--bf16) ;;
         int2) ;;
         vq2)  SERVE_ARGS+=(--vq2 --vq-codebook "$LLAMA_CB") ;;
+        quarot) SERVE_ARGS+=(--int2plain); export HADAMARD_ORDER=128 ;;
+        naive)  SERVE_ARGS+=(--int2plain); export HADAMARD_ORDER=16 SGLANG_INT2_NO_HADAMARD=1 ;;
         *) echo "unknown arm $ARM"; exit 1 ;;
     esac
     BOOTLOG="logs/llama_grid_${ARM}_server.log"
