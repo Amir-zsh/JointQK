@@ -1,0 +1,45 @@
+{
+  "name": "qwen3_8b_niah_v2_owncalib",
+  "description": "Qwen3-8B NIAH sweep, calibration-unified: int2 and vq2 re-served on rotations recomputed from OUR 198-prompt GPQA corpus (v1 used the authors' released rotations, 83 prompts / their capture — kept as the 'production OSCAR as released' record). K codebook (gpqacc64k) already derives from the same corpus and is unchanged.",
+  "model": "Qwen/Qwen3-8B",
+  "out_root": "artifacts/oscar_e2e/lh/grid_v2",
+  "engine_clone": "vendor/OSCAR-vq",
+  "calibration": {
+    "corpus": "artifacts/prompt_rows/gpqa_diamond.csv",
+    "corpus_prompts": 198,
+    "rotations": "artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own",
+    "rotation_recipe": "capture_qkv_dump 198 prompts -> compute_kv_rotation --method qqt_sst --composition r_h_pbr --head-dim 128",
+    "k_codebook": "third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+    "k_codebook_recipe": "Samuel's gpqacc64k train (same 198-prompt corpus, 8x64K cycled, ptn/stratified/flat/2bpc); rotation-independent"
+  },
+  "methods": {
+    "int2": {
+      "serve_args": [],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own",
+        "SGLANG_OSCAR_K_CLIP_RATIO": "0.96",
+        "SGLANG_OSCAR_V_CLIP_RATIO": "0.92"
+      }
+    },
+    "vq2": {
+      "serve_args": ["--vq2", "--vq-codebook", "third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt"],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own"
+      }
+    }
+  },
+  "reused_methods": {
+    "bf16": "artifacts/oscar_e2e/lh (v1 record)",
+    "int2_authors_rotation": "artifacts/oscar_e2e/int2 + lh (v1 record — production OSCAR as released)"
+  },
+  "cells": [
+    {"name": "niah_8192",  "rows": "artifacts/prompt_rows/niah_8192_qwen.jsonl",  "shards": 2, "client_args": "--threads 12"},
+    {"name": "niah_16384", "rows": "artifacts/prompt_rows/niah_16384_qwen.jsonl", "shards": 2, "client_args": "--threads 8"},
+    {"name": "niah_32768", "rows": "artifacts/prompt_rows/niah_32768_qwen.jsonl", "shards": 4, "client_args": "--threads 4"},
+    {"name": "niah_65536", "rows": "artifacts/prompt_rows/niah_65536_qwen.jsonl", "shards": 8, "client_args": "--threads 2"}
+  ],
+  "protocol": {
+    "niah": "greedy (T=0), 1 rollout/row, gen cap 128, accuracy = mean RULER string_match over 8 subtasks",
+    "serving": "token pool 140000/GPU, CUDA graphs, MAX_REQS=24; mixed-KV band 64 sink + 256 recent bf16"
+  }
+}

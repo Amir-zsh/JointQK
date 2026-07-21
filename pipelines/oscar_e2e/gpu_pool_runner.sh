@@ -44,6 +44,16 @@ boot_arm(){ # arm
   local SERVE=(--gpu "$GPU" --port "$PORT")
   export ROT_DIR="$ROOT/artifacts/oscar_llama31_8b/rotations"
   unset SGLANG_VQ_V_CODEBOOK_PATH SGLANG_INT2_NO_HADAMARD HADAMARD_ORDER SGLANG_LLOYD_MAX 2>/dev/null
+  # Spec mode (run_experiment.py): ARMS_DIR holds sourceable per-method
+  # configs (MODEL, env exports, SERVE_EXTRA). Every argument is on disk.
+  if [ -n "${ARMS_DIR:-}" ] && [ -f "$ARMS_DIR/$arm.sh" ]; then
+    unset ROT_DIR
+    # shellcheck disable=SC1090
+    source "$ARMS_DIR/$arm.sh"
+    SERVE+=("${SERVE_EXTRA[@]}" --model "$MODEL")
+    boot_serve "$arm" "${SERVE[@]}"
+    return $?
+  fi
   case "$arm" in
     bf16)   SERVE+=(--bf16 --model "$MODEL") ;;
     int2)   SERVE+=(--model "$MODEL") ;;
@@ -61,6 +71,11 @@ boot_arm(){ # arm
       SERVE+=(--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt) ;;
     *) log "unknown arm $arm"; return 1 ;;
   esac
+  boot_serve "$arm" "${SERVE[@]}"
+}
+
+boot_serve(){ # arm serve-args...
+  local arm="$1"; shift
   # Full-capacity concurrency: short-context cells leave the 140K-token pool
   # mostly idle at the default 8 requests; 24 concurrent requests + matching
   # CUDA-graph batch keep decode batches fat. Long-context cells self-limit
@@ -69,7 +84,7 @@ boot_arm(){ # arm
   local BLOG="logs/pool_gpu${GPU}_server.log"
   : > "$BLOG"   # truncate SYNCHRONOUSLY: nohup's redirect races the grep below,
                 # which otherwise matches the previous boot's stale "fired up"
-  nohup bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE[@]}" >> "$BLOG" 2>&1 &
+  nohup bash pipelines/oscar_e2e/serve_oscar.sh "$@" >> "$BLOG" 2>&1 &
   SERVER_PID=$!
   for i in $(seq 1 120); do
     grep -q "The server is fired up and ready to roll" "$BLOG" && { CUR_ARM="$arm"; log "server up arm=$arm"; return 0; }

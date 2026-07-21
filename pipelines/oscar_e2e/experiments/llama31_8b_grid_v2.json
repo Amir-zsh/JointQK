@@ -1,0 +1,54 @@
+{
+  "name": "llama31_8b_grid_v2_owncalib",
+  "description": "Llama-3.1-8B grid, calibration-unified: ALL calibration-based methods derive from the same corpus (198 GPQA-Diamond prompts, ours). Re-runs the rotation-dependent methods (int2, vq2) on rotations recomputed from the full 198-prompt dump; calibration-free methods (bf16, turbo, quarot, naive) are reused from grid/ v1 unchanged.",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "out_root": "artifacts/oscar_llama31_8b/grid_v2",
+  "engine_clone": "vendor/OSCAR-vq",
+  "calibration": {
+    "corpus": "artifacts/prompt_rows/gpqa_diamond.csv",
+    "corpus_prompts": 198,
+    "rotations": "artifacts/oscar_llama31_8b/rotations_gpqa198",
+    "rotation_recipe": "capture_qkv_dump 198 prompts -> compute_kv_rotation --method qqt_sst --composition r_h_pbr --head-dim 128",
+    "k_codebook": "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+    "k_codebook_recipe": "capture_gpqa_concat (same 198 prompts, 8x64K cycled) -> train_group_vq_alloc --grouping stratified --allocation flat --bpc 2 --pertoken-norm -> make_fp8 e5m2 (rotation-independent: bundle carries its own forward map)"
+  },
+  "methods": {
+    "int2": {
+      "serve_args": [],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_llama31_8b/rotations_gpqa198",
+        "SGLANG_OSCAR_K_CLIP_RATIO": "0.96",
+        "SGLANG_OSCAR_V_CLIP_RATIO": "0.92"
+      },
+      "notes": "production OSCAR path; clips remain the authors' Qwen-tuned defaults (recorded limitation, not recalibrated)"
+    },
+    "vq2": {
+      "serve_args": ["--vq2", "--vq-codebook", "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt"],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_llama31_8b/rotations_gpqa198"
+      },
+      "notes": "K tier = codebook (unchanged, rotation-independent); V tier + windows = int2 path, so V rides the new rotations"
+    }
+  },
+  "reused_methods": {
+    "bf16": "artifacts/oscar_llama31_8b/grid/bf16",
+    "turbo": "artifacts/oscar_llama31_8b/grid/turbo",
+    "quarot": "artifacts/oscar_llama31_8b/grid/quarot",
+    "naive": "artifacts/oscar_llama31_8b/grid/naive"
+  },
+  "cells": [
+    {"name": "niah_8192",  "rows": "artifacts/prompt_rows/niah_8192_llama.jsonl",  "shards": 2, "client_args": "--threads 12"},
+    {"name": "niah_16384", "rows": "artifacts/prompt_rows/niah_16384_llama.jsonl", "shards": 2, "client_args": "--threads 8"},
+    {"name": "niah_32768", "rows": "artifacts/prompt_rows/niah_32768_llama.jsonl", "shards": 4, "client_args": "--threads 4"},
+    {"name": "niah_65536", "rows": "artifacts/prompt_rows/niah_65536_llama.jsonl", "shards": 8, "client_args": "--threads 2"},
+    {"name": "gpqa",      "rows": "artifacts/prompt_rows/gpqa_diamond_llama.jsonl",   "shards": 2, "client_args": "--samples 5 --temperature 0.6 --top-p 0.9 --top-k -1 --threads 24"},
+    {"name": "math500",   "rows": "artifacts/prompt_rows/math500_llama.jsonl",        "shards": 4, "client_args": "--samples 5 --temperature 0.6 --top-p 0.9 --top-k -1 --threads 24"},
+    {"name": "aime25",    "rows": "artifacts/prompt_rows/aime25_llama.jsonl",         "shards": 1, "client_args": "--samples 5 --temperature 0.6 --top-p 0.9 --top-k -1 --threads 12"},
+    {"name": "humaneval", "rows": "artifacts/prompt_rows_code/humaneval_llama.jsonl", "shards": 2, "client_args": "--samples 5 --temperature 0.6 --top-p 0.9 --top-k -1 --threads 24"}
+  ],
+  "protocol": {
+    "niah": "greedy (T=0), 1 rollout/row, gen cap 128, accuracy = mean RULER string_match over 8 subtasks",
+    "reasoning_code": "avg@5 (5 independent seed-sets, per-seed scoring, mean +/- std), math-verify / answer-letter / test-execution scorers",
+    "serving": "token pool 140000/GPU, CUDA graphs, MAX_REQS=24; mixed-KV band 64 sink + 256 recent bf16 for int2/vq2"
+  }
+}
