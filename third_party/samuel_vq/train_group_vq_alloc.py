@@ -47,6 +47,39 @@ def stratified_perm(d, G):
     return torch.tensor(perm, dtype=torch.long)
 
 
+def balanced_perm(logv, G):
+    """Volume-equalizing partition (flat-rate optimum of the grouping theorem): partition
+    coords into groups of G that balance the group log-volumes Σ_{i∈group} log σ_i².
+    Greedy least-loaded (LPT) seed + pairwise swap refinement -> hits the AM-GM bound.
+    `logv`: 1-D np array of per-coord log-variances (only full groups; d must be divisible
+    by G here — Qwen d=128, G=4). Returns a LongTensor perm (perm[pos] = original coord)."""
+    import numpy as np
+    logv = np.asarray(logv, dtype=np.float64)
+    d = logv.shape[0]; L = d // G
+    order = np.argsort(-logv)
+    sums = np.zeros(L); members = [[] for _ in range(L)]
+    for i in order:                                             # LPT seed
+        l = min((l for l in range(L) if len(members[l]) < G), key=lambda l: sums[l])
+        members[l].append(int(i)); sums[l] += logv[i]
+    S = [logv[m].sum() for m in members]                        # swap refinement
+    improved = True
+    while improved:
+        improved = False
+        for a in range(L):
+            for b in range(a + 1, L):
+                base = abs(S[a] - S[b]); best = None
+                for ia, ea in enumerate(members[a]):
+                    for ib, eb in enumerate(members[b]):
+                        nSa = S[a] - logv[ea] + logv[eb]; nSb = S[b] - logv[eb] + logv[ea]
+                        if abs(nSa - nSb) < base - 1e-12:
+                            base = abs(nSa - nSb); best = (ia, ib, nSa, nSb)
+                if best:
+                    ia, ib, nSa, nSb = best
+                    members[a][ia], members[b][ib] = members[b][ib], members[a][ia]
+                    S[a], S[b] = nSa, nSb; improved = True
+    return torch.tensor([i for m in members for i in m], dtype=torch.long)
+
+
 def waterfill_continuous(score, total):
     """reverse water-filling: bits_j = max(0, 0.5*log2(score_j/theta)), sum ~ total."""
     s = score.clamp_min(1e-30).double()
@@ -102,7 +135,7 @@ if __name__ == "__main__":
     ap.add_argument("--calib-idx", type=int, nargs="+", default=None,
                     help="legacy alias for --code-idx (1-corpus mode).")
     ap.add_argument("--G", type=int, default=4)
-    ap.add_argument("--grouping", choices=["consecutive", "stratified"], default="consecutive")
+    ap.add_argument("--grouping", choices=["consecutive", "stratified", "balanced"], default="consecutive")
     ap.add_argument("--allocation", choices=["flat", "waterfill"], default="flat")
     ap.add_argument("--bpc", type=int, default=2, help="target bits/coord (flat: uniform; waterfill: average)")
     ap.add_argument("--qtau", type=float, default=1.0, help="Sigma_Q whitening temperature (1=full QPCA, <1 tempers toward Sigma_K PCA)")
@@ -161,6 +194,13 @@ if __name__ == "__main__":
     for l in range(L):
         for h in range(Hkv):
             r = fetch(l, h).to(dev)                    # (N, d) permuted+whitened residual
+            # balanced: per-head volume-equalizing permutation from this head's coefficient
+            # variance spectrum, folded into F[l,h]/inv[l,h] so decode needs no extra step.
+            if args.grouping == "balanced":
+                perm = balanced_perm(r.var(0).log().cpu().numpy(), args.G)   # CPU LongTensor
+                r = r[:, perm.to(r.device)]
+                F[l, h] = F[l, h][:, perm]              # permute output (coefficient) coords
+                inv[l, h] = inv[l, h][perm, :]          # permute coefficient rows of inverse
             if args.pertoken_norm:                     # OSCAR/KIVI-style per-token RMS scale
                 r = r / r.pow(2).mean(-1, keepdim=True).sqrt().clamp_min(1e-8)
             if args.allocation == "waterfill":
