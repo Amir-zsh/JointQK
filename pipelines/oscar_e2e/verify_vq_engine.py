@@ -16,6 +16,14 @@ Gates (all must PASS):
                   matches a torch attention reference over the reconstructed
                   K_hat and dequantized int2 V within 2e-2 rel (fp16/bf16
                   kernel math vs fp32 reference).
+  G4 V roundtrip: engine strided-group V encode/decode (the VQ-V ablation
+                  tier) matches a double-precision reference codec at
+                  rate-distortion parity. Coordinate-placement bugs (the
+                  V-fatal class K gates cannot see) show up as ~2x
+                  distortion here.
+  G5 kernel V_VQ: the vq2 stage-1 kernel with the group-VQ V branch matches
+                  a torch reference built from the documented plane
+                  semantics (plane m of group g -> coord m*NG+g).
 """
 
 import argparse
@@ -40,6 +48,12 @@ def main():
     ap.add_argument(
         "--bundle",
         default="artifacts/page_quant2/vqg_bundle__qwen3_8b_flat_ptn.pt",
+    )
+    ap.add_argument(
+        "--v-bundle",
+        default="third_party/samuel_vq/codebooks/vqv_G4_strided_gpqa_engine.pt",
+        help="engine-basis V codebook (forward=identity, STRIDED groups); "
+             "G4/G5 skip if absent",
     )
     ap.add_argument("--layers", type=int, nargs="+", default=[0, 5, 18, 35])
     ap.add_argument("--tokens", type=int, default=512)
@@ -229,7 +243,7 @@ def main():
     NG, KC = vq.num_groups, vq.codebook_size
     cache = seq * bs + 7
     k_idx_buf = torch.randint(
-        0, KC, (cache + 1, H, NG), device=device, dtype=torch.int16
+        0, KC, (cache + 1, H, NG), device=device, dtype=torch.uint8
     )
     k_sz = torch.zeros(cache + 1, H, 2, device=device, dtype=torch.float32)
     k_sz[..., 0] = torch.rand(cache + 1, H, device=device) + 0.5
@@ -299,6 +313,144 @@ def main():
                 failures.append(f"G3 b{b} qh{qh}: rel {e:.3e}")
     n_g3 = sum(1 for f in failures if f.startswith("G3"))
     print(f"  kernel-vs-ref: {'PASS' if n_g3 == 0 else f'FAIL ({n_g3} probes)'}")
+
+    # ---- V gates (G4/G5). K's gates are blind to V-fatal bugs: attention
+    # scores are dot products (invariant to coordinate permutations), while
+    # V enters as a weighted SUM where coordinate placement matters. Both V
+    # gates therefore verify the strided group layout (codebook group g =
+    # coords {g, g+NG, g+2NG, g+3NG}; kernel plane m of group g -> output
+    # coord m*NG + g) end to end. Skipped with a note if the V bundle is
+    # absent.
+    v_bundle = os.path.join(REPO_ROOT, args.v_bundle)
+    if not os.path.exists(v_bundle):
+        print(f"== G4/G5 SKIPPED: V bundle not found at {args.v_bundle}")
+    else:
+        print("== G4 V roundtrip parity (engine strided encode/decode vs reference)")
+        vqv = load_vq_codebook(
+            v_bundle,
+            layer_num=L_total,
+            start_layer=0,
+            head_num=H,
+            head_dim=D,
+            device=device,
+            dtype=torch.bfloat16,
+        )
+        ngv, gv = vqv.num_groups, vqv.group_dim
+        # Pool's strided perm and its inverse; sanity: a true permutation.
+        perm = torch.tensor(
+            [g + m * ngv for g in range(ngv) for m in range(gv)],
+            dtype=torch.long, device=device,
+        )
+        inv_perm = torch.empty_like(perm)
+        inv_perm[perm] = torch.arange(D, device=device)
+        assert torch.equal(perm.sort().values, torch.arange(D, device=device))
+
+        vblob = torch.load(v_bundle, map_location="cpu", weights_only=False)
+        for l in args.layers:
+            h = l % H
+            v = torch.randn(T, D, device=device, dtype=torch.float32)
+            v3 = v.unsqueeze(1).expand(T, H, D).contiguous()
+            # Engine path: strided perm -> ptn -> assign -> gather -> unperm.
+            idx, scale = vq_encode(
+                v3[..., perm].to(torch.bfloat16), vqv.cb16[l], vqv.cb_sq[l],
+                pertoken_norm=vqv.pertoken_norm,
+            )
+            v_hat = vq_dequant(idx, scale, vqv.cb16[l])[..., inv_perm]
+            # Reference: double-precision codec on the SAME permuted rows
+            # (forward=identity, mean=0 — the engine-basis bundle), unpermuted.
+            ref = GroupVQCompressor(
+                torch.eye(D, dtype=torch.float64),
+                torch.eye(D, dtype=torch.float64),
+                torch.zeros(D, dtype=torch.float64),
+                [c.to(torch.float8_e5m2).to(torch.float16)
+                 for c in vblob["codebooks"][(l, h)]],
+                vblob["bounds"],
+                pertoken_norm=bool(vblob.get("pertoken_norm", False)),
+            ).to(device)
+            v_ref = ref.roundtrip(v[:, perm.cpu()])[:, inv_perm.cpu()]
+            d_ref = rel_err(v_ref, v)
+            d_eng = rel_err(v_hat[:, h], v)
+            per_tok_ref = (v_ref.to(torch.float64) - v.to(torch.float64)).pow(2).sum(-1)
+            per_tok_eng = (
+                v_hat[:, h].to(torch.float64) - v.to(torch.float64)
+            ).pow(2).sum(-1)
+            vnorm = v.to(torch.float64).pow(2).sum(-1).clamp_min(1e-12)
+            worst = ((per_tok_eng - per_tok_ref) / vnorm).max().item()
+            ratio = (d_eng ** 2) / max(d_ref ** 2, 1e-12)
+            ok = ratio <= 1.005 and worst <= 0.02
+            if not ok:
+                failures.append(
+                    f"G4 layer {l} head {h}: distortion ratio {ratio:.4f}, "
+                    f"worst per-token excess {worst:.4f}"
+                )
+            print(
+                f"  layer {l:2d} head {h}: distortion ref {d_ref:.4f} eng "
+                f"{d_eng:.4f} (ratio {ratio:.4f}, worst excess {worst:.4f})  "
+                f"{'PASS' if ok else 'FAIL'}"
+            )
+
+        print("== G5 vq2 kernel with V_VQ vs torch reference")
+        lv = args.layers[1] if len(args.layers) > 1 else 0
+        v_idx_buf = torch.randint(
+            0, vqv.codebook_size, (cache + 1, H, ngv), device=device,
+            dtype=torch.uint8,
+        )
+        v_sz_vq = torch.zeros(cache + 1, H, 2, device=device, dtype=torch.float32)
+        v_sz_vq[..., 0] = torch.rand(cache + 1, H, device=device) + 0.5
+        att_out.zero_(); att_lse.fill_(float("-inf"))
+        _decode_grouped_att_m_fwd_quant_vq2(
+            q_dec,
+            k_idx_buf,
+            vq.cb_packed[l],
+            v_buf,
+            k_sz,
+            v_sz_vq,
+            att_out,
+            att_lse,
+            kv_indptr,
+            kv_indices,
+            num_kv_splits,
+            max_splits,
+            sm_scale,
+            logit_cap=0.0,
+            cb_packed_v=vqv.cb_packed[lv],
+            v_idx_buffer=v_idx_buf,
+        )
+        o_v = torch.zeros(bs, QH, D, device=device, dtype=torch.bfloat16)
+        _unified_stage2(att_out, att_lse, o_v, total_splits=max_splits)
+
+        # Torch reference: K_hat as in G3; V_hat[t, h, m*NG+g] =
+        # fp8e5(cb byte m of group g at idx) * ptn_scale — the documented
+        # kernel plane semantics, built independently from cb16 + inv_perm.
+        cb16_k = vq.cb16[l]
+        cb16_v = vqv.cb16[lv]
+        h_ids_v = torch.arange(H, device=device).view(1, H, 1)
+        g_ids_v = torch.arange(ngv, device=device).view(1, 1, ngv)
+        n_g5 = 0
+        for b in range(bs):
+            sl = kv_indices[b * seq : (b + 1) * seq]
+            idxk = k_idx_buf[sl].long()
+            khat = (
+                cb16_k[h_ids, g_ids, idxk].to(torch.float32).reshape(seq, H, D)
+                * k_sz[sl][..., 0:1].to(torch.float32)
+            )
+            idxv = v_idx_buf[sl].long()
+            # [seq, H, NG_V, G] in permuted (contiguous-group) order ->
+            # unpermute to natural coords.
+            vhat_p = cb16_v[h_ids_v, g_ids_v, idxv].to(torch.float32).reshape(
+                seq, H, D
+            )
+            vhat = vhat_p[..., inv_perm] * v_sz_vq[sl][..., 0:1].to(torch.float32)
+            for qh in range(0, QH, 7):
+                h = qh // 4
+                s = (q_dec[b, qh].to(torch.float32) @ khat[:, h].T) * sm_scale
+                p = torch.softmax(s, -1)
+                o_ref = p @ vhat[:, h]
+                e = rel_err(o_v[b, qh], o_ref)
+                if e > 2e-2:
+                    failures.append(f"G5 b{b} qh{qh}: rel {e:.3e}")
+                    n_g5 += 1
+        print(f"  kernel-vs-ref (V_VQ): {'PASS' if n_g5 == 0 else f'FAIL ({n_g5} probes)'}")
 
     print()
     if failures:
