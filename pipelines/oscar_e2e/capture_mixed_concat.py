@@ -104,7 +104,10 @@ def main():
         ids = torch.tensor([ids_list], dtype=torch.long)
         out = run_prefill_qkv_capture(model, ids)
         accumulate(out["q_post"], out["k_post"], acc, dev)
-        kp = out["k_post"][:, :, ::args.pool_stride, :].to(torch.float16).cpu()
+        # .contiguous(): torch.save of a strided view persists the FULL
+        # underlying storage — without it each example is 4x larger on disk.
+        kp = (out["k_post"][:, :, ::args.pool_stride, :]
+              .to(torch.float16).cpu().contiguous())
         T2 = int(kp.shape[2])
         torch.save({"k_post": kp, "prompt_length": T2,
                     "config": "mixed_concat", "row_index": i},
