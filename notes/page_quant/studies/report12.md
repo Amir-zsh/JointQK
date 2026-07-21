@@ -9,6 +9,49 @@ All cells served on the vq2-extended OSCAR engine (vendor/OSCAR-vq @
 `6f78cd6cd`, gates G1–G6 ALL PASS), one stack for every method, identical
 exported rows per cell, sharded across 6 A100s by the pool scheduler.
 
+## 0. Protocol (shared settings)
+
+**Serving stack (every cell, every method, both models):** token pool
+140,000/GPU, CUDA graphs, ≤24 concurrent requests. All quantized methods
+share OSCAR's mixed-KV window policy — first 64 tokens (sinks) + most
+recent 256 tokens in bf16, older tokens quantized on aging; clips K 0.96 /
+V 0.92 (Naive/QuaRot: 1.0). No sequence cap below the pool; the longest
+requests are NIAH-64K (65,536-token prompt + 128 generated).
+
+**NIAH (both models, all methods):** contexts 8K/16K/32K/64K; 800 rows per
+context = 8 RULER subtasks × 100 (single_1–3, multikey_1–3, multivalue,
+multiquery). Greedy (T=0), **1 rollout/row**, gen cap 128. Accuracy =
+`string_match` per subtask, headline = unweighted mean over the 8.
+
+**Llama reasoning/code:** GPQA-diamond 198 / math500 full 500 / AIME25 30 /
+HumanEval 164 rows. **5 rollouts/prompt**, T=0.6 / top-p 0.9 / no top-k
+(Llama generation_config), non-thinking; caps gpqa+math 4096, aime 8192,
+humaneval 2048. Accuracy = **avg@5**: each seed-set scored independently
+(math-verify / answer-letter / test execution), mean of the 5 per-seed
+accuracies, std over seeds. Not pass@5.
+
+**Offline mechanism checks (§4):** not served — live-captured Qwen V
+(8 GPQA prompts ≤3072 tok for checks 1–2; NIAH-haystack rows ≤4096 tok for
+check 3), engine R_v, relative MSE in the rotated basis, layer-0 excluded.
+
+**Calibration data per method:**
+
+| method | rotation calibration | codebook / other |
+|---|---|---|
+| bf16 | — | — |
+| int2 Qwen | authors' released (83 prompts, 20K-tok budget) | clips 0.96/0.92 (authors') |
+| int2 Llama | ours: 50 GPQA prompts → authors' pipeline (qqt_sst, r_h_pbr) | same clips (Qwen-tuned, not re-tuned — caveat) |
+| vq2 | same rotations as int2 (per model) | K codebook: 198 GPQA prompts cycled into 8×64K seqs (gpqacc64k), ptn, stratified, flat, 2 b/coord |
+| vq2mix | same, unchanged | same recipe, 5-domain corpus (~300K unique tok) |
+| VQ-V | same | V codebook vqv_G4_strided_gpqa_engine.pt, GPQA-calibrated |
+| QuaRot | — (fixed Hadamard, order 128) | — |
+| Naive | — (no rotation) | — |
+
+Asymmetry to keep in mind reading the Llama table: vq2 and int2 share the
+same 50-prompt rotation stack, so their *relative* ordering is clean, but
+absolute distance to bf16 partly reflects the thinner rotation calibration
+and un-retuned clips.
+
 ## 1. Llama-3.1-8B: five methods, served
 
 Onboarding built fresh this run: OSCAR rotations from the authors' own
