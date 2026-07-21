@@ -39,6 +39,7 @@ check 3), engine R_v, relative MSE in the rotated basis, layer-0 excluded.
 | method | rotation calibration | codebook / other |
 |---|---|---|
 | bf16 | — | — |
+| TurboQuant | — (fixed Hadamard, order 128) | Lloyd-Max INT2, MSE-optimal uniform encoding (no calibration; see §5.3) |
 | int2 Qwen | authors' released (83 prompts, 20K-tok budget) | clips 0.96/0.92 (authors') |
 | int2 Llama | ours: 50 GPQA prompts → authors' pipeline (qqt_sst, r_h_pbr) | same clips (Qwen-tuned, not re-tuned — caveat) |
 | vq2 | same rotations as int2 (per model) | K codebook: 198 GPQA prompts cycled into 8×64K seqs (gpqacc64k), ptn, stratified, flat, 2 b/coord |
@@ -64,20 +65,20 @@ cap-hit rule in short-validation and were re-exported before any full cell).
 
 **NIAH mean (800 rows/cell, greedy):**
 
-| ctx | bf16 | **vq2** | int2 (OSCAR) | QuaRot-INT2 | Naive-INT2 |
-|---|---|---|---|---|---|
-| 8K  | 98.2 | 92.3 | 84.3 | 37.3 | 0.3 |
-| 16K | 98.5 | 91.2 | 82.7 | 35.5 | 0.2 |
-| 32K | 97.4 | 91.7 | 80.0 | 37.3 | 0.1 |
-| 64K | 97.4 | **92.1** | 76.7 | 33.6 | 0.0 |
+| ctx | bf16 | **vq2** | int2 (OSCAR) | TurboQuant-INT2 | QuaRot-INT2 | Naive-INT2 |
+|---|---|---|---|---|---|---|
+| 8K  | 98.2 | 92.3 | 84.3 | 80.7 | 37.3 | 0.3 |
+| 16K | 98.5 | 91.2 | 82.7 | 79.3 | 35.5 | 0.2 |
+| 32K | 97.4 | 91.7 | 80.0 | 80.1 | 37.3 | 0.1 |
+| 64K | 97.4 | **92.1** | 76.7 | 73.6 | 33.6 | 0.0 |
 
 **Reasoning / code (avg@5):**
 
-| task | bf16 | vq2 | int2 | QuaRot | Naive |
-|---|---|---|---|---|---|
-| math500 (full 500) | 44.3 | 44.3 | 44.5 | 6.4 | 3.9 |
-| HumanEval | 63.8 | 63.7 | 64.8 | 7.0 | 0.0 |
-| GPQA-diamond | 25.1 | 24.6 | 21.8 | 2.9 | 1.0 |
+| task | bf16 | vq2 | int2 | TurboQuant | QuaRot | Naive |
+|---|---|---|---|---|---|---|
+| math500 (full 500) | 44.3 | 44.3 | 44.5 | 17.2 | 6.4 | 3.9 |
+| HumanEval | 63.8 | 63.7 | 64.8 | 30.5 | 7.0 | 0.0 |
+| GPQA-diamond | 25.1 | 24.6 | 21.8 | 12.4 | 2.9 | 1.0 |
 | AIME25 | ≈0 for every method — Llama-3.1-8B scores ~0 as published; uninformative row |
 
 Findings:
@@ -99,8 +100,17 @@ Findings:
    is free where retrieval pressure is low, on Llama as on Qwen. GPQA is
    near chance for this model (extraction ~72–80%; absolute ~25%), AIME is
    zero — both retained for protocol completeness, neither informative.
-5. **QuaRot (~35) and Naive (~0) reproduce OSCAR's Table-2 baseline
-   hierarchy** on a model family the paper never tested.
+5. **The Table-2 baseline hierarchy reproduces on a model family the
+   paper never tested**: TurboQuant (NIAH ~74–81) > QuaRot (~35) >
+   Naive (~0), with OSCAR's int2 above TurboQuant everywhere except 32K
+   (80.0 vs 80.1, a tie). Two readings: (a) an optimal scalar quantizer
+   with a plain Hadamard nearly matches production OSCAR's full stack on
+   pure retrieval; (b) on reasoning/code, where decode-context fidelity
+   matters, OSCAR's calibrated rotations + bf16 recent ring are worth
+   2–3× TurboQuant's scores (44.5 vs 17.2 math500, 64.8 vs 30.5
+   HumanEval). TurboQuant's 64K weak spot is the uuid haystack
+   (multikey_3 = 17) — same dense-random-text domain that stresses every
+   method here. TurboQuant cells ran 2026-07-21 after the §5.3 fix.
 
 ## 2. Qwen3-8B served NIAH sweep — now complete
 
@@ -192,6 +202,24 @@ applies to **V only**.
    (bf16-32K read 71.4; true 97.4). Caught by a physical-impossibility
    check (baselines "improving" with context) before anything was recorded;
    fixed (literal_eval before scoring) and re-merged.
+
+3. **TurboQuant baseline was unimplemented-as-documented, then mis-tuned
+   (engine, fixed in clone commits `a9a4ab6d3` + `b04860e71`)**: the
+   documented recipe (`SGLANG_LLOYD_MAX=1` on the int2plain path) pointed
+   at a flag only the *mixed* OSCAR pool read — the plain pool would have
+   silently served min-max (i.e., QuaRot mislabeled). Additionally the
+   legacy LM encoding (`LM_RATIO=1.16`, dynamic-range-matched) costs +26%
+   distortion vs exact Lloyd-Max. Fix: LM branch in BOTH plain-pool
+   writers (fused-Hadamard decode + pre-rotated prefill — the two-writer
+   split is the same bug class as §5.1) storing the MSE-optimal
+   uniform-level encoding Δ*=0.98774 (+1.2% vs exact LM analytic; +0.8%
+   on real post-FWHT Llama K/V — `turbo_lm_check.py`). Readers keep the
+   `(q−zero)·scale` contract, sidestepping the exact-centroid path's
+   documented decode instability. Gates: `verify_turbo_lm.py` T1–T4 ALL
+   PASS (kernel-vs-torch 100%, writer-vs-writer arena parity 100%).
+   Served family-control: greedy 600-tok loop uniq-ratio turbo 0.15 vs
+   QuaRot 0.10 vs bf16 0.62 — looping is the plain-int2 family behavior,
+   not an LM defect.
 
 Also fixed en route: pool-runner stale-bootlog race (readiness grep matched
 the previous server's banner).

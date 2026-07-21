@@ -188,3 +188,27 @@ with context) before anything was recorded.
 scoring. **Verification**: re-merge with --force; bf16-32K must land ~95+,
 naive-64K must collapse toward ~0; string-answer tasks (gpqa/math/humaneval)
 unaffected by construction.
+
+## turbo-1: TurboQuant baseline unimplemented-as-documented + mis-tuned LM encoding (engine)
+
+- **Root cause**: two independent defects. (1) `SGLANG_LLOYD_MAX` was only
+  read by the mixed OSCAR pool; the plain int2 pool (the int2plain serving
+  path the TurboQuant recipe targets) ignored it — the documented recipe
+  would silently serve min-max (QuaRot mislabeled as TurboQuant). (2) The
+  mixed-pool LM branch encoded reconstruction levels via `LM_RATIO=1.16`,
+  fitted to match the old clip path's dynamic range, not to minimize MSE:
+  +26% distortion vs exact Lloyd-Max.
+- **Fix** (clone commits `a9a4ab6d3`, `b04860e71`): LM branch added to BOTH
+  plain-pool writers — fused-Hadamard (decode) and pre-rotated plain writer
+  (prefill); the two-writer split surfaced on first boot via a new guard
+  (same bug class as the VQ-V prefix-dequant). Encoding replaced everywhere
+  with the MSE-optimal uniform-level fit to the LM centroids
+  (Δ*=0.98774σ, zero=1.5): +1.2% vs exact LM analytic, +0.8% on real
+  post-FWHT Llama K/V. Readers keep `(q−zero)·scale` — the exact-centroid
+  dequant path (documented decode instability) is never enabled.
+- **Verification**: `pipelines/oscar_e2e/turbo_lm_check.py` (constants +
+  Gaussian + real-data distortion table); `verify_turbo_lm.py` gates T1–T4
+  ALL PASS (kernel-vs-torch parity 100%, quantizer-quality bars,
+  writer-vs-writer arena parity 100%, grouped+LM guard). Served: NIAH-8K
+  24-row slice 95.8; greedy-loop family control turbo 0.15 > QuaRot 0.10
+  (bf16 0.62) — no LM-specific degeneration.
