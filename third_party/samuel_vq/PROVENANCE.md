@@ -47,3 +47,12 @@ prompt rows (gitignored dirs artifacts/prompt_rows_{code,proto}/).
 | file | sha256 |
 |---|---|
 | vqv_G4_strided_gpqa_engine.pt (V codebook, engine basis: forward=identity, mean=0, STRIDED groups, K=256 G=4 ptn) | dc2db8e35edcaede1b34cd066019b8910aecd7d576b78f446e5e6eab26ecc4c7 |
+
+## Llama onboarding tooling snapshot (2026-07-20)
+
+Copied from /vault/samuel/efficient-llm/JointQK/entropy_coding (read-only,
+authorized copy-with-attribution) for the Llama-3.1-8B build on lambda6:
+capture_qkv_dump.py (877595de), capture_gpqa_concat.py (68a0b8ff),
+make_fp8.py (1244ad1c), train_group_vq_alloc.py (refreshed). Recipes adapted
+from his logs/build_4b_stratified_64k.sh and logs/build_qwen3_32b.sh into
+pipelines/oscar_e2e/build_llama31_8b.sh.
