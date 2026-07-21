@@ -61,6 +61,18 @@ def main():
             [pd.read_csv(d / "predictions.csv") for d in sorted(dirs)],
             ignore_index=True,
         )
+        # CSV round-trip stringifies list-typed columns (NIAH answers are
+        # lists); the ruler scorer then iterates the STRING character-wise
+        # ("['1679215']" -> 7/11 chars match -> 63.64%-style garbage).
+        # Parse list-like strings back to real lists before scoring.
+        import ast
+        for col in df.columns:
+            if df[col].dtype == object:
+                sample = df[col].dropna().astype(str)
+                if len(sample) and sample.str.startswith("[").all():
+                    df[col] = df[col].map(
+                        lambda x: ast.literal_eval(x) if isinstance(x, str) else x
+                    )
         dup = df.duplicated(subset=["rid", "sample_k"]).sum()
         assert dup == 0, f"{cell}: {dup} duplicate (rid, sample_k) rows"
         cell.mkdir(parents=True, exist_ok=True)

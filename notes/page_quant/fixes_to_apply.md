@@ -170,3 +170,21 @@ below.
 **Verification**: new gate **G6** in verify_vq_engine.py exercises the
 exact function on mixed HP+quant slots vs an independent reconstruction —
 quant rel 2.8e-4, HP passthrough exact; full suite (G1–G6) ALL PASS.
+
+## merge_shards scored CSV-stringified answer lists character-wise (2026-07-21)
+
+**Root cause**: merge_shards.py re-scored merged shards from predictions.csv;
+CSV serialization turns the NIAH `answer` list column into its repr string,
+and the vendored ruler scorer iterates answers — so it matched the string's
+CHARACTERS ("['1679215']" → 7/11 present → 63.64%). All merged (sharded)
+NIAH cells were mis-scored: bf16-32K read 71.4 (true ≈95+), and garbage-
+output baselines picked up phantom points from stray digits (naive-INT2
+"25.8" at 64K). Monolithic cells (client scores from live jsonl-derived
+lists) were unaffected, which is why 8/16K looked sane while 32/64K looked
+impossible. Caught by the physical-impossibility check (baselines improving
+with context) before anything was recorded.
+
+**Fix**: literal_eval list-like object columns after the CSV read, before
+scoring. **Verification**: re-merge with --force; bf16-32K must land ~95+,
+naive-64K must collapse toward ~0; string-answer tasks (gpqa/math/humaneval)
+unaffected by construction.
