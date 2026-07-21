@@ -5,6 +5,22 @@ into the OSCAR authors' SGLang stack as a first-class KV-cache tier, how to
 run it, and every caveat / fairness consideration we are tracking.
 Written 2026-07-17 during the plan11 long-horizon evaluation.
 
+> **State pointer (2026-07-21, for Samuel).** The canonical code lives on
+> **lambda7** at `/vault/amir/efficient-llm/teamily-project` — main repo
+> branch `pgq10`, engine clone `vendor/OSCAR-vq` branch `vq2-longhorizon`
+> @ `6f78cd6cd`. Your 2026-07-20 handoff (F1 uint8 arena, F2 kernel parity,
+> VQ-V tier, Naive/QuaRot baselines, protocol tooling) is fully merged, plus
+> on top of it: V integrity gates **G4/G5/G6** in `verify_vq_engine.py`
+> (ALL PASS), a **fix to your VQ-V patch** — `dequantize_prefix_kv` decoded
+> the V index arena as packed int2 crumbs during chunked prefill (clone
+> commit `6f78cd6cd`; write-up:
+> https://claude.ai/code/artifact/02c62657-a7de-42e9-a48e-ca6343b7417f),
+> your debug probes removed per the gate-landing condition, and a missing
+> stream-capture guard on the VQV read-back probe. Experiments now run on
+> **lambda6** (byte-identical mirror at the same path; Llama-3.1-8B
+> rotations + ptn/64K codebook under `artifacts/oscar_llama31_8b/`, five-arm
+> grid in flight). lambda7 GPUs are yours.
+
 **All paths are on the shared filesystem, repo root =
 `/vault/amir/efficient-llm/teamily-project` (branch `pgq10`). Run commands from that root.**
 
