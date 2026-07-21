@@ -22,7 +22,8 @@ SAMP = "--samples 5 --temperature 0.6 --top-p 0.9 --top-k -1"
 
 # (cell, rows_file, n_shards, extra_args)
 LLAMA_CELLS = [
-    ("niah_16384", "artifacts/prompt_rows/niah_16384_llama.jsonl", 4, "--threads 8"),
+    # niah_16384 intentionally absent: in flight monolithically at the
+    # monolith->pool transition (re-add if an arm's cell failed).
     ("niah_32768", "artifacts/prompt_rows/niah_32768_llama.jsonl", 4, "--threads 4"),
     ("niah_65536", "artifacts/prompt_rows/niah_65536_llama.jsonl", 8, "--threads 2"),
     ("gpqa", "artifacts/prompt_rows/gpqa_diamond_llama.jsonl", 2, f"{SAMP} --threads 24"),

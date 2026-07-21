@@ -94,6 +94,14 @@ mark_job(){ # lineno newstatus
 }
 
 log "worker start (queue=$QUEUE)"
+# Wait for the GPU to free (a monolithic-era server/client may still own it;
+# their cells complete, then we take over).
+for i in $(seq 1 720); do
+  USED=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $GPU)
+  [ "$USED" -lt 2000 ] && break
+  [ $((i % 24)) -eq 0 ] && log "waiting for gpu (used=${USED}MiB)"
+  sleep 10
+done
 while true; do
   CLAIM=$(claim_job) || { log "queue drained"; break; }
   LN=$(cut -f1 <<<"$CLAIM")
