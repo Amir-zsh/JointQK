@@ -1,7 +1,7 @@
 # Report 12 — Llama-3.1-8B five-method grid, Qwen sweep completion, and the VQ-V ablation
 
 **Status: results COMPLETE (lambda6 GPU-pool run, night of 2026-07-20 → 21);
-one offline mechanism check in flight (e5m2 snap, section 4).**
+VQ-V mechanism resolved offline (section 4).**
 
 All cells served on the vq2-extended OSCAR engine (vendor/OSCAR-vq @
 `6f78cd6cd`, gates G1–G6 ALL PASS), one stack for every method, identical

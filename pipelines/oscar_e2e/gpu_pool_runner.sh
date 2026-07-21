@@ -48,6 +48,7 @@ boot_arm(){ # arm
     bf16)   SERVE+=(--bf16 --model "$MODEL") ;;
     int2)   SERVE+=(--model "$MODEL") ;;
     vq2)    SERVE+=(--vq2 --model "$MODEL" --vq-codebook artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt) ;;
+    vq2mix) SERVE+=(--vq2 --model "$MODEL" --vq-codebook artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_mixed64k_fp8.pt) ;;
     quarot) SERVE+=(--int2plain --model "$MODEL"); export HADAMARD_ORDER=128 ;;
     naive)  SERVE+=(--int2plain --model "$MODEL"); export HADAMARD_ORDER=16 SGLANG_INT2_NO_HADAMARD=1 ;;
     qwen-vq2)

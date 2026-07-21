@@ -40,6 +40,15 @@ QWEN_JOBS = [
 QWEN_OUT = "artifacts/oscar_e2e/lh/pool"
 LLAMA_OUT = "artifacts/oscar_llama31_8b/grid"
 
+# --set mixed: the vq2mix NIAH re-run (mixed-domain codebook, report12 §4).
+# Same rows/shards as the main grid so the comparison is cell-for-cell.
+MIXED_CELLS = [
+    ("niah_8192", "artifacts/prompt_rows/niah_8192_llama.jsonl", 2, "--threads 12"),
+    ("niah_16384", "artifacts/prompt_rows/niah_16384_llama.jsonl", 2, "--threads 8"),
+    ("niah_32768", "artifacts/prompt_rows/niah_32768_llama.jsonl", 4, "--threads 4"),
+    ("niah_65536", "artifacts/prompt_rows/niah_65536_llama.jsonl", 8, "--threads 2"),
+]
+
 
 def shard_rows(rows_path: Path, n: int) -> list[Path]:
     lines = rows_path.read_text().splitlines()
@@ -56,6 +65,7 @@ def shard_rows(rows_path: Path, n: int) -> list[Path]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
+    ap.add_argument("--set", default="main", choices=["main", "mixed"])
     args = ap.parse_args()
 
     jobs = []
@@ -77,11 +87,15 @@ def main():
                 continue
             jobs.append((arm, out, str(sp.relative_to(REPO)), extra))
 
-    for arm in LLAMA_ARMS:
-        for cell, rows, n, extra in LLAMA_CELLS:
-            add(arm, f"{LLAMA_OUT}/{arm}", cell, rows, n, extra)
-    for arm, cell, rows, n, extra in QWEN_JOBS:
-        add(arm, QWEN_OUT, cell, rows, n, extra)
+    if args.set == "mixed":
+        for cell, rows, n, extra in MIXED_CELLS:
+            add("vq2mix", f"{LLAMA_OUT}/vq2mix", cell, rows, n, extra)
+    else:
+        for arm in LLAMA_ARMS:
+            for cell, rows, n, extra in LLAMA_CELLS:
+                add(arm, f"{LLAMA_OUT}/{arm}", cell, rows, n, extra)
+        for arm, cell, rows, n, extra in QWEN_JOBS:
+            add(arm, QWEN_OUT, cell, rows, n, extra)
 
     out = REPO / args.out
     out.parent.mkdir(parents=True, exist_ok=True)
