@@ -452,6 +452,41 @@ def main():
                     n_g5 += 1
         print(f"  kernel-vs-ref (V_VQ): {'PASS' if n_g5 == 0 else f'FAIL ({n_g5} probes)'}")
 
+        print("== G6 VQ-V prefix dequant (chunked-prefill read path)")
+        # The third V read path (dequantize_prefix_kv under vq_v_enabled) —
+        # the one the original handoff missed (it decoded VQ indices as int2
+        # crumbs). Mixed HP+quant slots, raw-tensor call, vs the reference
+        # reconstruction used in G4.
+        from sglang.srt.layers.attention.quantized_kv_prefill import (
+            _vq_prefix_dequantize_v,
+        )
+        lg = args.layers[0]
+        n_hp_slots = 64
+        hp_rows = torch.randn(
+            n_hp_slots, H, D, device=device, dtype=torch.bfloat16
+        )
+        hp_off_g6 = cache  # pretend quant ids run [0, cache), HP at cache+
+        pfx = torch.cat([
+            torch.randperm(cache, device=device)[:200],
+            hp_off_g6 + torch.randint(0, n_hp_slots, (56,), device=device),
+        ])
+        v_hat = _vq_prefix_dequantize_v(
+            pfx, v_idx_buf, v_sz_vq, hp_rows, vqv.cb16[lg], inv_perm,
+            hp_off_g6, cache, torch.float32,
+        )
+        # Reference: same gather math built independently.
+        idxq = v_idx_buf[pfx[:200]].long()
+        ref_q = (
+            vqv.cb16[lg][h_ids_v, g_ids_v, idxq].to(torch.float32).reshape(200, H, D)
+        )[..., inv_perm] * v_sz_vq[pfx[:200]][..., 0:1].to(torch.float32)
+        e_q = rel_err(v_hat[:200], ref_q)
+        e_hp = rel_err(v_hat[200:], hp_rows[(pfx[200:] - hp_off_g6).long()])
+        ok6 = e_q <= 5e-3 and e_hp <= 5e-3
+        if not ok6:
+            failures.append(f"G6: quant rel {e_q:.3e}, hp rel {e_hp:.3e}")
+        print(f"  quant rel {e_q:.3e}, hp passthrough rel {e_hp:.3e}  "
+              f"{'PASS' if ok6 else 'FAIL'}")
+
     print()
     if failures:
         print("FAILURES:")

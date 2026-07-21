@@ -148,3 +148,25 @@
   (+1.23 [−0.04,+2.47]); ω tie holds. pgq5 T2 stays PASS with margin
   (+6.16 [+3.91,+8.45] SIG); retention/window verdicts unchanged. pgq6
   parity stays an all-task tie (−0.23 [−0.78,+0.25]).
+
+## VQ-V prefix dequant read VQ indices as int2 crumbs (2026-07-20)
+
+**Root cause**: Samuel's VQ-V handoff patch covered the write, flush, and
+decode-kernel paths but `dequantize_prefix_kv` (the chunked-prefill prefix
+read) still called `_mixed_prefix_dequantize_tensor` on the V arena
+unconditionally — under `vq_v_enabled` that arena holds uint8 codebook
+indices, decoded as packed int2 crumbs with the ptn scale misread as an
+affine scale/zero pair → garbage V for the entire quantized prefix on any
+prompt longer than one 4096-token chunk. Invisible to: his 400-token smoke
+(single chunk), our short smokes, the offline de-risk/HF-sim, and gates
+G4/G5 (which cover encode/decode math and the decode kernel, not this
+third read path). Surfaced while diagnosing the stalled/invalid Qwen VQ-V
+NIAH-32K served run (stopped, to be rerun).
+
+**Fix**: `_vq_prefix_dequantize_v` (strided inverse-perm gather, raw-tensor
+signature) + `vq_v_enabled` branch in `dequantize_prefix_kv`; clone commit
+below.
+
+**Verification**: new gate **G6** in verify_vq_engine.py exercises the
+exact function on mixed HP+quant slots vs an independent reconstruction —
+quant rel 2.8e-4, HP passthrough exact; full suite (G1–G6) ALL PASS.
