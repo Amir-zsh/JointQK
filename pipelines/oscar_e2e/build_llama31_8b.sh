@@ -66,12 +66,45 @@ else
 fi
 kill $SPID 2>/dev/null; PIDS=$(lsof -t -i :30830 2>/dev/null); [ -n "$PIDS" ] && kill $PIDS; sleep 8
 
-# --- C (background, GPU_B): 64K-concat capture -> ptn codebook -> fp8
-(
-  log "C1 concat-64k capture start (gpu $GPU_B)"
+
+# --- R (GPU_A): QKV dump (50 prompts) -> rotations -> validate -> cleanup
+log "R1 qkv dump (50 prompts, gpu $GPU_A)"
+if [ ! -f "$ROT/k_rotation_qqt_r_h_pbr.pt" ]; then
+  if [ ! -d "$DUMP/layer_0" ]; then
+    CUDA_VISIBLE_DEVICES=$GPU_A $PY -u third_party/samuel_vq/capture_qkv_dump.py \
+      --model "$MODEL" --csv "$CSV" --num-prompts 50 --out "$DUMP" >> "$LOG" 2>&1
+  fi
+  [ -d "$DUMP/layer_0" ] || { log "R1 FAILED"; exit 1; }
+  NL=$(ls -d "$DUMP"/layer_* | wc -l); log "R1 done layers=$NL"
+  [ "$NL" -eq 32 ] || { log "expected 32 layers got $NL; abort"; exit 1; }
+  log "R2 rotations (qqt_sst, r_h_pbr, head_dim 128)"
+  mkdir -p "$ROT"
+  OMP_NUM_THREADS=32 $PY vendor/OSCAR-vq/rotation/compute_kv_rotation.py \
+    --dump-path "$DUMP" --output-dir "$ROT" --head-dim 128 \
+    --method qqt_sst --composition r_h_pbr --chunk-id all >> "$LOG" 2>&1
+  [ -f "$ROT/k_rotation_qqt_r_h_pbr.pt" ] || { log "R2 FAILED"; exit 1; }
+fi
+$PY - <<PYEOF >> "$LOG" 2>&1
+import torch
+for f in ["k_rotation_qqt_r_h_pbr", "v_rotation_sst_r_h_pbr"]:
+    d = torch.load("$ROT/%s.pt" % f, map_location="cpu", weights_only=False); L = d["layers"]
+    R = L[sorted(L)[0]]["rotation"].double()
+    e = (R @ R.T - torch.eye(128)).abs().max().item()
+    print("ROTVAL", f, "n_layers", len(L), "orth_err %.1e" % e)
+    assert len(L) == 32 and e < 1e-4
+PYEOF
+grep -q "ROTVAL v_rotation" <(tail -6 "$LOG") || { log "R3 validation FAILED"; exit 1; }
+log "R DONE; deleting dump (disk)"
+rm -rf "$DUMP"
+
+# --- C (sequential, BOTH gpus): 64K-concat capture -> ptn codebook -> fp8.
+# 8B fp16 weights + a 65536-token prefill OOM one A100-40GB; device_map=auto
+# shards weights across both cards (R has finished by now, GPU_A is free).
+
+  log "C1 concat-64k capture start (gpus $GPU_A,$GPU_B, sharded)"
   if [ ! -f "$BAS/basis_moments.pt" ]; then
     mkdir -p "$BAS"
-    CUDA_VISIBLE_DEVICES=$GPU_B PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
+    CUDA_VISIBLE_DEVICES=$GPU_A,$GPU_B PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
       third_party/samuel_vq/capture_gpqa_concat.py --model "$MODEL" --csv "$CSV" \
       --target-ctx 65536 --n-sequences 8 --pool-stride 4 \
       --out-basis "$BAS/basis_moments.pt" --out-pool "$POOL" >> "$LOG" 2>&1
@@ -89,41 +122,6 @@ kill $SPID 2>/dev/null; PIDS=$(lsof -t -i :30830 2>/dev/null); [ -n "$PIDS" ] &&
   $PY third_party/samuel_vq/make_fp8.py --in "$CBRAW" --out "$CBFP8" --fmt e5m2 >> "$LOG" 2>&1
   [ -f "$CBFP8" ] || { log "C3 fp8 FAILED"; exit 1; }
   log "C DONE -> $CBFP8"
-) &
-CPID=$!
-
-# --- R (GPU_A): QKV dump (50 prompts) -> rotations -> validate -> cleanup
-log "R1 qkv dump (50 prompts, gpu $GPU_A)"
-if [ ! -f "$ROT/k_rotation_qqt_r_h_pbr.pt" ]; then
-  if [ ! -d "$DUMP/layer_0" ]; then
-    CUDA_VISIBLE_DEVICES=$GPU_A $PY -u third_party/samuel_vq/capture_qkv_dump.py \
-      --model "$MODEL" --csv "$CSV" --num-prompts 50 --out "$DUMP" >> "$LOG" 2>&1
-  fi
-  [ -d "$DUMP/layer_0" ] || { log "R1 FAILED"; kill $CPID 2>/dev/null; exit 1; }
-  NL=$(ls -d "$DUMP"/layer_* | wc -l); log "R1 done layers=$NL"
-  [ "$NL" -eq 32 ] || { log "expected 32 layers got $NL; abort"; exit 1; }
-  log "R2 rotations (qqt_sst, r_h_pbr, head_dim 128)"
-  mkdir -p "$ROT"
-  OMP_NUM_THREADS=32 $PY vendor/OSCAR-vq/rotation/compute_kv_rotation.py \
-    --dump-path "$DUMP" --output-dir "$ROT" --head-dim 128 \
-    --method qqt_sst --composition r_h_pbr --chunk-id all >> "$LOG" 2>&1
-  [ -f "$ROT/k_rotation_qqt_r_h_pbr.pt" ] || { log "R2 FAILED"; kill $CPID 2>/dev/null; exit 1; }
-fi
-$PY - <<PYEOF >> "$LOG" 2>&1
-import torch
-for f in ["k_rotation_qqt_r_h_pbr", "v_rotation_sst_r_h_pbr"]:
-    d = torch.load("$ROT/%s.pt" % f, map_location="cpu", weights_only=False); L = d["layers"]
-    R = L[sorted(L)[0]]["rotation"].double()
-    e = (R @ R.T - torch.eye(128)).abs().max().item()
-    print("ROTVAL", f, "n_layers", len(L), "orth_err %.1e" % e)
-    assert len(L) == 32 and e < 1e-4
-PYEOF
-grep -q "ROTVAL v_rotation" <(tail -6 "$LOG") || { log "R3 validation FAILED"; kill $CPID 2>/dev/null; exit 1; }
-log "R DONE; deleting dump (disk)"
-rm -rf "$DUMP"
-
-wait $CPID; CRC=$?
-[ "$CRC" -eq 0 ] || { log "C stage failed rc=$CRC"; exit 1; }
 
 # --- V: gates on the NEW bundle, int2 smoke, vq2 smoke
 log "V1 gates on new ptn bundle"
