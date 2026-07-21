@@ -16,6 +16,9 @@ PORT=30800
 MODE=int2
 CTX=73728          # RULER-64K + generation headroom; 131072 arenas OOM on A100-40GB
 MEM_FRAC=0.78
+# --model parameterizes BF16 for OSCAR's other model configs. int2/vq2 assume the
+# Qwen3-8B rotzoo/codebook, so only override --model for --bf16 runs.
+MODEL="${MODEL:-Qwen/Qwen3-8B}"
 VQ_CODEBOOK="${VQ_CODEBOOK:-artifacts/page_quant2/vqg_bundle__qwen3_8b_flat_ptn.pt}"
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -23,6 +26,8 @@ while [[ $# -gt 0 ]]; do
         --port) PORT="$2"; shift 2 ;;
         --bf16) MODE=bf16; shift ;;
         --vq2) MODE=vq2; shift ;;
+        --int2plain) MODE=int2plain; shift ;;   # plain per-token int2, NO mixed-KV band; Hadamard via HADAMARD_ORDER (1=naive, 128=quarot)
+        --model) MODEL="$2"; shift 2 ;;
         --vq-codebook) VQ_CODEBOOK="$2"; shift 2 ;;
         --ctx) CTX="$2"; shift 2 ;;
         --mem-frac) MEM_FRAC="$2"; shift 2 ;;
@@ -36,7 +41,9 @@ done
 # vendor/OSCAR in .venv-oscar.
 export PYTHONPATH="$(cd "$(dirname "$0")/../.." && pwd)/vendor/OSCAR-vq/sglang-research/python:${PYTHONPATH:-}"
 
-ROT_DIR="$REPO_ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128"
+# ROT_DIR overridable so int2/vq2 can serve a non-8B model with its own OSCAR
+# rotations (e.g. the Qwen3-4B build under JointQK/artifacts/oscar_4b/rotations).
+ROT_DIR="${ROT_DIR:-$REPO_ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128}"
 CUDA128="/vault/amir/.conda/envs/cuda128"
 
 export CUDA_VISIBLE_DEVICES=$GPU
@@ -62,7 +69,8 @@ if [[ -x "$GCC12/bin/x86_64-conda-linux-gnu-g++" ]]; then
 fi
 
 ARGS=(
-    --model-path Qwen/Qwen3-8B
+    --model-path "$MODEL"
+    --tensor-parallel-size "${TP:-1}"
     --host 127.0.0.1 --port "$PORT"
     --trust-remote-code
     --prefill-attention-backend triton
@@ -84,6 +92,12 @@ ARGS=(
     # requests' BF16 prefix windows until the HP-prefix pool exhausts
     # (observed after ~3200 rows); no reuse to gain, so disable it.
     --disable-radix-cache
+    # F2: quant-tier decode split-K cap. vq2's gather kernel is decode-latency-bound
+    # and wants high split-K (a matched-splits sweep found 48 best: 32K decode
+    # 21.4->17.2 ms/tok, and it keeps vq2 competitive to 64K). int2/bf16's cheap
+    # unpack is less split-sensitive at short ctx (8 is fine there) but also wants
+    # more at long ctx. Default 48 for vq2, 8 otherwise; override with KV_SPLITS=<n>.
+    --triton-attention-num-kv-splits "${KV_SPLITS:-$( [ "$MODE" = vq2 ] && echo 48 || echo 8 )}"
 )
 
 if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
@@ -92,13 +106,26 @@ if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
     export SGLANG_ENABLE_MIXED_KV_WINDOWS=1
     export SGLANG_OSCAR_K_ROTATION_PATH="$ROT_DIR/k_rotation_qqt_r_h_pbr.pt"
     export SGLANG_OSCAR_V_ROTATION_PATH="$ROT_DIR/v_rotation_sst_r_h_pbr.pt"
-    export SGLANG_OSCAR_K_CLIP_RATIO=0.96
-    export SGLANG_OSCAR_V_CLIP_RATIO=0.92
+    # Overridable so the OSCAR-Table-2 baselines can serve on the same int2 path:
+    # Naive/QuaRot want no clip (1.0); TurboQuant wants Lloyd-Max levels (SGLANG_LLOYD_MAX=1).
+    export SGLANG_OSCAR_K_CLIP_RATIO="${SGLANG_OSCAR_K_CLIP_RATIO:-0.96}"
+    export SGLANG_OSCAR_V_CLIP_RATIO="${SGLANG_OSCAR_V_CLIP_RATIO:-0.92}"
+    export SGLANG_LLOYD_MAX="${SGLANG_LLOYD_MAX:-0}"
     export SGLANG_OSCAR_ABSORB_V_ROTATION=1
     export SGLANG_MIXED_KV_PREFIX_TOKENS=64
     export SGLANG_MIXED_KV_RECENT_TOKENS="${RECENT_TOKENS:-256}"
     export SGLANG_MIXED_KV_HP_DTYPE=bfloat16
-    export SGLANG_MIXED_KV_SCALE_DTYPE=float32
+    export SGLANG_MIXED_KV_SCALE_DTYPE="${SCALE_DTYPE:-float32}"
+    export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+    ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
+fi
+if [[ "$MODE" == "int2plain" ]]; then
+    # OSCAR baseline reproduction: plain per-token INT2, NO mixed-KV band (no MP), NO OSCAR rotation.
+    # The plain int2 pool always applies a segmented Hadamard of order HADAMARD_ORDER:
+    #   HADAMARD_ORDER=1   -> identity  -> Naive-INT2 (no rotation)
+    #   HADAMARD_ORDER=128 -> full Hadamard over head_dim -> QuaRot-INT2
+    # (MIXED_KV_WINDOWS left unset -> pool_configurator falls back to the plain int2 pool.)
+    export HADAMARD_ORDER="${HADAMARD_ORDER:-128}"
     export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
     ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
 fi
@@ -111,5 +138,9 @@ if [[ "$MODE" == "vq2" ]]; then
         *)  export SGLANG_VQ_CODEBOOK_PATH="$REPO_ROOT/$VQ_CODEBOOK" ;;
     esac
 fi
+
+# DISABLE_CUDA_GRAPH=1 forces eager decode so in-Python decode instrumentation
+# (e.g. the VQ read-back probe) actually runs instead of being skipped by graph replay.
+[[ -n "${DISABLE_CUDA_GRAPH:-}" ]] && ARGS+=(--disable-cuda-graph)
 
 exec "$REPO_ROOT/.venv-oscar/bin/python" -m sglang.launch_server "${ARGS[@]}"

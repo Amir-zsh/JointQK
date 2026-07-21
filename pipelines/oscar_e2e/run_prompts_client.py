@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import statistics
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -81,6 +82,17 @@ def main():
         sampling.update({"top_p": args.top_p, "top_k": args.top_k})
 
     from kvq.benchmarks.evaluate_registry import SCORER_REGISTRY
+    # HumanEval / LiveCodeBench have no scorer in the (read-only) kvq registry;
+    # their code-execution scorers live in our tree and take precedence. Load by
+    # file path: Amir's tree (on PYTHONPATH) has a regular `pipelines` package
+    # that shadows ours, so `import pipelines.eval.code_scorers` can't resolve.
+    import importlib.util
+    _spec = importlib.util.spec_from_file_location(
+        "code_scorers", REPO / "pipelines" / "eval" / "code_scorers.py")
+    _cs = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_cs)
+    CODE_SCORERS = _cs.CODE_SCORERS
+    scorer_for = lambda ds: CODE_SCORERS.get(ds) or SCORER_REGISTRY[ds]
 
     recs = [json.loads(l) for l in Path(args.rows).open()]
     if args.samples > 1:
@@ -145,15 +157,20 @@ def main():
     df.to_csv(out / "predictions.csv", index=False)
 
     dataset = recs[0]["dataset"]
-    scorer = SCORER_REGISTRY[dataset]
+    scorer = scorer_for(dataset)
     if args.samples > 1:
         per_k = [scorer(df[df.sample_k == k].reset_index(drop=True))
                  for k in range(args.samples)]
+        # Each sample_k is an independent sampled pass over the rows == one OSCAR
+        # "seed", so per_k are seed-level accuracies; report mean +/- std (n=samples).
+        accs = [m["accuracy"] for m in per_k]
         metrics = {
             "samples": args.samples,
             "sampling": {**sampling, "top_p": args.top_p, "top_k": args.top_k},
             "per_k": per_k,
-            "accuracy_avg_at_k": sum(m["accuracy"] for m in per_k) / len(per_k),
+            "accuracy_mean": statistics.mean(accs),
+            "accuracy_std": statistics.stdev(accs) if len(accs) > 1 else 0.0,
+            "accuracy_avg_at_k": sum(accs) / len(accs),
             "cap_hit_rate": float((df.finish_reason == "length").mean()),
             "mean_completion_tokens": float(df.completion_tokens.mean()),
             "total": int((df.sample_k == 0).sum()),

@@ -52,3 +52,5 @@ artifacts/niah_bench/
 artifacts/prompt_rows/
 artifacts/oscar_e2e/lh/**/io_log.jsonl
 artifacts/oscar_e2e/lh/**/predictions.csv
+artifacts/prompt_rows_proto/
+artifacts/prompt_rows_code/

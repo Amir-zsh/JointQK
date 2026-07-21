@@ -33,3 +33,17 @@ codebook:
 |---|---|
 | bench_vint2.py | 3c49584c401ca1a9c85ce03dda313977dac60b6e6895a0f6bd343f289cb5b60d |
 | vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt | b277bddf16f753c5fc31d8e8f1db05c0aaca1007d217ead7b7467214297e6b63 |
+
+## Handoff integration (2026-07-20)
+
+Applied Samuel's HANDOFF_engine.patch + HANDOFF_pipeline.patch from
+/vault/samuel/efficient-llm/oscar_vq2/ (his clone of vq2-longhorizon; see
+HANDOFF_AMIR.md there). Copied tooling: pipelines/eval/{code_scorers,
+code_exec,export_code_rows,archive_raw_generations}.py, pipelines/oscar_e2e/
+{run_baseline_plain.sh,proto_grid_worker.sh,score_running.py,
+decode_stream_bench.py} (ROOT parameterized, otherwise as-is), and code/proto
+prompt rows (gitignored dirs artifacts/prompt_rows_{code,proto}/).
+
+| file | sha256 |
+|---|---|
+| vqv_G4_strided_gpqa_engine.pt (V codebook, engine basis: forward=identity, mean=0, STRIDED groups, K=256 G=4 ptn) | dc2db8e35edcaede1b34cd066019b8910aecd7d576b78f446e5e6eab26ecc4c7 |
