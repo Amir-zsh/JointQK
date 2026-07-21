@@ -81,7 +81,7 @@ ARGS=(
     --sampling-backend pytorch
     --context-length "$CTX"
     --mem-fraction-static "$MEM_FRAC"
-    --cuda-graph-max-bs 8
+    --cuda-graph-max-bs "${CUDA_GRAPH_BS:-8}"
     # A100-40GB: the unified INT2 pool's HP/scale arenas land on top of the
     # mem-fraction budget (sized for H100-80GB); pin the token pool directly
     # AND the request slots (the fp16 HP recent-ring arena scales with
