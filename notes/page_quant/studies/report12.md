@@ -41,9 +41,9 @@ Findings:
    degrades monotonically (84.3 → 76.7).** At 64K vq2 leads by **+15.4**.
    Same qualitative shape as Qwen, with earlier and larger separation.
 2. **vq2's ~6-pt gap to bf16 is context-independent** → codebook capacity
-   (calibration quality), not a streaming/position effect. The Llama
-   codebook is first-cut (GPQA-only corpus, ~51K unique tokens cycled to
-   64K); a richer mixed-domain corpus is the obvious lever.
+   (calibration quality), not a streaming/position effect. **Tested same
+   day and REFUTED for K**: a five-domain corpus retrain moved nothing
+   (see §4 follow-up) — the gap is not calibration-domain on the K side.
 3. **int2's transfer to Llama is poor even at 8K** (84.3 vs Qwen's 97.6).
    Caveats recorded: our rotations calibrate on 50 prompts (authors used
    83 / 20K-token budget) and the 0.96/0.92 clips are Qwen-tuned defaults —
@@ -105,9 +105,33 @@ same R_v the engine loads, layer-0 excluded):
 **Conclusion**: the served deficit is codebook domain-sensitivity — the same
 property measured on the K side (his-vs-our codebook, 8–12 NIAH pts) — but V
 has no softmax to absorb it, so the OOD penalty converts directly to
-retrieval accuracy. Constructive next step: a **mixed-domain V codebook**
-(and K codebook — same recipe) is the single lever most likely to flip both
-the VQ-V ablation and the Llama vq2 gap.
+retrieval accuracy. Constructive next step: a **mixed-domain V codebook** is
+the lever most likely to flip the VQ-V ablation.
+
+### Follow-up (same day): mixed-domain K codebook on Llama — NULL
+
+Retrained the Llama K codebook on a five-domain corpus (gpqa 14% / math 32% /
+code 14% / needle-stripped RULER essay text 26% / synthetic digit-uuid
+key-value lines 14%, ~300K unique tokens vs GPQA-only's ~51K; identical
+trainer flags and rotations, so the delta isolates corpus alone). Gates PASS,
+served NIAH 800 rows/ctx:
+
+| ctx | vq2 (GPQA-only) | vq2mix (5-domain) | Δ |
+|---|---|---|---|
+| 8K  | 92.34 | 93.19 | +0.85 |
+| 16K | 91.16 | 92.00 | +0.84 |
+| 32K | 91.69 | 91.25 | −0.44 |
+| 64K | 92.09 | 91.09 | −1.00 |
+
+Mean Δ +0.06, no subtask pattern — **calibration-domain composition does
+not move the Llama K-side gap** (the ~6 pts to bf16 stays context-flat).
+The K/V asymmetry is coherent with the mechanism: K errors pass through a
+softmax that forgives them (and the dot-product geometry is
+rotation-conditioned), while V errors are linear in the output. Remaining
+suspects for the Llama gap: rotation quality (50-prompt calibration vs the
+authors' 83), Qwen-tuned clip defaults, or Llama K statistics being
+intrinsically harder at 2 b/coord. The mixed-domain recommendation now
+applies to **V only**.
 
 ## 5. Bugs found and fixed this run (both gated, tracker updated)
 
