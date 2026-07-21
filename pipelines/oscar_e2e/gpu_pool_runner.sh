@@ -65,7 +65,9 @@ boot_arm(){ # arm
   # via per-job client threads (the scheduler admits what fits the pool).
   export MAX_REQS="${POOL_MAX_REQS:-24}" CUDA_GRAPH_BS="${POOL_MAX_REQS:-24}"
   local BLOG="logs/pool_gpu${GPU}_server.log"
-  nohup bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE[@]}" > "$BLOG" 2>&1 &
+  : > "$BLOG"   # truncate SYNCHRONOUSLY: nohup's redirect races the grep below,
+                # which otherwise matches the previous boot's stale "fired up"
+  nohup bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE[@]}" >> "$BLOG" 2>&1 &
   SERVER_PID=$!
   for i in $(seq 1 120); do
     grep -q "The server is fired up and ready to roll" "$BLOG" && { CUR_ARM="$arm"; log "server up arm=$arm"; return 0; }
