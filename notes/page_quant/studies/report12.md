@@ -2,6 +2,8 @@
 
 **Status: results COMPLETE (lambda6 GPU-pool run, night of 2026-07-20 → 21);
 VQ-V mechanism resolved offline (section 4).**
+Shareable version (Samuel-facing, with state pointers):
+https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c
 
 All cells served on the vq2-extended OSCAR engine (vendor/OSCAR-vq @
 `6f78cd6cd`, gates G1–G6 ALL PASS), one stack for every method, identical
