@@ -43,7 +43,7 @@ boot_arm(){ # arm
   local MODEL="meta-llama/Llama-3.1-8B-Instruct"
   local SERVE=(--gpu "$GPU" --port "$PORT")
   export ROT_DIR="$ROOT/artifacts/oscar_llama31_8b/rotations"
-  unset SGLANG_VQ_V_CODEBOOK_PATH SGLANG_INT2_NO_HADAMARD HADAMARD_ORDER 2>/dev/null
+  unset SGLANG_VQ_V_CODEBOOK_PATH SGLANG_INT2_NO_HADAMARD HADAMARD_ORDER SGLANG_LLOYD_MAX 2>/dev/null
   case "$arm" in
     bf16)   SERVE+=(--bf16 --model "$MODEL") ;;
     int2)   SERVE+=(--model "$MODEL") ;;
@@ -51,6 +51,7 @@ boot_arm(){ # arm
     vq2mix) SERVE+=(--vq2 --model "$MODEL" --vq-codebook artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_mixed64k_fp8.pt) ;;
     quarot) SERVE+=(--int2plain --model "$MODEL"); export HADAMARD_ORDER=128 ;;
     naive)  SERVE+=(--int2plain --model "$MODEL"); export HADAMARD_ORDER=16 SGLANG_INT2_NO_HADAMARD=1 ;;
+    turbo)  SERVE+=(--int2plain --model "$MODEL"); export HADAMARD_ORDER=128 SGLANG_LLOYD_MAX=1 ;;
     qwen-vq2)
       export ROT_DIR="$ROOT/artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128"
       SERVE+=(--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt) ;;

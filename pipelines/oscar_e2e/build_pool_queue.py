@@ -65,7 +65,7 @@ def shard_rows(rows_path: Path, n: int) -> list[Path]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
-    ap.add_argument("--set", default="main", choices=["main", "mixed"])
+    ap.add_argument("--set", default="main", choices=["main", "mixed", "turbo"])
     args = ap.parse_args()
 
     jobs = []
@@ -90,6 +90,11 @@ def main():
     if args.set == "mixed":
         for cell, rows, n, extra in MIXED_CELLS:
             add("vq2mix", f"{LLAMA_OUT}/vq2mix", cell, rows, n, extra)
+    elif args.set == "turbo":
+        # TurboQuant-INT2 completes the five-method grid to six: same NIAH
+        # cells as MIXED plus the reasoning/code cells from the main grid.
+        for cell, rows, n, extra in MIXED_CELLS + LLAMA_CELLS[2:]:
+            add("turbo", f"{LLAMA_OUT}/turbo", cell, rows, n, extra)
     else:
         for arm in LLAMA_ARMS:
             for cell, rows, n, extra in LLAMA_CELLS:

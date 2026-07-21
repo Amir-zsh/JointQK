@@ -126,6 +126,8 @@ if [[ "$MODE" == "int2plain" ]]; then
     #   HADAMARD_ORDER=128 -> full Hadamard over head_dim -> QuaRot-INT2
     # (MIXED_KV_WINDOWS left unset -> pool_configurator falls back to the plain int2 pool.)
     export HADAMARD_ORDER="${HADAMARD_ORDER:-128}"
+    # TurboQuant-INT2 = Hadamard + Lloyd-Max write (SGLANG_LLOYD_MAX=1).
+    export SGLANG_LLOYD_MAX="${SGLANG_LLOYD_MAX:-0}"
     export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
     ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
 fi
