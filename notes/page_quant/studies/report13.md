@@ -165,9 +165,19 @@ for:**
 | cell | bf16 | int2 | vq2 |
 |---|---|---|---|
 | math500-sub (100 rows, avg@2, ~4–5K think-tokens) | 87.0 ±5.7 | 88.0 ±2.8 | 88.0 ±0.0 |
-| AIME25 (30 rows, avg@4, ~14K think-tokens) | 34.2 ±3.2 | 28.3 ±4.3 | [pending — cell re-running after a transient server death, resumes past 13/120 gens] |
+| AIME25 (30 rows, avg@4, ~14–15K think-tokens) | 34.2 ±3.2 | 28.3 ±4.3 | 30.8 ±7.4 |
 
 At ~5K thinking tokens, 2-bit K quantization is completely free (ties).
-At ~14K thinking tokens, int2 shows the first suggestive deficit of the
-project's reasoning cells (−5.8, ~1.3σ). Whether vq2 holds the bf16 level
-there is the open question this grid exists to answer.
+At ~14K thinking tokens the ordering matches the project-wide hierarchy —
+bf16 34.2 > vq2 30.8 > int2 28.3 — but the magnitudes are small and
+within noise at n=30 (vq2 −3.3, int2 −5.8 vs bf16; SE of the difference
+≈ 3–4; vq2's ±7.4 spread includes one 20.0 seed). Honest verdict:
+**long-CoT reasoning is far more quantization-tolerant than retrieval,
+even at 14K decode tokens** — the dramatic separation lives in NIAH, not
+in reasoning accuracy. A significance-grade answer needs more seeds/rows
+(AIME24+25 × 8 seeds is the cheap extension).
+
+The mechanism behind R1's large NIAH deficits (both methods, see table
+above) is under active diagnosis: cap-512 re-slice (verbosity/truncation
+channel) and clip-1.0 int2 cell (Qwen-tuned percentile clips vs
+heavier-tailed R1 activations) — results land in a report13 addendum.
