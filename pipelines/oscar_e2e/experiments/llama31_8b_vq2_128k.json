@@ -1,0 +1,36 @@
+{
+  "name": "llama31_8b_vq2_gpqacc128k",
+  "description": "Codebook position-coverage ablation: gpqacc128k (198 GPQA prompts cycled into 4 x 131072-token sequences) vs the canonical gpqacc64k (8 x 65536). Identical corpus, total token budget (524K), trainer flags, and rotations — the delta isolates RoPE-position coverage of the K-codebook calibration. Comparison target: grid_v2/vq2 (same rotations, gpqacc64k).",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "out_root": "artifacts/oscar_llama31_8b/grid_v2",
+  "engine_clone": "vendor/OSCAR-vq",
+  "calibration": {
+    "corpus": "artifacts/prompt_rows/gpqa_diamond.csv",
+    "corpus_prompts": 198,
+    "rotations": "artifacts/oscar_llama31_8b/rotations_gpqa198",
+    "k_codebook": "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc128k_fp8.pt",
+    "k_codebook_recipe": "capture_mixed_concat (gpqa-only segments, 4 x 131072 cycled, pool-stride 4) -> train_group_vq_alloc --grouping stratified --allocation flat --bpc 2 --pertoken-norm -> make_fp8 e5m2; built by build_llama_128k_codebook.sh"
+  },
+  "methods": {
+    "vq2_128k": {
+      "serve_args": ["--vq2", "--vq-codebook", "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc128k_fp8.pt"],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_llama31_8b/rotations_gpqa198"
+      },
+      "notes": "only the K codebook differs from grid_v2/vq2"
+    }
+  },
+  "reused_methods": {
+    "vq2 (gpqacc64k, the comparison column)": "artifacts/oscar_llama31_8b/grid_v2/vq2"
+  },
+  "cells": [
+    {"name": "niah_8192",  "rows": "artifacts/prompt_rows/niah_8192_llama.jsonl",  "shards": 2, "client_args": "--threads 12"},
+    {"name": "niah_16384", "rows": "artifacts/prompt_rows/niah_16384_llama.jsonl", "shards": 2, "client_args": "--threads 8"},
+    {"name": "niah_32768", "rows": "artifacts/prompt_rows/niah_32768_llama.jsonl", "shards": 4, "client_args": "--threads 4"},
+    {"name": "niah_65536", "rows": "artifacts/prompt_rows/niah_65536_llama.jsonl", "shards": 8, "client_args": "--threads 2"}
+  ],
+  "protocol": {
+    "niah": "greedy (T=0), 1 rollout/row, gen cap 128, accuracy = mean RULER string_match over 8 subtasks",
+    "note": "reasoning/code cells intentionally omitted — method-insensitive (all quantized methods tie bf16 there), NIAH is where codebook calibration shows"
+  }
+}
