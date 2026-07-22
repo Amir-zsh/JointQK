@@ -296,3 +296,22 @@ How every number was measured, and what it does / does not mean:
 
 Full review record: `notes/page_quant/studies/plan11_review_findings.md`.
 Study report (bars, CIs, telemetry): `notes/page_quant/studies/report11.md`.
+
+## Qwen calibration-unified re-run (v2) — handed to Samuel
+
+Amir's side stopped the Qwen v2 run (2026-07-21) per division of labor; all
+assets are ready at identical absolute paths on lambda6/7 under
+/vault/amir/efficient-llm/teamily-project:
+
+- **Rotations from OUR corpus** (the fairness fix — v1 int2 used the
+  authors' released rotations): `artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own/`
+  — 198 GPQA-Diamond prompts (same corpus as gpqacc64k), authors' pipeline
+  (qqt_sst / r_h_pbr), orth err ~2e-8, validated. Built by
+  `pipelines/oscar_e2e/recalibrate_rotations.sh`.
+- **Declarative spec** (every argument): `pipelines/oscar_e2e/experiments/qwen3_8b_niah_v2.json`;
+  replication recipe in `pipelines/oscar_e2e/experiments/README.md`
+  (run_experiment.py → ARMS_DIR workers → merge_shards).
+- **Partial results**: 4 of 32 shard jobs completed before stop, kept under
+  `artifacts/oscar_e2e/lh/grid_v2/` (re-running the spec resumes — completed
+  shards are skipped); queue rows marked HANDOFF in `logs/pool_queue_qwen_v2.tsv`.
+- Served smoke on the new rotations passed (int2, coherent generation).
