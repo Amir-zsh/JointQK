@@ -2,6 +2,7 @@
 
 **Status: position-coverage study COMPLETE; R1-Distill-Llama-8B onboarding
 + grid in flight (section 4 updates as cells land).**
+Shareable version: https://claude.ai/code/artifact/0cb61471-28cf-41f2-959a-009ee4cd6228
 
 Engine vendor/OSCAR-vq @ `0ecb1ab7c` (TP rank-sharded codebooks; custom
 all-reduce root-cause-fixed — see §3). All Llama cells on
