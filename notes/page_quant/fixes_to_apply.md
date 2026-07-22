@@ -222,11 +222,16 @@ unaffected by construction.
   (bf16 included) failed TP=2 CUDA-graph capture in sgl_kernel's custom
   all-reduce (`get_graph_buffer_ipc_meta` → invalid argument) despite full
   NVLink — a vendored-kernel/stack incompatibility.
-- **Fix**: clone commit `<see clone log>`: head_start slicing in the loader
+- **Fix**: clone commit `0ecb1ab7c`: head_start slicing in the loader
   (forward/inverse/mean/codebooks), offset = tp_rank × local head_num,
-  divisibility guard; serve_oscar.sh adds `--disable-custom-all-reduce`
-  automatically for TP>1 (NCCL all-reduce, graph-safe, ~free on NVLink at
-  our batch sizes).
+  divisibility guard. Defect 2 ROOT-CAUSED (2026-07-22, upstream
+  vllm#42609): `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` — our own
+  fragmentation setting — makes graph buffers non-IPC-exportable
+  (cudaIpcGetMemHandle on cuMemAddressReserve VA ranges); the sgl_kernel
+  wheel was innocent. serve_oscar.sh now drops expandable_segments for TP>1
+  and keeps custom all-reduce (DISABLE_CUSTOM_AR=1 / FORCE_EXPANDABLE=1
+  restore the old behavior). Measured A/B at TP=2 bs=1: custom AR 132.0
+  tok/s vs NCCL 122.5 (+7.8% decode).
 - **Verification**: loader slice gate (rank slices == full-load slices,
   bit-exact; non-divisible raises); TP=2 boots for bf16/int2/vq2 with
   per-rank log lines `heads=[0,4)/8` / `[4,8)/8`; needle retrieval correct

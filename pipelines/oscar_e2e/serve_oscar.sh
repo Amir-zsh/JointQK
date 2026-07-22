@@ -52,7 +52,15 @@ export CUDA_VISIBLE_DEVICES=$GPU
 export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
 export CUDA_HOME="$CUDA128"
 export PATH="$CUDA128/bin:$PATH"
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+# expandable_segments breaks cudaIpcGetMemHandle on the VA-range base
+# pointers custom all-reduce exports for CUDA-graph buffers (upstream:
+# vllm#42609) -> under TP we drop it (per-GPU pressure is halved) and keep
+# custom AR. FORCE_EXPANDABLE=1 restores it (pairs with DISABLE_CUSTOM_AR=1).
+if [[ "${TP:-1}" -gt 1 && "${FORCE_EXPANDABLE:-0}" != "1" ]]; then
+    unset PYTORCH_CUDA_ALLOC_CONF
+else
+    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+fi
 # System gcc is 9.4; their JIT kernels use C++20 <concepts> -> conda gcc-12.
 GCC12="/vault/amir/.conda/envs/gcc12"
 if [[ -x "$GCC12/bin/x86_64-conda-linux-gnu-g++" ]]; then
@@ -68,11 +76,13 @@ if [[ -x "$GCC12/bin/x86_64-conda-linux-gnu-g++" ]]; then
     export LD_LIBRARY_PATH="$GCC12/lib:$REPO_ROOT/.venv-oscar/lib/python3.12/site-packages/tvm_ffi/lib:$CUDA128/lib:${LD_LIBRARY_PATH:-}"
 fi
 
-# TP>1: the vendored sgl_kernel custom all-reduce fails CUDA-graph capture
-# on this stack (get_graph_buffer_ipc_meta -> invalid argument) despite full
-# NVLink; NCCL all-reduce is graph-safe and near-free at our batch sizes.
+# Custom all-reduce works under TP now that expandable_segments is dropped
+# there (the crash was cudaIpc on expandable VA ranges, vllm#42609 — not a
+# kernel bug). DISABLE_CUSTOM_AR=1 restores the NCCL fallback.
 TP_EXTRA=()
-if [[ "${TP:-1}" -gt 1 ]]; then TP_EXTRA+=(--disable-custom-all-reduce); fi
+if [[ "${TP:-1}" -gt 1 && "${DISABLE_CUSTOM_AR:-0}" = "1" ]]; then
+    TP_EXTRA+=(--disable-custom-all-reduce)
+fi
 
 ARGS=(
     --model-path "$MODEL"
