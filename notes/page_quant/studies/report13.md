@@ -11,6 +11,12 @@ declarative specs + manifests per run.
 
 ## 1. Headline: codebook position coverage is a cliff, not a slope
 
+*Setup — model: meta-llama/Llama-3.1-8B-Instruct (native RoPE 131072, no
+YaRN); calibration: rotations_gpqa198 (198 GPQA prompts, per-prompt dump)
++ K codebooks gpqacc64k (8×65536 concat) vs gpqacc128k (4×131072 concat),
+equal 524K-token budget; max seq: 8K–64K in-range evals, 131072
+out-of-range eval (prompts ≤130106 + 128 gen, TP=2).*
+
 gpqacc128k = the identical 198-prompt GPQA corpus, identical 524K-token
 budget, identical trainer flags and rotations as gpqacc64k — cycled into
 4 × 131072-token sequences instead of 8 × 65536. The only difference is
@@ -73,6 +79,9 @@ headroom) so no request exceeds native RoPE — generator snapshot
 
 ## 2. Infrastructure this enabled: TP serving
 
+*Setup — model: Llama-3.1-8B-Instruct; calibration as §1; max seq 131072
+served TP=2 (custom-AR A/B at TP=2 bs=1).*
+
 The 128K cells are the first production use of tensor parallelism (a
 131K-token bf16 KV cache is ~34 GB — impossible on one A100-40GB):
 bf16/vq2/vq2_128k each served TP=2 on a GPU pair. Two fixes made this
@@ -93,6 +102,13 @@ and keeps custom AR, measured **+7.8% decode vs the NCCL fallback**
   https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf
 
 ## 4. R1-Distill-Llama-8B: the long-CoT axis [IN FLIGHT]
+
+*Setup — model: deepseek-ai/DeepSeek-R1-Distill-Llama-8B (Llama-3.1-8B
+arch, native 131072); calibration: rotations from the 198-prompt GPQA
+corpus via the R1 chat template + gpqacc64k-recipe codebook (8×65536
+concat) — both under artifacts/oscar_r1d_llama8b/; max seq: NIAH 8K–64K
++128 gen; reasoning = short prompts + 32768-token generation cap (measured
+~4–5K math / ~14K AIME thinking tokens).*
 
 Motivation: every reasoning cell in the Llama grid ties (near-chance
 model) — we have never tested quantization under thousands of decode
