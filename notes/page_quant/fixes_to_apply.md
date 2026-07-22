@@ -212,3 +212,24 @@ unaffected by construction.
   writer-vs-writer arena parity 100%, grouped+LM guard). Served: NIAH-8K
   24-row slice 95.8; greedy-loop family control turbo 0.15 > QuaRot 0.10
   (bf16 0.62) — no LM-specific degeneration.
+
+## tp-1: engine unusable under tensor parallelism (two defects)
+
+- **Root cause**: (1) `load_vq_codebook` had no head sharding — under TP the
+  pool passes per-rank head_num (4 of 8) while the bundle holds all global
+  heads; boot died on `assert H == head_num` (and without it, ranks would
+  have served wrong-head codebooks silently). (2) Independently, ALL modes
+  (bf16 included) failed TP=2 CUDA-graph capture in sgl_kernel's custom
+  all-reduce (`get_graph_buffer_ipc_meta` → invalid argument) despite full
+  NVLink — a vendored-kernel/stack incompatibility.
+- **Fix**: clone commit `<see clone log>`: head_start slicing in the loader
+  (forward/inverse/mean/codebooks), offset = tp_rank × local head_num,
+  divisibility guard; serve_oscar.sh adds `--disable-custom-all-reduce`
+  automatically for TP>1 (NCCL all-reduce, graph-safe, ~free on NVLink at
+  our batch sizes).
+- **Verification**: loader slice gate (rank slices == full-load slices,
+  bit-exact; non-divisible raises); TP=2 boots for bf16/int2/vq2 with
+  per-rank log lines `heads=[0,4)/8` / `[4,8)/8`; needle retrieval correct
+  in all three; 48-row stratified NIAH-8K parity vq2 TP1 43/48 vs TP2 43/48
+  (4 balanced borderline flips; bf16 control flips 1/48 — generic TP
+  reduction-order numerics, not sharding).

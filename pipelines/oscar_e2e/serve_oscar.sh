@@ -68,9 +68,16 @@ if [[ -x "$GCC12/bin/x86_64-conda-linux-gnu-g++" ]]; then
     export LD_LIBRARY_PATH="$GCC12/lib:$REPO_ROOT/.venv-oscar/lib/python3.12/site-packages/tvm_ffi/lib:$CUDA128/lib:${LD_LIBRARY_PATH:-}"
 fi
 
+# TP>1: the vendored sgl_kernel custom all-reduce fails CUDA-graph capture
+# on this stack (get_graph_buffer_ipc_meta -> invalid argument) despite full
+# NVLink; NCCL all-reduce is graph-safe and near-free at our batch sizes.
+TP_EXTRA=()
+if [[ "${TP:-1}" -gt 1 ]]; then TP_EXTRA+=(--disable-custom-all-reduce); fi
+
 ARGS=(
     --model-path "$MODEL"
     --tensor-parallel-size "${TP:-1}"
+    "${TP_EXTRA[@]}"
     --host 127.0.0.1 --port "$PORT"
     --trust-remote-code
     --prefill-attention-backend triton
