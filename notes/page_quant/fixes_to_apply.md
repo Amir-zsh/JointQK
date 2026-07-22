@@ -238,3 +238,19 @@ unaffected by construction.
   in all three; 48-row stratified NIAH-8K parity vq2 TP1 43/48 vs TP2 43/48
   (4 balanced borderline flips; bf16 control flips 1/48 — generic TP
   reduction-order numerics, not sharding).
+
+## r1d-1 (KNOWN ISSUE, worked around): mixed-pool quant-flush allocation race under long generations
+
+- **Symptom**: `RuntimeError: Mixed KV windows failed to allocate quant
+  flush slots (#quant-free-pages: 7 ...)` — server death mid-cell, twice,
+  on vq2/aime25 (R1-distill, 8 concurrent requests × ≤32K generated
+  tokens ≈ 264K quantized-KV tokens vs a 140K-token pool).
+- **Root cause (suspected, not fixed)**: sglang's admission control and
+  the OSCAR mixed pool's quant-page/flush-slot bookkeeping disagree near
+  capacity under many long-decode requests; admission lets in a request
+  whose aging flush then finds no quant pages. int2 survived the same
+  cell by scheduling luck — the race is engine-level, not vq2-specific.
+- **Workaround**: bound concurrency to pool capacity for long-cap cells
+  (client --threads 3 + POOL_MAX_REQS=4 for 32K caps at 140K pool).
+  Proper fix would make admission account for worst-case quant pages;
+  candidate for Samuel's engine backlog.
