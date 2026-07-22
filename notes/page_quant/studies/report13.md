@@ -177,7 +177,23 @@ even at 14K decode tokens** — the dramatic separation lives in NIAH, not
 in reasoning accuracy. A significance-grade answer needs more seeds/rows
 (AIME24+25 × 8 seeds is the cheap extension).
 
-The mechanism behind R1's large NIAH deficits (both methods, see table
-above) is under active diagnosis: cap-512 re-slice (verbosity/truncation
-channel) and clip-1.0 int2 cell (Qwen-tuned percentile clips vs
-heavier-tailed R1 activations) — results land in a report13 addendum.
+See §4a for the diagnostics (both quick theories refuted).
+
+
+### 4a. NIAH-deficit diagnostics: both easy explanations refuted
+
+*Setup — 200-row stratified slice of niah_32768, same rids across all
+configurations; theory 1 re-serves bf16/int2/vq2 with gen cap 512 (vs
+128); theory 2 re-serves int2 with K-clip 1.0 (vs 0.96).*
+
+| check | result | verdict |
+|---|---|---|
+| Cap 128 → 512 | bf16 84.5→84.5 (+0.0); int2 43.0→39.5 (−3.5); vq2 58.5→55.0 (−3.5) | truncation/verbosity channel REFUTED — the deficit is genuine retrieval failure |
+| int2 K-clip 0.96 → 1.0 | 43.0 → 28.5 (−14.5) | "clip too tight" INVERTED — the clip is *protective*; R1's K tails are heavy enough that unclipped outliers coarsen the whole quantization range |
+
+Diagnosis: the reasoning fine-tune leaves K distributions intrinsically
+harder to quantize at 2 bits (clip choice alone swings int2 by 14.5
+points). The vq2-over-int2 margins in the grid are real method
+differences — per-token-norm + codebook absorbs the heavy tails better
+than affine min-max. Open directions: tighter clip sweep for int2 (0.92–
+0.94), and calibrating rotations/codebook on R1's own generated text.
