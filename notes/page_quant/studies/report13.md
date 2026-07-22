@@ -55,17 +55,29 @@ serving position range. It costs nothing (same corpus, same token budget
 — just longer concat sequences), and the failure mode for under-coverage
 is not graceful.
 
-**Cross-check with Samuel's Qwen 128K run (2026-07-22, YaRN ×4, 80 rows:
-bf16 83.4 / vq2 76.6 / OSCAR-INT2 25.9)** — no contradiction, a
-confirmation from the other side: under YaRN, position 128K is
-*interpolated* into the native 32K position-feature space, so his
-gpqacc64k codebook never leaves its calibrated distribution → vq2 shows
-the usual ~7-pt flat gap (−6.8), no cliff. The collapse is about
-post-RoPE position-feature coverage, not raw position index: in-coverage
-(via YaRN interpolation or extended calibration) → flat gap; extrapolated
-(our native-RoPE Llama run) → cliff. Falsification test to propose:
-Qwen 128K *without* YaRN (native extrapolation) — predicts his 64k
-codebook collapses like ours did.
+**Cross-check: Samuel's Qwen 128K result (bf16 83.4 / vq2 76.6 /
+OSCAR-INT2 25.9, 80 rows) looks different — it isn't. The difference is
+YaRN.** His vq2 uses the same 64K-calibrated gpqacc64k codebook yet scores
+76.6 where ours scored 0.16, because the two models reach 128K
+differently. Background: RoPE encodes each position as rotation angles on
+Q/K, and models are trained on a bounded position range. Qwen3-8B's
+trained range is 32768, so Samuel serves 128K with YaRN ×4 (his server
+config: rope_type yarn, factor 4.0), which rescales rotation frequencies
+so positions 0–131072 are *compressed into the trained angular range* —
+position 128K gets roughly the angles of native position 32K. Llama-3.1
+is natively 131072, so our run uses native RoPE, where positions past 64K
+produce angle combinations that exist nowhere below 64K. A codebook
+quantizes post-RoPE keys, so what it must cover is the *angular*
+distribution it meets at serving time, not position numbers: under YaRN
+everything stays inside what a ≤64K calibration has seen (→ his usual
+−6.8 gap, matching our −7.9 with the 128K-calibrated codebook); under
+native RoPE, keys past 64K snap to meaningless codewords (→ our 0.16).
+Same law from both sides: **the cliff is governed by post-RoPE angular
+coverage, not raw position index.** Falsification test proposed to
+Samuel: Qwen 128K *without* YaRN — predicts his 64K codebook collapses
+like ours did. (His OSCAR-INT2 25.9 fits too: scalar quantizers have no
+codebook to go out-of-distribution — it just continues its context decay,
+23.4 → 25.9.)
 
 Notes: (a) `single_1` (the repeated-sentence noise haystack) collapses for
 *everyone* at 128K including bf16 (6.0) — a base-model failure mode on
