@@ -315,3 +315,13 @@ assets are ready at identical absolute paths on lambda6/7 under
   `artifacts/oscar_e2e/lh/grid_v2/` (re-running the spec resumes — completed
   shards are skipped); queue rows marked HANDOFF in `logs/pool_queue_qwen_v2.tsv`.
 - Served smoke on the new rotations passed (int2, coherent generation).
+
+## Shareable artifacts (2026-07-21)
+
+- **Report 12** — Llama six-method grid (calibration-unified v2), Qwen sweep,
+  VQ-V ablation + mechanism, protocol, TurboQuant handoff:
+  https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c
+- **Integration handoff** — calibration unification, TurboQuant-INT2 fix,
+  TP support; engine cherry-picks `a9a4ab6d3` `b04860e71` `0ecb1ab7c`,
+  gates, absolute paths, Qwen v2 resume command:
+  https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf
