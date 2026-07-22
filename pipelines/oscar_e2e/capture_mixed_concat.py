@@ -75,6 +75,11 @@ def main():
 
     model, tok = load_model_and_tokenizer(args.model, device_map="auto",
                                           dtype_name="float16")
+    # Capture through the base transformer: the CausalLM head would
+    # materialize [T, vocab] logits (~34 GB at 128K x 128K vocab) that the
+    # capture never reads — it only needs the attention hooks + KV cache,
+    # both of which the base model provides.
+    model = model.model if hasattr(model, "model") else model
     dev = get_model_device(model)
 
     delim_ids = tok("\n\n---\n\n", add_special_tokens=False)["input_ids"]
