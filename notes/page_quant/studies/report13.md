@@ -48,6 +48,18 @@ serving position range. It costs nothing (same corpus, same token budget
 — just longer concat sequences), and the failure mode for under-coverage
 is not graceful.
 
+**Cross-check with Samuel's Qwen 128K run (2026-07-22, YaRN ×4, 80 rows:
+bf16 83.4 / vq2 76.6 / OSCAR-INT2 25.9)** — no contradiction, a
+confirmation from the other side: under YaRN, position 128K is
+*interpolated* into the native 32K position-feature space, so his
+gpqacc64k codebook never leaves its calibrated distribution → vq2 shows
+the usual ~7-pt flat gap (−6.8), no cliff. The collapse is about
+post-RoPE position-feature coverage, not raw position index: in-coverage
+(via YaRN interpolation or extended calibration) → flat gap; extrapolated
+(our native-RoPE Llama run) → cliff. Falsification test to propose:
+Qwen 128K *without* YaRN (native extrapolation) — predicts his 64k
+codebook collapses like ours did.
+
 Notes: (a) `single_1` (the repeated-sentence noise haystack) collapses for
 *everyone* at 128K including bf16 (6.0) — a base-model failure mode on
 degenerate text at extreme length, not quantization; amusingly vq2_128k
