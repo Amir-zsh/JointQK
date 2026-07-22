@@ -1,0 +1,48 @@
+{
+  "name": "r1distill_llama8b_longcot",
+  "description": "DeepSeek-R1-Distill-Llama-8B (identical arch to Llama-3.1-8B): the long-CoT reasoning axis. The Llama grid's reasoning cells are method-insensitive (near-chance model); R1-distill thinks for thousands of decode tokens, making reasoning cells discriminative for streaming quantization for the first time. Calibration = unified 198-prompt GPQA corpus (rotations_gpqa198 recipe + gpqacc64k codebook recipe). Sampling per DeepSeek card: T=0.6, top-p 0.95, no top-k; 32K generation caps for reasoning.",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+  "out_root": "artifacts/oscar_r1d_llama8b/grid",
+  "engine_clone": "vendor/OSCAR-vq",
+  "calibration": {
+    "corpus": "artifacts/prompt_rows/gpqa_diamond.csv",
+    "corpus_prompts": 198,
+    "rotations": "artifacts/oscar_r1d_llama8b/rotations_gpqa198",
+    "rotation_recipe": "capture_qkv_dump 198 prompts (R1 chat template) -> compute_kv_rotation qqt_sst r_h_pbr head-dim 128",
+    "k_codebook": "artifacts/oscar_r1d_llama8b/vqa_r1d_llama8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+    "k_codebook_recipe": "capture_mixed_concat gpqa-only 8x65536 -> train_group_vq_alloc stratified/flat/bpc2/ptn -> fp8 e5m2; built by build_r1distill.sh"
+  },
+  "methods": {
+    "bf16": {
+      "serve_args": ["--bf16"],
+      "env": {}
+    },
+    "int2": {
+      "serve_args": [],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_r1d_llama8b/rotations_gpqa198",
+        "SGLANG_OSCAR_K_CLIP_RATIO": "0.96",
+        "SGLANG_OSCAR_V_CLIP_RATIO": "0.92"
+      }
+    },
+    "vq2": {
+      "serve_args": ["--vq2", "--vq-codebook", "artifacts/oscar_r1d_llama8b/vqa_r1d_llama8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt"],
+      "env": {
+        "ROT_DIR": "artifacts/oscar_r1d_llama8b/rotations_gpqa198"
+      }
+    }
+  },
+  "cells": [
+    {"name": "niah_8192",  "rows": "artifacts/prompt_rows/niah_8192_r1d.jsonl",  "shards": 2, "client_args": "--threads 12"},
+    {"name": "niah_16384", "rows": "artifacts/prompt_rows/niah_16384_r1d.jsonl", "shards": 2, "client_args": "--threads 8"},
+    {"name": "niah_32768", "rows": "artifacts/prompt_rows/niah_32768_r1d.jsonl", "shards": 4, "client_args": "--threads 4"},
+    {"name": "niah_65536", "rows": "artifacts/prompt_rows/niah_65536_r1d.jsonl", "shards": 8, "client_args": "--threads 2"},
+    {"name": "aime25",    "rows": "artifacts/prompt_rows/aime25_r1d.jsonl",      "shards": 1, "client_args": "--samples 4 --temperature 0.6 --top-p 0.95 --top-k -1 --threads 8"},
+    {"name": "math500_sub", "rows": "artifacts/prompt_rows/math500_sub_r1d.jsonl", "shards": 4, "client_args": "--samples 2 --temperature 0.6 --top-p 0.95 --top-k -1 --threads 8"}
+  ],
+  "protocol": {
+    "niah": "greedy (T=0), 1 rollout/row, gen cap 128, mean RULER string_match over 8 subtasks",
+    "reasoning": "thinking mode (template auto-opens <think>), gen cap 32768, AIME25 avg@4 (30 rows), math500 subset avg@2 (fraction 0.2 = 100 rows, seed 42) — scoped for overnight; full-K expansion is a follow-up",
+    "shortval_gate": "before full cells: 20-row math sample must show </think> closure, extraction working, cap-hit <= 15% at 32K"
+  }
+}
