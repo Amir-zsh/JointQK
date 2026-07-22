@@ -65,37 +65,41 @@ cap-hit rule in short-validation and were re-exported before any full cell).
 
 **NIAH mean (800 rows/cell, greedy):**
 
+(int2/vq2 columns are the calibration-unified v2 numbers — all calibrated
+artifacts derive from the same 198-prompt GPQA corpus; see §1a.)
+
 | ctx | bf16 | **vq2** | int2 (OSCAR) | TurboQuant-INT2 | QuaRot-INT2 | Naive-INT2 |
 |---|---|---|---|---|---|---|
-| 8K  | 98.2 | 92.3 | 84.3 | 80.7 | 37.3 | 0.3 |
-| 16K | 98.5 | 91.2 | 82.7 | 79.3 | 35.5 | 0.2 |
-| 32K | 97.4 | 91.7 | 80.0 | 80.1 | 37.3 | 0.1 |
-| 64K | 97.4 | **92.1** | 76.7 | 73.6 | 33.6 | 0.0 |
+| 8K  | 98.2 | 93.3 | 86.6 | 80.7 | 37.3 | 0.3 |
+| 16K | 98.5 | 92.1 | 81.8 | 79.3 | 35.5 | 0.2 |
+| 32K | 97.4 | 92.3 | 81.3 | 80.1 | 37.3 | 0.1 |
+| 64K | 97.4 | **91.2** | 76.6 | 73.6 | 33.6 | 0.0 |
 
 **Reasoning / code (avg@5):**
 
 | task | bf16 | vq2 | int2 | TurboQuant | QuaRot | Naive |
 |---|---|---|---|---|---|---|
-| math500 (full 500) | 44.3 | 44.3 | 44.5 | 17.2 | 6.4 | 3.9 |
-| HumanEval | 63.8 | 63.7 | 64.8 | 30.5 | 7.0 | 0.0 |
-| GPQA-diamond | 25.1 | 24.6 | 21.8 | 12.4 | 2.9 | 1.0 |
+| math500 (full 500) | 44.3 | 44.1 | 44.2 | 17.2 | 6.4 | 3.9 |
+| HumanEval | 63.8 | 63.7 | 62.8 | 30.5 | 7.0 | 0.0 |
+| GPQA-diamond | 25.1 | 22.1 | 23.1 | 12.4 | 2.9 | 1.0 |
 | AIME25 | ≈0 for every method — Llama-3.1-8B scores ~0 as published; uninformative row |
 
 Findings:
 
-1. **vq2 is context-flat on Llama (~92 from 8K to 64K); production OSCAR
-   degrades monotonically (84.3 → 76.7).** At 64K vq2 leads by **+15.4**.
-   Same qualitative shape as Qwen, with earlier and larger separation.
+1. **vq2 is context-flat on Llama (~91–93 from 8K to 64K); production
+   OSCAR degrades monotonically (86.6 → 76.6).** At 64K vq2 leads by
+   **+14.6**. Same qualitative shape as Qwen, with earlier and larger
+   separation.
 2. **vq2's ~6-pt gap to bf16 is context-independent** → codebook capacity
    (calibration quality), not a streaming/position effect. **Tested same
    day and REFUTED for K**: a five-domain corpus retrain moved nothing
    (see §4 follow-up) — the gap is not calibration-domain on the K side.
-3. **int2's transfer to Llama is poor even at 8K** (84.3 vs Qwen's 97.6).
-   Caveats recorded: our rotations calibrate on 50 prompts (authors used
-   83 / 20K-token budget) and the 0.96/0.92 clips are Qwen-tuned defaults —
-   some of the gap may be calibration, not method. Still, vq2 uses the
-   same 50-prompt-derived stack for V and a same-corpus codebook for K, so
-   the *relative* ordering stands on equal footing.
+3. **int2's transfer to Llama is poor even at 8K** (86.6 vs Qwen's 97.6).
+   The rotation-calibration caveat from v1 is now **measured and closed**
+   (§1a): quadrupling rotation data (50 → 198 prompts) moves int2 by ~+1 pt
+   — the transfer gap is not calibration-starved rotations. Remaining
+   suspects: the Qwen-tuned 0.96/0.92 clips, or Llama K/V statistics being
+   intrinsically harder at 2 bits.
 4. **Reasoning/code: bf16 ≈ vq2 ≈ int2** (within seed noise) — quantization
    is free where retrieval pressure is low, on Llama as on Qwen. GPQA is
    near chance for this model (extraction ~72–80%; absolute ~25%), AIME is
@@ -111,6 +115,33 @@ Findings:
    HumanEval). TurboQuant's 64K weak spot is the uuid haystack
    (multikey_3 = 17) — same dense-random-text domain that stresses every
    method here. TurboQuant cells ran 2026-07-21 after the §5.3 fix.
+
+### 1a. Calibration-unified v2 re-run (fairness fix + rotation-effect measurement)
+
+v1 provenance was asymmetric: Llama rotations from 50 GPQA prompts, Qwen
+rotations from the authors' release, codebooks from our 198-prompt corpus.
+v2 unifies: **every calibrated artifact derives from the same 198-prompt
+GPQA corpus** (rotations: per-prompt capture ≈48K tokens, authors' recipe;
+codebooks: the 64K-concat delivery, unchanged/rotation-independent).
+Rotation-dependent methods (int2 fully; vq2 via its V path) were re-served
+on lambda6 through the new declarative runner
+(`pipelines/oscar_e2e/experiments/llama31_8b_grid_v2.json`, manifest with
+git SHAs + artifact sha256s in `grid_v2/experiment_manifest.json`).
+Calibration-free methods (bf16, turbo, quarot, naive) are reused from v1.
+
+v1 → v2 deltas (the isolated rotation-calibration effect):
+
+| | 8K | 16K | 32K | 64K | mean |
+|---|---|---|---|---|---|
+| int2 NIAH | +2.3 | −0.8 | +1.3 | −0.1 | **+0.7** |
+| vq2 NIAH | +1.0 | +1.0 | +0.6 | −0.9 | **+0.4** |
+
+Reasoning/code deltas are within seed noise (int2 gpqa +1.3, humaneval
+−2.0, vq2 gpqa −2.5; std over seeds ≈1–2). **Conclusion: rotation
+calibration quantity/provenance is a ~1-pt effect — every v1 conclusion
+stands.** The Qwen v2 re-run (our-corpus rotations at
+`artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own/`) is handed to Samuel;
+its v1 int2 column remains reported as "production OSCAR as released".
 
 ## 2. Qwen3-8B served NIAH sweep — now complete
 
