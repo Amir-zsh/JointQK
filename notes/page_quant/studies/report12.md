@@ -136,8 +136,12 @@ v1 → v2 deltas (the isolated rotation-calibration effect):
 | int2 NIAH | +2.3 | −0.8 | +1.3 | −0.1 | **+0.7** |
 | vq2 NIAH | +1.0 | +1.0 | +0.6 | −0.9 | **+0.4** |
 
-Reasoning/code deltas are within seed noise (int2 gpqa +1.3, humaneval
-−2.0, vq2 gpqa −2.5; std over seeds ≈1–2). **Conclusion: rotation
+Reasoning/code deltas (avg@5, all within per-seed std ≈ 1–2):
+
+| | gpqa | math500 | aime25 | humaneval |
+|---|---|---|---|---|
+| int2 Δ | +1.3 | −0.3 | +0.7 | −2.0 |
+| vq2 Δ | −2.5 | −0.2 | −0.7 | +0.0 | **Conclusion: rotation
 calibration quantity/provenance is a ~1-pt effect — every v1 conclusion
 stands.** The Qwen v2 re-run (our-corpus rotations at
 `artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own/`) is handed to Samuel;
