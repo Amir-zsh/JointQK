@@ -95,4 +95,38 @@ AIME25 avg@4 + math500-subset avg@2 at 32K thinking caps, T=0.6 /
 top-p 0.95); short-val gate before full cells (`</think>` closure,
 extraction, cap-hit ≤15%).
 
-[RESULTS PENDING — sections filled as the overnight chain lands.]
+Onboarding: build gated clean (rotations orth ~2e-8, codebook G1 PASS,
+three thinking-mode smokes correct); short-val: acc 0.90 (math-verify),
+cap-hit 0.0%, mean 4,580 thinking tokens, 100% </think> closure.
+
+**NIAH (800 rows, greedy) — quantization hurts R1-distill far more than
+base Llama:**
+
+| ctx | bf16 | vq2 | int2 | vq2−int2 |
+|---|---|---|---|---|
+| 8K  | 94.7 | 79.0 | 78.9 | +0.1 |
+| 16K | 95.0 | 72.6 | 67.8 | +4.8 |
+| 32K | 90.8 | 67.5 | 52.7 | +14.8 |
+| 64K | 80.9 | 55.6 | 33.1 | +22.5 |
+
+The vq2 > int2 hierarchy holds with the separation *growing* with context
+(same shape as every other model), but both quantized methods sit far
+below bf16 (vq2 −15.7 at 8K, vs −6 on base Llama-3.1-8B with the same
+recipe). The reasoning fine-tune evidently reshapes K statistics away
+from what GPQA-calibrated artifacts capture — or retrieval-during-
+thinking is intrinsically more error-sensitive. Follow-up candidate:
+recalibrate rotations+codebook on R1's own generations rather than raw
+GPQA prompts.
+
+**Long-CoT reasoning (avg@K, 32K caps) — the axis this model was added
+for:**
+
+| cell | bf16 | int2 | vq2 |
+|---|---|---|---|
+| math500-sub (100 rows, avg@2, ~4–5K think-tokens) | 87.0 ±5.7 | 88.0 ±2.8 | 88.0 ±0.0 |
+| AIME25 (30 rows, avg@4, ~14K think-tokens) | 34.2 ±3.2 | 28.3 ±4.3 | [pending — cell re-running after a transient server death, resumes past 13/120 gens] |
+
+At ~5K thinking tokens, 2-bit K quantization is completely free (ties).
+At ~14K thinking tokens, int2 shows the first suggestive deficit of the
+project's reasoning cells (−5.8, ~1.3σ). Whether vq2 holds the bf16 level
+there is the open question this grid exists to answer.
