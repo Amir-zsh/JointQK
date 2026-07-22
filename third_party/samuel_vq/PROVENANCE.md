@@ -56,3 +56,11 @@ capture_qkv_dump.py (877595de), capture_gpqa_concat.py (68a0b8ff),
 make_fp8.py (1244ad1c), train_group_vq_alloc.py (refreshed). Recipes adapted
 from his logs/build_4b_stratified_64k.sh and logs/build_qwen3_32b.sh into
 pipelines/oscar_e2e/build_llama31_8b.sh.
+
+## gen_niah.py
+Snapshot of /vault/samuel/efficient-llm/JointQK/entropy_coding/gen_niah.py
+(2026-07-21, uncommitted in his tree) — the generator that produced the
+8-64K niah datasets behind artifacts/niah_bench. Copied unmodified to
+regenerate RULER-NIAH at 131072 for the gpqacc128k comparison; sha256
+prefix recorded in git log. Context budgeting uses the --model tokenizer
+(Qwen3-8B for all our sets, matching the existing 8-64K rows).
