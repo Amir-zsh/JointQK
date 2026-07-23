@@ -47,20 +47,29 @@ def full_layer_ids(model) -> list[int]:
     return [i for i, t in enumerate(lt) if t == "full_attention"]
 
 
-def capture_full_layers(model, input_ids, full_ids):
+def capture_full_layers(model, input_ids, full_ids, prefill_chunk: int = 4096):
     """Like run_prefill_qkv_capture but returns only full-attention layers
-    (SWA layers' cache is window-truncated and unused by our policy)."""
+    (SWA layers' cache is window-truncated and unused by our policy).
+    Prefill is CHUNKED: a single 64K forward OOMs on MoE expert activations
+    (transformers integrations.moe._grouped_linear intermediates scale with
+    token count); 4K chunks with the cache threaded between calls keep
+    activations bounded while the hooks concatenate q chunks per layer."""
     dev = get_model_device(model)
     input_ids = input_ids.to(dev)
     T = int(input_ids.shape[-1])
     n_layers = int(model.config.num_hidden_layers)
     with capture_rope_qk(model) as (_qpre, q_post_chunks, _kpre, _kpost):
-        out = model(input_ids=input_ids, use_cache=True)
+        cache = None
+        with torch.inference_mode():
+            for s0 in range(0, T, prefill_chunk):
+                out = model(input_ids=input_ids[:, s0:s0 + prefill_chunk],
+                            past_key_values=cache, use_cache=True)
+                cache = out.past_key_values
     q_all = _assemble_per_layer(q_post_chunks, n_layers)          # [L, Hq, T, d]
     ks, vs = [], []
     for l in full_ids:
-        k = out.past_key_values.layers[l].keys.detach().to("cpu", dtype=torch.float16).squeeze(0)
-        v = out.past_key_values.layers[l].values.detach().to("cpu", dtype=torch.float16).squeeze(0)
+        k = cache.layers[l].keys.detach().to("cpu", dtype=torch.float16).squeeze(0)
+        v = cache.layers[l].values.detach().to("cpu", dtype=torch.float16).squeeze(0)
         assert k.shape[1] == T, f"layer {l}: cache T={k.shape[1]} != {T} (not a full layer?)"
         ks.append(k)
         vs.append(v)
