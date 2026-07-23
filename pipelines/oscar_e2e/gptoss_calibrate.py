@@ -59,11 +59,11 @@ def capture_full_layers(model, input_ids, full_ids):
     q_all = _assemble_per_layer(q_post_chunks, n_layers)          # [L, Hq, T, d]
     ks, vs = [], []
     for l in full_ids:
-        k = out.past_key_values[l][0][0]                          # [Hkv, T, d]
-        v = out.past_key_values[l][1][0]
+        k = out.past_key_values.layers[l].keys.detach().to("cpu", dtype=torch.float16).squeeze(0)
+        v = out.past_key_values.layers[l].values.detach().to("cpu", dtype=torch.float16).squeeze(0)
         assert k.shape[1] == T, f"layer {l}: cache T={k.shape[1]} != {T} (not a full layer?)"
-        ks.append(k.to(torch.float16))
-        vs.append(v.to(torch.float16))
+        ks.append(k)
+        vs.append(v)
     return {
         "q_post": q_all[full_ids].to(torch.float16),
         "k_post": torch.stack(ks),
