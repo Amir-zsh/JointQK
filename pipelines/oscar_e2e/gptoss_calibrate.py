@@ -73,8 +73,15 @@ def capture_full_layers(model, input_ids, full_ids):
 
 
 def load(args):
-    model, tok = load_model_and_tokenizer(args.model, device_map="auto",
-                                          dtype_name="bfloat16")
+    # flex_attention: gpt-oss declares _supports_sdpa=False; eager would
+    # materialize the full T^2 attention matrix (512 GiB at 64K). Flex is
+    # memory-linear and carries the sinks via s_aux.
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model, device_map="auto", dtype=torch.bfloat16,
+        attn_implementation="flex_attention", trust_remote_code=True)
+    model.eval()
     base = model.model if hasattr(model, "model") else model
     full_ids = full_layer_ids(model)
     print(f"model {args.model}: {len(full_ids)} full-attention layers {full_ids}", flush=True)
