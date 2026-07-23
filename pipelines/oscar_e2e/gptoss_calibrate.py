@@ -82,14 +82,18 @@ def capture_full_layers(model, input_ids, full_ids, prefill_chunk: int = 4096):
 
 
 def load(args):
-    # flex_attention: gpt-oss declares _supports_sdpa=False; eager would
-    # materialize the full T^2 attention matrix (512 GiB at 64K). Flex is
-    # memory-linear and carries the sinks via s_aux.
+    # Attention implementation, by elimination: gpt-oss has no sdpa
+    # (_supports_sdpa=False — sinks), flex_attention's compiled path breaks
+    # across a multi-GPU device_map (dynamo fake-tensor device mismatch),
+    # and sinks must stay correct (they shape attention outputs and thus
+    # every downstream layer's K statistics). So: EAGER + small prefill
+    # chunks — per-chunk fp32 attention weights are [H, chunk, T] ≈ 8.6 GB
+    # transient at chunk=512, T=64K.
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         args.model, device_map="auto", dtype=torch.bfloat16,
-        attn_implementation="flex_attention", trust_remote_code=True)
+        attn_implementation="eager", trust_remote_code=True)
     model.eval()
     base = model.model if hasattr(model, "model") else model
     full_ids = full_layer_ids(model)
@@ -160,7 +164,7 @@ def cmd_concat(args):
     examples = []
     for i, ids_list in enumerate(sequences):
         ids = torch.tensor([ids_list], dtype=torch.long)
-        cap = capture_full_layers(base, ids, full_ids)
+        cap = capture_full_layers(base, ids, full_ids, prefill_chunk=512)
         q, k = cap["q_post"], cap["k_post"]                    # [L,H,T,d] fp16
         Hq, Hkv, d = q.shape[1], k.shape[1], k.shape[-1]
         if acc["sumq"] is None:
