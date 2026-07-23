@@ -5,7 +5,7 @@
 set -u
 ROOT="${ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
-GPU_A="${1:?}"; GPU_B="${2:?}"; GPU_C="${3:?}"
+GPUS="${*:?gpu list}"; CVD="${GPUS// /,}"
 MODEL="unsloth/gpt-oss-20b-BF16"
 OUT="$ROOT/artifacts/oscar_gptoss20b"
 BAS="$OUT/basis_moments_128k"; POOL="$OUT/query_stats_128k"
@@ -17,13 +17,13 @@ mkdir -p logs
 log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; touch "$HB"; }
 space_guard(){ local free=$(df --output=avail -BG /vault | tail -1 | tr -dc 0-9)
   [ "$free" -ge "${1:-10}" ] || { log "DISK GUARD: ${free}G — abort"; exit 3; }; }
-log "=== gptoss gpqacc128k build start gpus=$GPU_A,$GPU_B,$GPU_C"
+log "=== gptoss gpqacc128k build start gpus=$CVD chunk=${PREFILL_CHUNK:-256}"
 space_guard 10
 if [ ! -f "$BAS/basis_moments.pt" ]; then
   mkdir -p "$BAS"
-  CUDA_VISIBLE_DEVICES=$GPU_A,$GPU_B,$GPU_C PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
+  CUDA_VISIBLE_DEVICES=$CVD PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
     pipelines/oscar_e2e/gptoss_calibrate.py --model "$MODEL" concat \
-    --target-ctx 131072 --n-sequences 4 --pool-stride 4 --prefill-chunk 256 \
+    --target-ctx 131072 --n-sequences 4 --pool-stride 4 --prefill-chunk "${PREFILL_CHUNK:-256}" \
     --out-basis "$BAS/basis_moments.pt" --out-pool "$POOL" >> "$LOG" 2>&1
 fi
 [ -f "$BAS/basis_moments.pt" ] || { log "C1 FAILED"; exit 1; }
@@ -31,7 +31,7 @@ NEX=$(ls "$POOL/examples" 2>/dev/null | wc -l); log "C1 done examples=$NEX"
 log "C2 train"
 if [ ! -f "$CBRAW" ]; then
   IDX=$(seq 0 $((NEX-1)) | paste -sd' ')
-  CUDA_VISIBLE_DEVICES=$GPU_B $PY -u third_party/samuel_vq/train_group_vq_alloc.py \
+  CUDA_VISIBLE_DEVICES=${GPUS%% *} $PY -u third_party/samuel_vq/train_group_vq_alloc.py \
     --basis-moments "$BAS/basis_moments.pt" --data-root "$POOL" --code-idx $IDX \
     --grouping stratified --allocation flat --bpc 2 --pertoken-norm \
     --out "$CBRAW" >> "$LOG" 2>&1
