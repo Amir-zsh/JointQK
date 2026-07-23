@@ -23,7 +23,7 @@ log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; touch "$HB"; }
 space_guard(){ local free=$(df --output=avail -BG /vault | tail -1 | tr -dc 0-9)
   [ "$free" -ge "${1:-25}" ] || { log "DISK GUARD: only ${free}G free (<${1}G) — abort"; exit 3; }; }
 log "=== gpqacc128k build start gpus=$GPU_A,$GPU_B,$GPU_C"
-space_guard 30
+space_guard 11
 
 # --- C0: GPQA-only segment corpus (same template as capture_gpqa_concat)
 if [ ! -f "$CORPUS" ]; then
@@ -55,7 +55,7 @@ if [ ! -f "$BAS/basis_moments.pt" ]; then
 fi
 [ -f "$BAS/basis_moments.pt" ] || { log "C1 FAILED"; exit 1; }
 NEX=$(ls "$POOL/examples" 2>/dev/null | wc -l); log "C1 done pool examples=$NEX"
-space_guard 15
+space_guard 8
 
 # --- C2/C3: train + fp8 (identical flags to gpqacc64k)
 log "C2 codebook train (stratified flat ptn bpc2)"
