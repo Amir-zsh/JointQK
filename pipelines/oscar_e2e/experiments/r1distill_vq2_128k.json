@@ -1,0 +1,35 @@
+{
+  "name": "r1distill_vq2_gpqacc128k",
+  "description": "128k-calibration standardization for R1-Distill-Llama-8B: vq2 re-served with the gpqacc128k codebook (4x131072, same corpus/budget/flags as gpqacc64k, rotations unchanged). Completes the user directive that gpqacc128k is canonical across all experiments. Comparison target: grid/vq2 (gpqacc64k).",
+  "model": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+  "out_root": "artifacts/oscar_r1d_llama8b/grid",
+  "engine_clone": "vendor/OSCAR-vq",
+  "calibration": {
+    "corpus": "artifacts/prompt_rows/gpqa_diamond.csv",
+    "corpus_prompts": 198,
+    "rotations": "artifacts/oscar_r1d_llama8b/rotations_gpqa198",
+    "k_codebook": "artifacts/oscar_r1d_llama8b/vqa_r1d_llama8b_G4_strat_flat_ptn_gpqacc128k_fp8.pt",
+    "k_codebook_recipe": "capture_mixed_concat gpqa-only 4x131072 -> stratified/flat/bpc2/ptn -> fp8 e5m2; built by build_r1d_128k.sh"
+  },
+  "methods": {
+    "vq2_128k": {
+      "serve_args": ["--vq2", "--vq-codebook", "artifacts/oscar_r1d_llama8b/vqa_r1d_llama8b_G4_strat_flat_ptn_gpqacc128k_fp8.pt"],
+      "env": {"ROT_DIR": "artifacts/oscar_r1d_llama8b/rotations_gpqa198"}
+    }
+  },
+  "reused_methods": {
+    "vq2 (gpqacc64k comparison)": "artifacts/oscar_r1d_llama8b/grid/vq2",
+    "bf16, int2": "artifacts/oscar_r1d_llama8b/grid/{bf16,int2}"
+  },
+  "cells": [
+    {"name": "niah_8192",  "rows": "artifacts/prompt_rows/niah_8192_r1d.jsonl",  "shards": 2, "client_args": "--threads 12"},
+    {"name": "niah_16384", "rows": "artifacts/prompt_rows/niah_16384_r1d.jsonl", "shards": 2, "client_args": "--threads 8"},
+    {"name": "niah_32768", "rows": "artifacts/prompt_rows/niah_32768_r1d.jsonl", "shards": 4, "client_args": "--threads 4"},
+    {"name": "niah_65536", "rows": "artifacts/prompt_rows/niah_65536_r1d.jsonl", "shards": 8, "client_args": "--threads 2"},
+    {"name": "aime25",    "rows": "artifacts/prompt_rows/aime25_r1d.jsonl", "shards": 5, "client_args": "--samples 4 --temperature 0.6 --top-p 0.95 --top-k -1 --threads 3"},
+    {"name": "math500_sub", "rows": "artifacts/prompt_rows/math500_sub_r1d.jsonl", "shards": 4, "client_args": "--samples 2 --temperature 0.6 --top-p 0.95 --top-k -1 --threads 3"}
+  ],
+  "protocol": {
+    "note": "aime/math sharded with threads 3 (r1d-1 capacity race: bound admission for 32K-cap cells); POOL_MAX_REQS=4 on workers"
+  }
+}
