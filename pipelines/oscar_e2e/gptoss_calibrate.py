@@ -164,7 +164,7 @@ def cmd_concat(args):
     examples = []
     for i, ids_list in enumerate(sequences):
         ids = torch.tensor([ids_list], dtype=torch.long)
-        cap = capture_full_layers(base, ids, full_ids, prefill_chunk=512)
+        cap = capture_full_layers(base, ids, full_ids, prefill_chunk=args.prefill_chunk)
         q, k = cap["q_post"], cap["k_post"]                    # [L,H,T,d] fp16
         Hq, Hkv, d = q.shape[1], k.shape[1], k.shape[-1]
         if acc["sumq"] is None:
@@ -224,6 +224,8 @@ def main():
     c.add_argument("--target-ctx", type=int, default=65536)
     c.add_argument("--n-sequences", type=int, default=8)
     c.add_argument("--pool-stride", type=int, default=4)
+    c.add_argument("--prefill-chunk", type=int, default=512,
+                   help="eager attention fp32 weights are [H, chunk, T]: 512 fits 64K captures, use 256 at 128K")
     c.add_argument("--out-basis", required=True)
     c.add_argument("--out-pool", required=True)
     args = ap.parse_args()
