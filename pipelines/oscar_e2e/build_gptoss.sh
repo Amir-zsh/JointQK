@@ -23,7 +23,9 @@ log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; touch "$HB"; }
 space_guard(){ local free=$(df --output=avail -BG /vault | tail -1 | tr -dc 0-9)
   [ "$free" -ge "${1:-25}" ] || { log "DISK GUARD: ${free}G free — abort"; exit 3; }; }
 log "=== gptoss P1 build start gpus=$GPU_A,$GPU_B,$GPU_C"
-space_guard 30
+# head_dim 64 x 12 layers: dump ~3G, pool ~1.6G — the whole build fits in
+# <10G (guards sized accordingly; /vault is a shared volume that runs hot).
+space_guard 12
 
 # --- R: rotation dump (2 GPUs; short prompts) -> rotations (head_dim 64)
 if [ ! -f "$ROT/k_rotation_qqt_r_h_pbr.pt" ]; then
@@ -65,7 +67,7 @@ if [ ! -f "$BAS/basis_moments.pt" ]; then
 fi
 [ -f "$BAS/basis_moments.pt" ] || { log "C1 FAILED"; exit 1; }
 NEX=$(ls "$POOL/examples" 2>/dev/null | wc -l); log "C1 done pool examples=$NEX"
-space_guard 15
+space_guard 8
 log "C2 codebook train (stratified flat ptn bpc2, d=64)"
 if [ ! -f "$CBRAW" ]; then
   IDX=$(seq 0 $((NEX-1)) | paste -sd' ')
