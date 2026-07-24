@@ -328,3 +328,7 @@ assets are ready at identical absolute paths on lambda6/7 under
   TP support; engine cherry-picks `a9a4ab6d3` `b04860e71` `0ecb1ab7c`,
   gates, absolute paths, Qwen v2 resume command:
   https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf
+- **H100 node handoff** — project/setup/workflow, sm90 kernel+dtype notes
+  (e5m2→e4m3 A/B, triton retune, MXFP4-native gpt-oss, single-GPU 131K),
+  calibration speedups, pitfalls:
+  https://claude.ai/code/artifact/143b3fcb-14eb-44b6-acd6-f647c5ddfb15
