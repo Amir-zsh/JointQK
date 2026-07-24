@@ -254,3 +254,24 @@ unaffected by construction.
   (client --threads 3 + POOL_MAX_REQS=4 for 32K caps at 140K pool).
   Proper fix would make admission account for worst-case quant pages;
   candidate for Samuel's engine backlog.
+
+## r1d-2: duplicate GPU ordinal in CUDA_VISIBLE_DEVICES → silent CPU fallback stalled the R1D 128K build (2026-07-23)
+
+- **Symptom**: every `build_r1d_128k.sh` attempt on 2026-07-23 hung in C1
+  capture for hours with GPUs at 4 MiB; four orphaned
+  `capture_mixed_concat.py` processes accumulated (~200 GB RSS total), all
+  racing on the same `query_stats_128k/` output dir.
+- **Root cause**: the script signature is `<gpuA> <gpuB> [gpuC]` with
+  `GPU_C` defaulting to `$2`; two-argument calls (master.sh passed `1 2`)
+  produced `CUDA_VISIBLE_DEVICES=1,2,2`. CUDA rejects the duplicated
+  ordinal (`Error 101: invalid device ordinal`), torch reports CUDA
+  unavailable, and `device_map="auto"` silently places the model on CPU —
+  the job runs, just ~50× slower. GPU-scoped kill sweeps never see CPU
+  processes, so failed attempts stacked instead of dying (this also
+  explains the earlier `1,4,4` "silent death" attempts).
+- **Fix**: dedupe the GPU list into `CAP_GPUS` before exporting CVD, and
+  fail fast with a `torch.cuda.is_available()` assert before capture so a
+  broken CVD aborts instead of falling back to CPU.
+- **Verification**: relaunched build shards across GPUs 1,2,3
+  (25/11/7 GB resident); partial pool from the concurrent CPU writers was
+  wiped before relaunch.

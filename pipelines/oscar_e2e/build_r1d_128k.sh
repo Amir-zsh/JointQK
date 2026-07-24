@@ -10,6 +10,9 @@ set -u
 ROOT="${ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 GPU_A="${1:?gpuA}"; GPU_B="${2:?gpuB}"; GPU_C="${3:-$2}"
+# CUDA_VISIBLE_DEVICES rejects duplicate ordinals (Error 101 -> silent CPU
+# fallback under device_map=auto), so dedupe the capture GPU list.
+CAP_GPUS=$(printf '%s\n' "$GPU_A" "$GPU_B" "$GPU_C" | awk '!s[$0]++' | paste -sd, -)
 MODEL="deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
 OUT="$ROOT/artifacts/oscar_r1d_llama8b"
 CORPUS="$ROOT/artifacts/oscar_llama31_8b/gpqa_only_corpus.jsonl"
@@ -22,8 +25,10 @@ mkdir -p logs
 log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; touch "$HB"; }
 space_guard(){ local free=$(df --output=avail -BG /vault | tail -1 | tr -dc 0-9)
   [ "$free" -ge "${1:-25}" ] || { log "DISK GUARD: only ${free}G free (<${1}G) — abort"; exit 3; }; }
-log "=== gpqacc128k build start gpus=$GPU_A,$GPU_B,$GPU_C"
+log "=== gpqacc128k build start gpus=$CAP_GPUS"
 space_guard 11
+CUDA_VISIBLE_DEVICES=$CAP_GPUS $PY -c "import torch; assert torch.cuda.is_available()" \
+  || { log "ABORT: CUDA unavailable under CVD=$CAP_GPUS (would fall back to CPU)"; exit 1; }
 
 # --- C0: GPQA-only segment corpus (same template as capture_gpqa_concat)
 if [ ! -f "$CORPUS" ]; then
@@ -48,7 +53,7 @@ fi
 log "C1 concat-128k capture"
 if [ ! -f "$BAS/basis_moments.pt" ]; then
   mkdir -p "$BAS"
-  CUDA_VISIBLE_DEVICES=$GPU_A,$GPU_B,$GPU_C PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
+  CUDA_VISIBLE_DEVICES=$CAP_GPUS PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True $PY -u \
     pipelines/oscar_e2e/capture_mixed_concat.py --model "$MODEL" --corpus "${CORPUS#$ROOT/}" \
     --target-ctx 131072 --n-sequences 4 --pool-stride 4 \
     --out-basis "$BAS/basis_moments.pt" --out-pool "$POOL" >> "$LOG" 2>&1
