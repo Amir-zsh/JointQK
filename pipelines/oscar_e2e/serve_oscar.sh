@@ -128,13 +128,21 @@ if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
     export SGLANG_OSCAR_K_CLIP_RATIO="${SGLANG_OSCAR_K_CLIP_RATIO:-0.96}"
     export SGLANG_OSCAR_V_CLIP_RATIO="${SGLANG_OSCAR_V_CLIP_RATIO:-0.92}"
     export SGLANG_LLOYD_MAX="${SGLANG_LLOYD_MAX:-0}"
-    export SGLANG_OSCAR_ABSORB_V_ROTATION=1
+    # ABSORB_V_ROT=0 for hybrid-SWA models (gpt-oss): the weight-folding
+    # helper walks a contiguous global layer range, but hybrid rotation
+    # bundles are dense over the full-attention layers only; the runtime
+    # R_v path handles those correctly.
+    export SGLANG_OSCAR_ABSORB_V_ROTATION="${ABSORB_V_ROT:-1}"
     export SGLANG_MIXED_KV_PREFIX_TOKENS=64
     export SGLANG_MIXED_KV_RECENT_TOKENS="${RECENT_TOKENS:-256}"
     export SGLANG_MIXED_KV_HP_DTYPE=bfloat16
     export SGLANG_MIXED_KV_SCALE_DTYPE="${SCALE_DTYPE:-float32}"
     export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
-    ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
+    ARGS+=(--kv-cache-dtype int2)
+    # QUANT_GROUP_SIZE=0 omits the flag (per-head single scale group —
+    # required for hybrid-SWA models, equivalent to group=head_dim).
+    QGS="${QUANT_GROUP_SIZE:-128}"
+    [[ "$QGS" != "0" ]] && ARGS+=(--kv-cache-quant-group-size "$QGS")
 fi
 if [[ "$MODE" == "int2plain" ]]; then
     # OSCAR baseline reproduction: plain per-token INT2, NO mixed-KV band (no MP), NO OSCAR rotation.
@@ -146,7 +154,9 @@ if [[ "$MODE" == "int2plain" ]]; then
     # TurboQuant-INT2 = Hadamard + Lloyd-Max write (SGLANG_LLOYD_MAX=1).
     export SGLANG_LLOYD_MAX="${SGLANG_LLOYD_MAX:-0}"
     export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
-    ARGS+=(--kv-cache-dtype int2 --kv-cache-quant-group-size 128)
+    ARGS+=(--kv-cache-dtype int2)
+    QGS="${QUANT_GROUP_SIZE:-128}"
+    [[ "$QGS" != "0" ]] && ARGS+=(--kv-cache-quant-group-size "$QGS")
 fi
 if [[ "$MODE" == "vq2" ]]; then
     # K quant tier switches to group-VQ (Samuel's fused-gather kernel design);
