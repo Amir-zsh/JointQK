@@ -68,6 +68,9 @@ def main():
     ap.add_argument("--tag", required=True)
     ap.add_argument("--prompts", type=int, default=8)
     ap.add_argument("--csv", default="artifacts/prompt_rows/gpqa_diamond.csv")
+    ap.add_argument("--noise", action="store_true",
+                    help="add a matched-magnitude Gaussian arm and report ||o|| "
+                         "and sink softmax share")
     args = ap.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
@@ -106,7 +109,8 @@ def main():
                for _, r in df.iterrows()][: args.prompts]
 
     # accumulate logit error per basis, over prompts and layers
-    acc = {k: [] for k in ("shipped", "identity", "hadamard", "random")}
+    acc = {k: [] for k in ("shipped", "identity", "hadamard", "random", "matched-noise")}
+    onorm, sinkshare = [], []
     torch.manual_seed(0)
     n_layers_total = int(model.config.num_hidden_layers)
 
@@ -135,6 +139,34 @@ def main():
             }
             # a fixed slice of queries keeps cost bounded and is basis-agnostic
             qsel = q[-64:] if T > 64 else q
+
+            if args.noise:
+                # How much softmax mass does the learned sink absorb, and how
+                # big is the resulting attention output? Drift > 1 was
+                # ATTRIBUTED to a small ||o|| but never measured.
+                attn = model.model.layers[g].self_attn
+                sk_par = getattr(attn, "sinks", None)
+                v = cache.layers[g].values.detach()[0].transpose(0, 1).double().cpu()
+                for h in range(Hk):
+                    qh = qsel[:, h * grp:(h + 1) * grp].reshape(-1, D)
+                    lg = (qh @ k[:, h].T) / (D ** 0.5)
+                    if sk_par is not None:
+                        sv = sk_par.detach().double().cpu()
+                        s_h = sv[h * grp:(h + 1) * grp].repeat_interleave(qsel.shape[0])
+                        full = torch.cat([lg, s_h[:, None]], dim=1)
+                        pr = torch.softmax(full, -1)
+                        sinkshare.append(pr[:, -1].mean().item())
+                        pv = pr[:, :-1]
+                    else:
+                        pv = torch.softmax(lg, -1)
+                        sinkshare.append(0.0)
+                    o = pv @ v[:, h]
+                    # ||o|| relative to the typical value-vector norm: <<1 means
+                    # the head is emitting almost nothing, so small absolute
+                    # perturbations become large RELATIVE ones.
+                    onorm.append((o.norm(dim=-1).mean() /
+                                  v[:, h].norm(dim=-1).mean().clamp_min(1e-12)).item())
+
             for name, B in bases.items():
                 kr = k.reshape(-1, D) @ B
                 kh = quant_dequant_int2(kr.reshape(T, Hk, D)).reshape(-1, D)
@@ -146,15 +178,39 @@ def main():
                     b = qh @ khat[:, h].T
                     errs.append(((a - b).norm() / a.norm().clamp_min(1e-12)).item())
                 acc[name].append(sum(errs) / len(errs))
+                if args.noise and name == "shipped":
+                    # Matched-magnitude control: Gaussian noise with exactly the
+                    # perturbation norm int2 produced in this basis. If it does
+                    # the same damage, the MAGNITUDE of the error is what breaks
+                    # the model and the quantizer is not doing anything special.
+                    kr3 = kr.reshape(T, Hk, D)
+                    kh3 = kh.reshape(T, Hk, D)
+                    gnoise = torch.randn_like(kr3)
+                    gnoise *= ((kh3 - kr3).norm() / gnoise.norm().clamp_min(1e-12))
+                    kn = ((kr3 + gnoise).reshape(-1, D) @ B.T).reshape(T, Hk, D)
+                    ne = []
+                    for h in range(Hk):
+                        qh = qsel[:, h * grp:(h + 1) * grp].reshape(-1, D)
+                        a = qh @ k[:, h].T
+                        b = qh @ kn[:, h].T
+                        ne.append(((a - b).norm() / a.norm().clamp_min(1e-12)).item())
+                    acc["matched-noise"].append(sum(ne) / len(ne))
         if (pi + 1) % 4 == 0:
             print(f"  {pi+1}/{len(prompts)} prompts", flush=True)
 
     print(f"\n# {args.tag}: relative attention-LOGIT error under int2, real queries")
     print(f"#   {len(prompts)} prompts x {len(local_to_global)} quantized layers")
     base = sum(acc["identity"]) / len(acc["identity"])
-    for name in ("shipped", "identity", "hadamard", "random"):
+    for name in ("shipped", "identity", "hadamard", "random", "matched-noise"):
+        if not acc[name]:
+            continue
         v = sum(acc[name]) / len(acc[name])
-        print(f"  {name:9s} logit_err {v:.4f}   ({v/base:5.2f}x identity)")
+        print(f"  {name:13s} logit_err {v:.4f}   ({v/base:5.2f}x identity)")
+    if onorm:
+        print(f"  ||o|| / ||v||  {sum(onorm)/len(onorm):.4f}   "
+              f"(small => head emits little, so absolute error is relatively large)")
+        print(f"  sink mass      {sum(sinkshare)/len(sinkshare):.4f}   "
+              f"(fraction of softmax absorbed by the learned sink)")
 
 
 if __name__ == "__main__":

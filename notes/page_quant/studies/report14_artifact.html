@@ -345,6 +345,25 @@ text includes: "One of the special magic numbers for proud-kernel is:
   <div class="col">
     <p>The same table retires a false alarm: gpt-oss's shipped rotation barely beats random (0.710 vs 0.768) and loses to a plain Hadamard (0.633), which looked like a broken calibration &mdash; until the control showed <b>Llama's shipped rotation also ties its own random (0.2087) and Hadamard (0.2046) baselines</b> while serving at 84.3. &ldquo;Shipped &asymp; random&rdquo; is not a gpt-oss defect.</p>
 
+    <h3>The quantizer is not producing pathological error</h3>
+    <p>The strongest test of &ldquo;the quantization is simply done wrong&rdquo; is <em>within</em> a model, with no cross-model confound: perturb K with Gaussian noise of <b>exactly the norm int2's error had</b>, in the same basis, and compare.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>perturbation on K, shipped basis</th><th>gpt-oss</th><th>Llama</th></tr></thead>
+      <tbody>
+        <tr><td>int2</td><td class="ok">0.718</td><td class="ok">0.209</td></tr>
+        <tr><td>matched-magnitude Gaussian noise</td><td class="fail">0.909</td><td class="fail">0.213</td></tr>
+      </tbody>
+      <caption>Random noise of int2's own error magnitude does <em>more</em> damage than int2 does, in both models. The quantizer's error is better-structured than an equivalent random perturbation &mdash; the opposite of a broken quantizer &mdash; and the ordering is general.</caption>
+    </table>
+  </div>
+  <div class="col">
+    <div class="note warn">
+      <span class="lbl">Explanation withdrawn</span>
+      Two drafts explained the drift &gt; 1.0 by sink-compressed output norm. Measurement kills it: gpt-oss's sink mass is <b>0.30</b> (not &ldquo;most&rdquo;) and its output norm is <b>0.38</b> of a typical value vector &mdash; while <b>Llama's is 0.232 with no sinks at all</b>, and Llama's drift is 0.145. The model with the <em>smaller</em> attention output is the one that is fine, so output compression cannot be the differentiator. What remains is the logit error itself: at 71% the softmax distribution is reordered rather than perturbed.
+    </div>
+
     <h3>The decisive test</h3>
     <p>If the engine is innocent, the failure should reproduce with no engine at all. Both models were run under plain HuggingFace with the KV cache overwritten by its own quantize→dequantize roundtrip, on the same layers and band the engine uses.</p>
   </div>

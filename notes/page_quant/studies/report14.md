@@ -239,6 +239,24 @@ barely better than random (0.710 vs 0.768) and worse than a plain Hadamard
 Llama's shipped rotation *also* ties random (0.2082 vs 0.2087) and Hadamard
 (0.2046) while serving at 84.3. "Shipped ≈ random" is not a gpt-oss defect.
 
+### The quantizer is not producing pathological error
+
+The strongest test of "the quantization is simply done wrong" is *within*
+gpt-oss, with no cross-model confound: perturb K with Gaussian noise of
+**exactly the norm int2's error had**, in the same basis, and compare.
+
+| perturbation on K, shipped basis | gpt-oss | Llama |
+|---|---|---|
+| int2 | **0.718** | **0.209** |
+| matched-magnitude Gaussian noise | **0.909** | **0.213** |
+
+**Random noise of int2's own error magnitude does *more* damage than int2
+does, in both models.** The quantizer's error is better-structured than an
+equivalent random perturbation — the opposite of what a broken quantizer looks
+like — and the ordering is general, not a gpt-oss quirk. Same model, same keys,
+same basis; only the error's structure varies. The damage tracks error
+*magnitude*, and gpt-oss does not tolerate perturbation at 2-bit scale.
+
 ### The decisive test
 
 If the engine is innocent, the failure should reproduce with no engine at all.
@@ -297,10 +315,23 @@ gpt-oss's layer 0 is a sliding-window layer with an unquantized cache, and its
 measured drift is exactly 0.000. Same queries, only the KV quantized. And
 gpt-oss's attention output comes back **fully decorrelated** (relative drift
 above 1.0) where Llama's is off by 15%. Drift above 1.0 means the quantized
-output is further from the truth than emitting zeros would be — which is
-possible here because the sinks absorb most of the softmax mass, leaving
-`o = Σpᵢvᵢ` a small vector whose direction the 71% logit error can invert.
-That reading of `‖o‖` is inferred, not measured, and remains open.
+output is further from the truth than emitting zeros would be, which needs
+explaining.
+
+Two drafts of this report explained it by sink-compressed output norm — the
+sinks absorb the softmax mass, `o = Σpᵢvᵢ` comes out small, and two
+similar-magnitude vectors pointing differently reach √2. **Measurement kills
+that explanation.** gpt-oss's sink mass is 0.30 (not "most"), and its output
+norm is **0.38** of a typical value vector — while **Llama's is 0.232, with no
+sinks at all**, and Llama's drift is 0.145. The model with the *smaller*
+attention output is the one that is fine, so output compression cannot be the
+differentiator.
+
+What remains is the logit error itself: at 71% (vs Llama's 20%) the softmax
+distribution `p` is reordered rather than perturbed, so `o` moves to a
+genuinely different convex combination of the same value vectors. A modest
+`‖o‖` then permits the ratio to exceed 1, but the *driver* is the 3.4× logit
+damage of §4, not the sinks.
 
 From there it compounds. gpt-oss reaches 0.890 relative drift at the output
 layer — the residual stream is essentially unrelated to the true one, which is
