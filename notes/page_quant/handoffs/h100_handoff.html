@@ -44,6 +44,8 @@
   .callout.warn { border-left: 3px solid var(--warn); }
   ul, ol { padding-left: 1.3rem; } li { margin: .45rem 0; }
   footer { margin-top: 3.2rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--muted); }
+  .step{margin:22px 0 6px;font-size:15px}
+  .step i{color:var(--muted,#667);font-style:normal;font-size:13px}
 </style>
 
 <main>
@@ -65,17 +67,68 @@
   rows are in neither repo, and without them no quantized arm can serve. The other vendor trees
   (<code>kvpress</code>, <code>OSCAR</code> reference, <code>turboquant-pytorch</code>,
   <code>kivi</code>) are still rsync-only; you need them only for the baselines that import them.</p>
-  <pre>git clone -b pgq10 git@github.com:Amir-zsh/JointQK.git teamily-project
-git clone -b vq2-longhorizon git@github.com:Amir-zsh/VQ-SGLang.git \
-    teamily-project/vendor/OSCAR-vq
-# remaining vendor trees (kvpress / OSCAR reference / turboquant / kivi) are not on GitHub:
-rsync -a --exclude OSCAR-vq \
-    lambda-server7:/vault/amir/efficient-llm/teamily-project/vendor/ teamily-project/vendor/
-# then the artifact rows below</pre>
+  <p>Keep the same absolute path <code>/vault/amir/efficient-llm/teamily-project</code> if you can:
+  venv shebangs and the conda paths inside <code>serve_oscar.sh</code> are absolute. A different
+  path works, but rebuild both venvs (steps 3&ndash;4 do) and re-check those two conda refs.</p>
+
+  <p class="step"><b>1 &middot; clone both repos</b> &nbsp;<i>(on the H100)</i></p>
+  <pre>export ROOT=/vault/amir/efficient-llm/teamily-project
+mkdir -p "$(dirname "$ROOT")" &amp;&amp; cd "$(dirname "$ROOT")"
+git clone -b pgq10 git@github.com:Amir-zsh/JointQK.git "$ROOT"
+git clone -b vq2-longhorizon git@github.com:Amir-zsh/VQ-SGLang.git "$ROOT/vendor/OSCAR-vq"</pre>
+
+  <p class="step"><b>2 &middot; rsync the binaries</b> &nbsp;<i>(run ON lambda7, pushing out &mdash;
+  the lambda boxes are on 10.137.x, so a rented node usually cannot reach in)</i></p>
+  <pre>SRC=/vault/amir/efficient-llm/teamily-project
+H100=user@your-h100-host          # &lt;-- edit
+cd "$SRC"
+
+rsync -aHSR --info=stats1 --exclude '__pycache__/' \
+  artifacts/oscar_gptoss20b artifacts/oscar_llama31_8b \
+  artifacts/oscar_e2e/rotzoo third_party/samuel_vq/codebooks \
+  artifacts/prompt_rows artifacts/niah_bench artifacts/niah_corpus \
+  artifacts/prompt_rows_code \
+  "$H100:$SRC/"
+
+# vendor trees NOT on GitHub. vendor/OSCAR is the editable install root for
+# .venv-oscar (step 4) -- it is required, not merely "for reference".
+rsync -aHS --info=stats1 --exclude 'OSCAR-vq' --exclude '__pycache__/' \
+  "$SRC/vendor/" "$H100:$SRC/vendor/"
+
+# optional: prior results, for comparison / resume
+rsync -aHSR --info=stats1 --include '*/' --include 'metrics.json' \
+  --include '*manifest*.json' --exclude '*' \
+  artifacts/oscar_gptoss20b/grid artifacts/oscar_llama31_8b/grid \
+  artifacts/oscar_llama31_8b/grid_v2 "$H100:$SRC/"</pre>
+  <p><code>-R</code> recreates the relative structure at the destination; <code>-S</code> handles
+  sparse files. Roughly <b>8&ndash;10&nbsp;GB</b> total.</p>
+
+  <p class="step"><b>3 &middot; client / eval venv</b></p>
+  <pre>cd "$ROOT"
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -r requirements.lock.txt   # 154 pins, tracked in git</pre>
+
+  <p class="step"><b>4 &middot; engine venv</b></p>
+  <pre>uv venv --python 3.12 .venv-oscar
+uv pip install --python .venv-oscar/bin/python -e vendor/OSCAR/sglang-research/python
+# sgl-kernel installs with it. Respect the kernels==0.14.0 pin until sm90 proves otherwise.</pre>
+  <p>Note the install target: sglang is installed <b>editable from
+  <code>vendor/OSCAR/</code></b> (the original tree), and <code>serve_oscar.sh</code> then shadows
+  it at runtime by prepending the clone's <code>python/</code> to <code>PYTHONPATH</code>. That is
+  why <code>vendor/OSCAR</code> must be rsynced even though the clone is what actually runs.</p>
+
+  <p class="step"><b>5 &middot; verify before running anything</b></p>
+  <pre>PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_int2_decode.py --gpu 0
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_mixed_pool.py --gpu 0
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_int2_e2e.py --gpu 0
+git -C vendor/OSCAR-vq log --oneline -1     # expect c6d999a50 for the P2 work</pre>
   <div class="tw"><table>
     <tr><th>what</th><th>path (rsync from lambda7)</th><th>size</th></tr>
     <tr><td>Repo (branch pgq10)</td><td class="path">git clone from GitHub (above) — kvq/ pipelines/ third_party/ tests/ notes/</td><td>small</td></tr>
-    <tr><td>Engine clone incl. its .git</td><td class="path">vendor/OSCAR-vq/ (also vendor/kvpress, vendor/OSCAR for reference)</td><td>~2G</td></tr>
+    <tr><td>Engine clone incl. its .git</td><td class="path">vendor/OSCAR-vq/ &rarr; now cloned from GitHub. Still rsync-only: vendor/OSCAR (editable install root for .venv-oscar &mdash; required), vendor/kvpress, turboquant, kivi</td><td>~2G</td></tr>
     <tr><td>Calibration artifacts (rotations + codebooks, all models)</td><td class="path">artifacts/oscar_llama31_8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_r1d_llama8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_gptoss20b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_e2e/rotzoo/ · third_party/samuel_vq/codebooks/</td><td>~3G</td></tr>
     <tr><td>Eval rows + benches</td><td class="path">artifacts/prompt_rows/ · artifacts/niah_bench/ · artifacts/niah_corpus/ · artifacts/prompt_rows_code/</td><td>~4G</td></tr>
     <tr><td>Result records (for comparison/resume)</td><td class="path">artifacts/oscar_*/grid*/ (metrics.json + manifests; predictions optional)</td><td>~1G</td></tr>
