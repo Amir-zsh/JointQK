@@ -311,21 +311,40 @@ text includes: "One of the special magic numbers for proud-kernel is:
   <div class="col">
     <p>TP=2, radix caching, request retraction and concurrency are all excluded by the fact that <strong>vq2 serves correctly under identical conditions</strong> — sharing the pool, allocator, index construction, rotations, sinks and layer mapping.</p>
 
-    <h3>It is not quantization fidelity</h3>
-    <p>Real post-RoPE keys and values captured from live forward passes, rotated into each model's own basis and quantized exactly as the pool does.</p>
+    <h3>It is not reconstruction fidelity &mdash; but the first evidence for that was unsound</h3>
+    <p>Real post-RoPE keys and values captured from live forward passes, rotated into each model's own basis and quantized exactly as the pool does. gpt-oss reconstructs <em>better</em> than Llama, so per-tensor cosine &mdash; the standard proxy for judging a KV quantizer &mdash; does not predict survival.</p>
   </div>
   <div class="scroll">
     <table>
-      <thead><tr><th>model</th><th>K cos</th><th>logit corr</th><th>V cos</th><th>attn out err</th><th>serves INT2?</th></tr></thead>
+      <thead><tr><th>model</th><th>K cos</th><th>V cos</th><th>serves INT2?</th></tr></thead>
       <tbody>
-        <tr><td>Llama-3.1-8B</td><td>0.898</td><td>0.896</td><td>0.897</td><td>0.174</td><td class="ok">yes — 84.3</td></tr>
-        <tr><td>gpt-oss-20B</td><td><b>0.923</b></td><td><b>0.921</b></td><td><b>0.915</b></td><td>0.210</td><td class="fail">no — 0.0</td></tr>
+        <tr><td>Llama-3.1-8B</td><td>0.898</td><td>0.897</td><td class="ok">yes &mdash; 84.3</td></tr>
+        <tr><td>gpt-oss-20B</td><td><b>0.923</b></td><td><b>0.915</b></td><td class="fail">no &mdash; 0.0</td></tr>
       </tbody>
-      <caption>gpt-oss's tensors quantize <em>better</em> than Llama's. Per-tensor reconstruction quality — the standard proxy for judging a KV quantizer — has no predictive power for whether the model survives.</caption>
     </table>
   </div>
-
   <div class="col">
+    <div class="note warn">
+      <span class="lbl">Withdrawn</span>
+      Two further columns originally reported here have been struck. A &ldquo;logit corr&rdquo; computed against <em>random Gaussian</em> queries is structurally blind to a basis misaligned with the real query distribution &mdash; which is exactly what a Q-weighted rotation is for. And an &ldquo;attn output err&rdquo; of 0.210/0.174 used the <b>same softmax weights</b> for quantized and reference V, so the K error never reached the attention distribution: it measured the V half only. Neither supported the claim it was used for.
+    </div>
+    <p>Replaced by the quantity that matters, using the model's own queries and letting the distribution move &mdash; relative error of the attention logits <code>q&middot;K</code> under int2, across competing bases (8 GPQA prompts per model):</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>basis</th><th>gpt-oss</th><th>Llama</th><th>gap</th></tr></thead>
+      <tbody>
+        <tr><td>identity (no rotation)</td><td>1.376</td><td>0.322</td><td>4.3&times;</td></tr>
+        <tr><td><b>shipped (calibrated)</b></td><td class="fail">0.710</td><td class="ok">0.208</td><td><b>3.4&times;</b></td></tr>
+        <tr><td>hadamard (calibration-free)</td><td>0.633</td><td>0.205</td><td>3.1&times;</td></tr>
+        <tr><td>random orthogonal</td><td>0.768</td><td>0.209</td><td>3.7&times;</td></tr>
+      </tbody>
+      <caption>gpt-oss's attention logits are ~3.4&times; more damaged by int2 than Llama's <em>in every basis</em> &mdash; including no rotation at all. No choice of basis closes the gap, which is what &ldquo;not a calibration bug&rdquo; looks like. A 71% logit error scrambles the softmax distribution, which is why the attention output decorrelates below.</caption>
+    </table>
+  </div>
+  <div class="col">
+    <p>The same table retires a false alarm: gpt-oss's shipped rotation barely beats random (0.710 vs 0.768) and loses to a plain Hadamard (0.633), which looked like a broken calibration &mdash; until the control showed <b>Llama's shipped rotation also ties its own random (0.2087) and Hadamard (0.2046) baselines</b> while serving at 84.3. &ldquo;Shipped &asymp; random&rdquo; is not a gpt-oss defect.</p>
+
     <h3>The decisive test</h3>
     <p>If the engine is innocent, the failure should reproduce with no engine at all. Both models were run under plain HuggingFace with the KV cache overwritten by its own quantize→dequantize roundtrip, on the same layers and band the engine uses.</p>
   </div>

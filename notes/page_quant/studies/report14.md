@@ -184,20 +184,60 @@ TP=2, radix caching, request retraction and concurrency are all excluded by
 the fact that **vq2 serves correctly under identical conditions**, sharing the
 pool, allocator, index construction, rotations, sinks and layer mapping.
 
-### It is not quantization fidelity
+The calibration data was audited separately. The moments' `local_to_global`
+matches the serving layer map; `ntok = 524288` from 8×64K sequences, so the
+position-coverage cliff (report 13) cannot explain an 8K failure; and the two
+models use *different capture scripts* (Llama: `capture_qkv_dump.py`;
+gpt-oss: our `gptoss_calibrate.py`, written for the eager/sink constraints),
+but both emit the same `[T, H, d]` fp16 post-RoPE convention into the same
+rotation builder. One real gap: the rotation bundles carry **no provenance** —
+no corpus, prompt count, context length, or capture commit — so they cannot be
+audited from their own contents.
+
+### It is not reconstruction fidelity — but the first evidence for that was unsound
 
 Real post-RoPE keys and values captured from live forward passes, rotated into
 each model's own OSCAR basis and quantized exactly as the pool does:
 
-| model | K cos | logit corr | V cos | attn output err | serves INT2? |
-|---|---|---|---|---|---|
-| Llama-3.1-8B | 0.898 | 0.896 | 0.897 | 0.174 | **yes (84.3)** |
-| gpt-oss-20B | **0.923** | **0.921** | **0.915** | 0.210 | no (0.0) |
+| model | K cos | V cos | serves INT2? |
+|---|---|---|---|
+| Llama-3.1-8B | 0.898 | 0.897 | **yes (84.3)** |
+| gpt-oss-20B | **0.923** | **0.915** | no (0.0) |
 
-**gpt-oss's tensors quantize better than Llama's.** This is the central
-negative result: per-tensor reconstruction quality — the standard proxy for
-judging a KV quantizer — has no predictive power for whether the model
-survives.
+gpt-oss's tensors reconstruct *better* than Llama's, so per-tensor cosine —
+the standard proxy for judging a KV quantizer — does not predict survival.
+
+**Two further columns originally reported here were withdrawn.** A "logit
+corr" computed against *random Gaussian* queries is structurally blind to a
+basis misaligned with the real query distribution, which is precisely what a
+Q-weighted rotation is for; and an "attn output err" of 0.210/0.174 was
+computed with the **same softmax weights** for the quantized and reference V,
+so the K error never reached the attention distribution at all. It measured
+the V half only. Neither supports the claim it was used for.
+
+Replaced by a measurement of the quantity that matters, using the model's own
+queries and letting the distribution move — relative error of the attention
+logits `q·K` under int2, in competing bases (8 GPQA prompts per model):
+
+| basis | gpt-oss | Llama | gap |
+|---|---|---|---|
+| identity (no rotation) | 1.376 | 0.322 | 4.3× |
+| **shipped (calibrated)** | **0.710** | **0.208** | **3.4×** |
+| hadamard (calibration-free) | 0.633 | 0.205 | 3.1× |
+| random orthogonal | 0.768 | 0.209 | 3.7× |
+
+**gpt-oss's attention logits are ~3.4× more damaged by int2 than Llama's, in
+every basis tested** — including no rotation, a random basis, and a
+calibration-free Hadamard. Even the best basis leaves gpt-oss at 63% logit
+error where Llama sits at 20%. No choice of basis closes the gap, which is
+what "not a calibration bug" looks like. A 71% logit error scrambles the
+softmax distribution, which is why the attention output decorrelates (§6).
+
+The same table also **retires a false alarm**: gpt-oss's shipped rotation is
+barely better than random (0.710 vs 0.768) and worse than a plain Hadamard
+(0.633), which looked like a broken calibration — until the control showed
+Llama's shipped rotation *also* ties random (0.2082 vs 0.2087) and Hadamard
+(0.2046) while serving at 84.3. "Shipped ≈ random" is not a gpt-oss defect.
 
 ### The decisive test
 
@@ -238,9 +278,11 @@ full-attention layers, any one of which can compensate for another.
 
 ## 6. Mechanism: where the error grows
 
-Teacher-forced comparison of the bf16 and INT2 runs (identical token stream so
-the two stay comparable, 48 decode steps), measuring relative drift of hidden
-states and of each sublayer's output:
+The 3.4× logit-error gap of §4 is the input to this section: a 71% error on
+attention logits scrambles the softmax distribution, and the damage propagates
+from there. Teacher-forced comparison of the bf16 and INT2 runs (identical
+token stream so the two stay comparable, 48 decode steps), measuring relative
+drift of hidden states and of each sublayer's output:
 
 | | gpt-oss | Llama |
 |---|---|---|
@@ -254,7 +296,11 @@ At the first quantized layer both models receive **identical inputs** —
 gpt-oss's layer 0 is a sliding-window layer with an unquantized cache, and its
 measured drift is exactly 0.000. Same queries, only the KV quantized. And
 gpt-oss's attention output comes back **fully decorrelated** (relative drift
-above 1.0) where Llama's is off by 15%.
+above 1.0) where Llama's is off by 15%. Drift above 1.0 means the quantized
+output is further from the truth than emitting zeros would be — which is
+possible here because the sinks absorb most of the softmax mass, leaving
+`o = Σpᵢvᵢ` a small vector whose direction the 71% logit error can invert.
+That reading of `‖o‖` is inferred, not measured, and remains open.
 
 From there it compounds. gpt-oss reaches 0.890 relative drift at the output
 layer — the residual stream is essentially unrelated to the true one, which is
@@ -321,8 +367,10 @@ Llama at a magnitude that produces drift 1.2 at layer 1, and see whether Llama
 also collapses. That separates "gpt-oss is fragile" from "this much drift
 kills any model."
 
-**Process note.** Three probes in this investigation produced striking results
-that were instrumentation errors, each caught by adding a known-good control:
+**Process note.** Five probes in this investigation produced striking results
+that were instrumentation errors, each caught by adding a known-good control.
+The pattern is uniform: a measurement was read as a finding before it was shown
+able to distinguish a passing case from a failing one.
 
 - a raw-text length probe with no bf16 control — bf16 produced *identical*
   "degenerate" output, so the probe could not attribute anything;
@@ -330,7 +378,13 @@ that were instrumentation errors, each caught by adding a known-good control:
   local ones, giving an apparent 100% error and a false reproduction of the
   bug;
 - a router hook reading `router_scores` instead of `router_indices`, reporting
-  0% expert flips when the true rate is 82%.
+  0% expert flips when the true rate is 82%;
+- an attention-output error computed with frozen softmax weights, so the K
+  error never entered the distribution — it measured the V half and was used
+  to argue fidelity was fine;
+- "the shipped rotation barely beats random", which looked like a broken
+  gpt-oss calibration until Llama's shipped rotation was found to tie its own
+  random and Hadamard baselines while serving at 84.3.
 
 Any single measurement in this area should be treated as provisional until it
 reproduces both a passing and a failing case.
