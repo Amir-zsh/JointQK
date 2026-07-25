@@ -275,3 +275,48 @@ unaffected by construction.
 - **Verification**: relaunched build shards across GPUs 1,2,3
   (25/11/7 GB resident); partial pool from the concurrent CPU writers was
   wiped before relaunch.
+
+## p2-1: premature mixed-KV flush double-assigns a quant slot (latent, 2026-07-24)
+
+- **Symptom**: in the offline gate
+  (`pipelines/oscar_e2e/verify_gptoss_mixed_pool.py`), an 8K prefill
+  followed by decode steps whose per-request flush counter starts at 0
+  instead of the layout-derived `counter_init` ends with one quant slot
+  referenced by two prefill positions (e.g. slot 7887 held by positions
+  7936 and 7944, exactly `N_Q` apart, straddling the
+  quant/HP-recent boundary at `seq - hp_recent`).
+- **Root cause**: with the counter seeded low, the first flush fires
+  before the demote window `[seq - hp_recent - flush_overflow, seq -
+  hp_recent)` has moved fully inside HP-recent, so the 8-position window
+  straddles the boundary; part of the page is written into
+  `req_to_token` and part is returned to the free pool, and the page is
+  later handed out again. This is the same failure the `_mixed_extend_
+  layout_counts` docstring predicts for chunked prefill.
+- **Status**: NOT the cause of the gpt-oss int2 zero-retrieval — with the
+  production seed (`counter_init` from `_mixed_extend_layout_counts`) the
+  gate is clean at 8192/8192 unique slots and 100% self-retrieval over
+  every position after 256 decode steps. Filed because any path that
+  admits a request without seeding the counter (retract/resume,
+  chunk continuation) reaches the bad state, and it is a plausible source
+  of the observed ~2 slot/req leak.
+- **Verification**: `verify_gptoss_mixed_pool.py --decode-steps 256`
+  reproduces on demand by seeding the counter at 0.
+
+
+## p2-2: SWAKVPool missing `release_req_slab` delegate (hybrid models only)
+
+- **Symptom**: on hybrid-SWA models the per-request HP-recent ring cursor and
+  flush counter are never reset — neither on request completion nor on
+  retract.
+- **Root cause**: `release_kv_cache` (mem_cache/common.py) resets them via
+  `getattr(kvcache, "release_req_slab", None)`. For hybrid models
+  `get_kvcache()` returns the `SWAKVPool` wrapper, which forwards
+  `hp_prefix_tokens` / `hp_recent_tokens` / `hp_global_offset` /
+  `flush_interval` / `N_Q` to the inner pool but **not** `release_req_slab`,
+  so the `getattr` returns None and the reset is silently skipped.
+- **Impact**: NOT the cause of the gpt-oss INT2 failure (that is a method
+  limitation — see `studies/report14.md`). The cursor advance is a rotation of
+  a per-request ring, so correctness appears unaffected, but it is a plausible
+  source of the observed ~2 slot/req leak and it is silently wrong.
+- **Fix**: add a `release_req_slab` delegate to `SWAKVPool` forwarding to
+  `full_kv_pool`. Not yet applied.
