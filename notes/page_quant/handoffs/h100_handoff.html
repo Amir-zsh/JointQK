@@ -1,0 +1,149 @@
+<title>H100 Handoff — KV-Cache Compression Experiments</title>
+<style>
+  :root {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+      --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+      --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+      --warn: #D4B96A; --warn-bg: #302B1A; }
+  }
+  :root[data-theme="dark"] { --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+    --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+    --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+    --warn: #D4B96A; --warn-bg: #302B1A; }
+  :root[data-theme="light"] { --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8; }
+  body { background: var(--bg); color: var(--ink);
+    font: 16px/1.62 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 0 20px; }
+  main { max-width: 72ch; margin: 0 auto; padding: 3rem 0 5rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  h1 { font-size: 1.8rem; font-weight: 600; margin: 0 0 .4rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 2.6rem 0 .8rem; padding-top: 1.3rem; border-top: 1px solid var(--rule); }
+  h2 .no { color: var(--accent); margin-right: .45em; }
+  h3 { font-size: 1.02rem; font-weight: 600; margin: 1.6rem 0 .5rem; }
+  p { margin: .7rem 0; }
+  .kicker { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin-bottom: .9rem; }
+  .meta { color: var(--muted); font-size: .92rem; }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; font-size: .86em; }
+  pre { background: var(--code-bg); padding: .8rem 1rem; border-radius: 6px; font-size: .83rem; line-height: 1.5; overflow-x: auto; }
+  .tw { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; font-size: .9rem; min-width: 100%; }
+  th, td { padding: .42rem .8rem; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: .76rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.path { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; word-break: break-all; }
+  .callout { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1.1rem; margin: 1.1rem 0; font-size: .95rem; }
+  .callout b:first-child { color: var(--accent); }
+  .callout.warn { border-left: 3px solid var(--warn); }
+  ul, ol { padding-left: 1.3rem; } li { margin: .45rem 0; }
+  footer { margin-top: 3.2rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--muted); }
+</style>
+
+<main>
+  <div class="kicker">KV-cache compression · infrastructure handoff</div>
+  <h1>Running the KV-quantization experiments on H100 nodes</h1>
+  <p class="meta">2026-07-23 · source of truth: <code>/vault/amir/efficient-llm/teamily-project</code> on lambda7 (canonical) / lambda6 (mirror; ssh host is <code>lambda-server6</code> = 10.137.32.78 — plain <code>lambda6</code> does not resolve and fails with &ldquo;no route to host&rdquo;, which reads like a downed node), branch <code>pgq10</code>, engine clone <code>vendor/OSCAR-vq</code> @ <code>7015d087a</code>+ (branch <code>vq2-longhorizon</code>) · companion docs: <a href="https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c">Report 12</a>, <a href="https://claude.ai/code/artifact/0cb61471-28cf-41f2-959a-009ee4cd6228">Report 13</a>, <a href="https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf">team handoff</a></p>
+
+  <h2><span class="no">1</span>What this project is</h2>
+  <p>We compress the transformer KV cache at serving time to ~2 bits/element and measure what survives. The flagship method, <b>vq2</b>, is a group-vector-quantized K tier inside the OSCAR serving engine (a research sglang fork): keys are mapped per (layer, KV-head) into a calibrated basis, split into 16 groups of 4 dims, and each group stored as one uint8 index into a 256-entry codebook plus a per-token fp8 RMS scale; V stays on OSCAR's scalar-INT2 path. Everything — quantize-on-aging behind a bf16 sink+recent band, fused triton decode kernels, chunked-prefill dequant — runs inside one engine, so every method is compared <em>served</em>, not offline. Baselines in the same stack: <b>OSCAR-INT2</b> (production release: calibrated rotations + percentile clips), <b>TurboQuant-INT2</b> (Lloyd-Max, calibration-free), <b>QuaRot-INT2</b>, <b>Naive-INT2</b>, and the <b>bf16</b> ceiling.</p>
+  <p>Headline results so far: vq2 holds long-context retrieval where scalar INT2 collapses (Llama-3.1-8B 64K NIAH: 92 vs 77; Qwen3-8B: 77 vs 23), is context-flat at ~7 pts below bf16, decodes 12–13% faster than OSCAR-INT2 at 100K on A100, and the sharpest design law we've measured: <b>codebook calibration must cover the serving position range</b> — a 64K-calibrated codebook serves 131K at 0.16 (total collapse) while a 128K-calibrated one serves it at 68.2. gpqacc128k (4 × 131,072-token concat) is now the canonical calibration everywhere.</p>
+
+  <h2><span class="no">2</span>What to copy to the H100 node</h2>
+  <p><b>Code comes from GitHub; binaries come by rsync.</b> The repo is pushed to <code>git@github.com:Amir-zsh/JointQK.git</code>, branch <code>pgq10</code> — clone that first. Two things are deliberately NOT in git and must be rsynced from lambda7: the <b>engine clone</b> <code>vendor/OSCAR-vq/</code> (gitignored; version-controlled by its own embedded git — copy the directory including its <code>.git</code>) and the <b>artifact binaries</b> below (rotations/codebooks are .pt files outside version control).</p>
+  <pre>git clone -b pgq10 git@github.com:Amir-zsh/JointQK.git teamily-project
+rsync -a lambda7:/vault/amir/efficient-llm/teamily-project/vendor/ teamily-project/vendor/
+# then the artifact rows below</pre>
+  <div class="tw"><table>
+    <tr><th>what</th><th>path (rsync from lambda7)</th><th>size</th></tr>
+    <tr><td>Repo (branch pgq10)</td><td class="path">git clone from GitHub (above) — kvq/ pipelines/ third_party/ tests/ notes/</td><td>small</td></tr>
+    <tr><td>Engine clone incl. its .git</td><td class="path">vendor/OSCAR-vq/ (also vendor/kvpress, vendor/OSCAR for reference)</td><td>~2G</td></tr>
+    <tr><td>Calibration artifacts (rotations + codebooks, all models)</td><td class="path">artifacts/oscar_llama31_8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_r1d_llama8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_gptoss20b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_e2e/rotzoo/ · third_party/samuel_vq/codebooks/</td><td>~3G</td></tr>
+    <tr><td>Eval rows + benches</td><td class="path">artifacts/prompt_rows/ · artifacts/niah_bench/ · artifacts/niah_corpus/ · artifacts/prompt_rows_code/</td><td>~4G</td></tr>
+    <tr><td>Result records (for comparison/resume)</td><td class="path">artifacts/oscar_*/grid*/ (metrics.json + manifests; predictions optional)</td><td>~1G</td></tr>
+    <tr><td>Do NOT copy</td><td class="path">artifacts/calibration/ (raw capture stages, TBs) · query_stats* pools · HF caches (re-download)</td><td>—</td></tr>
+  </table></div>
+  <p><b>Environments</b>: two venvs. <code>.venv</code> (uv, py3.12: torch/transformers 5.x, datasets, math-verify — capture + clients + scoring) and <code>.venv-oscar</code> (the engine: sglang deps per the clone). On H100 you likely do NOT need the A100-era hacks in <code>serve_oscar.sh</code>: the conda gcc-12 toolchain, cuda-12.8 lib symlinks, <code>NVCC_PREPEND_FLAGS=-ccbin</code>, and <code>--sampling-backend pytorch</code> (that one worked around flashinfer JIT missing curand on lambda) — try stock first, re-add only what breaks. The <code>kernels==0.14.0</code> pin for OSCAR's JIT kernels should still be respected until proven otherwise.</p>
+
+  <h2><span class="no">3</span>How to run experiments</h2>
+  <p>Everything eval flows through the declarative layer — one JSON spec per study, full provenance per run:</p>
+  <pre># 1. spec: pipelines/oscar_e2e/experiments/&lt;study&gt;.json
+#    (model, per-method serve_args+env+calibration paths, cells with rows/shards/sampling)
+.venv/bin/python pipelines/oscar_e2e/run_experiment.py \
+    --spec pipelines/oscar_e2e/experiments/llama31_8b_vq2_128k.json \
+    --queue logs/queue.tsv
+# -> experiment_manifest.json (git SHAs, artifact sha256s), arms/*.sh, sharded queue
+
+# 2. one pool worker per GPU (ARMS_DIR = spec mode)
+for g in 0 1 2 3; do ARMS_DIR=$PWD/&lt;out_root&gt;/arms \
+  nohup bash pipelines/oscar_e2e/gpu_pool_runner.sh logs/queue.tsv $g & done
+
+# 3. merge + score when no TODO/RUN rows remain
+.venv/bin/python pipelines/oscar_e2e/merge_shards.py --root &lt;out_root&gt;</pre>
+  <p>Serving directly (smokes, TP, one-offs): <code>pipelines/oscar_e2e/serve_oscar.sh</code> — modes <code>--bf16 / (int2 default) / --vq2 --vq-codebook &lt;bundle&gt; / --int2plain</code>; env knobs: <code>ROT_DIR</code> (rotations), <code>TP</code>, <code>MAX_TOKENS</code> (pool), <code>HADAMARD_ORDER</code> + <code>SGLANG_LLOYD_MAX=1</code> (TurboQuant), <code>SGLANG_INT2_NO_HADAMARD=1</code> (Naive), <code>SGLANG_VQ_V_CODEBOOK_PATH</code> (VQ-V ablation). Gates before trusting any new build: <code>verify_vq_engine.py</code> (G1–G6) and <code>verify_turbo_lm.py</code> (T1–T4) — expected outputs are in the <a href="https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf">team handoff</a>. Protocol per cell type (rollouts, caps, scorers) is spelled out in Report 12 §0.</p>
+  <h3>New-model onboarding checklist (the distilled recipe)</h3>
+  <ol>
+    <li>Config check: <code>layer_types</code> (any sliding-window layers? → calibrate/quantize full-attention layers only, cf. gpt-oss), <code>head_dim</code>, KV heads, <code>rope_scaling</code> (native vs YaRN — decides position-coverage risk), native max positions.</li>
+    <li>Rows: export with the model's own chat template AND tokenizer-budgeted context (assert max prompt + gen cap ≤ native window over ALL rows — sampling every Nth row missed overflows twice).</li>
+    <li>Calibration: 198-prompt GPQA corpus, both deliveries — per-prompt dump → rotations (authors' pipeline, model's head_dim); 4×131072 concat → codebook (gpqacc128k recipe). Copy a <code>build_*.sh</code> (gated stages, heartbeat, idempotent).</li>
+    <li>Short-val BEFORE full cells: extraction works, cap-hit ≤15%, thinking models close their think block, and sampling params from the model card (gpt-oss NEEDS T=1.0 — greedy degenerates into loops; R1-distill T=0.6/top-p 0.95; Llama T=0.6/top-p 0.9).</li>
+    <li>Sanity: NIAH scores must decrease with context. A rising curve means protocol artifact, not a discovery — this check has caught two real bugs.</li>
+  </ol>
+
+  <h2><span class="no">4</span>H100-specific: kernels and dtypes</h2>
+  <div class="callout"><b>fp8 codebook format — the one real dtype decision.</b> Codebook centroids are packed 4-per-int32 as <b>fp8-e5m2</b> solely because sm80 Triton can only bitcast fp8e5. H100 (sm90) bitcasts <b>e4m3</b> too, which has an extra mantissa bit — measurably better centroids (the e5m2 snap costs +3.3% reconstruction MSE on V, less on K). Recommendation: <b>keep e5m2 first</b> so H100 numbers are directly comparable to the A100 record, then A/B e4m3 as a clean upgrade: regenerate bundles with <code>make_fp8.py --fmt e4m3</code> and switch the bitcast dtype in the vq2 decode kernel (<code>decode_attention.py</code>, fp8e5 → fp8e4nv) + the loader's snap (<code>vq_codebook.py</code>). Both sides must switch together — encoder assigns against the snapped centroids the decoder reconstructs (the encode/decode-same-bytes invariant).</div>
+  <ul>
+    <li><b>Triton launch configs are A100-tuned</b>: vq2 decode uses BLOCK_N=128 / 4 warps / 3 stages, and split-K is per-method (48 vq2 / 8 others). H100's SM count and shared memory differ — retune before any throughput claim, and keep the project rule: <b>always compare methods at matched split-K</b> and identical backend settings.</li>
+    <li><b>Attention backends</b>: quantized paths exist only in the <b>triton</b> backend — keep <code>--prefill/decode-attention-backend triton</code> for every quantized configuration. On H100, FA3 becomes available for bf16; if you use it for the bf16 ceiling, report it as a separate "best-effort bf16" row — the apples-to-apples bf16 reference for kernel comparisons stays triton.</li>
+    <li><b>MXFP4 (gpt-oss)</b>: sm90 serves the native MXFP4 checkpoint (openai/gpt-oss-20b) — no more BF16-dequant, weights drop 42→~13GB, single GPU. But our A100 bf16 record used <code>unsloth/gpt-oss-20b-BF16</code>; MXFP4-native and bf16-dequant are not bit-identical models. Pick one per study and record it in the spec's calibration/model fields.</li>
+    <li><b>Memory geometry changes</b>: 80GB HBM removes most TP requirements — Llama/R1D at 131K fits ONE H100 (34GB KV + 16GB weights), gpt-oss bf16 fits one card. TP=2 remains only for throughput studies or bigger models. The TP support (rank-sharded codebooks, clone <code>0ecb1ab7c</code>) works as-is; the <code>expandable_segments</code>↔custom-all-reduce conflict (vllm#42609) is architecture-independent — <code>serve_oscar.sh</code> already drops expandable segments under TP&gt;1, keep that behavior.</li>
+    <li><b>Throughput protocol</b> (matching the existing Table-3 record): bs=1 streaming inter-token latency, ms/token, median of 3 reps, contexts 30/60/100K (+131K now feasible), CUDA graphs on. A100 record to beat/compare: vq2 1.7–1.8× over bf16 and 12–13% over OSCAR-INT2 at 100K. Expect H100 to compress these gaps for bandwidth-bound paths (HBM3 vs HBM2e) and re-tune before concluding anything.</li>
+  </ul>
+
+  <h2><span class="no">5</span>Calibration: approach, and how to speed it up safely</h2>
+  <p><b>The invariants (don't trade these for speed):</b></p>
+  <ul>
+    <li><b>One corpus per model</b> — the 198 GPQA-Diamond prompts (<code>artifacts/prompt_rows/gpqa_diamond.csv</code>) feed rotations AND codebooks; measured provenance effects are ~1 pt, but mixed provenance is unfalsifiable noise in comparisons.</li>
+    <li><b>Position coverage = max serving context.</b> The cliff is real (0.16 vs 68.2 at 131K) and governed by post-RoPE <em>angular</em> coverage: native-RoPE models extrapolating past calibration collapse; YaRN-interpolated serving is protected. Concat length ≥ serving max is free insurance — 4×131072 costs the same 524K-token budget as 8×65536.</li>
+    <li><b>fp64 (or compensated) second moments.</b> Moments accumulate over 524K tokens; naive fp32 outer-product sums can distort the eigenstructure that rotations/codebooks are built from.</li>
+    <li><b>Model-authentic capture</b>: model's own chat template, own weights (never reuse a base model's artifacts for a fine-tune — R1-distill showed the fine-tune reshapes K statistics), sink-correct attention where sinks exist.</li>
+  </ul>
+  <p><b>Speedups that don't touch accuracy.</b> Cost is model-path dependent: the Llama-family capture (<code>capture_mixed_concat.py</code>, flash/sdpa prefill, on-GPU fp64 accumulators) is already fast — measured 8 min for the full 4×131K R1D capture on 3×A100 — so don't spend effort there. The slow path is the gpt-oss-style HF capture (~30 min/128K sequence on A100; profile: eager+chunked attention ≳ fp64 moment einsums ≳ CPU-hook PCIe roundtrips ≫ rest). Items below target that path:</p>
+  <ol>
+    <li><b>H100 for free</b>: fp64 is ~3.5× A100, HBM3 transfers ~2×, and HF capture can use flash kernels (H100 has the sink-aware FA3-family kernel, so gpt-oss's eager+512-chunk workaround disappears — plain fast forwards). Expect 3–5× just from hardware.</li>
+    <li><b>Kill the CPU roundtrip</b>: the hooks assemble Q on the host and the accumulator ships chunks back (~120GB PCIe per 128K sequence). Accumulate moments directly from GPU-resident hook chunks — ~2× on top.</li>
+    <li><b>Parallelize sequences across GPUs</b>: the 4 concat sequences are independent — one per GPU, merge partial moments at the end (they're sums). Near-linear.</li>
+    <li><b>Two-pass precision</b>: fp32/TF32 einsum per 4K chunk + fp64 reduction across chunks retains effectively fp64 stability at tensor-core speed — validate once against the fp64 reference (moment cosine + downstream gate ratio) before adopting.</li>
+    <li><b>Longer-term</b>: capture through the sglang engine itself (taps at <code>forward_extend</code>; design + TP shard-reassembly notes in the team handoff discussion) — same-numerics-as-serving AND fastest, but it's a project, not a tweak.</li>
+  </ol>
+  <p class="meta">What NOT to shrink: corpus size, token budget, pool sampling (pool-stride 4), or position coverage — these are the accuracy-bearing quantities. All measured speedup headroom is in the compute path.</p>
+
+  <h2><span class="no">6</span>Things that will bite you (each of these cost us hours)</h2>
+  <div class="tw"><table>
+    <tr><th>trap</th><th>rule</th></tr>
+    <tr><td>Every reader/writer of a storage format is its own correctness surface</td><td>Three separate incidents (VQ-V prefix dequant; TurboQuant's two writers; SWAKVPool signature). After touching any pool/kernel, run the full gate battery, and grep for OTHER implementers of the same interface.</td></tr>
+    <tr><td>Impossible curves = protocol bugs</td><td>NIAH rising with context caught the char-wise scoring bug and the gpt-oss greedy collapse. Check monotonicity before believing any number.</td></tr>
+    <tr><td>Long-generation capacity race (tracker r1d-1)</td><td>Admission control vs quant-page flush disagree near pool capacity under many 32K-cap requests. Bound concurrency: threads ≈ pool_tokens / (prompt+cap); POOL_MAX_REQS=4 for 32K caps at a 140K pool. Engine-level fix is open backlog.</td></tr>
+    <tr><td>Duplicate GPU ordinal → silent CPU fallback (tracker r1d-2)</td><td><code>CUDA_VISIBLE_DEVICES=1,2,2</code> fails CUDA init (Error 101) and <code>device_map="auto"</code> silently places the model on CPU — the job runs ~50× slow forever and GPU-scoped kill-sweeps never see it. Dedupe GPU lists before export and fail fast on <code>torch.cuda.is_available()</code> in every capture/build launcher (fixed in <code>build_r1d_128k.sh</code>, commit <code>046954a</code> — pull ≥ this).</td></tr>
+    <tr><td>Hybrid-SWA input-length cap</td><td>sglang limits input to the SWA pool size (0.8 × MAX_TOKENS). For 131K prompts on SWA models set MAX_TOKENS=168000.</td></tr>
+    <tr><td>Rented-node multi-tenancy (if shared)</td><td>One orchestrator, serial lanes, single owner of GPU kill-sweeps (a concurrent sweep killed our own capture), generous boot timeouts, never kill by name — only by PID+UUID+owner.</td></tr>
+    <tr><td>torch.save of strided views</td><td>Persists the full backing storage (4× pool bloat). <code>.contiguous()</code> before saving.</td></tr>
+    <tr><td>Conventions</td><td>Layer-0 excluded from headline offline stats; pre-merge <code>.pre_&lt;fix&gt;</code> backups before overwriting canonical artifacts; bugs → <code>notes/page_quant/fixes_to_apply.md</code> (bugs only); every long run: log + heartbeat + idempotent resume.</td></tr>
+  </table></div>
+
+  <h2><span class="no">7</span>Suggested H100 agenda</h2>
+  <ol>
+    <li><b>Day 0</b>: rsync per §2, build venvs, run gate battery (G1–G6, T1–T4; plus the gpt-oss hybrid gates <code>verify_gptoss_int2_decode</code> / <code>_mixed_pool</code> / <code>_int2_e2e</code>, which are arch-sensitive and worth re-running on sm90) + one bf16 and one vq2 smoke per model — this validates the whole stack on the new arch before anything else.</li>
+    <li><b>Throughput first</b> (it's the H100-specific deliverable): retune triton configs, then the Table-3 protocol at 30/60/100/131K for bf16/int2/vq2 — single-GPU now. Then the e4m3 A/B (quality via NIAH-32K slice + speed).</li>
+    <li><b>Extra models</b>: follow §3's checklist; single-GPU serving makes the pool scheduler trivially efficient (one worker per GPU, no TP pairs). Candidates already scoped: Ministral-8B/Mistral-Nemo (third family, drop-in), Qwen3-32B (scale, now maybe TP=2 instead of 4), gpt-oss quantized (<b>P2 engine work implemented and validated; run <u>vq2 only</u></b>, clone <code>c6d999a50</code>: quant tiers on the 12 full-attention layers, sliding-window layers bf16, learned sinks in the unified decode kernel + prefill rescale). <b style="color:var(--bad,#b44a22)">OSCAR-INT2 does not work on gpt-oss and is not an engine bug</b> — it scores 0.0 on NIAH-8K vs 88.4 bf16, reproduces under plain HuggingFace with no engine code, and leaves Llama at 10/10 under the identical simulation. Do not spend H100 time debugging it; see <code>notes/page_quant/studies/report14.md</code>. Consequence for the tables: <b>gpt-oss has no INT2 baseline</b>, so its vq2 numbers compare against bf16 only. On H100 the prefill sink rescale can be dropped for native FA3 sinks</li>
+    <li>Mirror results back to <code>artifacts/…/grid*/</code> on lambda7 so the manifests stay the single record.</li>
+  </ol>
+
+  <footer>H100 handoff · 2026-07-23 · repo pgq10 · engine vq2-longhorizon · protocol reference: Report 12 §0 · questions → Amir</footer>
+</main>

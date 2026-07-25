@@ -1,0 +1,268 @@
+<title>Report 12 — Llama grid, Qwen sweep, VQ-V mechanism</title>
+<style>
+  :root {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+      --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+      --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+      --warn: #D4B96A; --warn-bg: #302B1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+    --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+    --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+    --warn: #D4B96A; --warn-bg: #302B1A;
+  }
+  :root[data-theme="light"] {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8;
+  }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.62 system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0; padding: 0 20px;
+  }
+  main { max-width: 70ch; margin: 0 auto; padding: 3.2rem 0 5rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  h1 { font-size: 1.9rem; font-weight: 600; margin: 0 0 .4rem; }
+  h2 { font-size: 1.32rem; font-weight: 600; margin: 2.8rem 0 .8rem; padding-top: 1.4rem; border-top: 1px solid var(--rule); }
+  h2 .no { color: var(--accent); margin-right: .45em; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.8rem 0 .6rem; }
+  p { margin: .75rem 0; }
+  a { color: var(--accent); }
+  .kicker { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin-bottom: .9rem; }
+  .meta { color: var(--muted); font-size: .92rem; margin: .2rem 0 0; }
+  .meta code { font-size: .85rem; }
+  .statusline { background: var(--card); border-left: 3px solid var(--accent); padding: .7rem 1rem; margin: 1.6rem 0; font-size: .95rem; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .87em; }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; }
+  .tw { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; font-size: .92rem; min-width: 100%; }
+  th, td { padding: .42rem .8rem; text-align: right; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  th:first-child, td:first-child { text-align: left; }
+  td.hl { color: var(--accent); font-weight: 600; }
+  .chip { display: inline-block; font: 600 .72rem/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; padding: .28em .6em; border-radius: 999px; vertical-align: .12em; }
+  .chip.good { color: var(--good); background: var(--good-bg); }
+  .chip.bad { color: var(--bad); background: var(--bad-bg); }
+  .chip.warn { color: var(--warn); background: var(--warn-bg); }
+  ol.findings { padding-left: 1.3rem; } ol.findings li { margin: .7rem 0; }
+  ul { padding-left: 1.3rem; } ul li { margin: .45rem 0; }
+  .note { font-size: .9rem; color: var(--muted); }
+  .pathtable td { white-space: normal; }
+  .pathtable td:last-child { font-family: ui-monospace, Menlo, monospace; font-size: .82rem; word-break: break-all; text-align: left; }
+  .callout { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1.1rem; margin: 1.2rem 0; font-size: .95rem; }
+  .callout b:first-child { color: var(--accent); }
+  footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--muted); }
+</style>
+
+<main>
+  <div class="kicker">KV-cache compression · served evaluation</div>
+  <h1>Report 12 — Llama-3.1-8B five-method grid, Qwen sweep completion, and the VQ-V ablation</h1>
+  <p class="meta">Run of 2026-07-20 → 21, lambda6 GPU pool · engine <code>vendor/OSCAR-vq</code> @ <code>6f78cd6cd</code> (branch <code>vq2-longhorizon</code>), gates G1–G6 all pass · repo branch <code>pgq10</code> · prepared for Samuel by Amir + Claude</p>
+
+  <div class="statusline">
+    <b>Status: complete.</b> All cells served on the vq2-extended OSCAR engine — one stack for every method, identical exported rows per cell, sharded across 6 A100s. VQ-V mechanism resolved offline (§4); mixed-domain K-codebook follow-up closed null same day (§4, follow-up).
+  </div>
+
+  <h2 id="s0"><span class="no">0</span>Protocol — shared settings for every experiment</h2>
+  <p><b>Serving stack.</b> Every cell, every method, both models: the same engine, token pool 140,000 per GPU, CUDA graphs, up to 24 concurrent requests. All quantized methods share OSCAR's mixed-KV window policy — the first 64 tokens (attention sinks) and the most recent 256 tokens stay in bf16; everything older is quantized as it ages out of the ring. Clip ratios are the OSCAR defaults, K 0.96 / V 0.92 (Naive and QuaRot run clip 1.0). So a "vq2 vs int2" contrast differs <em>only</em> in how aged K is stored — same window, same INT2-V path, same rotations. There is no sequence cap below the pool; the longest requests are NIAH-64K (65,536-token prompt + 128 generated).</p>
+  <p><b>NIAH (both models, all methods).</b> Contexts 8K / 16K / 32K / 64K; 800 rows per context = 8 RULER subtasks × 100 (single_1–3, multikey_1–3, multivalue, multiquery). <b>Greedy decoding, exactly 1 rollout per row</b>, generation cap 128 tokens. Accuracy = RULER <code>string_match</code> per subtask; the headline number is the unweighted mean over the 8 subtasks.</p>
+  <p><b>Llama reasoning/code.</b> GPQA-diamond 198 / math500 full 500 / AIME25 30 / HumanEval 164 rows. <b>5 rollouts per prompt</b>, T=0.6 / top-p 0.9 / no top-k (Llama-3.1 generation_config), non-thinking; generation caps gpqa+math 4096, aime 8192, humaneval 2048. Accuracy = <b>avg@5</b>: each of the 5 seed-sets is scored independently (math-verify for math, answer-letter extraction for GPQA, test execution for HumanEval), and the table reports the mean of the 5 per-seed accuracies with std over seeds. This is a mean over 5 full passes of the benchmark — not pass@5.</p>
+  <p><b>Offline mechanism checks (§4).</b> Not served: live-captured Qwen V (8 GPQA prompts at ≤3072 tokens for checks 1–2; NIAH-haystack rows at ≤4096 tokens for check 3), rotated with the engine's R<sub>v</sub>; error is relative MSE in the rotated basis, layer-0 excluded.</p>
+  <h3>Calibration data per method</h3>
+  <div class="tw"><table class="pathtable">
+    <tr><th>method</th><th>rotation calibration</th><th>codebook / other</th></tr>
+    <tr><td>bf16</td><td>—</td><td>—</td></tr>
+    <tr><td>TurboQuant-INT2</td><td>— (fixed Hadamard, order 128)</td><td>Lloyd-Max INT2, MSE-optimal uniform encoding — no calibration data at all (see §5, item 3)</td></tr>
+    <tr><td>int2, Qwen</td><td>authors' released rotations (83 prompts, 20K-token budget)</td><td>clips 0.96/0.92 (authors' defaults)</td></tr>
+    <tr><td>int2, Llama</td><td>ours: <b>198 GPQA prompts — the unified corpus</b> (v2; v1 used 50 — measured effect ≈ +1 pt, §1a)</td><td>same clips (Qwen-tuned, not re-tuned — recorded caveat)</td></tr>
+    <tr><td>vq2 (K tier)</td><td>same rotations as int2, per model</td><td>K codebook: 198 GPQA prompts concatenated and cycled into 8 × 64K-token sequences ("gpqacc64k"), per-token-norm, stratified groups, flat allocation, 2 b/coord</td></tr>
+    <tr><td>vq2mix (Llama)</td><td>same, unchanged</td><td>same recipe, corpus swapped for the 5-domain mix (~300K unique tokens)</td></tr>
+    <tr><td>VQ-V</td><td>same</td><td>V codebook vqv_G4_strided_gpqa_engine.pt, GPQA-calibrated — exactly the domain sensitivity §4 measures</td></tr>
+    <tr><td>QuaRot-INT2</td><td>— (fixed Hadamard, order 128)</td><td>—</td></tr>
+    <tr><td>Naive-INT2</td><td>— (no rotation)</td><td>—</td></tr>
+  </table></div>
+  <p class="note">One asymmetry to keep in mind reading the Llama table: vq2 and int2 sit on the same 50-prompt rotation stack, so their <em>relative</em> ordering is clean — but the absolute distance to bf16 partly reflects that thinner rotation calibration and the un-retuned clips.</p>
+
+  <h2 id="s1"><span class="no">1</span>Llama-3.1-8B: five methods, served</h2>
+  <p>Onboarding built fresh this run: OSCAR rotations from the authors' own pipeline (50 GPQA-prompt QKV dump → <code>compute_kv_rotation</code> qqt_sst / r_h_pbr, orthogonality error ~2e-8) and a per-token-norm, 64K-concat GPQA codebook via your trainer (stratified grouping, flat allocation, 2 b/coord). Reasoning/code sampling: K=5 seeds, T=0.6 / top-p 0.9 / no top-k (Llama-3.1 generation_config), non-thinking caps (gpqa/math 4096, aime 8192 — the 2048 defaults breached the ≤15% cap-hit rule in short validation and were re-exported before any full cell ran).</p>
+
+  <h3>NIAH mean (800 rows/cell, greedy)</h3>
+  <p class="note">int2/vq2 columns are the calibration-unified v2 numbers — every calibrated artifact derives from the same 198-prompt GPQA corpus (§1a).</p>
+  <div class="tw"><table>
+    <tr><th>ctx</th><th>bf16</th><th>vq2</th><th>int2 (OSCAR)</th><th>TurboQuant-INT2</th><th>QuaRot-INT2</th><th>Naive-INT2</th></tr>
+    <tr><td>8K</td><td>98.2</td><td class="hl">93.3</td><td>86.6</td><td>80.7</td><td>37.3</td><td>0.3</td></tr>
+    <tr><td>16K</td><td>98.5</td><td class="hl">92.1</td><td>81.8</td><td>79.3</td><td>35.5</td><td>0.2</td></tr>
+    <tr><td>32K</td><td>97.4</td><td class="hl">92.3</td><td>81.3</td><td>80.1</td><td>37.3</td><td>0.1</td></tr>
+    <tr><td>64K</td><td>97.4</td><td class="hl">91.2</td><td>76.6</td><td>73.6</td><td>33.6</td><td>0.0</td></tr>
+  </table></div>
+
+  <h3>Reasoning / code (avg@5)</h3>
+  <div class="tw"><table>
+    <tr><th>task</th><th>bf16</th><th>vq2</th><th>int2</th><th>TurboQuant</th><th>QuaRot</th><th>Naive</th></tr>
+    <tr><td>math500 (full 500)</td><td>44.3</td><td>44.1</td><td>44.2</td><td>17.2</td><td>6.4</td><td>3.9</td></tr>
+    <tr><td>HumanEval</td><td>63.8</td><td>63.7</td><td>62.8</td><td>30.5</td><td>7.0</td><td>0.0</td></tr>
+    <tr><td>GPQA-diamond</td><td>25.1</td><td>22.1</td><td>23.1</td><td>12.4</td><td>2.9</td><td>1.0</td></tr>
+    <tr><td>AIME25</td><td colspan="6">≈0 for every method — Llama-3.1-8B scores ~0 as published; uninformative row</td></tr>
+  </table></div>
+
+  <ol class="findings">
+    <li><b>vq2 is context-flat on Llama (~91–93 from 8K to 64K); production OSCAR degrades monotonically (86.6 → 76.6).</b> At 64K vq2 leads by <b>+14.6</b>. Same qualitative shape as Qwen, with earlier and larger separation.</li>
+    <li><b>vq2's ~6-pt gap to bf16 is context-independent.</b> We first read this as codebook capacity (calibration quality) — <b>tested same day and refuted for K</b>: a five-domain corpus retrain moved nothing (§4, follow-up). The gap is not calibration-domain on the K side.</li>
+    <li><b>int2's transfer to Llama is poor even at 8K</b> (86.6 vs Qwen's 97.6). The v1 rotation-calibration caveat is now <b>measured and closed</b> (§1a): quadrupling rotation data (50 → 198 prompts) moves int2 by ~+1 pt — the transfer gap is not calibration-starved rotations. Remaining suspects: the Qwen-tuned 0.96/0.92 clips, or Llama K/V statistics being intrinsically harder at 2 bits.</li>
+    <li><b>Reasoning/code: bf16 ≈ vq2 ≈ int2</b> (within seed noise) — quantization is free where retrieval pressure is low, on Llama as on Qwen. GPQA is near chance for this model (extraction ~72–80%; absolute ~25%), AIME is zero — both retained for protocol completeness, neither informative.</li>
+    <li><b>The Table-2 baseline hierarchy reproduces on a model family the paper never tested</b>: TurboQuant (NIAH ~74–81) &gt; QuaRot (~35) &gt; Naive (~0), with OSCAR's int2 above TurboQuant everywhere except 32K (80.0 vs 80.1, a tie). Two readings: an optimal scalar quantizer behind a plain Hadamard nearly matches production OSCAR's full stack on pure retrieval; but on reasoning/code, where decode-context fidelity matters, OSCAR's calibrated rotations + bf16 recent ring are worth 2–3× TurboQuant's scores (44.5 vs 17.2 on math500, 64.8 vs 30.5 on HumanEval). TurboQuant's 64K weak spot is the uuid haystack (multikey_3 = 17). These cells ran 2026-07-21, after the fix described in §5 item 3.</li>
+  </ol>
+
+  <h3 id="s1a">1a. Calibration-unified v2 re-run — fairness fix + rotation-effect measurement</h3>
+  <p>v1 calibration provenance was asymmetric: Llama rotations from 50 GPQA prompts (ours), Qwen rotations from the authors' release, codebooks from our 198-prompt corpus. v2 unifies it — <b>every calibrated artifact now derives from the same 198-prompt GPQA corpus</b>: rotations from a per-prompt capture (≈48K tokens, the authors' own recipe shape; theirs used 83 prompts ≈ 20K), codebooks from the 64K-concat delivery (unchanged — the bundle's forward map is rotation-independent). Rotation-dependent methods (int2 fully; vq2 through its V path) were re-served; calibration-free methods (bf16, TurboQuant, QuaRot, Naive) carry over. The run is fully declarative and replicable: spec <code>pipelines/oscar_e2e/experiments/llama31_8b_grid_v2.json</code>, provenance manifest (git SHAs, artifact sha256s, row counts) at <code>artifacts/oscar_llama31_8b/grid_v2/experiment_manifest.json</code>.</p>
+  <p>The v1 → v2 delta isolates the rotation-calibration effect:</p>
+  <div class="tw"><table>
+    <tr><th></th><th>8K</th><th>16K</th><th>32K</th><th>64K</th><th>mean</th></tr>
+    <tr><td>int2 NIAH Δ</td><td>+2.3</td><td>−0.8</td><td>+1.3</td><td>−0.1</td><td><b>+0.7</b></td></tr>
+    <tr><td>vq2 NIAH Δ</td><td>+1.0</td><td>+1.0</td><td>+0.6</td><td>−0.9</td><td><b>+0.4</b></td></tr>
+  </table></div>
+  <div class="tw"><table>
+    <tr><th>Δ (avg@5)</th><th>gpqa</th><th>math500</th><th>aime25</th><th>humaneval</th></tr>
+    <tr><td>int2</td><td>+1.3</td><td>−0.3</td><td>+0.7</td><td>−2.0</td></tr>
+    <tr><td>vq2</td><td>−2.5</td><td>−0.2</td><td>−0.7</td><td>+0.0</td></tr>
+  </table></div>
+  <p>All reasoning/code deltas sit inside seed noise (per-seed std ≈ 1–2). <b>Conclusion: rotation calibration provenance is a ~1-point effect; every v1 conclusion stands.</b> The Qwen analogue is ready for you to run: our-corpus rotations at <code>/vault/amir/efficient-llm/teamily-project/artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own/</code> (validated, orth err ~2e-8), spec <code>pipelines/oscar_e2e/experiments/qwen3_8b_niah_v2.json</code>, replication recipe in <code>pipelines/oscar_e2e/experiments/README.md</code>; 4 of 32 shard jobs already complete under <code>artifacts/oscar_e2e/lh/grid_v2/</code> and a re-run resumes past them. The v1 Qwen int2 column stays reported as "production OSCAR as released".</p>
+
+  <h2 id="s2"><span class="no">2</span>Qwen3-8B served NIAH sweep — now complete</h2>
+  <div class="tw"><table>
+    <tr><th>ctx</th><th>bf16</th><th>vq2 (gpqacc64k)</th><th>int2 (production OSCAR)</th></tr>
+    <tr><td>8K</td><td>99.9</td><td class="hl">99.4</td><td>97.6</td></tr>
+    <tr><td>16K</td><td>99.5</td><td class="hl">98.6</td><td>95.8</td></tr>
+    <tr><td>32K</td><td>98.3</td><td class="hl">96.6</td><td>74.2</td></tr>
+    <tr><td>64K</td><td>86.3</td><td class="hl">76.8</td><td>23.4</td></tr>
+  </table></div>
+  <p class="note">8/16K vq2 cells added this run; 32/64K from the plan11/V2 record.</p>
+
+  <h2 id="s3"><span class="no">3</span>VQ-V ablation — closed, negative</h2>
+  <p>Your group-VQ applied to V (strided engine-basis codebook <code>vqv_G4_strided_gpqa_engine.pt</code>), on top of VQ-K, versus the shipping VQ-K + INT2-V — served, same rows:</p>
+  <div class="tw"><table>
+    <tr><th>served NIAH (Qwen)</th><th>32K</th><th>64K</th></tr>
+    <tr><td>VQ-K + INT2-V</td><td>96.6</td><td>76.8</td></tr>
+    <tr><td>VQ-K + <b>VQ-V</b></td><td>95.56</td><td><b>74.0</b></td></tr>
+  </table></div>
+  <p><b>VQ-V underperforms scalar INT2-V at both contexts and the deficit grows with context</b> (−1.0 → −2.8), concentrated in multikey subtasks — despite the offline de-risk showing 0.49× INT2-V's reconstruction MSE with fp16 centroids. These numbers are trustworthy in a way the first attempt's were not: gates G4–G6 prove every V read path decodes exactly what the write path stores (§5). Verdict: <b>ablation row, not a flagship change.</b></p>
+
+  <h2 id="s4"><span class="no">4</span>Mechanism: why VQ-V loses served despite 2× better offline MSE</h2>
+  <p>Section 3 leaves a contradiction. The offline de-risk said VQ-V reconstructs V at roughly <em>half</em> the error of scalar INT2-V — yet served on NIAH, it scores worse. Both measurements are correct, so something about the offline setup must not match what serving actually stresses. We had three candidate explanations and ran one targeted check for each.</p>
+  <p class="note">Shared setup for all three checks: V captured live from Qwen3-8B prefill, rotated by the same R<sub>v</sub> the engine loads, permuted the way the engine stores it, layer-0 excluded per repo convention. Script: <code>pipelines/oscar_e2e/vqv_e5m2_check.py</code> (plus inline variants for checks 2 and 3).</p>
+
+  <h3>Check 1: does the fp8 centroid snap eat the advantage? <span class="chip bad">REFUTED</span></h3>
+  <p>The engine cannot store fp16 centroids — the sm80 bitcast constraint forces them into fp8-e5m2. Your offline de-risk used fp16 centroids, so the served path quantizes slightly coarser than the path that was measured. If that snap costs enough precision, the 2× advantage could vanish before the engine ever runs. We reran the comparison with the engine's exact e5m2-snapped centroids, assignments included:</p>
+  <div class="tw"><table>
+    <tr><th>method</th><th>rel-MSE</th><th>vs INT2-V</th></tr>
+    <tr><td>INT2-V (per-token affine, clip 0.92)</td><td>0.124</td><td>—</td></tr>
+    <tr><td>VQ-V, fp16 centroids (the de-risk config)</td><td>0.058</td><td>0.47×</td></tr>
+    <tr><td>VQ-V, e5m2 centroids (what the engine runs)</td><td>0.060</td><td>0.48×</td></tr>
+  </table></div>
+  <p>The snap costs +3.3% — VQ-V keeps essentially the full 2× advantage exactly as the engine executes it (and the fp16 row reproduces your 0.49× de-risk number). Not the explanation.</p>
+
+  <h3>Check 2: is the average hiding catastrophic tokens? <span class="chip bad">REFUTED</span></h3>
+  <p>Average MSE can look great while a handful of tokens reconstruct terribly — and needle retrieval depends on the few tokens that carry the answer, not on the average. If VQ-V had a bad tail (tokens far from every codeword), that would reconcile good-average with bad-retrieval. We compared the full per-token error distributions instead of the mean. VQ-V wins at <em>every</em> quantile — median, p99, p999, and the single worst token. Its worst token (relMSE 0.12–0.14 by layer) reconstructs better than INT2-V's <em>median</em> token (≈0.125). There is no tail to blame.</p>
+
+  <h3>Check 3: does the advantage survive on NIAH text? <span class="chip good">CONFIRMED</span></h3>
+  <p>Both prior checks — and the original de-risk — measured V from <em>GPQA prompts</em>, which is also the text the codebook was trained on. But NIAH serves haystack text: repeated filler sentences, essay prose, dense blocks of random digits and uuids. The two methods should react very differently to that shift. INT2-V has no training data at all — its per-token affine scale adapts to whatever token it sees. A codebook is frozen at calibration time. So we repeated the measurement on V captured from actual NIAH-haystack rows:</p>
+  <div class="tw"><table>
+    <tr><th>V source</th><th>INT2-V</th><th>VQ-V (e5m2)</th><th>ratio</th></tr>
+    <tr><td>GPQA prompts (= calibration domain)</td><td>0.124</td><td>0.060</td><td>0.48×</td></tr>
+    <tr><td>NIAH haystack (= served regime)</td><td>0.126–0.130</td><td>0.097–0.100</td><td>0.76–0.80×</td></tr>
+  </table></div>
+  <p>Exactly the predicted asymmetry: INT2-V doesn't move (0.124 → ~0.128), while the codebook's error grows +65% out of domain, cutting its advantage roughly in half. This is the mechanism.</p>
+
+  <div class="callout"><b>Conclusion.</b> The served deficit is codebook domain sensitivity — the same property we measured on the K side (your codebook vs ours, 8–12 NIAH pts) — with one crucial difference: K errors pass through a softmax that forgives them, while V errors add linearly to the attention output. So the out-of-domain penalty on V converts directly into retrieval accuracy. The subtask pattern agrees: the deficit concentrates in <code>multikey_2/3</code>, whose haystacks are dense random-digit/uuid key-value text — the furthest thing from GPQA prose in the whole benchmark. One honest residual: even on NIAH-domain V the codebook's <em>average</em> MSE is still nominally below INT2-V's, yet it loses served — the remaining gap is likely error concentrated on needle tokens specifically (an attention-weighted rather than uniform error measure would resolve it). Constructive next step either way: a <b>mixed-domain V codebook</b> is the lever most likely to flip the VQ-V ablation.</div>
+
+  <h3>Follow-up (same day): mixed-domain K codebook on Llama <span class="chip warn">NULL</span></h3>
+  <p>Retrained the Llama K codebook on a five-domain corpus (gpqa 14% / math 32% / code 14% / needle-stripped RULER essay text 26% / synthetic digit-uuid key-value lines 14%; ~300K unique tokens vs GPQA-only's ~51K; identical trainer flags and rotations, so the delta isolates corpus alone). Gates pass; served NIAH, 800 rows/ctx:</p>
+  <div class="tw"><table>
+    <tr><th>ctx</th><th>vq2 (GPQA-only)</th><th>vq2mix (5-domain)</th><th>Δ</th></tr>
+    <tr><td>8K</td><td>92.34</td><td>93.19</td><td>+0.85</td></tr>
+    <tr><td>16K</td><td>91.16</td><td>92.00</td><td>+0.84</td></tr>
+    <tr><td>32K</td><td>91.69</td><td>91.25</td><td>−0.44</td></tr>
+    <tr><td>64K</td><td>92.09</td><td>91.09</td><td>−1.00</td></tr>
+  </table></div>
+  <p>Mean Δ +0.06, no subtask pattern — <b>calibration-domain composition does not move the Llama K-side gap</b> (the ~6 pts to bf16 stays context-flat). The K/V asymmetry is coherent with the mechanism: K errors pass through a softmax that forgives them (and the dot-product geometry is rotation-conditioned), while V errors are linear in the output. Remaining suspects for the Llama gap: rotation quality (50-prompt calibration vs your 83), Qwen-tuned clip defaults, or Llama K statistics being intrinsically harder at 2 b/coord. The mixed-domain recommendation now applies to <b>V only</b>.</p>
+
+  <h2 id="s5"><span class="no">5</span>Bugs found and fixed this run (both gated, tracker updated)</h2>
+  <ol class="findings">
+    <li><b>VQ-V prefix dequant (handoff patch; fixed in clone <code>6f78cd6cd</code>).</b> <code>dequantize_prefix_kv</code> decoded the V index arena as packed int2 crumbs during chunked prefill — garbage V for every prompt longer than one chunk, invisible to all single-chunk smokes and to gates G4/G5 (a third reader of the format, never updated). Fixed + new gate <b>G6</b>. Full write-up: <a href="https://claude.ai/code/artifact/02c62657-a7de-42e9-a48e-ca6343b7417f">artifact 02c62657</a>.</li>
+    <li><b>merge_shards scoring (ours).</b> CSV round-trip stringified NIAH answer lists; the ruler scorer then matched <em>characters</em> ("['1679215']" → 7/11 → 63.64%). All sharded NIAH cells were mis-scored on first merge (bf16-32K read 71.4; true 97.4). Caught by a physical-impossibility check (baselines "improving" with context) before anything was recorded; fixed (<code>literal_eval</code> before scoring) and re-merged.</li>
+  </ol>
+  <ol class="findings" start="3">
+    <li><b>TurboQuant baseline: unimplemented-as-documented, then mis-tuned (engine; fixed in clone commits <code>a9a4ab6d3</code> + <code>b04860e71</code>).</b> The documented recipe — <code>SGLANG_LLOYD_MAX=1</code> on the int2plain path — pointed at a flag that only the <em>mixed</em> OSCAR pool read; the plain pool serving QuaRot/Naive/TurboQuant would have silently run min-max, i.e., QuaRot mislabeled as TurboQuant. On top of that, the legacy Lloyd-Max encoding (<code>LM_RATIO=1.16</code>, fitted to match the old clip path's dynamic range) costs <b>+26% distortion vs exact Lloyd-Max</b>. The fix adds the LM branch to <em>both</em> plain-pool writers — the fused-Hadamard decode writer and the pre-rotated prefill writer (the same two-writer bug class as item 1) — storing the MSE-optimal uniform-level encoding Δ*&nbsp;=&nbsp;0.98774: +1.2% vs exact LM analytically, +0.8% on real post-FWHT Llama K/V (<code>turbo_lm_check.py</code>). Readers keep the plain <code>(q−zero)·scale</code> contract, which sidesteps the exact-centroid dequant path's documented decode instability. Gates <code>verify_turbo_lm.py</code> T1–T4 all pass (kernel-vs-torch parity 100%, writer-vs-writer arena parity 100%). Served family control: a 600-token greedy decode loops under every plain-int2 method (tail uniqueness: turbo 0.15, QuaRot 0.10, bf16 0.62; no CJK-spam signature) — looping is the no-bf16-band family behavior, not an LM defect.</li>
+  </ol>
+  <p class="note">Also fixed en route: a pool-runner stale-bootlog race (readiness grep matched the previous server's banner).</p>
+  <div class="callout"><b>Heads-up for your tree.</b> <code>torch.save</code> of a strided view persists the <em>full</em> underlying storage: the <code>::stride</code> pool subsampling in <code>capture_gpqa_concat.py</code> writes each example at 4× its logical size (33 GB per pool). Our variant adds <code>.contiguous()</code> before saving; the same one-line fix applies to yours.</div>
+
+  <h2 id="s6"><span class="no">6</span>Infrastructure delta</h2>
+  <p>Sharded GPU-pool scheduler (<code>build_pool_queue.py</code>, <code>gpu_pool_runner.sh</code>, <code>merge_shards.py</code>): flock-protected job queue, one worker per GPU, server-affinity claiming (an engine server survives across consecutive same-configuration shards, so sharding doesn't multiply boot cost), MAX_REQS + CUDA-graph batch raised 8 → 24 with per-cell client threads scaled to context. First production night: 117 jobs, 6 GPUs, zero idle GPU-hours, 2 transient failures auto-requeued. io_log-based client resume made every interruption cheap.</p>
+
+  <h2 id="s7"><span class="no">7</span>Where everything lives</h2>
+  <p>Canonical code state: <b>lambda7</b>, repo branch <code>pgq10</code>; engine clone at <code>vendor/OSCAR-vq</code> (its own git, branch <code>vq2-longhorizon</code>, HEAD <code>6f78cd6cd</code>). Results are mirrored lambda6 ↔ lambda7 at identical absolute paths.</p>
+  <div class="tw"><table class="pathtable">
+    <tr><th>what</th><th>absolute path</th></tr>
+    <tr><td>Repo root (both nodes)</td><td>/vault/amir/efficient-llm/teamily-project</td></tr>
+    <tr><td>Llama grid results (incl. turbo/)</td><td>artifacts/oscar_llama31_8b/grid/&lt;method&gt;/&lt;cell&gt;/metrics.json</td></tr>
+    <tr><td>TurboQuant LM gates + quantizer study</td><td>pipelines/oscar_e2e/verify_turbo_lm.py · pipelines/oscar_e2e/turbo_lm_check.py</td></tr>
+    <tr><td>Llama rotations + codebooks</td><td>artifacts/oscar_llama31_8b/{rotations/, vqa_llama31_8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt, vqa_llama31_8b_G4_strat_flat_ptn_mixed64k_fp8.pt}</td></tr>
+    <tr><td>Qwen extra cells (vq2 8/16K, VQ-V 64K)</td><td>artifacts/oscar_e2e/lh/pool/ · VQ-V 32K: artifacts/oscar_e2e/lh/vqv_niah_32768/</td></tr>
+    <tr><td>Mechanism check outputs</td><td>artifacts/oscar_e2e/lh/vqv_e5m2_check.json</td></tr>
+    <tr><td>Mixed-domain corpus + builder</td><td>artifacts/oscar_llama31_8b/mixed_corpus.jsonl · pipelines/oscar_e2e/build_mixed_corpus.py</td></tr>
+    <tr><td>Integrity gates (G1–G6)</td><td>pipelines/oscar_e2e/verify_vq_engine.py</td></tr>
+    <tr><td>This report (markdown source)</td><td>notes/page_quant/studies/report12.md</td></tr>
+    <tr><td>Run manual (serving + protocol)</td><td><a href="https://claude.ai/code/artifact/040e974f-c1eb-428e-b7af-5c2194939a87">artifact 040e974f</a> · notes/page_quant/vq2_oscar_integration.md</td></tr>
+  </table></div>
+
+  <h2 id="s8"><span class="no">8</span>Handoff: integrating TurboQuant-INT2 into your tree</h2>
+  <p>Everything below lives at identical absolute paths on lambda6 and lambda7. The engine changes are two commits in our clone's git — cleanest is to cherry-pick them; the file list is for review or manual application.</p>
+
+  <h3>Engine changes (clone commits <code>a9a4ab6d3</code> + <code>b04860e71</code>)</h3>
+  <div class="tw"><table class="pathtable">
+    <tr><th>what changed</th><th>absolute path</th></tr>
+    <tr><td>LM branch in the fused Hadamard writer (decode-side writes) + <code>lloyd_max</code> launcher param + grouped-scales guard</td><td>/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/QuantKernel/fused_hadamard_int2_kv.py</td></tr>
+    <tr><td>Identical LM branch in the plain int2 writer (prefill writes pre-rotated K/V through this one — both writers must stay bit-identical)</td><td>/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/kv_quant_kernels.py</td></tr>
+    <tr><td>Reads <code>SGLANG_LLOYD_MAX</code>, plumbs <code>lloyd_max</code> into both writers, raises on LM-without-rotation</td><td>/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/memory_pool.py</td></tr>
+    <tr><td>Mixed-pool LM encoding consistency fix: <code>LM_RATIO=1.16</code> → <code>Δ*=0.9877367723552428</code> (this branch is not exercised by any current configuration, but the two LM encodings must agree)</td><td>/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py</td></tr>
+    <tr><td>Env flag (pre-existing, authors' — no change needed)</td><td>/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/environ.py (<code>SGLANG_LLOYD_MAX</code>)</td></tr>
+  </table></div>
+  <p>To pull into your clone on lambda7:</p>
+  <div class="tw"><pre style="background:var(--code-bg);padding: .8rem 1rem;border-radius:6px;font-size:.85rem;line-height:1.5;">cd &lt;your-clone&gt;
+git remote add amir /vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq
+git fetch amir vq2-longhorizon
+git cherry-pick a9a4ab6d3 b04860e71</pre></div>
+  <p class="note">The two commits are self-contained given the vq2-longhorizon base you already have; they touch nothing in the vq2/VQ-V paths.</p>
+
+  <h3>Serving recipe</h3>
+  <p>TurboQuant = the int2plain path + full-head-dim Hadamard + the LM flag. No clip, no rotation files, no calibration artifacts of any kind:</p>
+  <div class="tw"><pre style="background:var(--code-bg);padding:.8rem 1rem;border-radius:6px;font-size:.85rem;line-height:1.5;">export HADAMARD_ORDER=128 SGLANG_LLOYD_MAX=1
+bash /vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/serve_oscar.sh \
+    --int2plain --model meta-llama/Llama-3.1-8B-Instruct --gpu &lt;g&gt; --port &lt;p&gt;</pre></div>
+  <p class="note">Constraints the engine now enforces instead of silently degrading: quant group size must equal head_dim (per-(token, head) scales), and <code>SGLANG_INT2_NO_HADAMARD</code> must be unset. In our launcher this is the pool configuration <code>turbo</code> in <code>pipelines/oscar_e2e/gpu_pool_runner.sh</code>; the job set is <code>build_pool_queue.py --set turbo</code>.</p>
+
+  <h3>Verification before trusting any run</h3>
+  <div class="tw"><table class="pathtable">
+    <tr><th>step</th><th>command / path</th></tr>
+    <tr><td>Kernel gates T1–T4 (kernel-vs-torch parity, quantizer-quality bars, writer-vs-writer arena parity, grouped guard) — expect <code>ALL GATES PASS</code></td><td>cd /vault/amir/efficient-llm/teamily-project &amp;&amp; PYTHONPATH=$PWD/vendor/OSCAR-vq/sglang-research/python .venv-oscar/bin/python pipelines/oscar_e2e/verify_turbo_lm.py</td></tr>
+    <tr><td>Quantizer-design evidence (Δ* derivation, Gaussian + real post-FWHT K/V distortion table)</td><td>/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/turbo_lm_check.py (add <code>--real --gpu N</code> for the captured-K/V half)</td></tr>
+    <tr><td>Served results from this report's run (merged metrics per cell)</td><td>/vault/amir/efficient-llm/teamily-project/artifacts/oscar_llama31_8b/grid/turbo/&lt;cell&gt;/metrics.json</td></tr>
+  </table></div>
+  <p class="note">One caveat to carry into any write-up: reconstruction uses the MSE-optimal <em>uniform-level</em> fit to the Lloyd-Max centroids (+1.2% distortion vs exact LM), because every reader keeps the <code>(q−zero)·scale</code> contract — the exact-centroid dequant path is the one with the documented production decode instability, and it stays off.</p>
+
+  <footer>
+    Report 12 · branch pgq10 · engine vendor/OSCAR-vq @ 6f78cd6cd · gates G1–G6 pass on every configuration served · speed/timing caveats and the full serving recipe are in the run manual above.
+  </footer>
+</main>

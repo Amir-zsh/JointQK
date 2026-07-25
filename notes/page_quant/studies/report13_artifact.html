@@ -1,0 +1,136 @@
+<title>Report 13 — Position coverage, RULER-128K, R1-Distill</title>
+<style>
+  :root {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+      --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+      --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+      --warn: #D4B96A; --warn-bg: #302B1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+    --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+    --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+    --warn: #D4B96A; --warn-bg: #302B1A;
+  }
+  :root[data-theme="light"] {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+    --warn: #8A6D1F; --warn-bg: #F4EDD8;
+  }
+  body { background: var(--bg); color: var(--ink);
+    font: 16px/1.62 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 0 20px; }
+  main { max-width: 70ch; margin: 0 auto; padding: 3.2rem 0 5rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  h1 { font-size: 1.9rem; font-weight: 600; margin: 0 0 .4rem; }
+  h2 { font-size: 1.32rem; font-weight: 600; margin: 2.8rem 0 .8rem; padding-top: 1.4rem; border-top: 1px solid var(--rule); }
+  h2 .no { color: var(--accent); margin-right: .45em; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.8rem 0 .6rem; }
+  p { margin: .75rem 0; }
+  a { color: var(--accent); }
+  .kicker { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin-bottom: .9rem; }
+  .meta { color: var(--muted); font-size: .92rem; margin: .2rem 0 0; }
+  .statusline { background: var(--card); border-left: 3px solid var(--accent); padding: .7rem 1rem; margin: 1.6rem 0; font-size: .95rem; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .87em; background: var(--code-bg); padding: .1em .35em; border-radius: 3px; }
+  .tw { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; font-size: .92rem; min-width: 100%; }
+  th, td { padding: .42rem .8rem; text-align: right; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th { font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  th:first-child, td:first-child { text-align: left; }
+  td.hl { color: var(--accent); font-weight: 600; }
+  td.dead { color: var(--bad); font-weight: 600; }
+  .chip { display: inline-block; font: 600 .72rem/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; padding: .28em .6em; border-radius: 999px; vertical-align: .12em; }
+  .chip.warn { color: var(--warn); background: var(--warn-bg); }
+  .callout { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1.1rem; margin: 1.2rem 0; font-size: .95rem; }
+  .callout b:first-child { color: var(--accent); }
+  .note { font-size: .9rem; color: var(--muted); }
+  .specbar { font-size: .84rem; color: var(--muted); background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: .5rem .9rem; margin: .6rem 0 1rem; }
+  .specbar b { color: var(--ink); font-weight: 600; }
+  ol, ul { padding-left: 1.3rem; } li { margin: .5rem 0; }
+  footer { margin-top: 3.5rem; padding-top: 1.2rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--muted); }
+</style>
+
+<main>
+  <div class="kicker">KV-cache compression · served evaluation</div>
+  <h1>Report 13 — Codebook position coverage, RULER-128K, and the R1-Distill long-CoT axis</h1>
+  <p class="meta">2026-07-22 · lambda6 · engine <code>vendor/OSCAR-vq</code> @ <code>0ecb1ab7c</code> · Llama cells on rotations_gpqa198, declarative specs + manifests per run · companion to <a href="https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c">Report 12</a></p>
+
+  <div class="statusline"><b>Status:</b> complete — position-coverage study, TP serving, the full R1-Distill grid, and the NIAH-mechanism diagnostics (§4a).</div>
+
+  <h2><span class="no">1</span>Headline: codebook position coverage is a cliff, not a slope</h2>
+  <div class="specbar"><b>Model:</b> meta-llama/Llama-3.1-8B-Instruct (native RoPE 131,072 — no YaRN). <b>Calibration:</b> rotations from the 198-prompt GPQA corpus (per-prompt dump, <code>rotations_gpqa198</code>); K codebooks from the same 198 prompts — <code>gpqacc64k</code> = 8 × 65,536-token concat vs <code>gpqacc128k</code> = 4 × 131,072-token concat (equal 524K-token budget). <b>Max seq len:</b> in-range table evals at 8,192–65,536 ctx; out-of-range eval at 131,072 ctx (prompts ≤ 130,106 + 128 generated, inside native RoPE; server context-length 131,072, TP=2).</div>
+  <p><code>gpqacc128k</code> = the identical 198-prompt GPQA corpus, identical 524K-token budget, identical trainer flags and rotations as <code>gpqacc64k</code> — cycled into 4 × 131072-token sequences instead of 8 × 65536. The only difference is how far out in RoPE-position space the codebook sees keys during calibration.</p>
+  <h3>In-range (NIAH 8–64K): equivalent</h3>
+  <div class="tw"><table>
+    <tr><th>ctx</th><th>vq2 (64k-calib)</th><th>vq2_128k (128k-calib)</th><th>Δ</th></tr>
+    <tr><td>8K</td><td>93.31</td><td>93.34</td><td>+0.03</td></tr>
+    <tr><td>16K</td><td>92.12</td><td>91.25</td><td>−0.88</td></tr>
+    <tr><td>32K</td><td>92.28</td><td>91.88</td><td>−0.41</td></tr>
+    <tr><td>64K</td><td>91.19</td><td>92.25</td><td>+1.06</td></tr>
+  </table></div>
+  <h3>Out-of-range (RULER-131072, 800 rows, TP=2 served): catastrophic</h3>
+  <div class="tw"><table>
+    <tr><th>method @ 128K</th><th>NIAH mean</th><th>per-subtask</th></tr>
+    <tr><td>bf16 (ceiling)</td><td>76.12</td><td style="text-align:left">mk 75/79/77 · mq 92 · mv 80 · s1 6 · s2 100 · s3 100</td></tr>
+    <tr><td>vq2, gpqacc64k</td><td class="dead">0.16</td><td style="text-align:left">zeros across the board</td></tr>
+    <tr><td>vq2, gpqacc128k</td><td class="hl">68.22</td><td style="text-align:left">mk 60/62/64 · mq 80 · mv 66 · s1 19 · s2 99 · s3 96</td></tr>
+  </table></div>
+  <p>The 64k-calibrated codebook does not degrade at 2× its calibrated positions — it <b>collapses to zero</b>: keys at unseen RoPE positions encode to garbage codewords and retrieval dies wholesale. The 128k-calibrated codebook, identical in every other respect, serves 128K at the usual ~7-pt distance below bf16 — the same context-flat gap seen at every other length.</p>
+  <div class="callout"><b>Design rule.</b> Codebook calibration must cover the entire serving position range. It costs nothing — same corpus, same token budget, just longer concat sequences — and the under-coverage failure mode is not graceful.</div>
+  <div class="callout"><b>Cross-check: Samuel's Qwen 128K result looks different — it isn't. The difference is YaRN.</b>
+  <p>Samuel's numbers at 128K (Qwen3-8B, 80 rows): bf16 83.4, vq2 76.6 (−6.8), OSCAR-INT2 25.9. At first glance this contradicts our cliff — his vq2 uses the same 64K-calibrated <code>gpqacc64k</code> codebook, yet scores 76.6 where ours scored 0.16. The reconciliation is in how each model reaches 128K.</p>
+  <p><b>Background — two ways to serve long context.</b> Every RoPE model is trained on a bounded position range, and each position is encoded as a set of rotation angles applied to Q and K. Qwen3-8B's trained range is 32,768 positions; to serve 128K, Samuel enables <b>YaRN</b> (his server config: <code>rope_type: yarn, factor 4.0</code>), which rescales the rotation frequencies so that positions 0–131,072 are <em>compressed into the angular range the model was trained on</em> — position 128K gets roughly the angles that position 32K would have natively. Llama-3.1-8B needs no such trick: its trained range is already 131,072, so our run uses <b>native RoPE</b> — positions past 64K produce angle combinations that genuinely exist nowhere below 64K.</p>
+  <p><b>Why this decides the codebook's fate.</b> A codebook quantizes post-RoPE keys, so what it must cover is the distribution of rotation angles it will meet at serving time — not the position <em>numbers</em>. Under YaRN ×4, every key up to 128K carries angles from the native 0–32K range, which a codebook calibrated on ≤64K sequences has seen thoroughly: it stays in-distribution, and vq2 shows its usual ~7-point gap below bf16 (−6.8, matching our −7.9 with the 128K-calibrated codebook). Under native RoPE, keys past 64K carry angles the 64K-calibrated codebook has never encountered: they snap to meaningless codewords and retrieval collapses to zero. Same law, observed from both sides — <b>the cliff is governed by post-RoPE angular coverage, not by raw position index</b>.</p>
+  <p><b>Falsification test proposed to Samuel:</b> serve Qwen at 128K <em>without</em> YaRN (pure extrapolation). Our finding predicts his 64K codebook collapses there exactly as ours did. (His OSCAR-INT2 at 25.9 also fits: a scalar quantizer has no codebook to go out-of-distribution — it just continues its usual context decay, 23.4 at 64K → 25.9 at 128K.)</p></div>
+  <p class="note">Notes: <code>single_1</code> (repeated-sentence noise haystack) collapses for everyone at 128K including bf16 (6.0) — a base-model failure on degenerate text at extreme length, not quantization (vq2_128k's 19 suggests quantization noise breaks the repetition attractor). The 131072 row set is Llama-tokenizer-budgeted (ctx 130048 + 1024 headroom), so no request exceeds native RoPE.</p>
+
+  <h2><span class="no">2</span>Infrastructure this enabled: TP serving</h2>
+  <div class="specbar"><b>Model:</b> meta-llama/Llama-3.1-8B-Instruct. <b>Calibration:</b> as §1 (rotations_gpqa198 + gpqacc64k/128k codebooks). <b>Max seq len:</b> 131,072 ctx served TP=2; the +7.8% custom-AR A/B measured at TP=2, bs=1, short-prompt decode.</div>
+  <p>The 128K cells are the first production tensor-parallel serving (a 131K-token bf16 KV cache is ~34 GB — impossible on one A100-40GB): all three methods ran TP=2 on GPU pairs. Two fixes made it work (tracker <code>tp-1</code>): rank-sharded codebook loading (clone <code>0ecb1ab7c</code>), and the custom all-reduce crash root-caused to our own <code>expandable_segments</code> allocator setting (cudaIpc cannot export expandable VA ranges — upstream vllm#42609). <code>serve_oscar.sh</code> drops it for TP&gt;1 and keeps custom AR: measured <b>+7.8% decode</b> vs the NCCL fallback (132.0 vs 122.5 tok/s, TP=2 bs=1).</p>
+
+  <h2><span class="no">3</span>Also closed this cycle</h2>
+  <ul>
+    <li><b>TurboQuant-INT2</b> implemented + corrected (tracker <code>turbo-1</code>) — Report 12 §5.3.</li>
+    <li><b>Calibration-unified v2</b> canonical; rotation-provenance effect ~1 pt — Report 12 §1a.</li>
+    <li><b>Qwen v2 + all integration handoffs</b>: <a href="https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf">handoff artifact</a>.</li>
+  </ul>
+
+  <h2><span class="no">4</span>R1-Distill-Llama-8B: the long-CoT axis</h2>
+  <div class="specbar"><b>Model:</b> deepseek-ai/DeepSeek-R1-Distill-Llama-8B (Llama-3.1-8B architecture; native RoPE 131,072). <b>Calibration:</b> rotations from the same 198-prompt GPQA corpus captured through the R1 chat template (<code>artifacts/oscar_r1d_llama8b/rotations_gpqa198</code>); K codebook = gpqacc64k recipe on this model (198 prompts, 8 × 65,536 concat). <b>Max seq len:</b> NIAH at 8,192–65,536 ctx + 128 generated; reasoning cells: short prompts + <b>32,768-token generation cap</b> (measured means: math ~4–5K, AIME ~14K thinking tokens); pool 140K tokens/GPU.</div>
+  <p>Motivation: every reasoning cell in the Llama grid ties (near-chance model) — quantization had never been tested under thousands of decode tokens of chain-of-thought, the regime where production OSCAR's streaming quantization collapsed on NIAH. R1-Distill-Llama-8B is architecturally identical to Llama-3.1-8B (full stack reuse, zero engine work) and thinks at length. Onboarding gated clean end-to-end; short-val: acc 0.90 (math-verify), cap-hit 0.0%, mean 4,580 thinking tokens, 100% <code>&lt;/think&gt;</code> closure.</p>
+  <h3>NIAH — quantization hurts R1-distill far more than base Llama</h3>
+  <div class="tw"><table>
+    <tr><th>ctx</th><th>bf16</th><th>vq2</th><th>int2</th><th>vq2−int2</th></tr>
+    <tr><td>8K</td><td>94.7</td><td>79.0</td><td>78.9</td><td>+0.1</td></tr>
+    <tr><td>16K</td><td>95.0</td><td>72.6</td><td>67.8</td><td>+4.8</td></tr>
+    <tr><td>32K</td><td>90.8</td><td>67.5</td><td>52.7</td><td>+14.8</td></tr>
+    <tr><td>64K</td><td>80.9</td><td class="hl">55.6</td><td>33.1</td><td>+22.5</td></tr>
+  </table></div>
+  <p>The vq2 &gt; int2 hierarchy holds with growing separation (same shape as every model), but both quantized methods lose ~3× more to bf16 than base Llama does under the identical recipe (vq2 −15.7 at 8K vs −6). The reasoning fine-tune evidently reshapes K statistics away from what GPQA-prompt-calibrated artifacts capture. Follow-up candidate: calibrate on R1's own generations.</p>
+  <h3>Long-CoT reasoning (32K caps, T=0.6/top-p 0.95)</h3>
+  <div class="tw"><table>
+    <tr><th>cell</th><th>bf16</th><th>int2</th><th>vq2</th></tr>
+    <tr><td>math500-sub (100 rows, avg@2, ~4–5K think-tokens)</td><td>87.0 ±5.7</td><td>88.0 ±2.8</td><td>88.0 ±0.0</td></tr>
+    <tr><td>AIME25 (30 rows, avg@4, ~14–15K think-tokens)</td><td>34.2 ±3.2</td><td>28.3 ±4.3</td><td>30.8 ±7.4</td></tr>
+  </table></div>
+  <p>At ~5K thinking tokens, 2-bit K quantization is completely free. At ~14K, the ordering matches the project-wide hierarchy — bf16 34.2 &gt; vq2 30.8 &gt; int2 28.3 — but magnitudes are small and within noise at n=30 (SE of the difference ≈ 3–4; vq2's ±7.4 includes one 20.0 seed). Honest verdict: <b>long-CoT reasoning is far more quantization-tolerant than retrieval, even at 14K decode tokens</b> — the dramatic separation lives in NIAH. A significance-grade answer needs more seeds/rows (AIME24+25 × 8 seeds is the cheap extension). NIAH-deficit diagnostics: see §4a below — both quick theories refuted. (The vq2 cell's first two attempts died to an engine capacity race under many long-decode requests — tracker <code>r1d-1</code>, worked around by bounding admission and sharding across GPUs with io_log carryover.)</p>
+
+  <h3>4a. NIAH-deficit diagnostics: both easy explanations refuted</h3>
+  <div class="specbar"><b>Model:</b> DeepSeek-R1-Distill-Llama-8B. <b>Setup:</b> 200-row stratified slice of niah_32768, identical rids across configurations. Theory 1: gen cap 512 vs 128 (bf16/int2/vq2). Theory 2: int2 with K-clip 1.0 vs 0.96, cap 128.</div>
+  <div class="tw"><table>
+    <tr><th>check</th><th>result</th><th>verdict</th></tr>
+    <tr><td>cap 128 → 512</td><td style="text-align:left">bf16 84.5→84.5 (+0.0) · int2 43.0→39.5 (−3.5) · vq2 58.5→55.0 (−3.5)</td><td style="text-align:left">truncation/verbosity REFUTED — genuine retrieval failure</td></tr>
+    <tr><td>int2 K-clip 0.96 → 1.0</td><td style="text-align:left">43.0 → 28.5 (−14.5)</td><td style="text-align:left">"clip too tight" INVERTED — the clip is <em>protective</em>; unclipped heavy tails coarsen the whole range</td></tr>
+  </table></div>
+  <p>Diagnosis: the reasoning fine-tune leaves K distributions intrinsically harder to 2-bit-quantize (clip choice alone swings int2 by 14.5 points), and the deficit is real retrieval damage. The grid's growing vq2-over-int2 margins are genuine method differences — per-token-norm + codebook absorbs heavy tails better than affine min-max. Open directions: a tighter int2 clip sweep (0.92–0.94), and calibrating on R1's own generated text.</p>
+
+  <footer>Report 13 · branch pgq10 · engine vendor/OSCAR-vq @ 0ecb1ab7c · markdown source /vault/amir/efficient-llm/teamily-project/notes/page_quant/studies/report13.md</footer>
+</main>

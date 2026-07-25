@@ -1,0 +1,207 @@
+<title>Handoff — Calibration, TurboQuant, Tensor Parallelism</title>
+<style>
+  :root {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+      --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+      --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181A; --ink: #E3E7E5; --muted: #98A2A6; --accent: #4FB3A0;
+    --rule: #2C3336; --card: #1C2124; --code-bg: #20262A;
+    --good: #5CC084; --good-bg: #1B2E22; --bad: #D98A7E; --bad-bg: #33211E;
+  }
+  :root[data-theme="light"] {
+    --bg: #FAFBFA; --ink: #1C2124; --muted: #5C6670; --accent: #0E6B5C;
+    --rule: #DDE3E1; --card: #F1F4F2; --code-bg: #EDF1EF;
+    --good: #1E7A46; --good-bg: #E3F1E8; --bad: #A0453A; --bad-bg: #F6E8E5;
+  }
+  body { background: var(--bg); color: var(--ink);
+    font: 16px/1.62 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 0 20px; }
+  main { max-width: 70ch; margin: 0 auto; padding: 3rem 0 5rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  h1 { font-size: 1.8rem; font-weight: 600; margin: 0 0 .4rem; }
+  h2 { font-size: 1.3rem; font-weight: 600; margin: 2.6rem 0 .8rem; padding-top: 1.3rem; border-top: 1px solid var(--rule); }
+  h2 .no { color: var(--accent); margin-right: .45em; }
+  h3 { font-size: 1.02rem; font-weight: 600; margin: 1.6rem 0 .5rem; }
+  p { margin: .7rem 0; }
+  .kicker { font-size: .78rem; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); margin-bottom: .9rem; }
+  .meta { color: var(--muted); font-size: .92rem; }
+  code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 3px; font-size: .87em; }
+  pre { background: var(--code-bg); padding: .8rem 1rem; border-radius: 6px; font-size: .84rem; line-height: 1.5; overflow-x: auto; }
+  .tw { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; font-size: .9rem; min-width: 100%; }
+  th, td { padding: .42rem .8rem; text-align: left; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: .76rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  td.path { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; word-break: break-all; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chip { display: inline-block; font: 600 .72rem/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; padding: .26em .6em; border-radius: 999px; vertical-align: .1em; }
+  .chip.good { color: var(--good); background: var(--good-bg); }
+  .callout { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: .9rem 1.1rem; margin: 1.1rem 0; font-size: .95rem; }
+  .callout b:first-child { color: var(--accent); }
+  ul { padding-left: 1.3rem; } li { margin: .4rem 0; }
+  footer { margin-top: 3.2rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--muted); }
+</style>
+
+<main>
+  <div class="kicker">OSCAR-vq engine · integration handoff</div>
+  <h1>Handoff: calibration unification, TurboQuant-INT2, tensor parallelism</h1>
+  <p class="meta">2026-07-21 · Amir → Samuel · repo <code>/vault/amir/efficient-llm/teamily-project</code> (identical paths on lambda6/7, lambda7 canonical) · branch <code>pgq10</code> · engine clone <code>vendor/OSCAR-vq</code>, branch <code>vq2-longhorizon</code>, HEAD <code>0ecb1ab7c</code></p>
+
+  <div class="callout"><b>TL;DR.</b> Four change streams since the vq2 state you have (<code>6f78cd6cd</code>): (1) all calibration now derives from one corpus per model, with new validated rotations for both models; (2) evals are now declarative and reproducible — one JSON spec per study, provenance manifest with git SHAs + artifact hashes per run; (3) TurboQuant-INT2 is now actually implemented (it wasn't — the documented recipe silently served min-max) and completes the Llama grid to six methods; (4) tensor parallelism works for all tiers — codebook bundles shard by rank, which is also the change that unlocks <b>multi-node inference</b>; the custom all-reduce crash is root-caused (our expandable_segments setting, vllm#42609) and properly fixed, custom AR measured +7.8% decode vs NCCL at TP=2. Engine changes are three self-contained commits you can cherry-pick; nothing touches your vq2/VQ-V paths.</p></div>
+
+  <h3>Engine cherry-pick (one-time)</h3>
+  <pre>cd &lt;your-clone&gt;
+git remote add amir /vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq
+git fetch amir vq2-longhorizon
+git cherry-pick a9a4ab6d3 b04860e71 0ecb1ab7c</pre>
+  <div class="tw"><table>
+    <tr><th>commit</th><th>what</th></tr>
+    <tr><td class="path">a9a4ab6d3</td><td>Lloyd-Max write path for the plain int2 pool + MSE-optimal encoding (TurboQuant, part 1)</td></tr>
+    <tr><td class="path">b04860e71</td><td>same LM branch in the plain writer used by pre-rotated prefill (TurboQuant, part 2 — two writers, one format)</td></tr>
+    <tr><td class="path">0ecb1ab7c</td><td>TP: shard vq2/VQ-V codebook bundles by tensor-parallel rank</td></tr>
+  </table></div>
+
+  <h2><span class="no">1</span>Calibration unification (v2)</h2>
+  <p><b>Policy.</b> Every calibrated artifact per model now derives from the <em>same</em> corpus: the 198 GPQA-Diamond prompts (<code>/vault/amir/efficient-llm/teamily-project/artifacts/prompt_rows/gpqa_diamond.csv</code>) — the corpus your gpqacc64k codebooks already use. Delivery differs per artifact type, matching each pipeline's own recipe: rotations from a per-prompt dump (198 prompts ≈ 48K tokens; the authors' recipe shape, more data than their 83), codebooks from the 64K-concat cycling. Codebooks are rotation-independent (the bundle carries its own forward map), so they were <em>not</em> retrained.</p>
+  <div class="tw"><table>
+    <tr><th>artifact</th><th>path</th><th>status</th></tr>
+    <tr><td>Llama rotations (198-prompt, ours)</td><td class="path">/vault/amir/efficient-llm/teamily-project/artifacts/oscar_llama31_8b/rotations_gpqa198/</td><td>built, orth err ~2e-8; v2 grid served on these</td></tr>
+    <tr><td>Qwen rotations (198-prompt, ours)</td><td class="path">/vault/amir/efficient-llm/teamily-project/artifacts/oscar_e2e/rotzoo/Qwen3-8B/gpqa198_own/</td><td>built + validated + int2 smoke passed — <b>yours to run</b></td></tr>
+    <tr><td>Builder (both models, gated, disk-guarded)</td><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/recalibrate_rotations.sh</td><td>idempotent</td></tr>
+  </table></div>
+  <p><b>Measured effect — good news for your existing results.</b> On Llama, re-serving int2 and vq2 on the unified rotations moved NIAH by <b>+0.7 / +0.4 mean</b> respectively (reasoning within seed noise). Rotation calibration provenance is a ~1-point effect; every ranking stands. Prediction: your Qwen re-run will barely move — it mostly buys the clean provenance statement. Your v1 int2 column stays reported as "production OSCAR as released".</p>
+  <p><b>Your Qwen v2 re-run is one command</b> (resumes past the 4/32 shards already done):</p>
+  <pre>cd /vault/amir/efficient-llm/teamily-project
+.venv/bin/python pipelines/oscar_e2e/run_experiment.py \
+    --spec pipelines/oscar_e2e/experiments/qwen3_8b_niah_v2.json \
+    --queue logs/pool_queue_qwen_v2.tsv
+for g in &lt;gpus&gt;; do ARMS_DIR=$PWD/artifacts/oscar_e2e/lh/grid_v2/arms \
+  nohup bash pipelines/oscar_e2e/gpu_pool_runner.sh logs/pool_queue_qwen_v2.tsv $g & done
+.venv/bin/python pipelines/oscar_e2e/merge_shards.py --root artifacts/oscar_e2e/lh/grid_v2</pre>
+  <p><b>Replication infra (new, and worth adopting).</b> One JSON spec per study holds every argument — model, per-method serve flags + env + calibration artifacts, cells with rows/shards/sampling. <code>run_experiment.py</code> materializes it into a provenance manifest (repo + clone git SHAs, sha256 of every calibration artifact and rotation file, row counts), sourceable <code>arms/*.sh</code> per method, and the sharded queue; the pool runner's <code>ARMS_DIR</code> mode boots servers from those files. Recipe and calibration policy: <code>/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/experiments/README.md</code>.</p>
+
+  <h2><span class="no">2</span>Experiment structure &amp; reproducibility</h2>
+  <p>All served evals now run through a declarative layer: <b>one JSON spec per study is the single source of truth for every argument</b>, and every run leaves a provenance manifest sufficient to reproduce it exactly. Nothing method- or cell-specific is hardcoded in the runner anymore.</p>
+  <h3>The spec (…/pipelines/oscar_e2e/experiments/*.json)</h3>
+  <div class="tw"><table>
+    <tr><th>field</th><th>contents</th></tr>
+    <tr><td class="path">model, out_root, engine_clone</td><td>model id, results root, clone path</td></tr>
+    <tr><td class="path">calibration</td><td>corpus + recipe strings + paths of rotations / codebooks the study depends on (these get sha256'd into the manifest)</td></tr>
+    <tr><td class="path">methods.&lt;name&gt;</td><td><code>serve_args</code> (list passed to serve_oscar.sh) + <code>env</code> (exports, $ROOT-relative paths auto-expanded) + free-text notes</td></tr>
+    <tr><td class="path">reused_methods</td><td>configurations NOT re-run, with the directory their numbers come from — reuse is recorded, never silent</td></tr>
+    <tr><td class="path">cells[]</td><td>name, rows file, shard count, client args (sampling/threads) — the full protocol per cell</td></tr>
+  </table></div>
+  <h3>What a run materializes</h3>
+  <div class="tw"><table>
+    <tr><th>artifact</th><th>contents</th></tr>
+    <tr><td class="path">&lt;out_root&gt;/experiment_manifest.json</td><td>resolved spec snapshot · repo AND engine-clone git SHAs · sha256 of every calibration artifact and each rotation .pt · per-cell row counts · queue size · timestamp</td></tr>
+    <tr><td class="path">&lt;out_root&gt;/arms/&lt;method&gt;.sh</td><td>sourceable boot config (MODEL, env exports, SERVE_EXTRA) — the exact flags every server booted with, human-readable on disk</td></tr>
+    <tr><td class="path">&lt;out_root&gt;/&lt;method&gt;/&lt;cell&gt;/</td><td>metrics.json + predictions.csv per cell (merged from __sN shard dirs by merge_shards.py, which re-scores the union and literal_evals list columns — see tracker for the char-wise scoring bug this prevents)</td></tr>
+  </table></div>
+  <h3>Reproducing any number</h3>
+  <pre>cd /vault/amir/efficient-llm/teamily-project
+# 1. read the cell's study manifest -> pins commits + artifact hashes
+# 2. materialize (idempotent: completed cells/shards are skipped -> resume)
+.venv/bin/python pipelines/oscar_e2e/run_experiment.py --spec &lt;spec&gt; --queue &lt;q.tsv&gt;
+# 3. one worker per GPU; ARMS_DIR switches the pool runner to spec mode
+for g in &lt;gpus&gt;; do ARMS_DIR=&lt;out_root&gt;/arms \
+  nohup bash pipelines/oscar_e2e/gpu_pool_runner.sh &lt;q.tsv&gt; $g & done
+# 4. merge + score when the queue drains (no TODO/RUN rows)
+.venv/bin/python pipelines/oscar_e2e/merge_shards.py --root &lt;out_root&gt;</pre>
+  <p class="meta">Live examples: <code>llama31_8b_grid_v2.json</code> (the calibration-unified grid), <code>qwen3_8b_niah_v2.json</code> (yours), <code>llama31_8b_vq2_128k.json</code> (the gpqacc128k position-coverage ablation). Row shards are deterministic (<code>lines[i::n]</code> → <code>__sNofM.jsonl</code>); the queue is method-major so worker arm-affinity keeps one server alive across consecutive same-method shards. Full walkthrough: <code>/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/experiments/README.md</code>.</p>
+
+<h2><span class="no">3</span>TurboQuant-INT2: implemented, corrected, measured</h2>
+  <p><b>What was wrong.</b> Two independent defects. First, the documented recipe (<code>SGLANG_LLOYD_MAX=1</code> on the int2plain path) pointed at a flag only the <em>mixed</em> OSCAR pool read — the plain pool serving QuaRot/Naive/TurboQuant ignored it, so "TurboQuant" would have silently been QuaRot mislabeled. Second, the legacy LM encoding (<code>LM_RATIO=1.16</code>, fitted to the old clip path's dynamic range) costs <b>+26% distortion vs exact Lloyd-Max</b>.</p>
+  <p><b>The fix.</b> An LM branch in <em>both</em> plain-pool writers — the fused-Hadamard decode writer and the plain writer that prefill uses for pre-rotated K/V (the two-writer split is the same bug class as the VQ-V prefix-dequant). Indices come from LM thresholds on per-(token, head) standardized coords; the stored <code>(scale, zero)</code> encode the MSE-optimal <em>uniform-level</em> fit to the LM centroids (Δ* = 0.98774σ), so every reader keeps the untouched <code>(q−zero)·scale</code> contract — the exact-centroid dequant path with its documented decode instability stays off. Cost of the uniform-level compromise: <b>+1.2% vs exact LM</b> analytically, <b>+0.8%</b> on real post-FWHT Llama K/V (derivation + Monte-Carlo + real-data table: <code>pipelines/oscar_e2e/turbo_lm_check.py</code>).</p>
+  <h3>File-by-file (commits a9a4ab6d3 + b04860e71)</h3>
+  <div class="tw"><table>
+    <tr><th>file (engine clone)</th><th>change</th></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/QuantKernel/fused_hadamard_int2_kv.py</td><td><code>_fused_hadamard_int2_set_kv_kernel</code> gains <code>LLOYD_MAX: tl.constexpr</code> (passed at launch, next to <code>HP_OFFSET</code> — no factory/cache-key change needed) with the LM branch after the FWHT + bf16 roundtrip; launcher <code>quantized_set_kv_int2_hadamard_fused_triton(..., lloyd_max=False)</code>; grouped-scales + LM raises <code>ValueError</code>.</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/kv_quant_kernels.py</td><td>the IDENTICAL LM branch in <code>_quantized_set_kv_int2_kernel</code> + <code>lloyd_max</code> through <code>_launch_quantize_int2</code> / <code>quantized_set_kv_int2_triton</code>. This is the writer <b>prefill</b> uses: it passes already-rotated K/V (<code>already_hadamard_transformed=True</code>), so decode and prefill write through different kernels that must stay bit-identical.</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/memory_pool.py</td><td><code>set_kv_buffer</code> int2 branch reads <code>envs.SGLANG_LLOYD_MAX</code> once, plumbs <code>lloyd_max=</code> into both writer calls, and raises on the one undefined combination (LM + <code>SGLANG_INT2_NO_HADAMARD</code>).</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/QuantKernel/oscar_rotation_clip_int2_kv.py</td><td>mixed-pool LM branch: legacy <code>LM_RATIO=1.16</code> encoding replaced by the same Δ* encoding (not exercised by any current config, but the two LM encodings must agree).</td></tr>
+  </table></div>
+  <h3>Exact quantizer semantics (if you apply by hand)</h3>
+  <pre># per (token, head), on the POST-rotation bf16-roundtripped row v[0..D):
+mean = Σv/D;  std = sqrt(Σ(v-mean)²/D + 1e-8)
+q_i  = (d_i >= -T·std) + (d_i >= 0) + (d_i >= T·std)     # d = v - mean
+       T        = 0.9810652732849121                       # LM threshold
+scale = DELTA · std;   zero = 1.5 - mean/scale
+       DELTA    = 0.9877367723552428                       # = E[x·l(x)]/E[l(x)²], x~N(0,1)
+# readers stay untouched: k_hat = (q - zero) * scale  ==  (q-1.5)·DELTA·std + mean</pre>
+  <p class="meta">Why uniform levels instead of exact LM centroids: every reader (decode kernel, prefix dequant, any future one) keeps the plain uniform contract — the exact-centroid dequant path is the one with the documented production decode instability, and it stays off. Cost: +1.2% distortion vs exact LM (analytic), +0.8% on real post-FWHT Llama K/V. The legacy 1.16 encoding was +26%. Derivation + Monte-Carlo + real-data table: <code>/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/turbo_lm_check.py</code>.</p>
+  <p><b>Gates</b> <span class="chip good">T1–T4 ALL PASS</span> — <code>/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/verify_turbo_lm.py</code> (repo side, copy it too). Expected output on A100:</p>
+  <pre>T1/K: idx-agree=1.00000 mse kern=3.58142e-01 ref=3.58142e-01 -> PASS
+T2/K: vs minmax=7.81199e-01 vs exactLM=3.53862e-01 -> PASS
+T1/V: idx-agree=1.00000 mse kern=9.61031e-02 ref=9.61031e-02 -> PASS
+T2/V: vs minmax=2.07761e-01 vs exactLM=9.50178e-02 -> PASS
+T4: writer-vs-writer arena-agree=1.00000 scale-relerr=3.03e-05 -> PASS
+T3: grouped+LM raises -> PASS
+ALL GATES PASS</pre>
+  <div class="callout"><b>Invariants to preserve if you modify anything here.</b> (1) The two writers must stay bit-identical — any change to one requires rerunning T4 (writer-vs-writer arena parity). (2) Never introduce exact-centroid dequant into a reader; the whole design keeps <code>(q−zero)·scale</code>. (3) LM requires per-(token, head) scales (quant group == head_dim); the guards enforce this — don't remove them. (4) The LM branch quantizes the bf16-roundtripped values (matching the unfused path's numerics) — keep the <code>.to(bf16).to(f32)</code> before the stats or T1 index agreement drops to ~0.999.</div>
+  <p><b>Serving recipe</b> (no calibration artifacts of any kind):</p>
+  <pre>export HADAMARD_ORDER=128 SGLANG_LLOYD_MAX=1
+bash /vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/serve_oscar.sh --int2plain --model &lt;model&gt; --gpu &lt;g&gt; --port &lt;p&gt;</pre>
+  <p><b>Result on Llama-3.1-8B</b> (NIAH mean, 800 rows/ctx): 80.7 / 79.3 / 80.1 / 73.6 at 8/16/32/64K — reproduces the OSCAR Table-2 hierarchy (vq2 &gt; int2 &gt; TurboQuant &gt; QuaRot &gt; Naive) on a family the paper never tested. It <em>ties</em> production OSCAR at 32K NIAH with zero calibration, but trails 2–3× on reasoning/code (math500 17.2 vs 44.2) — isolating the bf16 recent ring + calibrated rotations as OSCAR's real edge in decode-heavy regimes. Cells: <code>/vault/amir/efficient-llm/teamily-project/artifacts/oscar_llama31_8b/grid/turbo/</code>.</p>
+
+  <h2><span class="no">4</span>Tensor parallelism — multi-GPU and multi-node</h2>
+  <p><b>Defect 1 — codebook head sharding (ours).</b> Under TP the pool receives the per-rank KV head count while the bundle holds all global heads; boot died on a shape assert (and without it, ranks would have quantized against wrong-head codebooks). Fix: <code>load_vq_codebook</code> takes <code>head_start</code> and slices <code>forward/inverse/mean/codebooks</code> to the rank's contiguous slice; the pool computes the offset from <code>get_tensor_model_parallel_rank() × head_num</code>; TP size must divide the KV head count (no replication support — guarded). Applies to both the K-tier and VQ-V bundles.</p>
+  <p><b>Defect 2 — custom all-reduce (stack-wide, hits bf16 too): FIXED, root-caused.</b> TP&gt;1 CUDA-graph capture died in custom all-reduce (<code>get_graph_buffer_ipc_meta → invalid argument</code>). Root cause (confirmed by test + upstream <a href="https://github.com/vllm-project/vllm/issues/42609">vllm#42609</a>): <code>PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True</code> — set in our serve wrapper for 40GB-card fragmentation — allocates from cuMemAddressReserve VA ranges that <code>cudaIpcGetMemHandle</code> cannot export. The sgl_kernel wheel was innocent. Fix (repo-side <code>serve_oscar.sh</code>): drop expandable_segments when TP&gt;1 (per-GPU pressure is halved there) and keep custom all-reduce; escape hatches <code>DISABLE_CUSTOM_AR=1</code> and <code>FORCE_EXPANDABLE=1</code>. Measured A/B at TP=2, bs=1 decode: custom AR <b>132.0 tok/s</b> vs NCCL 122.5 (<b>+7.8%</b>). If your serve wrapper sets expandable_segments, carry the same conditional.</p>
+  <p><b>Validation</b> <span class="chip good">ALL PASS</span>:</p>
+  <ul>
+    <li>Loader gate: rank slices are bit-exact slices of the full load; non-divisible sharding raises.</li>
+    <li>TP=2 boots for bf16 / int2 / vq2, per-rank log lines <code>heads=[0,4)/8</code> and <code>[4,8)/8</code>, needle retrieval correct in all three.</li>
+    <li>Quality parity: stratified 48-row NIAH-8K slice, vq2 TP=2 = <b>43/48, identical to TP=1</b>, 4 balanced borderline flips; bf16 control flips 1/48 — generic TP reduction-order numerics, not sharding.</li>
+  </ul>
+  <h3>File-by-file (commit 0ecb1ab7c + repo-side serve script)</h3>
+  <div class="tw"><table>
+    <tr><th>file</th><th>change</th></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/vq_codebook.py</td><td><code>load_vq_codebook(..., head_start: int = 0)</code>: slices <code>forward/inverse/mean</code> as <code>[:, head_start:head_start+head_num]</code> and codebook dict entries as <code>(layer, head_start + h)</code>; asserts <code>head_end &lt;= H_total</code> and divisibility. Everything downstream (packing to int32, cb_sq, q_map transpose) is untouched — it operates on the sliced tensors.</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/vendor/OSCAR-vq/sglang-research/python/sglang/srt/mem_cache/unified_kv_pool.py</td><td>both <code>load_vq_codebook</code> call sites (K tier and VQ-V) pass <code>head_start = get_tensor_model_parallel_rank() * self.head_num</code> (import from <code>sglang.srt.distributed</code>).</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/serve_oscar.sh (repo, not clone)</td><td>appends <code>--disable-custom-all-reduce</code> whenever <code>TP&gt;1</code> — sgl_kernel's custom AR dies in CUDA-graph capture (<code>get_graph_buffer_ipc_meta → invalid argument</code>) on this stack even with full NVLink; NCCL AR is graph-safe. If your serve wrapper differs, carry this flag.</td></tr>
+  </table></div>
+  <div class="callout"><b>What needs NO change under TP</b> (verified, so you don't chase ghosts): OSCAR rotations (per-layer [D,D], head-agnostic — every rank loads the full matrix); all pool arenas and scales (already sized by the local head_num sglang passes in); the GQA query map <code>vq_map_q</code> (q heads and kv heads shard by the same factor, groups stay intact); decode kernels and split-K settings (head-count agnostic). The ONLY globally-head-indexed artifacts are the VQ bundles.</div>
+  <h3>Multi-node inference</h3>
+  <p>The rank-sharding fix is exactly what multi-node serving needs: sglang scales past one node by spreading TP ranks across machines (<code>--nnodes</code> / <code>--node-rank</code> / <code>--dist-init-addr</code>), and each rank now loads only its own contiguous codebook slice — node placement is irrelevant to the loader, so the vq2/VQ-V tiers work under any TP layout, single- or multi-node. Two things to know: (a) inter-node all-reduce goes over NCCL automatically (custom AR is intra-node IPC by construction; sglang picks the communicator per link, no flag needed); (b) the KV pools, arenas, and rotations were already per-rank-local, so the codebook loader was the <em>only</em> globally-indexed piece. Status: validated at TP=2 single-node (full battery below); a cross-node topology hasn't been smoke-tested yet — before any multi-node run, do the boot + needle check with the model sharded across machines, and expect models whose KV-head count the total TP size doesn't divide to be rejected by the loader guard (8 KV heads → TP ∈ {2,4,8}).</p>
+  <p><b>Usage (single node):</b> <code>TP=2 bash /vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/serve_oscar.sh ... --gpu 1,2</code>. Practical payoff: 128K-context serving — a 131K-token bf16 KV cache (~34 GB) cannot fit one A100-40GB, so the RULER-128K cells run TP=2. (First user: the gpqacc128k position-coverage ablation currently in flight — 128K-calibrated K codebook vs gpqacc64k, including a RULER-131072 cell; row set + generator snapshot at <code>/vault/amir/efficient-llm/teamily-project/third_party/samuel_vq/gen_niah.py</code> → <code>/vault/amir/efficient-llm/teamily-project/artifacts/niah_bench/131072/</code>, Llama-tokenizer-budgeted to stay inside native RoPE.)</p>
+
+  <h2><span class="no">5</span>Repo-side files you may want to copy</h2>
+  <p>The cherry-picks cover the engine clone only. These live in our repo (same absolute path both nodes, <code>/vault/amir/efficient-llm/teamily-project/</code>) and are self-contained — copy with attribution or import directly:</p>
+  <div class="tw"><table>
+    <tr><th>file</th><th>what it gives you</th></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/verify_turbo_lm.py</td><td>TurboQuant gates T1–T4 (needs only PYTHONPATH to the clone + a GPU; no bundles)</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/turbo_lm_check.py</td><td>Δ* derivation, Gaussian Monte-Carlo, and (<code>--real</code>) captured-K/V distortion table — the evidence behind the constants</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/recalibrate_rotations.sh</td><td>one-command rotation rebuild for any model from the 198-prompt corpus (dump → compute_kv_rotation → orth validation → dump cleanup, disk-guarded, idempotent)</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/run_experiment.py + /vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/experiments/ (specs + README.md)</td><td>declarative eval runs: spec → provenance manifest (git SHAs + artifact sha256s) + per-method arm scripts + sharded queue; pool runner consumes via <code>ARMS_DIR</code></td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/gpu_pool_runner.sh</td><td>the flock-queue GPU-pool worker with the <code>ARMS_DIR</code> spec mode (plus <code>boot_serve</code> extraction)</td></tr>
+    <tr><td class="path">/vault/amir/efficient-llm/teamily-project/third_party/samuel_vq/gen_niah.py (your script, snapshotted)</td><td>+ <code>artifacts/niah_bench/131072/</code> and <code>/vault/amir/efficient-llm/teamily-project/artifacts/prompt_rows/niah_131072_llama.jsonl</code> — RULER-NIAH at 128K, Llama-tokenizer-budgeted to 130048 so prompt+128 stays inside native RoPE (the Qwen-budgeted first cut overflowed Llama by 126 tokens — regenerate per-tokenizer if you build a Qwen 128K set, don't reuse ours blindly)</td></tr>
+  </table></div>
+  <h3>Env-var map (who reads what)</h3>
+  <div class="tw"><table>
+    <tr><th>env</th><th>consumer</th><th>meaning</th></tr>
+    <tr><td class="path">SGLANG_LLOYD_MAX</td><td>plain int2 pool (memory_pool.set_kv_buffer) AND mixed pool</td><td>Lloyd-Max INT2 write path (TurboQuant = this + HADAMARD_ORDER=128 + int2plain, clip 1.0)</td></tr>
+    <tr><td class="path">HADAMARD_ORDER</td><td>plain int2 pool</td><td>FWHT segment size (128 = full head_dim = QuaRot/TurboQuant; with SGLANG_INT2_NO_HADAMARD=1 → Naive)</td></tr>
+    <tr><td class="path">SGLANG_VQ_CODEBOOK_PATH / SGLANG_VQ_V_CODEBOOK_PATH</td><td>unified mixed pool</td><td>vq2 K tier / VQ-V tier — now TP-aware (rank-sliced)</td></tr>
+    <tr><td class="path">TP (serve_oscar.sh)</td><td>serve wrapper</td><td>tensor-parallel size; &gt;1 auto-adds --disable-custom-all-reduce</td></tr>
+  </table></div>
+
+  <h2><span class="no">6</span>Where to look</h2>
+  <div class="tw"><table>
+    <tr><th>what</th><th>absolute path (both nodes)</th></tr>
+    <tr><td>Full report (six-method grid, VQ-V mechanism, protocol, v1→v2 deltas)</td><td class="path">https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c · /vault/amir/efficient-llm/teamily-project/notes/page_quant/studies/report12.md</td></tr>
+    <tr><td>Bug tracker entries (turbo-1, tp-1, VQ-V prefix dequant, merge_shards scoring)</td><td class="path">/vault/amir/efficient-llm/teamily-project/notes/page_quant/fixes_to_apply.md</td></tr>
+    <tr><td>Experiment specs + replication README</td><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/experiments/</td></tr>
+    <tr><td>Provenance manifests of every v2 run</td><td class="path">/vault/amir/efficient-llm/teamily-project/artifacts/oscar_llama31_8b/grid_v2/experiment_manifest.json · /vault/amir/efficient-llm/teamily-project/artifacts/oscar_e2e/lh/grid_v2/experiment_manifest.json</td></tr>
+    <tr><td>Gates</td><td class="path">/vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/verify_vq_engine.py (G1–G6) · /vault/amir/efficient-llm/teamily-project/pipelines/oscar_e2e/verify_turbo_lm.py (T1–T4)</td></tr>
+  </table></div>
+
+  <footer>Handoff 2026-07-22 (rev 4: +experiment structure, multi-node) · engine commits a9a4ab6d3 · b04860e71 · 0ecb1ab7c on vq2-longhorizon · repo pgq10 · questions → Amir</footer>
+</main>

@@ -1,0 +1,499 @@
+<title>Why OSCAR INT2 fails on gpt-oss-20B</title>
+
+<style>
+:root{
+  --paper:#f6f7f9; --raised:#ffffff; --ink:#101418; --body:#2b323b;
+  --muted:#5f6976; --faint:#8c96a3; --rule:#dde2e8; --rule-soft:#e9edf1;
+  --steel:#3d6b8c; --fail:#b44a22; --ok:#2f7d72;
+  --code-bg:#eef1f4;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,ui-serif,serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0d1116; --raised:#141a21; --ink:#eef2f6; --body:#c3ccd6;
+    --muted:#8f9aa7; --faint:#6b7683; --rule:#232c36; --rule-soft:#1b232b;
+    --steel:#7aa8c9; --fail:#e07a4d; --ok:#5cb8a8;
+    --code-bg:#161d25;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d1116; --raised:#141a21; --ink:#eef2f6; --body:#c3ccd6;
+  --muted:#8f9aa7; --faint:#6b7683; --rule:#232c36; --rule-soft:#1b232b;
+  --steel:#7aa8c9; --fail:#e07a4d; --ok:#5cb8a8;
+  --code-bg:#161d25;
+}
+:root[data-theme="light"]{
+  --paper:#f6f7f9; --raised:#ffffff; --ink:#101418; --body:#2b323b;
+  --muted:#5f6976; --faint:#8c96a3; --rule:#dde2e8; --rule-soft:#e9edf1;
+  --steel:#3d6b8c; --fail:#b44a22; --ok:#2f7d72;
+  --code-bg:#eef1f4;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--body);
+  font-family:var(--serif); font-size:17px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:860px; margin:0 auto; padding:0 28px 96px}
+.col{max-width:65ch}
+
+/* ---- header ---- */
+header{border-bottom:1px solid var(--rule); margin-bottom:44px; padding:56px 0 32px}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--steel); margin:0 0 18px
+}
+h1{
+  font-family:var(--sans); font-weight:700; letter-spacing:-.022em;
+  font-size:clamp(30px,5vw,44px); line-height:1.1; color:var(--ink);
+  margin:0 0 14px; text-wrap:balance;
+}
+.deck{font-size:19px; color:var(--muted); margin:0 0 26px; max-width:56ch}
+.meta{
+  font-family:var(--mono); font-size:12.5px; line-height:1.8;
+  color:var(--faint); margin:0; max-width:70ch
+}
+.meta b{color:var(--muted); font-weight:500}
+
+/* ---- verdict ---- */
+.verdict{
+  background:var(--raised); border:1px solid var(--rule);
+  border-left:3px solid var(--fail); border-radius:3px;
+  padding:24px 26px; margin:0 0 52px;
+}
+.verdict .eyebrow{color:var(--fail); margin-bottom:12px}
+.verdict p{margin:0 0 12px; font-size:17px}
+.verdict p:last-child{margin-bottom:0}
+.verdict strong{color:var(--ink); font-weight:600}
+
+/* ---- sections ---- */
+section{margin:0 0 56px}
+h2{
+  font-family:var(--sans); font-weight:650; letter-spacing:-.015em;
+  font-size:24px; color:var(--ink); margin:0 0 6px; text-wrap:balance;
+}
+h2 .num{
+  font-family:var(--mono); font-size:13px; font-weight:400;
+  color:var(--steel); letter-spacing:.06em; margin-right:12px;
+}
+h3{
+  font-family:var(--sans); font-weight:600; font-size:16.5px;
+  color:var(--ink); margin:34px 0 8px; letter-spacing:-.008em;
+}
+p{margin:0 0 16px}
+strong{color:var(--ink); font-weight:600}
+ul{margin:0 0 16px; padding-left:22px}
+li{margin:0 0 9px}
+a{color:var(--steel)}
+
+.lede{font-size:18.5px; color:var(--muted)}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto; margin:22px 0 26px; border:1px solid var(--rule); border-radius:3px}
+table{border-collapse:collapse; width:100%; background:var(--raised)}
+th,td{
+  padding:9px 14px; text-align:left; border-bottom:1px solid var(--rule-soft);
+  font-family:var(--mono); font-size:13px; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+th{
+  color:var(--faint); font-weight:500; font-size:11px;
+  letter-spacing:.09em; text-transform:uppercase;
+  border-bottom:1px solid var(--rule); background:var(--paper);
+}
+td:first-child{color:var(--muted)}
+tr:last-child td{border-bottom:none}
+td b{color:var(--ink); font-weight:700}
+.fail{color:var(--fail); font-weight:700}
+.ok{color:var(--ok); font-weight:700}
+caption{
+  caption-side:bottom; text-align:left; padding:10px 14px 0;
+  font-family:var(--sans); font-size:12.5px; color:var(--faint);
+  white-space:normal; line-height:1.5;
+}
+
+/* ---- code ---- */
+pre{
+  background:var(--code-bg); border:1px solid var(--rule); border-radius:3px;
+  padding:16px 18px; overflow-x:auto; margin:18px 0 22px;
+}
+code{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--body)}
+p code,li code,td code{
+  background:var(--code-bg); padding:1px 5px; border-radius:2px; font-size:12.5px;
+}
+.sample{white-space:pre-wrap; word-break:break-word}
+.sample.bad{border-left:3px solid var(--fail)}
+.sample.good{border-left:3px solid var(--ok)}
+
+/* ---- chart ---- */
+figure{margin:26px 0 30px}
+.chart{
+  background:var(--raised); border:1px solid var(--rule); border-radius:3px;
+  padding:18px 10px 8px; overflow-x:auto;
+}
+svg{display:block; width:100%; height:auto; min-width:560px}
+.grid{stroke:var(--rule-soft); stroke-width:1}
+.axis{stroke:var(--rule); stroke-width:1}
+.tick{font-family:var(--mono); font-size:10px; fill:var(--faint)}
+.axlabel{font-family:var(--mono); font-size:10px; fill:var(--faint);
+  letter-spacing:.1em; text-transform:uppercase}
+.lfail{fill:none; stroke:var(--fail); stroke-width:2.25;
+  stroke-linejoin:round; stroke-linecap:round}
+.lok{fill:none; stroke:var(--ok); stroke-width:2.25;
+  stroke-linejoin:round; stroke-linecap:round}
+.dfail{fill:var(--fail)} .dok{fill:var(--ok)}
+.slabel{font-family:var(--sans); font-size:12px; font-weight:600}
+figcaption{
+  font-family:var(--sans); font-size:12.5px; color:var(--faint);
+  margin-top:10px; line-height:1.55; max-width:62ch;
+}
+
+/* ---- callout ---- */
+.note{
+  border-left:2px solid var(--rule); padding:2px 0 2px 20px;
+  margin:22px 0; color:var(--muted); font-size:16px;
+}
+.note .lbl{
+  font-family:var(--mono); font-size:11px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--steel); display:block; margin-bottom:6px;
+}
+.note.warn{border-left-color:var(--fail)}
+.note.warn .lbl{color:var(--fail)}
+
+footer{
+  border-top:1px solid var(--rule); margin-top:64px; padding-top:22px;
+  font-family:var(--mono); font-size:12px; color:var(--faint); line-height:1.8;
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">KV-cache compression · Report 14</p>
+  <h1>Why OSCAR INT2 fails on gpt-oss-20B</h1>
+  <p class="deck">A limitation of the method on this architecture — not a bug in our integration.</p>
+  <p class="meta">
+    <b>models</b> unsloth/gpt-oss-20b-BF16 · meta-llama/Llama-3.1-8B-Instruct (reference)<br>
+    <b>engine</b> vendored OSCAR sglang fork, branch vq2-longhorizon · TP=2 · A100-40GB<br>
+    <b>date</b> 2026-07-24
+  </p>
+</header>
+
+<div class="verdict">
+  <p class="eyebrow">Verdict</p>
+  <p>Wiring quantized KV into gpt-oss produced a server that boots and decodes but scores <strong>0.0 on NIAH-8K under INT2</strong>, against <strong>88.4 for bf16</strong> on identical rows. Generations are degenerate — every row runs to the token cap emitting word salad.</p>
+  <p>The failure <strong>reproduces in pure HuggingFace with zero engine code</strong>, and the identical simulation leaves Llama untouched at 10/10. The cause is the quantization method meeting this architecture. <strong>vq2 is unaffected</strong> and serves gpt-oss correctly through the same plumbing.</p>
+</div>
+
+<section>
+  <h2><span class="num">01</span>Background</h2>
+  <div class="col">
+    <p class="lede">Transformer inference caches a key and value vector for every token it reads. At long context that cache dominates memory and bandwidth — a 128K prompt costs tens of gigabytes in bf16, and decode speed is bound by streaming it.</p>
+    <p>This project compresses the key side to roughly <strong>2 bits per coordinate</strong>. The pipeline calibrates per-(layer, kv_head) second moments from a small prompt corpus, chooses a per-layer orthogonal basis from those statistics so key energy concentrates in fewer coordinates, quantizes each coordinate independently in that basis, and decompresses on the fly when future queries arrive.</p>
+    <p>Because the rotation is orthogonal, <code>q·k</code> is preserved: the query is rotated by the same matrix and attention scores are unchanged. All the loss comes from the quantizer.</p>
+
+    <h3>The two arms</h3>
+    <p><strong>OSCAR INT2</strong> is the published baseline — the authors' production method, vendored from their fork. Keys and values are quantized to 2 bits by <strong>per-token affine min-max</strong> in the calibrated basis, plus an optional per-row clip. With one scale group per head, a token's 64 coordinates share a single scale and zero-point: four representable levels.</p>
+    <p><strong>vq2</strong> is our method: the key tier is replaced by a <strong>group vector-quantizer</strong> with an fp8 codebook learned from the same corpus. The value tier stays on OSCAR's INT2 path unchanged, so the arms differ only in how keys are encoded.</p>
+
+    <h3>The mixed HP+INT2 cache</h3>
+    <p>Neither method quantizes everything. The pool keeps a <strong>high-precision band</strong> in bf16 — the first 64 tokens (attention sinks) and the most recent 256 — and quantizes only the middle, flushing aged tokens into the quantized tier in 8-token pages.</p>
+    <p>This matters throughout: <strong>a prompt shorter than ~320 tokens never touches the quantized tier</strong> and is served entirely from bf16.</p>
+
+    <h3>Where the work stood</h3>
+    <p>The method was validated on dense models — Llama-3.1-8B scores 84.3 (INT2) and 92.3 (vq2) on NIAH-8K against a bf16 ceiling of 98.2; Qwen3-8B INT2 reaches 97.6. The task was extending both arms to a much stranger model.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">02</span>How gpt-oss-20B is different</h2>
+  <div class="col">
+    <p>gpt-oss is not a scaled-up Llama. Four architectural properties separate it from every model this stack had served, and each required new code.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>property</th><th>Llama-3.1-8B</th><th>gpt-oss-20B</th></tr></thead>
+      <tbody>
+        <tr><td>attention pattern</td><td>uniform full attention ×32</td><td><b>alternating</b>: 12 sliding-window (128 tok) + 12 full</td></tr>
+        <tr><td>FFN</td><td>dense</td><td><b>Mixture of Experts</b> — 32 experts, top-4</td></tr>
+        <tr><td>softmax</td><td>standard</td><td><b>learned attention sinks</b></td></tr>
+        <tr><td>head_dim</td><td>128</td><td><b>64</b></td></tr>
+        <tr><td>KV cache</td><td>one uniform pool</td><td><b>hybrid</b> — quantized + bf16 side by side</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p><strong>Hybrid attention</strong> is the consequential one. Half of gpt-oss's layers see only the last 128 tokens, so quantizing them is pointless — only the 12 full-attention layers are compressed. That demands a wrapper pool routing per layer, a dual allocator, index translation between pools, and a dense re-indexing mapping global layer ids <code>[1,3,…,23]</code> onto the 12-entry calibration bundle.</p>
+    <p><strong>Learned sinks</strong> add a per-head constant to the softmax denominator, letting a head attend to "nothing". They had to be threaded into the quantized decode kernel and, for prefill, applied as an exact rescale of a sink-less output, <code>o · sigmoid(lse − sink)</code>.</p>
+    <p><strong>MoE</strong> means each token's FFN is selected discretely by a router — which turns out to matter enormously.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">03</span>The problem</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>arm</th><th>NIAH-8K</th><th>cap-hit rate</th><th>mean tokens</th></tr></thead>
+      <tbody>
+        <tr><td>bf16</td><td class="ok">88.4</td><td>0.40</td><td>166</td></tr>
+        <tr><td>INT2</td><td class="fail">0.0</td><td class="fail">1.00</td><td class="fail">256 (every row)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>The model did not answer wrongly — it stopped producing language. Every row ran to the cap without emitting a stop token.</p>
+  </div>
+  <pre class="sample bad"><code>' \nThe question is question.\n\n\nWe get squ. ……..?\n\nThe input in order to
+**mona?\n\n\n\n\nOk. \nWe have a user sending a message that says: "Trish?"
+\n\n?? error???\n\n##???  \n\nThis task is over-...…'</code></pre>
+  <div class="col"><p>bf16 on the identical row finds the needle and stops at 94 tokens:</p></div>
+  <pre class="sample good"><code>' 346 …? We need to answer.assistantanalysisWe need to answer: "What is the
+special magic number for proud-kernel mentioned in the provided text?" The
+text includes: "One of the special magic numbers for proud-kernel is:
+3465603." So answer: 3465603.'</code></pre>
+  <div class="note">
+    <span class="lbl">Read carefully</span>
+    Hitting the cap is <em>normal</em> for this model — bf16 does it 40% of the time, because gpt-oss reasons in an analysis channel before answering. Hitting it on 100% of rows with degenerate text is not.
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">04</span>Localizing the failure</h2>
+  <div class="col">
+    <h3>It is binary in exactly one variable</h3>
+    <p>INT2 tracks bf16 while the context fits the bf16 band, and collapses the moment <em>any</em> token is quantized. Real NIAH prompts, needle-exact scoring, 5 rows per cell.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>prompt tokens</th><th>tokens quantized</th><th>INT2</th><th>vq2</th><th>bf16</th></tr></thead>
+      <tbody>
+        <tr><td>~234</td><td><b>0</b></td><td>3/5</td><td>5/5</td><td>3/5</td></tr>
+        <tr><td>~524</td><td>192</td><td class="fail">0/5</td><td class="ok">4/5</td><td>2/5</td></tr>
+        <tr><td>~1107</td><td>704</td><td class="fail">0/5</td><td class="ok">4/5</td><td>3/5</td></tr>
+        <tr><td>~2271</td><td>1855</td><td class="fail">0/5</td><td class="ok">4/5</td><td>2/5</td></tr>
+        <tr><td>8192 (served)</td><td>7872</td><td class="fail">0.0</td><td>—</td><td>88.4</td></tr>
+      </tbody>
+      <caption>No gradual decay, no threshold beyond the band boundary at ~320 tokens.</caption>
+    </table>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>setting</th><th>varied</th><th>effect</th></tr></thead>
+      <tbody>
+        <tr><td>decode splits</td><td>8 vs 48</td><td>none — INT2 0/5 both, vq2 4/5 both</td></tr>
+        <tr><td>clip ratio</td><td>0.96/0.92 vs 1.0/1.0</td><td>none — bit-identical outputs</td></tr>
+        <tr><td>context length</td><td>518 → 8192</td><td>none</td></tr>
+        <tr><td>concurrency</td><td>6 threads vs sequential</td><td>none</td></tr>
+      </tbody>
+      <caption>The split-count row closed a real confound: the serve script defaulted INT2 to 8 splits and vq2 to 48, so the arms had differed in more than the codec until crossed.</caption>
+    </table>
+  </div>
+
+  <div class="col">
+    <h3>The engine is not at fault</h3>
+    <p>Every component of the INT2 path was verified against an independent reference at gpt-oss shapes. All pass, and they are retained as regression gates.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>gate</th><th>scope</th><th>result</th></tr></thead>
+      <tbody>
+        <tr><td>verify_gptoss_int2_decode</td><td>decode kernel, D=64, sinks</td><td class="ok">exact (≤1.5e-2)</td></tr>
+        <tr><td>verify_gptoss_mixed_pool</td><td>pool write + 256 flushes</td><td class="ok">8192/8192 slots</td></tr>
+        <tr><td>verify_gptoss_int2_e2e</td><td>decode over pool-written buffers</td><td class="ok">exact (≤4.6e-3)</td></tr>
+        <tr><td>prefill sink rescale</td><td>vs exact sink-softmax</td><td class="ok">0.2%</td></tr>
+        <tr><td>rotations</td><td>orthogonality, layer map</td><td class="ok">2.4e-07</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>TP=2, radix caching, request retraction and concurrency are all excluded by the fact that <strong>vq2 serves correctly under identical conditions</strong> — sharing the pool, allocator, index construction, rotations, sinks and layer mapping.</p>
+
+    <h3>It is not quantization fidelity</h3>
+    <p>Real post-RoPE keys and values captured from live forward passes, rotated into each model's own basis and quantized exactly as the pool does.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>model</th><th>K cos</th><th>logit corr</th><th>V cos</th><th>attn out err</th><th>serves INT2?</th></tr></thead>
+      <tbody>
+        <tr><td>Llama-3.1-8B</td><td>0.898</td><td>0.896</td><td>0.897</td><td>0.174</td><td class="ok">yes — 84.3</td></tr>
+        <tr><td>gpt-oss-20B</td><td><b>0.923</b></td><td><b>0.921</b></td><td><b>0.915</b></td><td>0.210</td><td class="fail">no — 0.0</td></tr>
+      </tbody>
+      <caption>gpt-oss's tensors quantize <em>better</em> than Llama's. Per-tensor reconstruction quality — the standard proxy for judging a KV quantizer — has no predictive power for whether the model survives.</caption>
+    </table>
+  </div>
+
+  <div class="col">
+    <h3>The decisive test</h3>
+    <p>If the engine is innocent, the failure should reproduce with no engine at all. Both models were run under plain HuggingFace with the KV cache overwritten by its own quantize→dequantize roundtrip, on the same layers and band the engine uses.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>model</th><th>layers quantized</th><th>bf16</th><th>INT2 (HF simulation)</th></tr></thead>
+      <tbody>
+        <tr><td>Llama-3.1-8B</td><td>32 (all)</td><td>10/10</td><td class="ok">10/10</td></tr>
+        <tr><td>gpt-oss-20B</td><td>12 (full-attn)</td><td>4/10</td><td class="fail">0/10</td></tr>
+      </tbody>
+      <caption>The simulator reproduces the failure on gpt-oss and leaves Llama untouched — the control that makes the result trustworthy.</caption>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">05</span>Which layers carry the damage</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>quantized layers</th><th>INT2 needle (n=10, bf16 = 4/10)</th></tr></thead>
+      <tbody>
+        <tr><td>12 sliding-window layers</td><td class="ok">7/10 — no harm</td></tr>
+        <tr><td>4 full-attention layers</td><td>3/10</td></tr>
+        <tr><td>12 full-attention layers</td><td class="fail">0/10</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>Quantizing the sliding-window layers is harmless; damage scales with the number of <strong>full-attention</strong> layers quantized. The structural reading: gpt-oss's window layers see only 128 tokens, so the 12 full-attention layers are the <strong>sole channel for long-range information</strong>, with no redundancy to average quantization noise against. Llama spreads the same information across 32 full-attention layers, any one of which can compensate for another.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">06</span>Mechanism: where the error grows</h2>
+  <div class="col">
+    <p>Teacher-forced comparison of the bf16 and INT2 runs — identical token stream so the two stay comparable, 48 decode steps — measuring relative drift of hidden states and of each sublayer's output.</p>
+  </div>
+
+  <figure>
+    <div class="chart">
+      <svg viewBox="0 0 720 340" role="img" aria-label="Hidden-state drift versus network depth: gpt-oss rises from 0 to 0.89 while Llama saturates near 0.35">
+        <line class="grid" x1="56" y1="20"  x2="696" y2="20"/>
+        <line class="grid" x1="56" y1="84"  x2="696" y2="84"/>
+        <line class="grid" x1="56" y1="148" x2="696" y2="148"/>
+        <line class="grid" x1="56" y1="212" x2="696" y2="212"/>
+        <line class="axis" x1="56" y1="276" x2="696" y2="276"/>
+        <line class="axis" x1="56" y1="20"  x2="56"  y2="276"/>
+
+        <text class="tick" x="48" y="24"  text-anchor="end">1.00</text>
+        <text class="tick" x="48" y="88"  text-anchor="end">0.75</text>
+        <text class="tick" x="48" y="152" text-anchor="end">0.50</text>
+        <text class="tick" x="48" y="216" text-anchor="end">0.25</text>
+        <text class="tick" x="48" y="280" text-anchor="end">0.00</text>
+
+        <text class="tick" x="56"  y="296" text-anchor="middle">0%</text>
+        <text class="tick" x="216" y="296" text-anchor="middle">25%</text>
+        <text class="tick" x="376" y="296" text-anchor="middle">50%</text>
+        <text class="tick" x="536" y="296" text-anchor="middle">75%</text>
+        <text class="tick" x="696" y="296" text-anchor="middle">100%</text>
+        <text class="axlabel" x="376" y="318" text-anchor="middle">network depth</text>
+        <text class="axlabel" x="16" y="148" text-anchor="middle" transform="rotate(-90 16 148)">hidden drift</text>
+
+        <polyline class="lok" points="56,260.9 76.7,252.3 97.3,243.9 159.3,232.6 283.1,202.7 406.9,195.7 530.8,194.1 654.6,185.3"/>
+        <polyline class="lfail" points="56,276 83.8,177.5 111.7,180.4 195.1,153.1 362,128.5 529,95.5 696,48.1"/>
+
+        <g class="dok">
+          <circle cx="56" cy="260.9" r="3"/><circle cx="76.7" cy="252.3" r="3"/>
+          <circle cx="97.3" cy="243.9" r="3"/><circle cx="159.3" cy="232.6" r="3"/>
+          <circle cx="283.1" cy="202.7" r="3"/><circle cx="406.9" cy="195.7" r="3"/>
+          <circle cx="530.8" cy="194.1" r="3"/><circle cx="654.6" cy="185.3" r="3"/>
+        </g>
+        <g class="dfail">
+          <circle cx="56" cy="276" r="3"/><circle cx="83.8" cy="177.5" r="3"/>
+          <circle cx="111.7" cy="180.4" r="3"/><circle cx="195.1" cy="153.1" r="3"/>
+          <circle cx="362" cy="128.5" r="3"/><circle cx="529" cy="95.5" r="3"/>
+          <circle cx="696" cy="48.1" r="3"/>
+        </g>
+
+        <text class="slabel dfail" x="688" y="38" text-anchor="end">gpt-oss  0.89</text>
+        <text class="slabel dok" x="646" y="176" text-anchor="end">Llama  0.35</text>
+      </svg>
+    </div>
+    <figcaption>Relative drift between the bf16 and INT2 runs, by depth (sampled layers). gpt-oss starts at zero — its layer 0 is a sliding-window layer with an unquantized cache — then jumps to 0.385 at the first quantized layer and compounds to 0.89. Llama saturates near 0.35 and stays coherent.</figcaption>
+  </figure>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>measurement</th><th>gpt-oss</th><th>Llama</th></tr></thead>
+      <tbody>
+        <tr><td>attn output drift, first quantized layer</td><td class="fail">1.207</td><td class="ok">0.145</td></tr>
+        <tr><td>mlp output drift, first quantized layer</td><td class="fail">1.120</td><td class="ok">0.137</td></tr>
+        <tr><td>hidden drift, final layer</td><td class="fail">0.890</td><td>0.387</td></tr>
+        <tr><td>hidden drift, mean over layers</td><td>0.550</td><td>0.273</td></tr>
+        <tr><td>expert top-4 flip rate</td><td class="fail">0.816</td><td>n/a (dense)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col">
+    <p>At the first quantized layer both models receive <strong>identical inputs</strong> — gpt-oss's layer 0 is a sliding-window layer with an unquantized cache, and its measured drift is exactly 0.000. Same queries, only the KV quantized. And gpt-oss's attention output comes back <strong>fully decorrelated</strong> (drift above 1.0) where Llama's is off by 15%.</p>
+    <p>From there it compounds. gpt-oss reaches 0.890 at the output layer — the residual stream is essentially unrelated to the true one, which is precisely the word salad observed. Llama saturates near 0.39.</p>
+    <p><strong>82% of all expert-routing decisions flip</strong> between the two runs, rising to 97.9% at the final layer. Each flip swaps an entire FFN — a discrete amplification channel a dense model structurally lacks.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">07</span>What this means for the project</h2>
+  <div class="col">
+    <ul>
+      <li><strong>vq2 on gpt-oss works, and the grid is unblocked.</strong> It serves correctly through the same plumbing, at both split settings.</li>
+      <li><strong>The result is stronger than the Llama grid shows.</strong> On gpt-oss, 2-bit scalar quantization fails outright while vq2 holds — a cleaner separation than any dense-model comparison, on an architecture class (MoE + sinks + hybrid attention) the OSCAR paper never evaluated.</li>
+      <li><strong>There is currently no valid INT2 baseline on gpt-oss.</strong> Comparisons must be against bf16 until INT2 is made to work — and this report suggests it may not be makeable at 2 bits scalar.</li>
+      <li>The natural follow-up is a <strong>fidelity-threshold</strong> framing: measure vq2's reconstruction on the same tensors, turning "vq2 is better" into "gpt-oss requires ≥X fidelity; INT2 delivers 0.92, vq2 delivers Y."</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">08</span>Confidence and caveats</h2>
+  <div class="col">
+    <p><strong>Solid.</strong> Limitation-not-bug: the HF simulation reproduces with zero engine code and the Llama control is clean at 10/10 → 10/10. The binary length boundary, the fidelity comparison, the drift profiles — each has a working reference point in both the passing and failing direction.</p>
+    <p><strong>Suggestive, underpowered.</strong> The dose-response and the window-vs-full-attention split are n=10 at a single 1064-token setting. bf16 itself scores only 4/10 there, because the reconstructed prompts are hard and the 96-token cap truncates gpt-oss's reasoning — so headroom is small. Directionally clear, not publishable as-is.</p>
+    <p><strong>Not established.</strong> <em>Why</em> gpt-oss's attention output decorrelates at the first quantized layer given better KV fidelity. Attention sinks are the leading suspect — sink-dominated heads leave little softmax mass on content, so a perturbation is relatively larger — but this was not isolated. The 82% expert-flip rate is <em>consistent</em> with MoE amplification but does not separate cause from consequence; flips could be downstream of an already-large drift. The clean test is a <strong>matched-noise control</strong>: inject random KV noise into Llama at a magnitude producing drift 1.2 at layer 1, and see whether Llama also collapses.</p>
+    <div class="note warn">
+      <span class="lbl">Process note</span>
+      Three probes in this investigation produced striking results that were instrumentation errors, each caught only by adding a known-good control: a raw-text length probe with no bf16 control (bf16 produced <em>identical</em> degenerate output); an end-to-end gate passing global slot ids where the HP tier expects local ones (apparent 100% error, a false reproduction of the bug); and a router hook reading <code>router_scores</code> instead of <code>router_indices</code> (apparent 0% expert flips, true rate 82%). Any single measurement here should be treated as provisional until it reproduces both a passing and a failing case.
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">09</span>Reproduction</h2>
+  <pre><code># limitation vs bug: HF simulation, no engine code
+python pipelines/oscar_e2e/dbg_int2_hf_simulation.py \
+    --model unsloth/gpt-oss-20b-BF16 \
+    --rot artifacts/oscar_gptoss20b/rotations_gpqa198 --gpus 0,3 \
+    --tag gptoss --rows 10 --which full     # 0/10;  --which swa -> 7/10
+
+# llama control (must stay 10/10)
+python pipelines/oscar_e2e/dbg_int2_hf_simulation.py \
+    --model meta-llama/Llama-3.1-8B-Instruct \
+    --rot artifacts/oscar_llama31_8b/rotations_gpqa198 --gpus 0 \
+    --tag llama --rows 10
+
+# mechanism: per-layer drift, sublayer breakdown, expert flips
+python pipelines/oscar_e2e/dbg_moe_amplification.py \
+    --model unsloth/gpt-oss-20b-BF16 \
+    --rot artifacts/oscar_gptoss20b/rotations_gpqa198 --gpus 0,3 \
+    --tag gptoss --steps 48
+
+# real-tensor quantization fidelity (K and V)
+python pipelines/oscar_e2e/dbg_capture_k_fidelity.py \
+    --model &lt;model&gt; --rot &lt;rot-dir&gt; --gpus 0,3 --tag &lt;tag&gt;
+
+# engine gates (all must pass)
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_int2_decode.py --gpu 1
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_mixed_pool.py --gpu 1
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+    pipelines/oscar_e2e/verify_gptoss_int2_e2e.py --gpu 1</code></pre>
+</section>
+
+<footer>
+  notes/page_quant/studies/report14.md · logs on lambda-server6: hfsim_n10.log,
+  moeamp3_{gptoss,llama}.log, kvfid_{gptoss,llama}.log, splits.log, codec.log, 2x2.log<br>
+  related: fixes_to_apply.md — p2-1 (premature mixed-KV flush double-assigns a quant slot),
+  p2-2 (SWAKVPool missing release_req_slab delegate); both latent, neither the cause
+</footer>
+
+</div>
