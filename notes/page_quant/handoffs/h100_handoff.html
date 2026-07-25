@@ -56,9 +56,21 @@
   <p>Headline results so far: vq2 holds long-context retrieval where scalar INT2 collapses (Llama-3.1-8B 64K NIAH: 92 vs 77; Qwen3-8B: 77 vs 23), is context-flat at ~7 pts below bf16, decodes 12–13% faster than OSCAR-INT2 at 100K on A100, and the sharpest design law we've measured: <b>codebook calibration must cover the serving position range</b> — a 64K-calibrated codebook serves 131K at 0.16 (total collapse) while a 128K-calibrated one serves it at 68.2. gpqacc128k (4 × 131,072-token concat) is now the canonical calibration everywhere.</p>
 
   <h2><span class="no">2</span>What to copy to the H100 node</h2>
-  <p><b>Code comes from GitHub; binaries come by rsync.</b> The repo is pushed to <code>git@github.com:Amir-zsh/JointQK.git</code>, branch <code>pgq10</code> — clone that first. Two things are deliberately NOT in git and must be rsynced from lambda7: the <b>engine clone</b> <code>vendor/OSCAR-vq/</code> (gitignored; version-controlled by its own embedded git — copy the directory including its <code>.git</code>) and the <b>artifact binaries</b> below (rotations/codebooks are .pt files outside version control).</p>
+  <p><b>Code comes from GitHub (two repos); binaries come by rsync.</b> Both are private.
+  The project repo is <code>git@github.com:Amir-zsh/JointQK.git</code>, branch <code>pgq10</code>.
+  The engine is now its own repo too — <code>git@github.com:Amir-zsh/VQ-SGLang.git</code>, branch
+  <code>vq2-longhorizon</code> — so cloning it into <code>vendor/OSCAR-vq/</code> replaces the old
+  ~2&nbsp;GB vendor rsync. <b>Cloning is not sufficient on its own:</b> the artifact binaries below
+  (rotations and codebooks are <code>.pt</code>, excluded by <code>.gitignore</code>) and the eval
+  rows are in neither repo, and without them no quantized arm can serve. The other vendor trees
+  (<code>kvpress</code>, <code>OSCAR</code> reference, <code>turboquant-pytorch</code>,
+  <code>kivi</code>) are still rsync-only; you need them only for the baselines that import them.</p>
   <pre>git clone -b pgq10 git@github.com:Amir-zsh/JointQK.git teamily-project
-rsync -a lambda7:/vault/amir/efficient-llm/teamily-project/vendor/ teamily-project/vendor/
+git clone -b vq2-longhorizon git@github.com:Amir-zsh/VQ-SGLang.git \
+    teamily-project/vendor/OSCAR-vq
+# remaining vendor trees (kvpress / OSCAR reference / turboquant / kivi) are not on GitHub:
+rsync -a --exclude OSCAR-vq \
+    lambda-server7:/vault/amir/efficient-llm/teamily-project/vendor/ teamily-project/vendor/
 # then the artifact rows below</pre>
   <div class="tw"><table>
     <tr><th>what</th><th>path (rsync from lambda7)</th><th>size</th></tr>
