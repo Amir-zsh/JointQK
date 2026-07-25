@@ -117,6 +117,13 @@ ARGS=(
     --triton-attention-num-kv-splits "${KV_SPLITS:-$( [ "$MODE" = vq2 ] && echo 48 || echo 8 )}"
 )
 
+# Extra sglang flags for one-off ablation cells, e.g.
+# SERVE_EXTRA="--chunked-prefill-size 32768". Word-split deliberately.
+if [[ -n "${SERVE_EXTRA:-}" ]]; then
+    read -r -a _serve_extra_arr <<< "$SERVE_EXTRA"
+    ARGS+=("${_serve_extra_arr[@]}")
+fi
+
 if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
     # Serve-time parameters exactly as the authors' eval driver sets them
     # (64/256 band + clips live in the DRIVER env, not the code defaults).
