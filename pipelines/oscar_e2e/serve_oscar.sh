@@ -162,7 +162,7 @@ if [[ "$MODE" == "int2" || "$MODE" == "vq2" ]]; then
     # bundles are dense over the full-attention layers only; the runtime
     # R_v path handles those correctly.
     export SGLANG_OSCAR_ABSORB_V_ROTATION="${ABSORB_V_ROT:-1}"
-    export SGLANG_MIXED_KV_PREFIX_TOKENS=64
+    export SGLANG_MIXED_KV_PREFIX_TOKENS="${PREFIX_TOKENS:-64}"
     export SGLANG_MIXED_KV_RECENT_TOKENS="${RECENT_TOKENS:-256}"
     export SGLANG_MIXED_KV_HP_DTYPE=bfloat16
     export SGLANG_MIXED_KV_SCALE_DTYPE="${SCALE_DTYPE:-float32}"

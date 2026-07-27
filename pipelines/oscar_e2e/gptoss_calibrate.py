@@ -81,6 +81,20 @@ def capture_full_layers(model, input_ids, full_ids, prefill_chunk: int = 4096):
     }
 
 
+def _checkpoint_is_mxfp4(model_id: str) -> bool:
+    from transformers import AutoConfig
+    qc = getattr(
+        AutoConfig.from_pretrained(model_id, trust_remote_code=True),
+        "quantization_config", None,
+    )
+    if qc is None:
+        return False
+    fmt = qc.get("quant_method") if isinstance(qc, dict) else getattr(
+        qc, "quant_method", None
+    )
+    return str(fmt).lower().endswith("mxfp4")
+
+
 def load(args):
     # Attention implementation, by elimination: gpt-oss has no sdpa
     # (_supports_sdpa=False — sinks), flex_attention's compiled path breaks
@@ -91,9 +105,27 @@ def load(args):
     # transient at chunk=512, T=64K.
     from transformers import AutoModelForCausalLM, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+    # The official openai/gpt-oss-20b checkpoint ships MXFP4 MoE experts. Its
+    # packed-weight path dies with an illegal memory access while materializing
+    # across a multi-GPU device_map, and calibration wants bf16 statistics
+    # anyway, so ask transformers to dequantize at load. Absent on a plain
+    # bf16 checkpoint, where quantization_config=None leaves the load unchanged.
+    quant_cfg = None
+    device_map = "auto"
+    if _checkpoint_is_mxfp4(args.model):
+        from transformers import Mxfp4Config
+        quant_cfg = Mxfp4Config(dequantize=True)
+        # Even when dequantizing, sharding this checkpoint over a multi-GPU
+        # device_map dies with an illegal memory access while materializing the
+        # expert weights. Dequantized it is ~42 GB, which fits one 80 GB card
+        # alongside the ~8.6 GB transient eager-attention weights, so pin it.
+        device_map = {"": 0}
+        print(f"model {args.model}: MXFP4 checkpoint -> dequantizing to bf16, "
+              f"single-GPU device_map", flush=True)
     model = AutoModelForCausalLM.from_pretrained(
-        args.model, device_map="auto", dtype=torch.bfloat16,
-        attn_implementation="eager", trust_remote_code=True)
+        args.model, device_map=device_map, dtype=torch.bfloat16,
+        attn_implementation="eager", trust_remote_code=True,
+        quantization_config=quant_cfg)
     model.eval()
     base = model.model if hasattr(model, "model") else model
     full_ids = full_layer_ids(model)

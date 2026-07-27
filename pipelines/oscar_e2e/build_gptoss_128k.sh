@@ -6,16 +6,16 @@ set -u
 ROOT="${ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 GPUS="${*:?gpu list}"; CVD="${GPUS// /,}"
-MODEL="unsloth/gpt-oss-20b-BF16"
-OUT="$ROOT/artifacts/oscar_gptoss20b"
+MODEL="${MODEL:-unsloth/gpt-oss-20b-BF16}"
+OUT="${OUT:-$ROOT/artifacts/oscar_gptoss20b}"
 BAS="$OUT/basis_moments_128k"; POOL="$OUT/query_stats_128k"
 CBRAW="$OUT/vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k.pt"
 CBFP8="$OUT/vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k_fp8.pt"
 PY="$ROOT/.venv/bin/python"
-LOG="$ROOT/logs/build_gptoss_128k.log"; HB="$ROOT/logs/build_gptoss_128k.heartbeat"
+LOG="${LOG:-$ROOT/logs/build_gptoss_128k.log}"; HB="${HB:-$ROOT/logs/build_gptoss_128k.heartbeat}"
 mkdir -p logs
 log(){ echo "[$(date '+%F %T')] $*" >> "$LOG"; touch "$HB"; }
-space_guard(){ local free=$(df --output=avail -BG /vault | tail -1 | tr -dc 0-9)
+space_guard(){ local free=$(df --output=avail -BG "${DISK_GUARD_PATH:-$OUT}" | tail -1 | tr -dc 0-9)
   [ "$free" -ge "${1:-10}" ] || { log "DISK GUARD: ${free}G — abort"; exit 3; }; }
 log "=== gptoss gpqacc128k build start gpus=$CVD chunk=${PREFILL_CHUNK:-256}"
 space_guard 10
