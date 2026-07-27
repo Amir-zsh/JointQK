@@ -61,6 +61,12 @@ def main():
     ap.add_argument("--tokens", type=int, default=1024)
     ap.add_argument("--gen", type=int, default=96)
     ap.add_argument("--rows", type=int, default=3)
+    ap.add_argument("--groups", type=int, default=1,
+                    help="scale groups per head. 1 = the served config (all "
+                         "head_dim coords share one min-max). Higher = finer "
+                         "scales; the one int2 knob never tested, because the "
+                         "engine rejects --kv-cache-quant-group-size on hybrid "
+                         "SWA models.")
     ap.add_argument("--which", default="full",
                     help="full=quantize full-attn layers (engine behaviour); "
                          "swa=quantize the sliding-window layers instead; "
@@ -131,7 +137,7 @@ def main():
                         Rm = R[local]["rotation"].to(buf.device, torch.float32)
                         # [B,H,T,D] -> [T,H,D] band, rotate, quantize, rotate back
                         band = buf[0, :, lo:hi].permute(1, 0, 2).float()
-                        qd = quant_dequant_int2(band @ Rm) @ Rm.T
+                        qd = quant_dequant_int2(band @ Rm, args.groups) @ Rm.T
                         buf[0, :, lo:hi] = qd.permute(1, 0, 2).to(buf.dtype)
             past = cache
             new = []
@@ -143,8 +149,9 @@ def main():
         return tok.decode(new)
 
     print(f"# {args.tag}: which={args.which} -> {len(target_layers())} "
-          f"quantized layers, band=[{HP_PREFIX}, T-{HP_RECENT}), "
-          f"target~{args.tokens} tok")
+          f"quantized layers, groups={args.groups} "
+          f"({64 // args.groups if args.groups else 0} dims/scale at d=64), "
+          f"band=[{HP_PREFIX}, T-{HP_RECENT}), target~{args.tokens} tok")
     for mode in ("bf16", "int2"):
         hits = 0
         first = None

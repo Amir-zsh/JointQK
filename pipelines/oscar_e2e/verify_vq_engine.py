@@ -10,12 +10,14 @@ Gates (all must PASS):
                   reference roundtrip (same bundle) within 1e-2 rel.
   G2 score-equiv: softmax over q.K_hat scores (original space) equals softmax
                   over q_map(q).r_hat + HP-tier residual scores (stored
-                  space) -- validates the mean-shift invariance the engine
-                  relies on, mixing quant and HP tiers.
+                  space), both with and without a learned attention sink --
+                  validates the production prefill sink helper as well as
+                  mixed tiers.
   G3 kernel     : _fwd_grouped_kernel_stage1_quant_vq2 + unified stage-2
                   matches a torch attention reference over the reconstructed
-                  K_hat and dequantized int2 V within 2e-2 rel (fp16/bf16
-                  kernel math vs fp32 reference).
+                  K_hat and dequantized int2 V, including the production fused
+                  sink shift, within 2e-2 rel (fp16/bf16 kernel math vs fp32
+                  reference).
   G4 V roundtrip: engine strided-group V encode/decode (the VQ-V ablation
                   tier) matches a double-precision reference codec at
                   rate-distortion parity. Coordinate-placement bugs (the
@@ -69,6 +71,9 @@ def main():
         vq_encode,
         vq_map_k,
         vq_map_q,
+    )
+    from sglang.srt.layers.attention.quantized_kv_prefill import (
+        adjust_vq_attention_sinks,
     )
     from kvq.compression.group_vq import GroupVQCompressor
 
@@ -194,7 +199,11 @@ def main():
     n_hp = 64  # last 64 tokens act as the HP tier (exact residual rows)
     max32 = 0.0
     maxbf = 0.0
+    max_sink32 = 0.0
+    max_unshifted_sink_error = 0.0
     sm_scale_g2 = 1.0 / (D ** 0.5)
+    sinks = torch.linspace(-1.5, 1.5, QH, device=device)
+    shifted_sinks = adjust_vq_attention_sinks(q, sinks, mean, sm_scale_g2)
     for b in range(3):
         for qh in [0, QH // 2, QH - 1]:
             h = qh // 4
@@ -206,6 +215,9 @@ def main():
                 ]
             ) * sm_scale_g2
             p_orig = torch.softmax(s_orig, -1)
+            p_orig_sink = torch.softmax(
+                torch.cat([s_orig, sinks[qh].view(1)]), -1
+            )
             for q_m, is32 in ((q_m32, True), (q_m_bf, False)):
                 # Stored space: q_m . r_hat (quant) and q_m . r (HP rows).
                 s_store = torch.cat(
@@ -222,11 +234,41 @@ def main():
                         failures.append(
                             f"G2 b{b} qh{qh}: fp32 softmax delta {e:.3e}"
                         )
+                    p_store_sink = torch.softmax(
+                        torch.cat(
+                            [s_store, shifted_sinks[b, qh].view(1)]
+                        ),
+                        -1,
+                    )
+                    sink_e = (p_orig_sink - p_store_sink).abs().max().item()
+                    max_sink32 = max(max_sink32, sink_e)
+                    if sink_e > 2e-3:
+                        failures.append(
+                            f"G2-sink b{b} qh{qh}: shifted sink softmax "
+                            f"delta {sink_e:.3e}"
+                        )
+                    p_unshifted_sink = torch.softmax(
+                        torch.cat([s_store, sinks[qh].view(1)]), -1
+                    )
+                    max_unshifted_sink_error = max(
+                        max_unshifted_sink_error,
+                        (p_orig_sink - p_unshifted_sink)
+                        .abs()
+                        .max()
+                        .item(),
+                    )
                 else:
                     maxbf = max(maxbf, e)
+    if max_unshifted_sink_error < 1e-3:
+        failures.append(
+            "G2-sink fixture is not discriminating: leaving the sink "
+            f"unshifted changes softmax by only {max_unshifted_sink_error:.3e}"
+        )
     g2ok = not any(f.startswith("G2") for f in failures)
     print(
         f"  max softmax delta: fp32-map {max32:.2e} (gate 2e-3), "
+        f"shifted-sink {max_sink32:.2e} (gate 2e-3), "
+        f"unshifted-sink max {max_unshifted_sink_error:.2e}, "
         f"bf16-map {maxbf:.2e} (info)  {'PASS' if g2ok else 'FAIL'}"
     )
 
@@ -254,7 +296,9 @@ def main():
     v_sz[..., 0] = torch.rand(cache, H, device=device) * 0.1 + 0.05
     v_sz[..., 1] = torch.rand(cache, H, device=device)
 
-    q_dec = torch.randn(bs, QH, D, device=device, dtype=torch.bfloat16)
+    sink_q = torch.randn(bs, QH, D, device=device, dtype=torch.bfloat16)
+    q_dec = vq_map_q(sink_q, vq.q_map[l])
+    sinks_g3 = torch.linspace(-2.0, 1.0, QH, device=device)
     kv_indices = torch.randperm(cache, device=device)[: seq * bs].to(torch.int64)
     kv_indptr = torch.tensor([0, seq, 2 * seq], device=device, dtype=torch.int64)
     max_splits = 8
@@ -282,7 +326,16 @@ def main():
         logit_cap=0.0,
     )
     o = torch.zeros(bs, QH, D, device=device, dtype=torch.bfloat16)
-    _unified_stage2(att_out, att_lse, o, total_splits=max_splits)
+    _unified_stage2(
+        att_out,
+        att_lse,
+        o,
+        total_splits=max_splits,
+        sinks=sinks_g3,
+        sink_q=sink_q,
+        sink_mean=vq.mean[l],
+        sink_sm_scale=sm_scale,
+    )
 
     # Torch reference: reconstruct K_hat rows and dequant V for the same slots.
     cb16_l = vq.cb16[l]  # [H, NG, K, G]
@@ -306,7 +359,12 @@ def main():
         for qh in range(0, QH, 7):
             h = qh // 4
             s = (q_dec[b, qh].to(torch.float32) @ khat[:, h].T) * sm_scale
-            p = torch.softmax(s, -1)
+            sink_shift = (
+                sink_q[b, qh].to(torch.float32)
+                @ vq.mean[l, h].to(torch.float32)
+            ) * sm_scale
+            sink_logit = sinks_g3[qh] - sink_shift
+            p = torch.softmax(torch.cat([s, sink_logit.view(1)]), -1)[:-1]
             o_ref = p @ vv[:, h]
             e = rel_err(o[b, qh], o_ref)
             if e > 2e-2:

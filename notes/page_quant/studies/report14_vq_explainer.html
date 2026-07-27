@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the 2-bit KV cache actually works</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{
+    delimiters:[{left:'$$',right:'$$',display:true},
+                {left:'\\[',right:'\\]',display:true},
+                {left:'\\(',right:'\\)',display:false}],
+    ignoredTags:['script','noscript','style','textarea','pre','code','option','svg']
+  });"></script>
+<style>
+:root{
+  --paper:#f5f6f8; --panel:#fff; --panel2:#fafbfc;
+  --ink:#12171f; --body:#2b3440; --muted:#6b7684;
+  --rule:#dde2e9; --soft:#eef1f5;
+  --accent:#33518a; --accent-soft:#e8edf6;
+  --hp:#b0722a; --hp-soft:#f7ecdd;
+  --qz:#1f7a70; --qz-soft:#dff0ed;
+  --bad:#b3402c; --bad-soft:#fae9e5;
+  --warn:#8a6a1f;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --disp:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0f1319; --panel:#161b23; --panel2:#131820;
+    --ink:#eef2f7; --body:#c3ccd8; --muted:#8b96a5;
+    --rule:#28303b; --soft:#1c232c;
+    --accent:#7ba1dd; --accent-soft:#1a2536;
+    --hp:#dda45f; --hp-soft:#2e2418;
+    --qz:#5bc3b4; --qz-soft:#122a28;
+    --bad:#e8836a; --bad-soft:#2e1a15;
+    --warn:#d0a94e;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1319; --panel:#161b23; --panel2:#131820;
+  --ink:#eef2f7; --body:#c3ccd8; --muted:#8b96a5;
+  --rule:#28303b; --soft:#1c232c;
+  --accent:#7ba1dd; --accent-soft:#1a2536;
+  --hp:#dda45f; --hp-soft:#2e2418;
+  --qz:#5bc3b4; --qz-soft:#122a28;
+  --bad:#e8836a; --bad-soft:#2e1a15;
+  --warn:#d0a94e;
+}
+:root[data-theme="light"]{
+  --paper:#f5f6f8; --panel:#fff; --panel2:#fafbfc;
+  --ink:#12171f; --body:#2b3440; --muted:#6b7684;
+  --rule:#dde2e9; --soft:#eef1f5;
+  --accent:#33518a; --accent-soft:#e8edf6;
+  --hp:#b0722a; --hp-soft:#f7ecdd;
+  --qz:#1f7a70; --qz-soft:#dff0ed;
+  --bad:#b3402c; --bad-soft:#fae9e5;
+  --warn:#8a6a1f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--body);
+  font:16px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:52px 26px 100px}
+header{border-bottom:2px solid var(--ink);padding-bottom:26px;margin-bottom:14px}
+.kicker{font:11px/1.4 var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.16em}
+h1{font-family:var(--disp);font-size:44px;line-height:1.06;letter-spacing:-.02em;
+  color:var(--ink);margin:14px 0 14px;text-wrap:balance;font-weight:600}
+.deck{font-size:19px;line-height:1.5;color:var(--muted);max-width:70ch;margin:0 0 20px}
+.meta{font:12px/1.8 var(--mono);color:var(--muted)}
+section{margin:56px 0;scroll-margin-top:20px}
+h2{font-family:var(--disp);font-size:28px;line-height:1.18;letter-spacing:-.01em;
+  color:var(--ink);margin:0 0 6px;font-weight:600;text-wrap:balance}
+.sub{font-size:14px;color:var(--muted);margin:0 0 22px;max-width:70ch}
+h3{font-size:15px;color:var(--ink);margin:32px 0 8px;font-weight:650;
+  letter-spacing:.01em}
+h4{font:11px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);margin:24px 0 8px;font-weight:600}
+p{margin:0 0 14px;max-width:70ch}
+ul,ol{max-width:70ch;margin:0 0 14px;padding-left:22px}
+li{margin:0 0 7px}
+strong{color:var(--ink);font-weight:650}
+code{font-family:var(--mono);font-size:.88em;background:var(--soft);
+  padding:2px 5px;border-radius:3px;color:var(--ink)}
+pre{background:var(--panel2);border:1px solid var(--rule);border-radius:7px;
+  padding:15px 17px;overflow-x:auto;font:12.5px/1.6 var(--mono);color:var(--ink);
+  margin:14px 0 18px}
+pre code{background:none;padding:0;font-size:inherit}
+.hl{color:var(--accent);font-weight:650}
+.cmt{color:var(--muted)}
+figure{margin:26px 0 30px;max-width:1030px}
+figcaption{font-size:13px;line-height:1.5;color:var(--muted);margin-top:11px;
+  padding-left:14px;border-left:2px solid var(--rule);max-width:74ch}
+figcaption b{color:var(--body)}
+svg{display:block;max-width:100%;height:auto}
+.svgbox{background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+  padding:20px 18px;overflow-x:auto}
+.callout{border:1px solid var(--rule);background:var(--panel);
+  border-left:3px solid var(--accent);border-radius:6px;padding:16px 19px;
+  margin:20px 0;max-width:76ch}
+.callout p:last-child{margin-bottom:0}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout.key{border-left-color:var(--qz);background:var(--qz-soft)}
+.label{font:10.5px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.13em;
+  color:var(--muted);margin-bottom:8px;font-weight:600}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:8px;margin:18px 0 22px}
+table{border-collapse:collapse;width:100%;background:var(--panel);font-size:13px}
+th,td{padding:9px 13px;border-bottom:1px solid var(--soft);text-align:left;
+  vertical-align:top}
+th{font:10.5px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.09em;
+  color:var(--muted);background:var(--panel2);white-space:nowrap;font-weight:600}
+td{font:12.5px/1.5 var(--mono)}
+td.t{font:13px/1.55 var(--sans)}
+tr:last-child td{border-bottom:none}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--qz);font-weight:700}
+.no{color:var(--bad);font-weight:700}
+.wn{color:var(--warn);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:16px 18px}
+.card h4{margin-top:0}
+.card p:last-child{margin-bottom:0}
+.eq{background:var(--panel2);border:1px solid var(--rule);border-radius:7px;
+  padding:14px 18px;margin:16px 0;font:13.5px/2 var(--mono);color:var(--ink);
+  overflow-x:auto}
+.eq .an{color:var(--muted);font-size:.88em}
+.math{background:var(--panel);border:1px solid var(--rule);border-radius:7px;
+  padding:6px 20px;margin:18px 0;max-width:76ch;overflow-x:auto}
+.math .katex-display{margin:.7em 0}
+.math .katex{color:var(--ink)}
+.math .note{font:11.5px/1.5 var(--mono);color:var(--muted);
+  padding:0 0 10px;margin-top:-4px}
+.toc{background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+  padding:18px 22px;margin:28px 0 0;columns:2;column-gap:34px}
+.toc a{color:var(--body);text-decoration:none;display:block;padding:3px 0;
+  font-size:13.5px;break-inside:avoid}
+.toc a:hover{color:var(--accent);text-decoration:underline}
+.toc a span{color:var(--muted);font:11px var(--mono);margin-right:8px}
+a{color:var(--accent)}
+.pill{display:inline-block;font:10px/1 var(--mono);text-transform:uppercase;
+  letter-spacing:.1em;padding:4px 7px;border-radius:3px;vertical-align:middle;
+  font-weight:600}
+.pill.hp{background:var(--hp-soft);color:var(--hp)}
+.pill.qz{background:var(--qz-soft);color:var(--qz)}
+@media (max-width:860px){
+  .two{grid-template-columns:1fr}.toc{columns:1}h1{font-size:32px}
+  .wrap{padding:34px 18px 70px}
+}
+@media print{
+  body{background:#fff}.svgbox,table{break-inside:avoid}figure{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+<header>
+  <div class="kicker">KV-cache compression · gpt-oss-20B · implementation reference</div>
+  <h1>How the 2-bit KV cache actually works</h1>
+  <p class="deck">A byte-level walkthrough of the OSCAR mixed-precision KV cache as deployed:
+  what is stored, in what dtype, at what address, how it is written, how it is read back
+  inside the attention kernels — and where the two quantizers differ.</p>
+  <p class="meta">
+    Workspace <code>/vault/amir/efficient-llm/teamily-project</code> ·
+    Engine <code>vendor/OSCAR-vq/sglang-research</code> (branch <code>vq2-longhorizon</code>)<br>
+    Model <code>unsloth/gpt-oss-20b-BF16</code>, TP=2, A100-40GB ·
+    every number below read from the source or measured from the shipped artifacts · 2026-07-26
+  </p>
+</header>
+
+<nav class="toc">
+  <a href="#s1"><span>1</span>The problem, in bytes</a>
+  <a href="#s2"><span>2</span>Three bands, one address space</a>
+  <a href="#s3"><span>3</span>What one token costs</a>
+  <a href="#s4"><span>4</span>Path A — scalar INT2</a>
+  <a href="#s5"><span>5</span>Path B — group VQ</a>
+  <a href="#s6"><span>6</span>Same 8 bits, different points</a>
+  <a href="#s7"><span>7</span>How a token ages into the tier</a>
+  <a href="#s8"><span>8</span>Reading it back</a>
+  <a href="#s9"><span>9</span>The learned sink, and the bug it caused</a>
+  <a href="#s10"><span>10</span>Honest accounting</a>
+  <a href="#s11"><span>11</span>Code map</a>
+</nav>
+
+<section id="s1">
+  <h2>1. The problem, in bytes</h2>
+  <p class="sub">Why any of this exists. All figures for gpt-oss-20B at 128K context, batch 1.</p>
+
+  <p>Every token the model reads leaves behind a key vector and a value vector <em>per layer,
+  per KV head</em>. gpt-oss-20B has 24 layers, but they alternate: 12 are
+  <strong>sliding-window</strong> layers that only ever see the last 128 tokens, and 12 are
+  <strong>full-attention</strong> layers that see everything. Only the full-attention layers
+  accumulate a cache worth compressing — and only those 12 are touched by any of this.</p>
+
+  <div class="math">
+  \[
+  \underbrace{64\times 2\,\text{B}}_{K}\;+\;\underbrace{64\times 2\,\text{B}}_{V}
+  \;=\; 256\ \text{B}
+  \quad\text{per token, per layer, per KV head}
+  \]
+  \[
+  256\,\text{B}\times\underbrace{8}_{\text{KV heads}}\times\underbrace{12}_{\text{full-attn layers}}
+  \times\underbrace{131{,}072}_{\text{tokens}}\;=\;\mathbf{3.00\ GB}
+  \]
+  <p class="note">head_dim = 64. On a 40 GB card, for a single request. Under TP=2 each rank
+  holds half of this (4 KV heads).</p>
+  </div>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 210" role="img" aria-label="Cache size comparison, bf16 versus compressed">
+        <text x="0" y="14" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">KV CACHE, 12 FULL-ATTENTION LAYERS, 128K CONTEXT</text>
+        <!-- bf16 bar -->
+        <text x="0" y="52" font-family="var(--mono)" font-size="12" fill="var(--ink)">bf16</text>
+        <rect x="86" y="38" width="760" height="30" rx="3" fill="var(--hp)" opacity="0.85"/>
+        <text x="856" y="58" font-family="var(--mono)" font-size="13" fill="var(--ink)" font-weight="600">3.00 GB</text>
+        <!-- compressed bar -->
+        <text x="0" y="110" font-family="var(--mono)" font-size="12" fill="var(--ink)">compressed</text>
+        <rect x="86" y="96" width="10" height="30" rx="2" fill="var(--hp)" opacity="0.85"/>
+        <rect x="96" y="96" width="134" height="30" rx="2" fill="var(--qz)" opacity="0.85"/>
+        <text x="240" y="116" font-family="var(--mono)" font-size="13" fill="var(--ink)" font-weight="600">0.568 GB</text>
+        <text x="330" y="116" font-family="var(--mono)" font-size="12" fill="var(--qz)" font-weight="700">5.28x smaller</text>
+        <!-- legend -->
+        <rect x="86" y="150" width="11" height="11" rx="2" fill="var(--hp)" opacity="0.85"/>
+        <text x="103" y="160" font-family="var(--mono)" font-size="11" fill="var(--muted)">high-precision band (bf16) — 320 tokens, 7.5 MB</text>
+        <rect x="86" y="172" width="11" height="11" rx="2" fill="var(--qz)" opacity="0.85"/>
+        <text x="103" y="182" font-family="var(--mono)" font-size="11" fill="var(--muted)">quantized tier — 130,752 tokens, 561 MB</text>
+        <text x="620" y="160" font-family="var(--mono)" font-size="11" fill="var(--muted)">codebook (model state, not per-token): 1.5 MB</text>
+        <text x="620" y="182" font-family="var(--mono)" font-size="11" fill="var(--muted)">sliding-window layers stay bf16: 3.0 MB</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 1.</b> The compression only applies to the middle band of the
+    12 full-attention layers. The 12 sliding-window layers are left in bf16 and cost almost
+    nothing because they only retain 128 tokens each.</figcaption>
+  </figure>
+</section>
+
+<section id="s2">
+  <h2>2. Three bands, one address space</h2>
+  <p class="sub">The cache is not uniform. Understanding the slot-id namespace is the key to
+  understanding everything else.</p>
+
+  <p>Nothing quantizes the whole sequence. The pool keeps two <strong>high-precision (HP)</strong>
+  bands in bf16 and compresses only what is between them:</p>
+
+  <ul>
+    <li><span class="pill hp">prefix</span> the first <code>P = 64</code> tokens — the attention
+    sinks and prompt anchors, which attention returns to constantly;</li>
+    <li><span class="pill qz">quantized</span> everything in the middle;</li>
+    <li><span class="pill hp">recent</span> the most recent <code>R = 256</code> tokens, which
+    decode is most sensitive to.</li>
+  </ul>
+
+  <p>This has an immediate consequence that explains several otherwise-confusing measurements:
+  <strong>a prompt shorter than <code>P + R = 320</code> tokens never touches the quantized tier
+  at all</strong> and is served entirely from bf16.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 362" role="img" aria-label="Cache bands and slot address space">
+        <text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">LOGICAL VIEW &#8212; ONE REQUEST&#8217;S TOKEN POSITIONS &#160;<tspan fill="var(--muted)" opacity="0.75">(widths schematic)</tspan></text>
+        <rect x="0" y="26" width="90" height="38" rx="3" fill="var(--hp)" opacity="0.85"/>
+        <rect x="90" y="26" width="700" height="38" fill="var(--qz)" opacity="0.85"/>
+        <rect x="790" y="26" width="150" height="38" rx="3" fill="var(--accent)" opacity="0.85"/>
+        <text x="45" y="50" font-family="var(--mono)" font-size="10.5" fill="#fff" text-anchor="middle" font-weight="700">P = 64</text>
+        <text x="440" y="50" font-family="var(--mono)" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">quantized middle</text>
+        <text x="865" y="50" font-family="var(--mono)" font-size="10.5" fill="#fff" text-anchor="middle" font-weight="700">R = 256</text>
+        <text x="0" y="79" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pos 0</text>
+        <text x="45" y="79" font-family="var(--mono)" font-size="9.5" fill="var(--hp)" text-anchor="middle" font-weight="700">bf16 sinks</text>
+        <text x="440" y="79" font-family="var(--mono)" font-size="9.5" fill="var(--qz)" text-anchor="middle" font-weight="700">2 bits/coord</text>
+        <text x="865" y="79" font-family="var(--mono)" font-size="9.5" fill="var(--accent)" text-anchor="middle" font-weight="700">bf16 recent</text>
+        <text x="940" y="79" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="end">newest</text>
+
+        <text x="470" y="103" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="middle">req_to_token[req, pos] &#8594; int32 slot id &#8212; the bands land in a DIFFERENT order in memory</text>
+
+        <!-- connectors: logical band -> physical region (they cross; that is the point) -->
+        <path d="M45 88 C 45 120, 828 120, 828 152" stroke="var(--hp)" stroke-width="2" fill="none" opacity="0.8" marker-end="url(#arH)"/>
+        <path d="M440 88 C 440 120, 377 120, 377 152" stroke="var(--qz)" stroke-width="2" fill="none" opacity="0.8" marker-end="url(#arQ)"/>
+        <path d="M865 88 C 865 120, 921 120, 921 152" stroke="var(--accent)" stroke-width="2" fill="none" opacity="0.8" marker-end="url(#arA)"/>
+        <defs>
+          <marker id="arH" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--hp)"/></marker>
+          <marker id="arQ" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--qz)"/></marker>
+          <marker id="arA" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--accent)"/></marker>
+        </defs>
+
+        <text x="0" y="146" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">PHYSICAL VIEW &#8212; THE WHOLE POOL, SHARED BY ALL 8 REQUESTS &#160;<tspan fill="var(--ink)" opacity="0.9">(to scale)</tspan></text>
+        <rect x="0.0" y="158" width="754.8" height="40" rx="3" fill="var(--qz)" opacity="0.85"/>
+        <rect x="754.8" y="158" width="147.2" height="40" fill="var(--hp)" opacity="0.85"/>
+        <rect x="902.0" y="158" width="38.0" height="40" rx="3" fill="var(--accent)" opacity="0.85"/>
+        <text x="377" y="176" font-family="var(--mono)" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">quant pages &#8212; 42,008 slots</text>
+        <text x="377" y="191" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" opacity="0.9">5,251 pages x N_Q=8 &#160;(page 0 reserved for padded writes)</text>
+        <text x="828" y="176" font-family="var(--mono)" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">HP-prefix</text>
+        <text x="828" y="190" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle">8,192 slots</text>
+
+        <line x1="921" y1="200" x2="921" y2="216" stroke="var(--accent)" stroke-width="1"/>
+        <text x="940" y="228" font-family="var(--mono)" font-size="9.5" fill="var(--accent)" text-anchor="end" font-weight="700">HP-recent: 8 rings x 264 = 2,112 slots</text>
+
+        <line x1="754.8" y1="152" x2="754.8" y2="212" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="0" y="212" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">slot 0</text>
+        <text x="751" y="245" font-family="var(--mono)" font-size="10" fill="var(--ink)" text-anchor="end" font-weight="700">HP_OFFSET = 5251 x 8 = 42,008</text>
+
+        <rect x="0" y="258" width="940" height="96" rx="5" fill="var(--accent-soft)" stroke="var(--rule)"/>
+        <text x="14" y="278" font-family="var(--mono)" font-size="11.5" fill="var(--ink)" font-weight="700">The entire tier test is one integer comparison: &#160;slot &gt;= HP_OFFSET &#8658; high precision.</text>
+        <text x="14" y="298" font-family="var(--mono)" font-size="10.5" fill="var(--body)">No side table. Every kernel reads the tier off the slot id. HP arena index = slot - HP_OFFSET.</text>
+        <text x="14" y="322" font-family="var(--mono)" font-size="10.5" fill="var(--body)"><tspan fill="var(--qz)" font-weight="700">quant</tspan> + <tspan fill="var(--hp)" font-weight="700">HP-prefix</tspan> are shared paged free lists &#8212; any request draws any free page (dynamic).</text>
+        <text x="14" y="341" font-family="var(--mono)" font-size="10.5" fill="var(--body)"><tspan fill="var(--accent)" font-weight="700">HP-recent</tspan> is NOT allocated: req slot i statically owns [i&#183;264 + base, &#8230;+264). Pure arithmetic.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 2.</b> Two different things, deliberately stacked. The top strip is
+    <b>one request's token positions</b>; the bottom is <b>the entire pool, shared by all 8 request
+    slots</b>. Note that the three bands do <em>not</em> keep their order in memory: the
+    <span style="color:var(--hp)"><b>prefix</b></span> band sits <em>above</em> the whole quantized
+    region in the address space, not before it — which is why the connectors cross. The physical
+    widths are to scale from the deployed server's own startup log
+    (<code>num_quant_pages=5251, N_Q=8, hp_prefix_pool_tokens=8192, max_req_slots=8,
+    recent_ring=264</code>); the logical widths are schematic, since at 8K context the two HP bands
+    are really only 3.9% of the sequence.
+    Source: <code>unified_kv_pool.py:193-204, 431-453</code>;
+    <code>unified_kv_allocator.py:65-76, 165-173</code>.</figcaption>
+  </figure>
+
+  <h3>The geometry constants, and where they come from</h3>
+  <p>One constant drives the whole layout. <code>N_Q</code> is the number of quantized slots that
+  fit in the byte footprint of a single high-precision token — since INT2 packs 4 coordinates per
+  byte and bf16 uses 2 bytes per coordinate, that ratio is exactly 4x2 = 8:</p>
+
+  <div class="math">
+  \[
+  N_Q \;=\; 4\cdot\operatorname{sizeof}(\texttt{hp\_dtype}) \;=\; 8 \quad\text{(bf16)}
+  \]
+  \[
+  \begin{aligned}
+  \operatorname{HP\_OFFSET} &= \texttt{num\_quant\_pages}\cdot N_Q &&= 5251\times 8 = 42{,}008\\
+  \text{recent ring}        &= R + N_Q                            &&= 256 + 8 = 264\ \text{slots/request}\\
+  \text{flush interval}     &= N_Q                                &&= 8\ \text{tokens/page}
+  \end{aligned}
+  \]
+  <p class="note">compute_page_geometry, unified_kv_pool.py:110-127. The startup log prints this
+  ring formula as "R + N_Q-1"; that string is stale — the code adds a full N_Q.</p>
+  </div>
+
+  <p><code>N_Q</code> is simultaneously the allocator page size, the engine's
+  <code>--page-size</code>, and the flush batch size. <code>P</code> and <code>R</code> are both
+  required to be multiples of it. The recent ring is deliberately one page larger than <code>R</code>
+  so that a decode step can reserve its next slot before the flush plan releases the oldest page,
+  without the two aliasing.</p>
+
+  <div class="callout">
+    <div class="label">Deployed vs library defaults</div>
+    <p>The engine's own defaults are <code>P=32, R=128</code>
+    (<code>environ.py:215-216</code>). The serve script overrides them to
+    <code>P=64, R=256</code>. Everything in this document uses the deployed values.</p>
+  </div>
+
+  <h3>Who owns a slot? Three different allocation disciplines</h3>
+  <p>In a stock bf16 server there is one flat pool and a single free list: every request takes
+  whatever slot is free next. Here the three regions behave differently, and only one of them is
+  statically partitioned.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Region</th><th class="num">share</th><th>Discipline</th><th class="t">How a slot is obtained</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="pill qz">quant</span></td><td class="num">80.3%</td>
+          <td><b>dynamic, shared</b></td>
+          <td class="t">Paged free list (<code>free_pages</code>), pages of <code>N_Q=8</code>. Any request draws any free page; freed pages return to the same list. This is ordinary paged allocation — just at page granularity 8 instead of 1.</td>
+        </tr>
+        <tr>
+          <td><span class="pill hp">HP-prefix</span></td><td class="num">15.7%</td>
+          <td><b>dynamic, shared</b></td>
+          <td class="t">Its own paged free list (<code>hp_prefix_free_pages</code>). The allocator takes <code>req_pool_indices</code> only to drive iteration order — the allocation itself is pooled, so any request can get any free page.</td>
+        </tr>
+        <tr>
+          <td><span class="pill hp" style="background:var(--accent-soft);color:var(--accent)">HP-recent</span></td><td class="num">4.0%</td>
+          <td><b>static, private</b></td>
+          <td class="t"><b>Not allocated at all.</b> Request slot <code>i</code> permanently owns a 264-slot ring at <code>i&#215;264 + base</code>, advanced by a per-request cursor. No free list, no search.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The static ring is a deliberate trade. Every decode step must write one HP-recent slot and every
+  eighth step must demote the oldest page — putting that on a free list would mean an allocation and
+  a lookup on the hottest path in the engine. Making it pure arithmetic keeps the decode step
+  <strong>sync-free and shape-static</strong>, which is what allows the whole thing to be captured in
+  a CUDA graph. The cost is <code>264 &#215; max_req_slots = 2,112</code> slots reserved whether or
+  not the requests exist — 4% of the pool.</p>
+
+  <div class="callout">
+    <div class="label">Can two requests share the same physical slot?</div>
+    <p><strong>Not in this deployment.</strong> The pools are "shared" only in the sense that the
+    <em>free lists</em> are common — at any moment each slot belongs to exactly one request. True
+    sharing (two requests whose identical prompt prefix points at the same KV rows) is what a radix
+    prefix cache does, and the served configuration runs with
+    <code>--disable-radix-cache</code>. HP-recent could not be shared in any case, since it is carved
+    by request index.</p>
+  </div>
+
+  <p>So: <em>capacity</em> is fixed at startup — all three arenas are allocated once, sized from
+  <code>max_total_num_tokens</code> and <code>max_running_requests</code>, and never grow.
+  <em>Placement</em> is dynamic for 96% of the slots and static for the 4% that decode touches every
+  single step.</p>
+</section>
+
+<section id="s3">
+  <h2>3. What one token costs</h2>
+  <p class="sub">Every tensor, its shape, its dtype, and the byte arithmetic that follows.</p>
+
+  <h3>The physical tensors, per full-attention layer</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Tensor</th><th>Shape</th><th>Dtype</th><th class="t">Holds</th></tr></thead>
+      <tbody>
+        <tr><td>k_buffer <span class="pill qz">VQ</span></td><td>[slots+1, 8, 16]</td><td>uint8</td>
+          <td class="t">One codebook index per VQ group; 16 groups cover 64 dims. The <b>+1</b> is a trash row — masked writes are redirected there so the scatter stays shape-static under CUDA graphs.</td></tr>
+        <tr><td>k_buffer <span class="pill qz">INT2</span></td><td>[slots, 8, 16]</td><td>uint8</td>
+          <td class="t">64 dims packed 4-per-byte. Same 16 bytes, entirely different meaning.</td></tr>
+        <tr><td>k_scales_zeros</td><td>[slots+1, 8, 2]</td><td>fp32</td>
+          <td class="t">INT2: (scale, zero). VQ: slot 0 = per-token RMS scale, <b>slot 1 always zero</b> — kept only so decode strides match INT2.</td></tr>
+        <tr><td>v_buffer</td><td>[slots, 8, 16]</td><td>uint8</td>
+          <td class="t">V is scalar INT2 in <em>both</em> arms. Four 2-bit codes per byte.</td></tr>
+        <tr><td>v_scales_zeros</td><td>[slots, 8, 2]</td><td>fp32</td>
+          <td class="t">Affine (scale, zero) for V. Both slots used.</td></tr>
+        <tr><td>hp_k_buffer</td><td>[hp_slots, 8, 64]</td><td>bf16</td>
+          <td class="t">High-precision K — but <b>not raw K</b>. Already in the storage basis (VQ residual, or the OSCAR rotated basis). This matters in §9.</td></tr>
+        <tr><td>hp_v_buffer</td><td>[hp_slots, 8, 64]</td><td>bf16</td>
+          <td class="t">High-precision V in the R<sub>v</sub> basis.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:13px;color:var(--muted)"><code>slots = num_quant_pages x N_Q</code>;
+  <code>hp_slots = num_hp_prefix_slots + max_req x 264</code>.
+  Source: <code>unified_kv_pool.py:488-706</code>.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 330" role="img" aria-label="Byte layout of one cache entry">
+        <text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">ONE TOKEN &#183; ONE LAYER &#183; ONE KV HEAD</text>
+
+        <text x="0" y="42" font-family="var(--mono)" font-size="12" fill="var(--hp)" font-weight="700">HIGH-PRECISION ENTRY &#8212; 256 bytes</text>
+        <rect x="0" y="52" width="460" height="34" rx="3" fill="var(--hp)" opacity="0.75"/>
+        <rect x="470" y="52" width="460" height="34" rx="3" fill="var(--hp)" opacity="0.5"/>
+        <text x="230" y="74" font-family="var(--mono)" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">K &#160;64 x bf16 &#160;= &#160;128 B</text>
+        <text x="700" y="74" font-family="var(--mono)" font-size="11" fill="#fff" text-anchor="middle" font-weight="600">V &#160;64 x bf16 &#160;= &#160;128 B</text>
+
+        <text x="0" y="126" font-family="var(--mono)" font-size="12" fill="var(--qz)" font-weight="700">COMPRESSED ENTRY &#8212; 48 bytes &#160;(5.33x smaller)</text>
+        <rect x="0" y="136" width="230" height="34" rx="3" fill="var(--qz)" opacity="0.8"/>
+        <rect x="230" y="136" width="58" height="34" fill="var(--qz)" opacity="0.5"/>
+        <rect x="288" y="136" width="58" height="34" rx="3" fill="var(--bad)" opacity="0.35"/>
+        <text x="115" y="158" font-family="var(--mono)" font-size="10.5" fill="#fff" text-anchor="middle" font-weight="600">16 x uint8 index = 16 B</text>
+        <text x="259" y="158" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" font-weight="600">scale 4B</text>
+        <text x="317" y="158" font-family="var(--mono)" font-size="9.5" fill="var(--bad)" text-anchor="middle" font-weight="700">dead 4B</text>
+        <rect x="360" y="136" width="230" height="34" rx="3" fill="var(--qz)" opacity="0.6"/>
+        <rect x="590" y="136" width="58" height="34" fill="var(--qz)" opacity="0.4"/>
+        <rect x="648" y="136" width="58" height="34" rx="3" fill="var(--qz)" opacity="0.4"/>
+        <text x="475" y="158" font-family="var(--mono)" font-size="10.5" fill="#fff" text-anchor="middle" font-weight="600">16 B packed int2</text>
+        <text x="619" y="158" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" font-weight="600">scale 4B</text>
+        <text x="677" y="158" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" font-weight="600">zero 4B</text>
+
+        <text x="0" y="188" font-family="var(--mono)" font-size="10" fill="var(--muted)">K = 24 B &#160;(VQ index + RMS scale)</text>
+        <text x="360" y="188" font-family="var(--mono)" font-size="10" fill="var(--muted)">V = 24 B &#160;(int2 + affine scale/zero)</text>
+        <text x="740" y="158" font-family="var(--mono)" font-size="12" fill="var(--ink)" font-weight="700">total 48 B</text>
+
+        <rect x="0" y="212" width="940" height="106" rx="5" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="14" y="234" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.1">EFFECTIVE BITS PER COORDINATE, AS DEPLOYED (fp32 scales)</text>
+        <text x="14" y="257" font-family="var(--mono)" font-size="11.5" fill="var(--body)">payload &#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;2.00 b/coord&#160;&#160;&#160;&#160;&#160;<tspan fill="var(--muted)">16 B over 64 dims &#8212; exactly 2 bits, no padding waste</tspan></text>
+        <text x="14" y="278" font-family="var(--mono)" font-size="11.5" fill="var(--body)">+ scale metadata&#160;&#160;&#160;1.00 b/coord&#160;&#160;&#160;&#160;&#160;<tspan fill="var(--muted)">2 fp32 slots = 8 B over 64 dims</tspan></text>
+        <text x="14" y="302" font-family="var(--mono)" font-size="12.5" fill="var(--ink)" font-weight="700">= 3.00 b/coord allocated&#160;&#160;&#160;&#160;<tspan fill="var(--bad)">not 2.00</tspan></text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 3.</b> The "2-bit" cache is <b>3.0 bits per coordinate</b> as actually
+    deployed. The payload really is exactly 2 bits, but per-token scale metadata adds a full extra
+    bit at <code>head_dim=64</code> — and for VQ-K half of that is a slot the code never writes.
+    head_dim 64 is the worst case: the overhead is
+    <code>16 &#215; scale_bytes / group_size</code>, so a 128-dim head pays only 0.5.</figcaption>
+  </figure>
+
+  <div class="callout bad">
+    <div class="label">Correction to earlier drafts of this document</div>
+    <p>Previous versions claimed bf16 scales and a 40-byte entry. The runtime default is
+    <strong>fp32</strong> (<code>environ.py:218</code>; <code>serve_oscar.sh</code> also sets it
+    explicitly), giving <strong>48 bytes</strong> and 3.0 b/coord. The bf16 default in the class
+    signature is effectively dead — every real call site resolves the dtype from the environment.</p>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>head_dim</th><th>scale dtype</th><th class="num">payload</th><th class="num">metadata</th><th class="num">total b/coord</th></tr></thead>
+      <tbody>
+        <tr><td>64 <span class="pill qz">gpt-oss</span></td><td>fp32 (deployed)</td><td class="num">2.00</td><td class="num">1.00</td><td class="num"><span class="no">3.00</span></td></tr>
+        <tr><td>64</td><td>bf16</td><td class="num">2.00</td><td class="num">0.50</td><td class="num">2.50</td></tr>
+        <tr><td>128 <span class="pill hp">llama</span></td><td>fp32</td><td class="num">2.00</td><td class="num">0.50</td><td class="num">2.50</td></tr>
+        <tr><td>128</td><td>bf16</td><td class="num">2.00</td><td class="num">0.25</td><td class="num">2.25</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Switching <code>SCALE_DTYPE=bf16</code> would recover
+  ~16% of the compressed tier at 128K (568 &rarr; 475 MB) at some cost in scale precision. Untested.</p>
+</section>
+
+<section id="s4">
+  <h2>4. Path A — scalar INT2</h2>
+  <p class="sub">The published OSCAR baseline. Each coordinate is rounded independently to one of
+  four levels, with one shared scale for the whole head.</p>
+
+  <h3>The encode pipeline</h3>
+  <div class="math">
+  \[
+  \tilde k = k R_k
+  \qquad\text{($R_k$ orthonormal $64\times64$, per layer)}
+  \]
+  \[
+  \tau=\operatorname{sort}\bigl(|\tilde k|\bigr)_{\lfloor 0.96\cdot 64\rfloor},
+  \qquad
+  \tilde k \leftarrow \operatorname{clamp}(\tilde k,\,-\tau,\,+\tau)
+  \]
+  \[
+  s=\frac{\max\tilde k-\min\tilde k}{3},
+  \qquad
+  z=\frac{-\min\tilde k}{s},
+  \qquad
+  q=\Bigl\lfloor \tfrac{\tilde k}{s}+z+\tfrac12 \Bigr\rfloor \in\{0,1,2,3\}
+  \]
+  \[
+  \texttt{packed}=q_0\;|\;(q_1\!\ll\!2)\;|\;(q_2\!\ll\!4)\;|\;(q_3\!\ll\!6)
+  \]
+  <p class="note">Result: 16 bytes + one (scale, zero) pair. The denominator 3 is
+  \(2^2-1\), the largest representable code.</p>
+  </div>
+
+  <p>Reconstruction is</p>
+  <div class="math">
+  \[
+  \hat x=(q-z)\,s
+  \]
+  </div>
+  <p>The endpoints are <em>exact</em>: \(q=0\) returns \(\min\) and \(q=3\) returns \(\max\). The
+  scheme is affine/asymmetric — the four levels are evenly spaced, but the grid is not centred on
+  zero and zero is generally not representable. Note also that \(z\) is stored as a
+  <em>float</em>, not an integer, so no rounding of the zero-point occurs.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 250" role="img" aria-label="INT2 quantization levels and the quartered byte packing">
+        <text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">THE FOUR LEVELS</text>
+        <line x1="40" y1="52" x2="900" y2="52" stroke="var(--rule)" stroke-width="2"/>
+        <g font-family="var(--mono)" font-size="10" fill="var(--muted)" text-anchor="middle">
+          <line x1="120" y1="42" x2="120" y2="62" stroke="var(--qz)" stroke-width="3"/>
+          <line x1="380" y1="42" x2="380" y2="62" stroke="var(--qz)" stroke-width="3"/>
+          <line x1="640" y1="42" x2="640" y2="62" stroke="var(--qz)" stroke-width="3"/>
+          <line x1="900" y1="42" x2="900" y2="62" stroke="var(--qz)" stroke-width="3"/>
+          <text x="120" y="78" fill="var(--ink)">q=0</text><text x="380" y="78" fill="var(--ink)">q=1</text>
+          <text x="640" y="78" fill="var(--ink)">q=2</text><text x="900" y="78" fill="var(--ink)">q=3</text>
+          <text x="120" y="94">min</text><text x="900" y="94">max</text>
+        </g>
+        <text x="380" y="34" font-family="var(--mono)" font-size="10" fill="var(--muted)" text-anchor="middle">&#8592;&#8212; step = (max-min)/3 &#8212;&#8594;</text>
+        <text x="40" y="118" font-family="var(--mono)" font-size="11" fill="var(--body)">One (scale, zero) pair covers <tspan fill="var(--ink)" font-weight="700">all 64 coordinates</tspan> of the head. Every coordinate gets the same four levels.</text>
+
+        <text x="0" y="152" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">THE QUARTERED BYTE &#8212; WHICH DIMENSIONS SHARE A BYTE</text>
+        <rect x="40" y="166" width="300" height="40" rx="4" fill="var(--panel2)" stroke="var(--qz)" stroke-width="1.5"/>
+        <line x1="115" y1="166" x2="115" y2="206" stroke="var(--rule)"/>
+        <line x1="190" y1="166" x2="190" y2="206" stroke="var(--rule)"/>
+        <line x1="265" y1="166" x2="265" y2="206" stroke="var(--rule)"/>
+        <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+          <text x="77" y="184" fill="var(--ink)" font-weight="700">q3</text>
+          <text x="152" y="184" fill="var(--ink)" font-weight="700">q2</text>
+          <text x="227" y="184" fill="var(--ink)" font-weight="700">q1</text>
+          <text x="302" y="184" fill="var(--ink)" font-weight="700">q0</text>
+          <text x="77" y="199" fill="var(--muted)" font-size="9">bits 7:6</text>
+          <text x="152" y="199" fill="var(--muted)" font-size="9">bits 5:4</text>
+          <text x="227" y="199" fill="var(--muted)" font-size="9">bits 3:2</text>
+          <text x="302" y="199" fill="var(--muted)" font-size="9">bits 1:0</text>
+        </g>
+        <text x="40" y="160" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">byte i (MSB left)</text>
+        <text x="370" y="180" font-family="var(--mono)" font-size="11" fill="var(--body)">holds dims &#160;<tspan fill="var(--ink)" font-weight="700">48+i</tspan>, <tspan fill="var(--ink)" font-weight="700">32+i</tspan>, <tspan fill="var(--ink)" font-weight="700">16+i</tspan>, <tspan fill="var(--ink)" font-weight="700">i</tspan></text>
+        <text x="370" y="198" font-family="var(--mono)" font-size="10.5" fill="var(--bad)">NOT four consecutive dims &#8212; stride is head_dim/4 = 16</text>
+        <text x="40" y="232" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">This "quartered" layout is why decode accumulates into four separate quarter-tiles, and why the prefill dequant kernel indexes byte (d mod 16), crumb (d div 16).</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 4.</b> Byte <code>i</code> of a packed row does <em>not</em> hold dims
+    <code>4i..4i+3</code>. It holds dims <code>i</code>, <code>16+i</code>, <code>32+i</code>,
+    <code>48+i</code>. Getting this wrong silently decodes garbage; both the pack kernel
+    (<code>kv_quant_kernels.py:253</code>) and every reader agree on it.</figcaption>
+  </figure>
+
+  <h3>The clip, and why it exists</h3>
+  <p>Before computing min/max, each row is symmetrically clipped at the
+  <code>floor(ratio &#215; head_dim)</code>-th order statistic of <code>|row|</code>
+  — deployed at <code>0.96</code> for K and <code>0.92</code> for V. With only four levels, a single
+  outlier coordinate would stretch <code>(max-min)</code> and coarsen the step for all 64
+  coordinates. Clipping trades a large error on a few outliers for a smaller error everywhere
+  else. It is implemented as a bisection search inside the kernel
+  (<code>gpu_flush_int2.py:204-226</code>), not a sort.</p>
+
+  <h3>The basis: deliberately flattening the spectrum</h3>
+  <p>This is the design decision that makes a single shared scale defensible. The K rotation
+  (<code>qqt_r_h_pbr</code>) is orthonormal and ends in a Hadamard-style mixing stage. Measured on
+  the shipped artifact for layer 1:</p>
+
+  <div class="math">
+  \[
+  \frac{\lambda_{\max}}{\lambda_{\min}}\Bigl(\Sigma_K\Bigr)=\mathbf{54.6}
+  \qquad (\lambda\in[0.397,\;21.67])
+  \]
+  \[
+  \overline{|R_{ij}|}=0.102 \;\approx\; \tfrac{1}{\sqrt{64}}=0.125
+  \qquad\text{(dense, near-uniform $\Rightarrow$ energy spreading)}
+  \]
+  \[
+  \operatorname{diag}\bigl(R^{\top}\Sigma_K R\bigr)\;\longrightarrow\;
+  \text{flat at } \overline{\lambda}=2.41
+  \]
+  <p class="note">Measured on the shipped artifact, layer 1. A Hadamard \(H\) satisfies
+  \(\sum_j H_{ij}^2\lambda_j=\overline{\lambda}\) for every row \(i\) — every coordinate ends up
+  with the same variance.</p>
+  </div>
+
+  <p>Because a scalar quantizer with one shared scale can only be efficient if every coordinate has
+  comparable variance, INT2's basis is chosen to <strong>destroy</strong> the anisotropy in the
+  data. That is a coherent design — but it also means INT2 must spend the same 2 bits on every
+  direction, whether that direction matters to the queries or not. Section 5 takes the opposite
+  approach.</p>
+</section>
+
+<section id="s5">
+  <h2>5. Path B — group vector quantization</h2>
+  <p class="sub">Instead of rounding each coordinate independently, look up a whole 4-dimensional
+  sub-vector in a learned codebook. Same 2 bits per coordinate.</p>
+
+  <h3>The encode pipeline</h3>
+  <div class="math">
+  \[
+  r=(k-\mu)F
+  \qquad
+  \begin{aligned}
+  &\mu:\ \text{per-(layer, head) mean, fp32}\\
+  &F:\ \text{QPCA basis, }64\times64\text{ fp64, \textbf{not} orthonormal}
+  \end{aligned}
+  \]
+  \[
+  s=\operatorname{RMS}(r)=\sqrt{\tfrac{1}{64}\textstyle\sum_{d} r_d^2},
+  \qquad
+  r_n=\frac{r}{s}
+  \qquad\text{(one scalar per token, per head)}
+  \]
+  \[
+  \operatorname{idx}_g=\arg\max_{c\,\in\,\mathcal{C}_g}
+    \Bigl(\langle c,\;r_n[g]\rangle-\tfrac12\lVert c\rVert^2\Bigr),
+  \qquad g=1\ldots16
+  \]
+  <p class="note">That argmax is exactly \(\arg\min_c\lVert r_n[g]-c\rVert^2\) with the constant
+  \(\lVert r_n\rVert^2\) dropped. Result: 16 uint8 indices + 1 RMS scale.</p>
+  </div>
+
+  <p>The query is mapped by the <em>inverse transpose</em>, which makes the stored dot product
+  reproduce the true one up to a constant:</p>
+
+  <div class="math">
+  \[
+  q_m=q\,F^{-\top}
+  \qquad\Longrightarrow\qquad
+  q_m\cdot r \;=\; q\cdot(k-\mu) \;=\; q\cdot k \;-\; \underbrace{q\cdot\mu}_{\displaystyle c}
+  \]
+  <p class="note">c is constant across all real keys for a given query, hence softmax-invariant —
+  unless the denominator contains something that is not a real key (§9).</p>
+  </div>
+
+  <div class="callout key">
+    <div class="label">The basis is not a rotation</div>
+    <p>Unlike INT2's <code>R_k</code>, the VQ <code>forward</code> matrix is <strong>not
+    orthonormal</strong> — measured on the shipped artifact, <code>F F&#7488; - I</code> has max
+    magnitude <strong>309</strong> and <code>F</code> has condition number <strong>16.8</strong>.
+    It is a <em>&#931;<sub>Q</sub>-whitened</em> (QPCA) basis: <code>F = &#931;_Q<sup>&#189;</sup> V</code>.
+    Only invertibility is needed — <code>F @ inverse = I</code> to 4.4e-15 — because the query is
+    mapped by <code>F&#8315;&#7488;</code> rather than by <code>F</code>. This is why the general claim
+    "the rotation is orthogonal so <code>q&#183;k</code> is preserved" applies to the INT2 arm only.</p>
+  </div>
+
+  <h3>What is actually in the codebook file</h3>
+  <p><code>artifacts/oscar_gptoss20b/vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k_fp8.pt</code>,
+  9.94 MB:</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Key</th><th>Shape</th><th>Dtype</th><th class="t">Role</th></tr></thead>
+      <tbody>
+        <tr><td>forward</td><td>(12, 8, 64, 64)</td><td>float64</td><td class="t">Per (layer, head) QPCA map. 12 = the full-attention layers only.</td></tr>
+        <tr><td>inverse</td><td>(12, 8, 64, 64)</td><td>float64</td><td class="t">Its inverse; transposed at load to give the query map.</td></tr>
+        <tr><td>mean</td><td>(12, 8, 64)</td><td>float32</td><td class="t">The &#956; subtracted before mapping.</td></tr>
+        <tr><td>codebooks</td><td>96 cells &#215; 16 &#215; [256, 4]</td><td>float16</td><td class="t">One independent codebook per (layer, head, group). 1,572,864 centroid coordinates total.</td></tr>
+        <tr><td>bounds</td><td>16 &#215; (start, end, bits)</td><td>&#8212;</td><td class="t">(0,4,8), (4,8,8), &#8230; &#8212; 4 dims per group, 8 bits per group.</td></tr>
+        <tr><td>pertoken_norm</td><td>&#8212;</td><td>bool</td><td class="t"><code>True</code> &#8212; the RMS scale is enabled.</td></tr>
+        <tr><td>G / bits_per_coord / fp8_fmt</td><td>&#8212;</td><td>&#8212;</td><td class="t"><code>4</code> / <code>2.0</code> / <code>e5m2</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="math">
+  \[
+  \frac{8\ \text{bits/group}}{4\ \text{dims/group}}=\mathbf{2.00\ bits/coord}
+  \qquad
+  K=2^{8}=256\ \text{centroids saturates a uint8 index}
+  \]
+  \[
+  \underbrace{12}_{\text{layers}}\times\underbrace{8}_{\text{heads}}
+  \times\underbrace{16}_{\text{groups}}\times\underbrace{256}_{\text{codes}}
+  \times 4\,\text{B}=\mathbf{1.5\ MB}
+  \]
+  <p class="note">The codebook is model state, paid once — not per token.</p>
+  </div>
+
+  <h3>How it was trained</h3>
+  <p>Calibration ran 4 sequences &#215; 131,072 tokens of concatenated GPQA text through the model,
+  hooking only the full-attention layers and pooling every 4th token's post-RoPE key. Then, for each
+  of the 96 (layer, head) cells independently:</p>
+  <ol>
+    <li>Build the QPCA basis from the accumulated second moments:
+    <code>F = &#931;_Q<sup>&#189;</sup>V</code>, eigendecomposition in float64.</li>
+    <li><strong>Stratified grouping:</strong> the coordinate of eigen-rank <code>r</code> is assigned
+    to group <code>r mod 16</code>. So each 4-dim group deliberately spans the <em>whole</em>
+    eigenvalue spectrum — one high-variance direction paired with progressively lower-variance ones.
+    The permutation is folded into <code>F</code>'s columns at training time, so no runtime
+    permutation exists.</li>
+    <li>Per-token RMS normalise the residuals.</li>
+    <li>Run 16 independent k-means (batched Lloyd, 25 iterations, empty clusters reseeded from the
+    farthest points), K=256 each.</li>
+  </ol>
+  <p>That is <strong>1,536 k-means fits</strong> for one model. Flat allocation: every group gets
+  the same 8 bits.</p>
+
+  <h3>How the codebook is stored for the decode kernel</h3>
+  <p>At load, the fp16 centroids are cast to fp8-e5m2 and the four bytes of each 4-dim codeword are
+  packed into a single <code>int32</code>, little-endian (coordinate <em>i</em> &rarr; byte <em>i</em>).
+  The decode kernel then fetches one whole codeword per 32-bit load and bit-casts the four bytes
+  back to fp16 planes. E5M2 specifically, because that is the only fp8 format Triton can bitcast on
+  sm80.</p>
+
+  <div class="eq">
+cb_packed : int32 [12, 8, 16, 256]        <span class="an">[layer, head, group, code]</span>
+
+kernel:  cw = cb_packed[h, g, idx]
+         p0 = bitcast_fp8e5(cw       &amp; 0xFF)   &#8594; fp16   <span class="an">coord 0</span>
+         p1 = bitcast_fp8e5(cw &gt;&gt;  8 &amp; 0xFF)   &#8594; fp16   <span class="an">coord 1</span>
+         p2 = bitcast_fp8e5(cw &gt;&gt; 16 &amp; 0xFF)   &#8594; fp16   <span class="an">coord 2</span>
+         p3 = bitcast_fp8e5(cw &gt;&gt; 24 &amp; 0xFF)   &#8594; fp16   <span class="an">coord 3</span>
+  </div>
+
+  <p>The per-token RMS scale is <em>not</em> applied to the reconstructed vector. It is folded into
+  the score column instead, exploiting <code>q &#183; (c&#183;s) = (q &#183; c) &#183; s</code>, which keeps the
+  tensor-core dot product in raw-codeword space:</p>
+  <pre><code>qk = tl.dot(q_main, tl.trans(kg))     <span class="cmt"># [BLOCK_H, BLOCK_N] fp32</span>
+qk = qk * k_scale[None, :]            <span class="cmt"># fold ptn scale into the column</span>
+qk *= sm_scale</code></pre>
+</section>
+
+<section id="s6">
+  <h2>6. Same 8 bits, different points</h2>
+  <p class="sub">The cleanest statement of what separates the two methods — and it is not the bit
+  budget.</p>
+
+  <p>Take one 4-dimensional group. Both methods spend exactly 8 bits on it:</p>
+
+  <div class="two">
+    <div class="card">
+      <h4>Scalar INT2</h4>
+      <p>2 bits &#215; 4 coordinates. Each coordinate independently picks one of 4 levels, from a
+      grid set by <em>one scale shared across the entire 64-dim head</em>.</p>
+      <p style="font:13px var(--mono);color:var(--ink)">4&#8308; = <b>256 representable points</b></p>
+    </div>
+    <div class="card">
+      <h4>Group VQ</h4>
+      <p>One 8-bit index into a codebook of 256 centroids, fitted by k-means to this specific
+      (layer, head, group)'s actual residual distribution.</p>
+      <p style="font:13px var(--mono);color:var(--ink)">2&#8312; = <b>256 representable points</b></p>
+    </div>
+  </div>
+
+  <div class="callout key">
+    <p><strong>Identical bit count. Identical number of representable points.</strong> The only
+    difference is <em>where those 256 points sit</em>: INT2's are locked to a rectangular lattice
+    with axis-aligned spacing, VQ's are placed wherever the calibration data actually lies.</p>
+  </div>
+
+  <h3>Why that matters here: the groups are extremely anisotropic</h3>
+  <p>Recall from §5 that stratified grouping deliberately pairs a high-eigenvalue direction with
+  low-eigenvalue ones inside every group. Measured on the shipped codebook, layer 1 head 0, group 0:</p>
+
+  <div class="math">
+  \[
+  \frac{\sigma(\text{coord }0)}{\sigma(\text{coord }1)}
+  =\frac{6.763}{0.461}=\mathbf{14.7\times}
+  \qquad\text{within a single 4-dim group}
+  \]
+  \[
+  \frac{\sigma_{\max}}{\sigma_{\min}}\Bigl(\text{all 64 coords of the head}\Bigr)=\mathbf{91\times}
+  \]
+  <p class="note">Measured from the shipped codebook, layer 1 head 0. Compare §4: INT2's basis
+  drives this ratio toward 1 on purpose.</p>
+  </div>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 310" role="img" aria-label="Vector quantizer centroids versus scalar INT2 lattice"><g><text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.1">GROUP VQ — 256 LEARNED CENTROIDS</text><rect x="52" y="30" width="364" height="226" fill="var(--panel2)" stroke="var(--rule)"/><line x1="64.7" y1="30" x2="64.7" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="248.1" x2="416" y2="248.1" stroke="var(--rule)" stroke-width="0.5"/><text x="64.7" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">-8</text><text x="46" y="251.1" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">-8</text><line x1="149.3" y1="30" x2="149.3" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="195.6" x2="416" y2="195.6" stroke="var(--rule)" stroke-width="0.5"/><text x="149.3" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">-4</text><text x="46" y="198.6" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">-4</text><line x1="234.0" y1="30" x2="234.0" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="143.0" x2="416" y2="143.0" stroke="var(--rule)" stroke-width="0.5"/><text x="234.0" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">0</text><text x="46" y="146.0" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">0</text><line x1="318.7" y1="30" x2="318.7" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="90.4" x2="416" y2="90.4" stroke="var(--rule)" stroke-width="0.5"/><text x="318.7" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">4</text><text x="46" y="93.4" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">4</text><line x1="403.3" y1="30" x2="403.3" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="37.9" x2="416" y2="37.9" stroke="var(--rule)" stroke-width="0.5"/><text x="403.3" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">8</text><text x="46" y="40.9" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">8</text><text x="234" y="292" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="middle">coordinate 0  (eigen-rank 0 — high variance)</text><text x="12" y="143" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 12 143)">coordinate 1  (rank 16 — low variance)</text><text x="52" y="22" font-family="var(--mono)" font-size="10" fill="var(--ink)" font-weight="700">adapts to the data's shape</text><circle cx="399.1" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="281.2" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="254.6" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="151.5" cy="142.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="275.3" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="237.7" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="328.3" cy="142.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="143.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="144.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="163.3" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="304.7" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="233.3" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="316.5" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="328.3" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="316.5" cy="141.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="152.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="144.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="135.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="141.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="155.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="142.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="223.7" cy="143.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="139.7" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="135.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="141.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="151.5" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="143.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="144.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="328.3" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="192.7" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="186.8" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="251.7" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="142.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="141.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="151.5" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="143.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="235.8" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="304.7" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="144.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="152.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="219.3" cy="142.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="175.1" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="130.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="146.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="192.7" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="175.1" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="143.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="142.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="141.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="204.5" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="292.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="328.3" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="124.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="132.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="144.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="141.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="139.7" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="142.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="151.5" cy="113.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="144.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="142.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="146.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="275.3" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="152.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="146.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="141.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="141.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="132.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="213.4" cy="152.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="144.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="150.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="135.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="144.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="257.6" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="139.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="136.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="145.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="142.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="139.7" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="149.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="146.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="144.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="142.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="135.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="142.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="139.7" cy="137.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="210.4" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="133.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="143.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="142.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="143.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="154.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="145.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="147.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="152.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="143.2" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="144.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="68.9" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="135.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="148.5" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="142.1" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="132.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="142.9" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="139.7" cy="139.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="163.3" cy="142.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="328.3" cy="121.0" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="399.1" cy="144.8" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="141.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="116.1" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="351.9" cy="140.3" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="251.7" cy="140.7" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="223.7" cy="128.4" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="92.6" cy="141.6" r="2.1" fill="var(--qz)" opacity="0.75"/><circle cx="375.4" cy="138.4" r="2.1" fill="var(--qz)" opacity="0.75"/></g><g transform="translate(500,0)"><text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.1">SCALAR INT2 — 4 LEVELS PER AXIS, ONE SHARED SCALE</text><rect x="52" y="30" width="364" height="226" fill="var(--panel2)" stroke="var(--rule)"/><line x1="64.7" y1="30" x2="64.7" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="248.1" x2="416" y2="248.1" stroke="var(--rule)" stroke-width="0.5"/><text x="64.7" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">-8</text><text x="46" y="251.1" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">-8</text><line x1="149.3" y1="30" x2="149.3" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="195.6" x2="416" y2="195.6" stroke="var(--rule)" stroke-width="0.5"/><text x="149.3" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">-4</text><text x="46" y="198.6" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">-4</text><line x1="234.0" y1="30" x2="234.0" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="143.0" x2="416" y2="143.0" stroke="var(--rule)" stroke-width="0.5"/><text x="234.0" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">0</text><text x="46" y="146.0" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">0</text><line x1="318.7" y1="30" x2="318.7" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="90.4" x2="416" y2="90.4" stroke="var(--rule)" stroke-width="0.5"/><text x="318.7" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">4</text><text x="46" y="93.4" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">4</text><line x1="403.3" y1="30" x2="403.3" y2="256" stroke="var(--rule)" stroke-width="0.5"/><line x1="52" y1="37.9" x2="416" y2="37.9" stroke="var(--rule)" stroke-width="0.5"/><text x="403.3" y="269" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">8</text><text x="46" y="40.9" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="end">8</text><text x="234" y="292" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="middle">coordinate 0  (eigen-rank 0 — high variance)</text><text x="12" y="143" font-family="var(--mono)" font-size="9.5" fill="var(--muted)" text-anchor="middle" transform="rotate(-90 12 143)">coordinate 1  (rank 16 — low variance)</text><text x="52" y="22" font-family="var(--mono)" font-size="10" fill="var(--ink)" font-weight="700">same 8 bits, forced onto a lattice</text><circle cx="68.9" cy="245.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="68.9" cy="177.2" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="68.9" cy="108.8" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="68.9" cy="40.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="179.0" cy="245.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="179.0" cy="177.2" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="179.0" cy="108.8" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="179.0" cy="40.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="289.0" cy="245.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="289.0" cy="177.2" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="289.0" cy="108.8" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="289.0" cy="40.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="399.1" cy="245.5" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="399.1" cy="177.2" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="399.1" cy="108.8" r="3.4" fill="var(--hp)" opacity="0.9"/><circle cx="399.1" cy="40.5" r="3.4" fill="var(--hp)" opacity="0.9"/><line x1="68.9" y1="30" x2="68.9" y2="256" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="179.0" y1="30" x2="179.0" y2="256" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="289.0" y1="30" x2="289.0" y2="256" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="399.1" y1="30" x2="399.1" y2="256" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="52" y1="245.5" x2="416" y2="245.5" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="52" y1="177.2" x2="416" y2="177.2" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="52" y1="108.8" x2="416" y2="108.8" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><line x1="52" y1="40.5" x2="416" y2="40.5" stroke="var(--hp)" stroke-width="0.7" stroke-dasharray="2 3" opacity="0.55"/><text x="58" y="137.0" font-family="var(--mono)" font-size="9" fill="var(--bad)" font-weight="700">only 4 distinct values on this axis</text></g></svg>
+    </div>
+    <figcaption><b>Figure 5.</b> Real centroids from the shipped codebook (layer 1, head 0, group 0), plotted on identical axes. Both panels represent the same 4-dim group with the same 8 bits. VQ spends its 256 codes where the data actually is — stretched along the high-variance axis, tight on the low-variance one. INT2 must place its 256 lattice points on a product grid with one shared step, so coordinate 1 — whose entire range is narrower than a single INT2 step — collapses to essentially one level. Measured across the whole head, <b>56 of 64 coordinates have a total range smaller than one INT2 step</b> in this basis, which is exactly the condition INT2's Hadamard stage exists to prevent.</figcaption>
+  </figure>
+
+  <p>A vector quantizer handles this for free — it simply places more centroids along the wide axis
+  and fewer along the narrow one, because k-means minimises error in the joint space. A scalar
+  quantizer with one shared scale cannot: it must pick a single step size and apply it to every
+  axis. That is precisely why INT2 rotates into a <em>flattened</em> basis first (§4) and VQ rotates
+  into a <em>concentrated</em> one.</p>
+
+  <div class="callout">
+    <div class="label">What this figure does and does not prove</div>
+    <p>It shows why a vector quantizer can exploit structure a shared-scale scalar quantizer must
+    first destroy. It does <strong>not</strong> establish that basis anisotropy is the cause of
+    INT2's failure on gpt-oss — report 14's engine-free simulation found INT2's logit damage is
+    ~3.4&#215; Llama's <em>in every basis tested, including no rotation at all</em>. The honest
+    reading is that these are two coherent designs with different failure modes, and gpt-oss
+    happens to fall outside what the scalar one tolerates.</p>
+  </div>
+</section>
+
+<section id="s7">
+  <h2>7. How a token ages into the quantized tier</h2>
+  <p class="sub">Nothing is quantized at write time during decode. Compression happens later, in
+  batches of 8.</p>
+
+  <p>Every decode step writes its new token to the <strong>HP-recent ring</strong> in bf16 — always,
+  unconditionally. Only when the ring has advanced a full page does a batch of the oldest tokens get
+  demoted into the compressed tier. A per-request counter tracks this, so a flush happens on exactly
+  one decode step in every <code>N_Q = 8</code>.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 290" role="img" aria-label="Token aging and flush timeline">
+        <text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">DECODE STEP N &#8212; NO FLUSH (7 STEPS OUT OF 8)</text>
+        <rect x="0" y="26" width="150" height="30" rx="3" fill="var(--qz)" opacity="0.75"/>
+        <rect x="158" y="26" width="620" height="30" rx="3" fill="var(--hp)" opacity="0.7"/>
+        <rect x="786" y="26" width="60" height="30" rx="3" fill="var(--hp)" opacity="0.95" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="75" y="46" font-family="var(--mono)" font-size="10" fill="#fff" text-anchor="middle">quant tier</text>
+        <text x="468" y="46" font-family="var(--mono)" font-size="10" fill="#fff" text-anchor="middle">HP-recent ring (264 slots)</text>
+        <text x="816" y="46" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" font-weight="700">new</text>
+        <text x="858" y="46" font-family="var(--mono)" font-size="10.5" fill="var(--body)">&#8592; written bf16</text>
+
+        <text x="0" y="94" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">DECODE STEP N+8 &#8212; FLUSH</text>
+        <rect x="0" y="108" width="148" height="30" rx="3" fill="var(--qz)" opacity="0.75"/>
+        <rect x="150" y="108" width="62" height="30" rx="3" fill="var(--qz)" opacity="0.95" stroke="var(--ink)" stroke-width="1.5"/>
+        <rect x="220" y="108" width="558" height="30" rx="3" fill="var(--hp)" opacity="0.7"/>
+        <rect x="786" y="108" width="60" height="30" rx="3" fill="var(--hp)" opacity="0.95" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="181" y="128" font-family="var(--mono)" font-size="9.5" fill="#fff" text-anchor="middle" font-weight="700">8 tok</text>
+        <text x="499" y="128" font-family="var(--mono)" font-size="10" fill="#fff" text-anchor="middle">HP-recent ring</text>
+        <path d="M244 100 C 234 76, 200 76, 188 100" stroke="var(--ink)" stroke-width="1.4" fill="none" marker-end="url(#ar2)"/>
+        <defs><marker id="ar2" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--ink)"/></marker></defs>
+        <text x="256" y="90" font-family="var(--mono)" font-size="10" fill="var(--ink)">oldest whole page demoted &#8212; encoded into one quant page</text>
+
+        <rect x="0" y="164" width="940" height="118" rx="5" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="14" y="184" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.1">THE FLUSH, IN THREE DEVICE KERNELS &#8212; NO CPU LOOP, NO HOST SYNC</text>
+        <text x="14" y="207" font-family="var(--mono)" font-size="11" fill="var(--body)"><tspan fill="var(--accent)" font-weight="700">1. plan</tspan>&#160;&#160;&#160;pick the N_Q oldest HP-recent positions; emit src/dst slot pairs + a valid mask</text>
+        <text x="14" y="228" font-family="var(--mono)" font-size="11" fill="var(--body)"><tspan fill="var(--accent)" font-weight="700">2. quant</tspan>&#160;&#160;one launch for ALL 12 layers and both K and V (layer is a grid axis)</text>
+        <text x="14" y="249" font-family="var(--mono)" font-size="11" fill="var(--body)"><tspan fill="var(--accent)" font-weight="700">3. remap</tspan>&#160;&#160;overwrite req_to_token[req, pos] from the HP slot id to the new quant slot id</text>
+        <text x="14" y="272" font-family="var(--mono)" font-size="10.5" fill="var(--muted)">Invalid rows route to a reserved trash slot, so every op is shape-static and safe to capture in a CUDA graph.</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 6.</b> Because step 3 rewrites the slot id in place and the id space is
+    flat, no downstream kernel needs to know a flush happened — it just reads a smaller integer next
+    time and lands in the other tier. The plan/apply split exists so the caller can return freed
+    slots to the allocator before the apply races with a concurrent forward.</figcaption>
+  </figure>
+
+  <p>The VQ flush is torch-side rather than a Triton kernel: it gathers the HP residual rows for
+  <em>all 12 layers at once</em> with a single <code>index_select</code>, encodes them in chunks of 8
+  tokens (bounding the <code>[L, c, H, NG, K]</code> score tensor), and scatters indices and scales
+  back. The INT2 flush kernel still runs alongside it to handle V and the <code>req_to_token</code>
+  remap, with its K-packing stage disabled via a <code>K_VQ</code> constexpr.</p>
+</section>
+
+<section id="s8">
+  <h2>8. Reading it back</h2>
+  <p class="sub">Prefill and decode reconstruct the cache in completely different ways, for good
+  reasons.</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 340" role="img" aria-label="Prefill versus decode read paths">
+        <text x="0" y="12" font-family="var(--mono)" font-size="10.5" fill="var(--accent)" letter-spacing="1.2" font-weight="700">PREFILL &#8212; MATERIALIZE DENSE, THEN FLASHATTENTION</text>
+        <rect x="0" y="26" width="150" height="46" rx="4" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="75" y="46" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">prefix slot ids</text>
+        <text x="75" y="61" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">int64, mixed tiers</text>
+        <defs><marker id="ar3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--muted)"/></marker></defs>
+        <path d="M154 49 L186 49" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="190" y="26" width="210" height="46" rx="4" fill="var(--qz-soft)" stroke="var(--qz)"/>
+        <text x="295" y="43" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">dequantize_prefix_kv</text>
+        <text x="295" y="58" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">gather codewords / unpack int2</text>
+        <path d="M404 49 L436 49" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="440" y="26" width="220" height="46" rx="4" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="550" y="43" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">dense [tokens, 8, 64]</text>
+        <text x="550" y="58" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">concat with current chunk</text>
+        <path d="M664 49 L696 49" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="700" y="26" width="240" height="46" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="820" y="43" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">flash_attn_varlen_func</text>
+        <text x="820" y="58" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">stock kernel, unmodified</text>
+        <text x="0" y="90" font-family="var(--mono)" font-size="10" fill="var(--muted)">There is no quantized prefill kernel. The whole cached prefix is reconstructed in model dtype first &#8212; simple, but O(prefix) memory traffic.</text>
+
+        <line x1="0" y1="112" x2="940" y2="112" stroke="var(--rule)"/>
+
+        <text x="0" y="138" font-family="var(--mono)" font-size="10.5" fill="var(--accent)" letter-spacing="1.2" font-weight="700">DECODE &#8212; FUSED PER-TIER KERNELS, NEVER MATERIALIZED</text>
+        <rect x="0" y="160" width="170" height="46" rx="4" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="85" y="177" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">split slot ids by tier</text>
+        <text x="85" y="192" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">count kernel + scatter kernel</text>
+        <path d="M174 172 L206 158" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <path d="M174 194 L206 222" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+
+        <rect x="210" y="136" width="300" height="44" rx="4" fill="var(--hp-soft)" stroke="var(--hp)"/>
+        <text x="360" y="153" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">stage 1a &#8212; HP tier</text>
+        <text x="360" y="168" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">stock bf16 GQA flash-decode, 8 splits</text>
+
+        <rect x="210" y="200" width="300" height="60" rx="4" fill="var(--qz-soft)" stroke="var(--qz)"/>
+        <text x="360" y="218" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">stage 1b &#8212; quantized tier</text>
+        <text x="360" y="233" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">uint8 idx &#8594; int32 codeword &#8594; 4 fp8 planes</text>
+        <text x="360" y="248" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">V int2 unpacked in registers, 4 quarter-tiles</text>
+
+        <path d="M514 158 L556 188" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <path d="M514 230 L556 202" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+
+        <rect x="560" y="168" width="200" height="54" rx="4" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="660" y="187" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">shared split-K scratch</text>
+        <text x="660" y="202" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">HP splits, then quant splits</text>
+        <text x="660" y="216" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">unused splits keep LSE = -inf</text>
+
+        <path d="M764 194 L796 194" stroke="var(--muted)" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="800" y="168" width="140" height="54" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text x="870" y="187" font-family="var(--mono)" font-size="9.5" fill="var(--ink)" text-anchor="middle">stage 2 merge</text>
+        <text x="870" y="202" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">online softmax</text>
+        <text x="870" y="216" font-family="var(--mono)" font-size="9" fill="var(--muted)" text-anchor="middle">+ learned sink</text>
+
+        <rect x="0" y="278" width="940" height="58" rx="5" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="14" y="299" font-family="var(--mono)" font-size="10.5" fill="var(--ink)" font-weight="700">Stage 2 is tier-agnostic: it walks every split, skips any whose LSE is still -inf, and merges the rest.</text>
+        <text x="14" y="320" font-family="var(--mono)" font-size="10.5" fill="var(--body)">acc &#215;= exp(m_old - m_new); &#160;acc += exp(lse_s - m_new)&#183;o_s; &#160;Z = Z&#183;exp(m_old - m_new) + exp(lse_s - m_new)&#183;l_s</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 7.</b> Decode never writes a dense compressed K or V to global memory —
+    reconstruction happens in registers, per query tile. That is where the bandwidth win actually
+    comes from. Prefill takes the simpler route because FlashAttention needs contiguous tensors
+    anyway.</figcaption>
+  </figure>
+
+  <p>The tier split itself is two small Triton kernels: one counts each request's HP slots directly
+  from <code>req_to_token</code>, the host builds the indptr arrays with a <code>cumsum</code> (no
+  device-to-host sync), and a second kernel scatters the two compact index lists. HP indices are
+  <strong>rebased</strong> to <code>slot - HP_OFFSET</code>; quant indices are stored raw. Note the
+  boundary test is <code>&gt;=</code>, not <code>&gt;</code> — HP slot 0 is valid, and using
+  <code>&gt;</code> would read out of bounds from the quant buffer.</p>
+</section>
+
+<section id="s9">
+  <h2>9. The learned sink, and the bug it caused</h2>
+  <p class="sub">Why mean-centering — mathematically harmless everywhere else — broke on gpt-oss
+  specifically.</p>
+
+  <p>gpt-oss adds a <strong>learned per-head sink logit</strong> <code>s</code> to the softmax
+  denominator. It has no value vector; it just lets a head attend to "nothing":</p>
+
+  <div class="math">
+  \[
+  \ell_i=\alpha\,q^{\top}k_i,
+  \qquad
+  \text{output}=\frac{\sum_i e^{\ell_i}\,v_i}
+                     {\sum_i e^{\ell_i}\;+\;\underbrace{e^{s}}_{\text{sink}}}
+  \]
+  <p class="note">The sink appears in the denominator only — it has no value vector in the
+  numerator. It controls how much probability mass is withheld from the real tokens.</p>
+  </div>
+
+  <p>Recall from §5 that VQ stores a mean-centred residual, which shifts every real-key logit by the
+  same query-dependent constant <code>c = &#945;&#183;q&#183;&#956;</code>. A softmax over real keys alone is
+  invariant to that. But with a sink in the denominator, it is not:</p>
+
+  <figure>
+    <div class="svgbox">
+      <svg viewBox="0 0 940 250" role="img" aria-label="The sink shift bug">
+        <text x="0" y="14" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.2">WHAT THE DENOMINATOR ACTUALLY BECOMES</text>
+
+        <rect x="0" y="32" width="450" height="86" rx="5" fill="var(--bad-soft)" stroke="var(--bad)"/>
+        <text x="16" y="52" font-family="var(--mono)" font-size="10.5" fill="var(--bad)" font-weight="700">OLD VQ &#8212; SINK LEFT UNSHIFTED</text>
+        <text x="16" y="74" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">Z = &#931; exp(&#8467;&#7522; - c) + exp(s)</text>
+        <text x="16" y="96" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">&#8801; &#931; exp(&#8467;&#7522;) + exp(s <tspan fill="var(--bad)" font-weight="700">+ c</tspan>)</text>
+        <text x="16" y="112" font-family="var(--mono)" font-size="10" fill="var(--muted)">the sink is silently strengthened, per query, per head</text>
+
+        <rect x="490" y="32" width="450" height="86" rx="5" fill="var(--qz-soft)" stroke="var(--qz)"/>
+        <text x="506" y="52" font-family="var(--mono)" font-size="10.5" fill="var(--qz)" font-weight="700">FIXED &#8212; SINK SHIFTED WITH THE KEYS</text>
+        <text x="506" y="74" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">Z = &#931; exp(&#8467;&#7522; - c) + exp(s <tspan fill="var(--qz)" font-weight="700">- c</tspan>)</text>
+        <text x="506" y="96" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">&#8801; exp(-c)&#183;( &#931; exp(&#8467;&#7522;) + exp(s) )</text>
+        <text x="506" y="112" font-family="var(--mono)" font-size="10" fill="var(--muted)">the exp(-c) cancels in the ratio &#8212; exactly equivalent</text>
+
+        <rect x="0" y="140" width="940" height="100" rx="5" fill="var(--panel2)" stroke="var(--rule)"/>
+        <text x="14" y="162" font-family="var(--mono)" font-size="10.5" fill="var(--muted)" letter-spacing="1.1">WHY THIS EXPLAINS FOUR OTHERWISE-PUZZLING OBSERVATIONS</text>
+        <text x="14" y="184" font-family="var(--mono)" font-size="10.5" fill="var(--body)">gpt-oss only &#8212; Llama has no learned sink at all</text>
+        <text x="14" y="203" font-family="var(--mono)" font-size="10.5" fill="var(--body)">VQ only &#8212; the scalar OSCAR path rotates but never subtracts a mean</text>
+        <text x="14" y="222" font-family="var(--mono)" font-size="10.5" fill="var(--body)">survives in the bf16 HP tier &#8212; HP rows are stored mean-centred too (&#167;3)</text>
+        <text x="500" y="184" font-family="var(--mono)" font-size="10.5" fill="var(--body)">the old gate passed &#8212; it compared softmax over real keys only,</text>
+        <text x="500" y="203" font-family="var(--mono)" font-size="10.5" fill="var(--body)">so the sink term was never in the comparison</text>
+        <text x="500" y="228" font-family="var(--mono)" font-size="10.5" fill="var(--ink)" font-weight="700">measured: 19.8% output error &#8594; 3.6e-7 after the fix</text>
+      </svg>
+    </div>
+    <figcaption><b>Figure 8.</b> The fix is exact: <code>s&#8242; = s - &#945;&#183;q&#183;&#956;</code>. This is why a
+    238-token prompt — which never touches the quantized tier at all — still lost accuracy under the
+    old VQ path. The bug was in the coordinate system, not the quantizer.</figcaption>
+  </figure>
+
+  <p>Written out, with \(c=\alpha\,q^{\top}\mu\) the mean-centering shift:</p>
+  <div class="math">
+  \[
+  Z_{\text{old}}=\sum_i e^{\ell_i-c}+e^{s}
+       \;=\;e^{-c}\Bigl(\sum_i e^{\ell_i}+e^{\,s+c}\Bigr)
+       \quad\Longrightarrow\quad
+       \text{sink silently becomes } s+c
+  \]
+  \[
+  Z_{\text{fixed}}=\sum_i e^{\ell_i-c}+e^{\,s-c}
+       \;=\;e^{-c}\Bigl(\sum_i e^{\ell_i}+e^{s}\Bigr)
+       \quad\Longrightarrow\quad
+       \frac{e^{-c}N}{e^{-c}Z}=\frac{N}{Z}\ \checkmark
+  \]
+  \[
+  \boxed{\,s'=s-\alpha\,q^{\top}\mu\,}
+  \]
+  <p class="note">The \(e^{-c}\) factor cancels between numerator and denominator, so the corrected
+  form is exactly equivalent to the original attention.</p>
+  </div>
+
+  <p>It is applied in both paths. Decode folds it into the existing stage-2 reducer, so it costs no
+  extra kernel launch (measured: +3.3&#181;s on the reducer, ~0.04 ms across all 12 layers per decode
+  step). Prefill computes the shifted sinks on the torch side, then applies the exact correction to
+  a sink-less FlashAttention output:</p>
+  <div class="math">
+  \[
+  o \;\leftarrow\; o\cdot\frac{Z}{Z+e^{s'}}
+    \;=\; o\cdot\sigma\bigl(\log Z-s'\bigr)
+  \]
+  <p class="note">FlashAttention already returns \(\log Z\) as its LSE, so this is one sigmoid and
+  one multiply — no need to trust the varlen kernel's own sink support, which is untested on
+  sm80.</p>
+  </div>
+  <p>The old behaviour can still be reproduced deliberately with
+  <code>SGLANG_VQ_DISABLE_SINK_CORRECTION=1</code>. Two asserts guard the corrected path: it is
+  incompatible with nonlinear logit capping and with XAI temperature scaling.</p>
+</section>
+
+<section id="s10">
+  <h2>10. Honest accounting</h2>
+  <p class="sub">Everything in the shipped system that is not what it says on the tin.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th class="t">Issue</th><th class="t">Detail</th><th class="t">Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="t"><b>"2-bit" is 3.0 bits</b></td>
+          <td class="t">Payload is exactly 2.00 b/coord, but fp32 scale metadata adds 1.00 more at head_dim 64.</td>
+          <td class="t">Real, unavoidable at this head_dim without changing scale dtype.</td>
+        </tr>
+        <tr>
+          <td class="t"><b>VQ wastes half its scale slot</b></td>
+          <td class="t"><code>k_scales_zeros[...,1]</code> is allocated and always zero — kept only so decode strides match INT2. 0.5 b/coord, ~50 MB at 128K.</td>
+          <td class="t">Fixable; would need a separate VQ stride path.</td>
+        </tr>
+        <tr>
+          <td class="t"><b>FP8 double-snap</b></td>
+          <td class="t">The builder quantizes centroids with a per-group scale and stores them <em>dequantized</em> as fp16. The loader then re-snaps them <em>unscaled</em> to e5m2. Measured: <span class="no">4.77% relative centroid RMSE</span>, changing 99.8% of values.</td>
+          <td class="t">Encoder and decoder both use the second-snap values, so it is self-consistent — not an arithmetic bug. Its end-to-end cost is <b>unmeasured</b>.</td>
+        </tr>
+        <tr>
+          <td class="t"><b>E5M2 is coarse</b></td>
+          <td class="t">2-bit mantissa = only 4 steps per binade. One real group's 256 centroids collapse to just <b>29 distinct values</b> along its widest axis.</td>
+          <td class="t">Forced: sm80 Triton can only bitcast <code>float8e5</code>.</td>
+        </tr>
+        <tr>
+          <td class="t"><b>V is still scalar INT2</b></td>
+          <td class="t">The "VQ2" arm is VQ-K + INT2-V. Any residual quality gap cannot yet be attributed to VQ-K.</td>
+          <td class="t">The 2&#215;2 factorial (BF16/VQ K &#215; BF16/INT2 V) is <b>pending</b>.</td>
+        </tr>
+        <tr>
+          <td class="t"><b>Prefill materializes densely</b></td>
+          <td class="t">The whole cached prefix is reconstructed in model dtype before FlashAttention — the compression saves storage, not prefill bandwidth.</td>
+          <td class="t">By design; decode is where the win is.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Where the numbers landed</h3>
+  <p>NIAH-8K, same 24 rows, 4 samples each, cap 256, 4 concurrent requests, sampled
+  (<code>temperature=1</code>):</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Arm</th><th class="num">accuracy</th><th class="num">cap-hit</th><th class="t">Reading</th></tr></thead>
+      <tbody>
+        <tr><td>bf16</td><td class="num"><span class="ok">98.96 &#177; 2.09</span></td><td class="num">5.2%</td><td class="t">ceiling</td></tr>
+        <tr><td>VQ, before sink fix</td><td class="num"><span class="no">61.46 &#177; 6.25</span></td><td class="num">62.5%</td><td class="t">the &#167;9 bug</td></tr>
+        <tr><td>VQ, after sink fix</td><td class="num"><span class="wn">79.17 &#177; 3.40</span></td><td class="num">39.6%</td><td class="t">bug worth ~17.7 points; gap remains</td></tr>
+        <tr><td>scalar INT2</td><td class="num"><span class="no">0.0</span></td><td class="num">96%</td><td class="t">reproduces engine-free &#8212; a method limitation, not a bug</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>For contrast, on Llama-3.1-8B (head_dim 128, no sinks, uniform full attention) both quantizers
+  work and the ordering is mild: at 8K, INT2 &minus;13.8 and VQ &minus;5.8 points against bf16; at 64K
+  the gap widens to &minus;20.8 and &minus;5.3. gpt-oss is where the scalar method breaks down
+  entirely.</p>
+</section>
+
+<section id="s11">
+  <h2>11. Code map</h2>
+  <p class="sub">All paths relative to <code>vendor/OSCAR-vq/sglang-research/python/sglang/</code>.</p>
+  <div class="scroll">
+    <table>
+      <thead><tr><th class="t">What</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td class="t">Pool: arenas, slot geometry, write paths, VQ flush</td><td>srt/mem_cache/unified_kv_pool.py</td></tr>
+        <tr><td class="t">Allocator: quant pages, HP-prefix pool, per-request recent rings</td><td>srt/mem_cache/unified_kv_allocator.py</td></tr>
+        <tr><td class="t">Codebook load, <code>vq_map_k</code>, <code>vq_map_q</code>, <code>vq_encode</code></td><td>srt/mem_cache/vq_codebook.py</td></tr>
+        <tr><td class="t">INT2 pack / unpack kernels</td><td>srt/mem_cache/kv_quant_kernels.py</td></tr>
+        <tr><td class="t">Decode flush: plan / fused quant / remap</td><td>QuantKernel/gpu_flush_int2.py</td></tr>
+        <tr><td class="t">Prefill prefix reconstruction + sink adjustment</td><td>srt/layers/attention/quantized_kv_prefill.py</td></tr>
+        <tr><td class="t">Tier index split, prefill driver, decode plumbing</td><td>srt/layers/attention/triton_backend.py</td></tr>
+        <tr><td class="t">VQ2 decode stage 1 + unified stage 2</td><td>srt/layers/attention/triton_ops/decode_attention.py</td></tr>
+        <tr><td class="t">Env-var defaults (P, R, dtypes, codebook path)</td><td>srt/environ.py:214-253</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Key environment variables</h4>
+  <pre><code>SGLANG_MIXED_KV_PREFIX_TOKENS   32     <span class="cmt"># deployed: 64   (P)</span>
+SGLANG_MIXED_KV_RECENT_TOKENS  128     <span class="cmt"># deployed: 256  (R)</span>
+SGLANG_MIXED_KV_HP_DTYPE       bfloat16 <span class="cmt"># drives N_Q = 4 * itemsize = 8</span>
+SGLANG_MIXED_KV_SCALE_DTYPE    float32  <span class="cmt"># the 3.0 b/coord culprit</span>
+SGLANG_VQ_CODEBOOK_PATH        ""       <span class="cmt"># non-empty => VQ K arena instead of INT2</span>
+SGLANG_OSCAR_K_CLIP_RATIO      0.0      <span class="cmt"># deployed: 0.96 (K), 0.92 (V)</span>
+SGLANG_VQ_DISABLE_SINK_CORRECTION 0     <span class="cmt"># =1 reproduces the old VQ bug on purpose</span>
+--kv-cache-quant-group-size    None     <span class="cmt"># None => one scale group per head</span></code></pre>
+
+  <div class="callout">
+    <div class="label">Reproducing the codebook</div>
+    <pre style="margin:0"><code>bash pipelines/oscar_e2e/build_gptoss_128k.sh
+  <span class="cmt"># C1 calibrate: 4 seqs x 131,072 tok of concatenated GPQA, full-attn layers only</span>
+  <span class="cmt"># C2 train:     stratified grouping, flat 8-bit allocation, per-token norm, 25 Lloyd iters</span>
+  <span class="cmt"># C3 fp8:       e5m2 cast  ->  vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k_fp8.pt</span></code></pre>
+  </div>
+</section>
+</main>
+</body>
+</html>

@@ -110,7 +110,7 @@ def main():
 
     # accumulate logit error per basis, over prompts and layers
     acc = {k: [] for k in ("shipped", "identity", "hadamard", "random", "matched-noise")}
-    onorm, sinkshare = [], []
+    onorm, sinkshare, align = [], [], []
     torch.manual_seed(0)
     n_layers_total = int(model.config.num_hidden_layers)
 
@@ -177,6 +177,21 @@ def main():
                     a = qh @ k[:, h].T
                     b = qh @ khat[:, h].T
                     errs.append(((a - b).norm() / a.norm().clamp_min(1e-12)).item())
+                if name == "shipped":
+                    # Query-alignment of the quantization error. With
+                    # Sq = Q^T Q / N and Se = E^T E / T (E = Khat - K), the mean
+                    # squared logit error is tr(Sq Se); an isotropic error of
+                    # the same norm would give tr(Sq) tr(Se) / D. The ratio is
+                    # therefore 1.0 when the error ignores query geometry, >1
+                    # when it concentrates exactly where queries are sensitive
+                    # -- which is what a Q-weighted rotation exists to prevent.
+                    E = (khat - k).reshape(-1, D)
+                    Qm = qsel.reshape(-1, D)
+                    Sq = Qm.T @ Qm / max(Qm.shape[0], 1)
+                    Se = E.T @ E / max(E.shape[0], 1)
+                    num = torch.einsum("ij,ji->", Sq, Se)
+                    den = (Sq.diagonal().sum() * Se.diagonal().sum() / D).clamp_min(1e-30)
+                    align.append((num / den).item())
                 acc[name].append(sum(errs) / len(errs))
                 if args.noise and name == "shipped":
                     # Matched-magnitude control: Gaussian noise with exactly the
@@ -206,6 +221,10 @@ def main():
             continue
         v = sum(acc[name]) / len(acc[name])
         print(f"  {name:13s} logit_err {v:.4f}   ({v/base:5.2f}x identity)")
+    if align:
+        print(f"  err/query align {sum(align)/len(align):.4f}   "
+              f"(1.0 = error ignores query geometry; >1 = it concentrates "
+              f"where queries are sensitive)")
     if onorm:
         print(f"  ||o|| / ||v||  {sum(onorm)/len(onorm):.4f}   "
               f"(small => head emits little, so absolute error is relatively large)")
