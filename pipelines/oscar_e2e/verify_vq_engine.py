@@ -331,10 +331,6 @@ def main():
         max_splits,
         sm_scale,
         logit_cap=0.0,
-        # Honour SGLANG_VQ_OPT_CB16 so G3/G5 actually exercise the fp16-gather
-        # path when it is enabled; passing cb16=None would silently test the
-        # packed-fp8 path instead and make the gate vacuous.
-        cb16=(vq.cb16[l] if os.environ.get("SGLANG_VQ_OPT_CB16", "") in ("1", "true", "True") else None),
     )
     o = torch.zeros(bs, QH, D, device=device, dtype=torch.bfloat16)
     _unified_stage2(

@@ -77,7 +77,11 @@ def hp_arena_bytes(geom: dict, max_req_slots: int, hp_prefix_slots: int,
     driver pins SGLANG_MIXED_KV_HP_PREFIX_POOL_TOKENS instead of inheriting it.
     """
     heads = max(1, geom["kv_heads"] // tp)
-    ring = RECENT_TOKENS + N_Q - 1
+    # Mirrors unified_kv_pool.compute_recent_ring_size. The +N_Q (not N_Q-1)
+    # reserves one transient slot: decode installs the new full->SWA mapping
+    # before the flush plan releases the oldest N_Q, so a ring sized to the
+    # steady-state maximum loses a mapping on the first wrap (fix p2-3).
+    ring = RECENT_TOKENS + N_Q
     slots = hp_prefix_slots + max_req_slots * ring
     per_slot = geom["layers"] * heads * (geom["head_dim"] + geom["v_head_dim"]) * HP_BYTES
     return slots * per_slot
