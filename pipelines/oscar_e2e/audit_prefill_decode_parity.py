@@ -92,6 +92,8 @@ def main():
     os.environ["SGLANG_OSCAR_V_CLIP_RATIO"] = "0.92"
     os.environ["SGLANG_OSCAR_ABSORB_V_ROTATION"] = "0"
     os.environ["SGLANG_VQ_CODEBOOK_PATH"] = args.bundle
+    # P5 exercises the shadow, which is opt-in (default off) in production.
+    os.environ["SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL"] = "1"
 
     from sglang.srt.distributed import (
         init_distributed_environment,
