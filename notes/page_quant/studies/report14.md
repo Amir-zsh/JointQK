@@ -4,7 +4,12 @@
 piecewise-prefill graph bug shared by INT2 and vq2, and a now-fixed
 GPT-OSS-specific VQ learned-sink bug. Corrected VQ is materially better but
 still below bf16. The remaining loss begins when the combined VQ-K/INT2-V tier
-activates; attribution within that tier is still open.*
+activates; §10 (added 2026-07-27) locates most of it in **chunked prefill** —
+the prompt reading its own quantized prefix — attributes it within the tier
+(VQ-K ~3/4, INT2-V ~1/4), proves by parity audit that it is not an
+implementation bug, shows the same mechanism on Qwen3-8B at 64K, and
+describes the opt-in exact-chunked-prefill fix that restores single-chunk
+accuracy.*
 
 *Models: `unsloth/gpt-oss-20b-BF16` (24 layers, alternating
 sliding-window(128)/full attention, MoE 32 experts top-4, learned attention
@@ -720,7 +725,9 @@ amplification channel that a dense model structurally lacks.
 - **VQ had a learned-sink correctness bug.** Fixing its coordinate
   error raises matched NIAH-8K from 61.46 to 79.17, while a verified all-BF16
   cache scores 8/8. The remaining bf16 gap appears only when rows enter the
-  combined VQ-K/INT2-V tier, but the two quantizers have not yet been separated.
+  combined VQ-K/INT2-V tier. *(Update 2026-07-27: the two quantizers are now
+  separated for the chunked-prefill component of that gap — VQ-K carries ~3/4
+  and INT2-V ~1/4, additive. See §10.)*
 - **The result is stronger than the Llama grid shows.** On gpt-oss, 2-bit
   scalar quantization fails outright in the engine-free simulation while
   corrected VQ remains much stronger in served quality sweeps, although neither
@@ -902,3 +909,154 @@ mixed-KV flush double-assigns a quant slot, still latent), **p2-2** (the
 `SWAKVPool.release_req_slab` delegate, now applied), and **p2-3** (the
 allocate-before-flush ring overwrite fixed here). None caused the graph-padding
 failure.
+
+---
+
+## 10. Addendum (2026-07-27, H100): chunked prefill is the dominant residual mechanism
+
+*Investigated on the H100 box after the A100 work above, on the merged
+`oscar-gptoss-vq-cleanup` engine, TP=2 for gpt-oss and TP=1 for Qwen3-8B.
+Tracker entry: `notes/page_quant/fixes_to_apply.md` **p2-4**.*
+
+### 10.1 The finding
+
+Chunked prefill — the serving default for long prompts — costs gpt-oss vq2
+**~24 NIAH points** that a single-chunk prefill of the identical prompt does
+not lose. Healthy tasks (multikey_2/3, single_3; no baseline degeneracy),
+300 rows, prompts 6,750–8,010 tokens:
+
+| arm | chunk 4096 (2–3 chunks) | chunk 16384 (1 chunk) | Δ |
+|---|---:|---:|---:|
+| bf16 | 95.67 | 94.33 | +1.33 |
+| vq2 | **67.33** | **91.00** | **−23.67** |
+
+The §4 length sweep above was served with 4,096-token chunks, so its 4K–16K
+rows (2–5 chunks each) carry this penalty inside them; its ≤2K rows do not.
+Part of what §4 read as a length-dependent "residual corrected-VQ2 gap" is
+therefore a chunk-count effect.
+
+### 10.2 Mechanism
+
+With one prefill chunk, the prompt's own forward pass attends to the exact
+in-pass K/V; quantization only ever affects decode reads. With two or more,
+chunk N+1 attends to chunks 1..N **through the pool** — reconstructed VQ-K
+rows and INT2-V crumbs — and the trailing tokens (where the question lives)
+build their hidden states through that error. Everything downstream then
+conditions on the corrupted representations: their own K/V written to the
+cache, and every decode step. The same codes that cost ~1 point when read at
+decode cost ~30 when the question tokens read them at prefill.
+
+Decisive controls:
+
+1. **Prefix forced all-HP** (`PREFIX_TOKENS=9216`): split rows 18 → 67 vs
+   bf16 65 — full recovery. Chunked attention, concat, causal masking and
+   sink correction are all correct; only the prefix *values* matter.
+2. **bs=1** reproduces (19 vs 18): not batching.
+3. **Chunk 8000** (final chunk ≈10 tokens, final tier layout identical to
+   single-chunk) still degrades: it is the read, not the layout, and not
+   gradual accumulation over thousands of tokens.
+4. The sink-correction algebra cancels exactly (a uniform shift passes
+   through log-sum-exp); verified empirically.
+
+### 10.3 It is not an implementation bug (parity audit)
+
+`pipelines/oscar_e2e/audit_prefill_decode_parity.py` (kept as a permanent
+gate) writes rows through the production `set_kv_buffer` extend path and
+reads the same arena bytes through (A) the prefill path
+(`dequantize_prefix_kv`) and (B) the decode-side reference, against (C) the
+exact stored-space rows, on a real `UnifiedInt2HPKVPool`:
+
+- A ≡ B elementwise at 1.3–1.8e-3 (bf16 rounding) for both K and V — no
+  scale bug, no crumb-order/coordinate permutation (the class of bug that
+  norm- and cosine-level gates cannot see);
+- distortion vs exact identical to 4 decimals on both paths, every layer;
+- **bit-identical top-1 retrieval decisions** at matched (bf16) precision.
+
+The write path is shared between chunked and single-chunk serving and the
+encode is per-token independent, so the final cache is identical either way.
+
+### 10.4 Attribution within the tier, and the calibration test
+
+Using the fix's side switch (§10.5) to substitute exact rows for one side at
+a time (healthy300, chunk 4096): no shadow 67.33; V exact 71.33 (+4.0);
+K exact 83.67 (+16.3); both 89.00 (+21.7). **VQ-K carries ~3/4 of the loss,
+INT2-V ~1/4, additive.**
+
+A better codebook does not help: the MXFP4-calibrated 128k bundle improves
+decode-side quality (single-chunk 91.7 → 93.67) while chunked-no-shadow
+stays collapsed (62.33). The fragility of prefill-time reads at this rate is
+intrinsic, not a calibration artifact.
+
+### 10.5 The fix: exact chunked prefill ("shadow")
+
+`SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL=1` (**opt-in; default off** by
+project decision). While a request is mid chunked prefill, the pool keeps a
+bf16 copy of the stored-space rows its non-final chunks write to quant slots
+(captured from tensors the HP write already computes);
+`dequantize_prefix_kv` swaps the exact rows in after reconstruction — one
+interposition point covering K and V in all quant flavors and both attention
+backends; the shadow is released at the first alloc step after the final
+chunk. Quant codes are still written at chunk time, so the final cache is
+**bit-identical** with the flag on or off; decode, pool accounting, radix
+cache and flush logic are untouched. Cost: the in-flight chunked prompt's
+K/V in bf16, quant layers only, prefill only (~100 MB at 8K gpt-oss; ~3 GB
+at 128K gpt-oss; ~18 GB at 128K on a dense 36-layer model — the one regime
+where the flag can exceed mem-fraction headroom). Skipped under CUDA-graph
+capture. `SGLANG_MIXED_KV_SHADOW_SIDE=k|v|kv` restricts the swap for
+ablations.
+
+Result with the fix: gpt-oss healthy300 chunk-4096 **67.33 → 89.00** (twice,
+identical), vs 91.67/92.33 single-chunk on the same code; with the MXFP4
+bundle, chunked 93.00 vs single-chunk 93.67 — parity within noise. The
+residual ~3 points has mixed per-task signs and matches bf16's own ±1.3
+chunk sensitivity (reduction-order numerics, not quantization — the shadow
+rows are bit-equal to the single-chunk values).
+
+### 10.6 Universality: Qwen was at the ceiling, not immune
+
+Qwen3-8B looked immune at 8K (100.00 at both chunk sizes) — but 100 is the
+ceiling. At 64K under the exact published protocol (gpqacc64k bundle,
+authors' rotations, chunk 8192, ctx 73728), 200 balanced rows:
+
+| cell | mean |
+|---|---:|
+| vq2 chunk 8192, shadow off (published protocol) | **78.00** (record: 77.69) |
+| vq2 single chunk (73728) | **81.12** |
+| vq2 chunk 8192, shadow on | **81.00** |
+| bf16 chunk 8192 / single | 84.25 / 84.75 |
+
+Same mechanism, same recovery (the chunked penalty concentrates in
+multikey_1, 84 → 100 with the shadow, matching single-chunk exactly),
+smaller magnitude for a measured reason: Qwen's K quantization error is
+smaller (QK-RMSNorm-bounded rows; bundle mean-row norms 13.95 vs gpt-oss
+28.24 median; lower distortion). Visibility of the mechanism = quantization
+error × task headroom.
+
+**Consequence: every chunked-served quant accuracy number in this project —
+including the Qwen vq2 64K record above and the §4 rows with ≥2 chunks —
+is depressed by this effect.** The published Qwen vq2-64K number understates
+vq2 by ~3 points. Headline tables should be re-run either single-chunk or
+with the flag on, and any future table must state `chunked_prefill_size` and
+the flag.
+
+### 10.7 Reproduction
+
+```bash
+# parity audit (no bug in the read paths); runs on a real pool, no server
+docker exec oscar-ab bash -lc "PYTHONPATH=vendor/OSCAR-vq/sglang-research/python \
+  CUDA_VISIBLE_DEVICES=1 /opt/venv-oscar/bin/python \
+  pipelines/oscar_e2e/audit_prefill_decode_parity.py"
+
+# gpt-oss healthy300 A/B (boot scripts in logs/_scratch/): boot_vq2.sh with
+# --chunked-prefill-size {4096,16384}; SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL=1
+# for the fixed arm; SGLANG_MIXED_KV_SHADOW_SIDE={k,v} for attribution.
+# client: run_prompts_client.py --rows artifacts/prompt_rows/niah_healthy300.jsonl
+
+# Qwen 64K (baseline-faithful): serve_oscar.sh --vq2 \
+#   --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt \
+#   --ctx 73728, chunk {8192, 73728}; rows artifacts/prompt_rows/niah_65536_qwen_n200.jsonl
+```
+
+Artifacts: `artifacts/oscar_gptoss20b/healthy/vq2_c{4096,16384}_shadowfix*`,
+`vq2_c4096_shadow{K,V}`, `vq2mx_*`, `qwen64k_*`. All new-cell metrics carry
+per-task scores and cap-hit rates.

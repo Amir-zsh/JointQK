@@ -346,3 +346,72 @@ unaffected by construction.
   both passes were graphed and the server returned to idle with no leak. The
   previously failing split-16 configuration also completed 24/24, scored
   95.83, and graphed all 57 prefills under strict checking.
+
+## p2-4: chunked prefill attends to the prompt through the quantized cache
+
+- **Symptom**: gpt-oss-20B vq2 loses ~24 NIAH points whenever the prompt
+  spans 2+ prefill chunks (healthy300: 67.33 at chunk 4096 vs 91.00 single
+  chunk); bf16 is chunk-insensitive (95.67 vs 94.33). Reproduces at bs=1;
+  per-task losses concentrate in whatever the trailing tokens must retrieve.
+- **Root cause**: with one chunk, the prompt's forward pass attends to the
+  exact in-pass k3/v3 and quantization only ever affects decode. With 2+
+  chunks, chunk N+1 reads chunk N through `dequantize_prefix_kv`, i.e.
+  through VQ-K reconstructions and int2-V crumbs, and those errors compound
+  through every remaining layer of the prompt's own forward pass — corrupting
+  the hidden states of the trailing tokens, where the question lives. Control
+  that pinned it: forcing the whole prefix into the bf16 HP tier
+  (PREFIX_TOKENS=9216) recovered full accuracy, so the chunked attention /
+  concat / causal / sink logic was all correct and only the prefix VALUES
+  mattered.
+- **Fix**: `SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL` (default ON). While a
+  request is mid chunked prefill, the unified pool keeps a bf16 shadow of the
+  stored-space rows its non-final chunks write to quant slots
+  (`shadow_register` in `_alloc_for_extend_mixed`; capture in
+  `set_kv_buffer` from the already-computed HP-tier tensors);
+  `dequantize_prefix_kv` swaps shadow rows in after reconstruction, so the
+  swap covers K and V in all quant flavors (VQ or int2). Release is deferred
+  to the alloc step after the final chunk (whose forward still reads the
+  shadow), with owner-absence at extend allocs as the abort fallback. Quant
+  codes are still written at chunk time, so the FINAL cache is bit-identical
+  with or without the flag and decode behavior is unchanged. Cost: the
+  in-flight chunked prompt's K/V in bf16 (quant layers only) during its
+  prefill. Skipped under CUDA-graph capture (falls back to dequantization).
+- **Verification**: engine gates G1–G6 all pass. healthy300 vq2 chunk 4096:
+  67.33 -> 89.00 (twice, identical), vs single-chunk 91.67/92.33 on the same
+  code — the chunking penalty shrinks from -23.67 to ~-3 with mixed per-task
+  signs, comparable to bf16's own +-1.3 chunk sensitivity. Single-chunk
+  scores are unchanged (91.00 pre vs 91.67/92.33 post, shadow provably
+  inert there since nothing registers). Artifacts:
+  `artifacts/oscar_gptoss20b/healthy/vq2_c{4096,16384}_shadowfix{,_r2}`.
+- **Attribution (root-cause depth 2)**: with the shadow's side switch
+  (`SGLANG_MIXED_KV_SHADOW_SIDE=k|v|kv`), healthy300 at chunk 4096:
+  no shadow 67.33, V-only exact 71.33 (+4.0), K-only exact 83.67 (+16.3),
+  both 89.00 (+21.7). VQ-K reconstruction error causes ~3/4 of the loss,
+  int2-V ~1/4, additive. The int2-arm control is uninformative (gpt-oss
+  INT2 is already at 0.00 from its known method failure, report14).
+- **Not a calibration artifact**: the MXFP4-calibrated 128k bundle improves
+  decode-side quality (single-chunk 91.7 -> 93.67) but does NOT reduce the
+  native chunked loss (no-shadow c4096: 62.33, still ~31 pts below its own
+  single chunk). The same codes that cost ~1 pt when read at decode cost
+  ~30 pts when the trailing prompt tokens read them during prefill — the
+  fragility is intrinsic to prefill-time reads at this rate, so no codebook
+  upgrade closes it; the shadow (or unchunked prefill) is the fix.
+- **Best configuration**: MXFP4 bundle + shadow: chunked 93.00 vs
+  single-chunk 93.67 — parity within noise.
+  Artifacts: `artifacts/oscar_gptoss20b/healthy/vq2_c4096_shadow{K,V}`,
+  `vq2mx_c4096_{noshadow,shadow}`, `vq2mx_c16384`, `int2_c4096`.
+- **Default changed to OFF** (user decision): the shadow is opt-in via
+  `SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL=1`. Accuracy-critical chunked
+  serving MUST set it explicitly; without it, chunked prefill carries the
+  quantization penalty measured above.
+- **Universality (answers "why not other models")**: Qwen3-8B is NOT immune —
+  it was only ever tested at 8K where it scores 100 (ceiling). At 64K under
+  the exact published protocol (gpqacc64k bundle, chunk 8192): chunked 78.00
+  (reproduces the 77.69 record), single-chunk 81.12, chunked+shadow 81.00;
+  bf16 chunk sensitivity only -0.50 (84.25 vs 84.75). Same mechanism, same
+  full recovery by the shadow, smaller magnitude than gpt-oss because Qwen's
+  K quantization error is smaller (QK-norm-bounded rows, half the row norm,
+  lower bundle distortion). Consequence: every chunked-served quant accuracy
+  number, Qwen included, was quietly depressed by this effect; the published
+  Qwen vq2-64K record understates vq2 by ~3 points. Artifacts:
+  `artifacts/oscar_gptoss20b/healthy/qwen64k_vq2gpqacc_*`, `qwen64k_bf16_*`.
