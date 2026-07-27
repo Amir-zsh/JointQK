@@ -73,6 +73,21 @@
         "SGLANG_VQ_OPT_FLUSH": "1",
         "SGLANG_VQ_OPT_PREFILL": "1"
       }
+    },
+    {
+      "label": "vq2_cuda",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-4B-Thinking-2507_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "SGLANG_VQ2_CUDA": "1"
+      }
     }
+  ],
+  "notes": [
+    "vq2_cuda = vq2_s8 + SGLANG_VQ2_CUDA=1: identical flags and maths, but decode stage-1 runs the CUDA kernel that stages the codebook in shared memory (triton_ops/vq2_cuda_stage1.py) instead of the Triton kernel that gathers it from global. An ADDITIONAL arm; vq2_s8/vq2_s48 are unchanged and still Triton, so the pair is directly comparable at the same split-K. Verified live in the server by torch-profiler kernel counts (2304 calls = 64 steps x 36 layers)."
   ]
 }

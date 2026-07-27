@@ -34,6 +34,7 @@ STYLE = [
     ("oscar_int2", "#1f77b4", "OSCAR-INT2"),
     ("vq2_s8", "#2ca02c", "vq2 (splits 8)"),
     ("vq2_s48", "#d62728", "vq2 (splits 48)"),
+    ("vq2_cuda", "#9467bd", "vq2 CUDA (shared codebook)"),
 ]
 
 

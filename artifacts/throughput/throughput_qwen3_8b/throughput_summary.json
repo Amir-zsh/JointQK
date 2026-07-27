@@ -704,6 +704,377 @@
         "decode_tok_s": 176.29
       }
     },
+    "vq2_cuda": {
+      "in30000_bs1": {
+        "batch_size": 1,
+        "input_len": 30000,
+        "output_len": 1024,
+        "warm_s": 1.51,
+        "latency_s": 12.2829,
+        "first_ttft_s": 0.1828,
+        "last_ttft_s": 0.1828,
+        "decode_window_s": 12.1001,
+        "decode_tok_s_total": 84.63,
+        "decode_tok_s_per_req": 84.627,
+        "decode_tok_s": 84.63,
+        "decode_tok_s_stagger_free": 84.63,
+        "overall_tok_s": 2525.79,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 28408,
+        "ttft_spread_frac": 0.0,
+        "estimator_gap_frac": 0.0,
+        "max_running_req": 1,
+        "server_last_gen_throughput": 84.39031837442492,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 64,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      },
+      "in30000_bs4": {
+        "batch_size": 4,
+        "input_len": 30000,
+        "output_len": 1024,
+        "warm_s": 4.47,
+        "latency_s": 13.5243,
+        "first_ttft_s": 0.321,
+        "last_ttft_s": 0.5292,
+        "decode_window_s": 12.9951,
+        "decode_tok_s_total": 315.2,
+        "decode_tok_s_per_req": 78.799,
+        "decode_tok_s": 313.39,
+        "decode_tok_s_stagger_free": 313.39,
+        "overall_tok_s": 9175.8,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 29728,
+        "ttft_spread_frac": 0.016,
+        "estimator_gap_frac": 0.0057,
+        "max_running_req": 4,
+        "server_last_gen_throughput": 315.0314400332927,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 64,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      },
+      "in30000_bs64": {
+        "batch_size": 64,
+        "input_len": 30000,
+        "output_len": 1024,
+        "warm_s": 87.84,
+        "latency_s": 74.884,
+        "first_ttft_s": 0.2996,
+        "last_ttft_s": 8.8923,
+        "decode_window_s": 65.9916,
+        "decode_tok_s_total": 993.1,
+        "decode_tok_s_per_req": 15.517,
+        "decode_tok_s": 938.44,
+        "decode_tok_s_stagger_free": 938.44,
+        "overall_tok_s": 26514.83,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 85224,
+        "ttft_spread_frac": 0.1302,
+        "estimator_gap_frac": 0.055,
+        "max_running_req": 64,
+        "server_last_gen_throughput": 983.259390875668,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 64,
+        "mem_frac": 0.85,
+        "is_bs_max": true
+      },
+      "in60000_bs1": {
+        "batch_size": 1,
+        "input_len": 60000,
+        "output_len": 1024,
+        "warm_s": 2.66,
+        "latency_s": 16.4403,
+        "first_ttft_s": 0.3187,
+        "last_ttft_s": 0.3187,
+        "decode_window_s": 16.1216,
+        "decode_tok_s_total": 63.52,
+        "decode_tok_s_per_req": 63.517,
+        "decode_tok_s": 63.52,
+        "decode_tok_s_stagger_free": 63.52,
+        "overall_tok_s": 3711.85,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 58144,
+        "ttft_spread_frac": 0.0,
+        "estimator_gap_frac": 0.0,
+        "max_running_req": 1,
+        "server_last_gen_throughput": 63.092084911072476,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 39,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      },
+      "in60000_bs39": {
+        "batch_size": 39,
+        "input_len": 60000,
+        "output_len": 1024,
+        "warm_s": 138.97,
+        "latency_s": 87.2737,
+        "first_ttft_s": 0.3532,
+        "last_ttft_s": 13.5285,
+        "decode_window_s": 73.7451,
+        "decode_tok_s_total": 541.54,
+        "decode_tok_s_per_req": 13.886,
+        "decode_tok_s": 500.62,
+        "decode_tok_s_stagger_free": 500.62,
+        "overall_tok_s": 27269.8,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 57080,
+        "ttft_spread_frac": 0.1787,
+        "estimator_gap_frac": 0.0756,
+        "max_running_req": 39,
+        "server_last_gen_throughput": 537.2954469563834,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 39,
+        "mem_frac": 0.85,
+        "is_bs_max": true
+      },
+      "in60000_bs4": {
+        "batch_size": 4,
+        "input_len": 60000,
+        "output_len": 1024,
+        "warm_s": 12.04,
+        "latency_s": 18.6174,
+        "first_ttft_s": 0.9038,
+        "last_ttft_s": 1.2043,
+        "decode_window_s": 17.4131,
+        "decode_tok_s_total": 235.22,
+        "decode_tok_s_per_req": 58.806,
+        "decode_tok_s": 234.03,
+        "decode_tok_s_stagger_free": 234.03,
+        "overall_tok_s": 13111.16,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 57080,
+        "ttft_spread_frac": 0.0173,
+        "estimator_gap_frac": 0.0051,
+        "max_running_req": 4,
+        "server_last_gen_throughput": 233.86566681444762,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 39,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      },
+      "in90000_bs1": {
+        "batch_size": 1,
+        "input_len": 90000,
+        "output_len": 1024,
+        "warm_s": 7.58,
+        "latency_s": 20.9015,
+        "first_ttft_s": 0.8328,
+        "last_ttft_s": 0.8328,
+        "decode_window_s": 20.0687,
+        "decode_tok_s_total": 51.02,
+        "decode_tok_s_per_req": 51.025,
+        "decode_tok_s": 51.03,
+        "decode_tok_s_stagger_free": 51.03,
+        "overall_tok_s": 4354.91,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 85752,
+        "ttft_spread_frac": 0.0,
+        "estimator_gap_frac": 0.0002,
+        "max_running_req": 1,
+        "server_last_gen_throughput": 50.75649317642281,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 26,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      },
+      "in90000_bs26": {
+        "batch_size": 26,
+        "input_len": 90000,
+        "output_len": 1024,
+        "warm_s": 165.45,
+        "latency_s": 92.6928,
+        "first_ttft_s": 1.5337,
+        "last_ttft_s": 16.2476,
+        "decode_window_s": 76.4452,
+        "decode_tok_s_total": 348.28,
+        "decode_tok_s_per_req": 13.395,
+        "decode_tok_s": 317.85,
+        "decode_tok_s_stagger_free": 317.85,
+        "overall_tok_s": 25531.91,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 85752,
+        "ttft_spread_frac": 0.1925,
+        "estimator_gap_frac": 0.0874,
+        "max_running_req": 26,
+        "server_last_gen_throughput": 346.45773105890163,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 26,
+        "mem_frac": 0.85,
+        "is_bs_max": true
+      },
+      "in90000_bs4": {
+        "batch_size": 4,
+        "input_len": 90000,
+        "output_len": 1024,
+        "warm_s": 22.75,
+        "latency_s": 24.3158,
+        "first_ttft_s": 0.7421,
+        "last_ttft_s": 2.4138,
+        "decode_window_s": 21.902,
+        "decode_tok_s_total": 187.01,
+        "decode_tok_s_per_req": 46.754,
+        "decode_tok_s": 183.06,
+        "decode_tok_s_stagger_free": 183.06,
+        "overall_tok_s": 14973.62,
+        "gates": {
+          "full_length": true,
+          "no_retract": true,
+          "warm_took": true,
+          "batch_coexisted": true,
+          "no_nan": true,
+          "server_agrees": true
+        },
+        "produced_tokens": [
+          1024,
+          1024
+        ],
+        "finish_reasons": [
+          "length"
+        ],
+        "cached_tokens_median": 85752,
+        "ttft_spread_frac": 0.0763,
+        "estimator_gap_frac": 0.0211,
+        "max_running_req": 4,
+        "server_last_gen_throughput": 186.26429768958,
+        "ok": true,
+        "arm": "vq2_cuda",
+        "pool_tokens": 2389000,
+        "b_max": 26,
+        "mem_frac": 0.85,
+        "is_bs_max": false
+      }
+    },
     "vq2_s48": {
       "in30000_bs1": {
         "batch_size": 1,
@@ -1456,6 +1827,14 @@
       "in90000_bs1": 2.627,
       "in90000_bs4": 1.944
     },
+    "vq2_cuda": {
+      "in30000_bs1": 1.665,
+      "in30000_bs4": 1.514,
+      "in60000_bs1": 2.063,
+      "in60000_bs4": 1.855,
+      "in90000_bs1": 2.262,
+      "in90000_bs4": 2.019
+    },
     "vq2_s48": {
       "in30000_bs1": 1.926,
       "in30000_bs4": 1.2,
@@ -1475,20 +1854,6 @@
   },
   "speedup_best": {
     "bf16": {
-      "in30000": {
-        "tok_s": 466.81,
-        "bs": 12,
-        "ref_tok_s": 466.81,
-        "ref_bs": 12,
-        "speedup": 1.0
-      },
-      "in60000": {
-        "tok_s": 178.04,
-        "bs": 6,
-        "ref_tok_s": 178.04,
-        "ref_bs": 6,
-        "speedup": 1.0
-      },
       "in90000": {
         "tok_s": 90.69,
         "bs": 4,
@@ -1498,20 +1863,6 @@
       }
     },
     "oscar_int2": {
-      "in30000": {
-        "tok_s": 925.85,
-        "bs": 64,
-        "ref_tok_s": 466.81,
-        "ref_bs": 12,
-        "speedup": 1.983
-      },
-      "in60000": {
-        "tok_s": 480.65,
-        "bs": 39,
-        "ref_tok_s": 178.04,
-        "ref_bs": 6,
-        "speedup": 2.7
-      },
       "in90000": {
         "tok_s": 281.97,
         "bs": 26,
@@ -1520,21 +1871,16 @@
         "speedup": 3.109
       }
     },
+    "vq2_cuda": {
+      "in90000": {
+        "tok_s": 317.85,
+        "bs": 26,
+        "ref_tok_s": 90.69,
+        "ref_bs": 4,
+        "speedup": 3.505
+      }
+    },
     "vq2_s48": {
-      "in30000": {
-        "tok_s": 567.52,
-        "bs": 64,
-        "ref_tok_s": 466.81,
-        "ref_bs": 12,
-        "speedup": 1.216
-      },
-      "in60000": {
-        "tok_s": 286.3,
-        "bs": 39,
-        "ref_tok_s": 178.04,
-        "ref_bs": 6,
-        "speedup": 1.608
-      },
       "in90000": {
         "tok_s": 191.05,
         "bs": 26,
@@ -1544,20 +1890,6 @@
       }
     },
     "vq2_s8": {
-      "in30000": {
-        "tok_s": 569.19,
-        "bs": 64,
-        "ref_tok_s": 466.81,
-        "ref_bs": 12,
-        "speedup": 1.219
-      },
-      "in60000": {
-        "tok_s": 286.89,
-        "bs": 39,
-        "ref_tok_s": 178.04,
-        "ref_bs": 6,
-        "speedup": 1.611
-      },
       "in90000": {
         "tok_s": 184.22,
         "bs": 26,

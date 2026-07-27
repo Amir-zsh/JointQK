@@ -77,19 +77,19 @@ sizes differ by arm, which is the point.
 
 **Qwen3-8B**
 
-| length | bf16 | oscar_int2 | vq2 (s8) | vq2 (s48) |
-|---|---|---|---|---|
-| 30k | 467 (b12) | **926 (b64) 1.98×** | 569 (b64) 1.22× | 568 (b64) 1.22× |
-| 60k | 178 (b6) | **481 (b39) 2.70×** | 287 (b39) 1.61× | 286 (b39) 1.61× |
-| 90k | 91 (b4) | **282 (b26) 3.11×** | 184 (b26) 2.03× | 191 (b26) 2.11× |
+| length | bf16 | oscar_int2 | vq2 (s8) | vq2 (s48) | **vq2_cuda** |
+|---|---|---|---|---|---|
+| 30k | 467 (b12) | 926 (b64) 1.98× | 569 (b64) 1.22× | 568 (b64) 1.22× | **938 (b64) 2.01×** |
+| 60k | 178 (b6) | 481 (b39) 2.70× | 287 (b39) 1.61× | 286 (b39) 1.61× | **501 (b39) 2.81×** |
+| 90k | 91 (b4) | 282 (b26) 3.11× | 184 (b26) 2.03× | 191 (b26) 2.11× | **318 (b26) 3.50×** |
 
 **Qwen3-4B-Thinking-2507**
 
-| length | bf16 | oscar_int2 | vq2 (s8) | vq2 (s48) |
-|---|---|---|---|---|
-| 30k | 370 (b13) | **970 (b64) 2.62×** | 588 (b64) 1.59× | 585 (b64) 1.58× |
-| 60k | 217 (b7) | **506 (b45) 2.34×** | 306 (b45) 1.41× | 294 (b45) 1.36× |
-| 90k | 95 (b4) | **332 (b30) 3.49×** | 192 (b30) 2.02× | 197 (b30) 2.07× |
+| length | bf16 | oscar_int2 | vq2 (s8) | vq2 (s48) | **vq2_cuda** |
+|---|---|---|---|---|---|
+| 30k | 370 (b13) | 970 (b64) 2.62× | 588 (b64) 1.59× | 585 (b64) 1.58× | **976 (b64) 2.64×** |
+| 60k | 217 (b7) | 506 (b45) 2.34× | 306 (b45) 1.41× | 294 (b45) 1.36× | **513 (b45) 2.37×** |
+| 90k | 95 (b4) | 332 (b30) 3.49× | 192 (b30) 2.02× | 197 (b30) 2.07× | **344 (b30) 3.61×** |
 
 Speedup grows with context length, as expected: the capacity advantage compounds
 as each request's KV gets larger. int2 beats vq2 throughout — vq2's decode kernel
@@ -158,23 +158,141 @@ config than int2 at the same batch -- its codebook gather is a dependent load
 needing more warps in flight -- so int2's 32/4/1 large-batch tier measures worse
 for vq2 (2171 us). It gets its own ladder rather than copying int2's.
 
-## Kernel investigation: no further win
+## Kernel investigation: the gap to int2 is closed (in a CUDA kernel)
 
-Full record in `pipelines/throughput/kernel_study/README.md`. The headline:
-ablating the real kernel shows the **codebook gather is 52% of it** (1009 of
-1934 us at bs=64); remove it and vq2 runs at 925 us against int2's 1634 us. The
-whole gap is the gather.
+Full record in `pipelines/throughput/kernel_study/README.md`.
 
-Eight approaches were measured and rejected -- `tl.gather` (1.7-4.3x slower),
-shared-memory staging fused (0.40x), smaller codebooks (1.28x for half the rate),
-split-K, pipelining, DRAM overlap (already achieved), removing `tl.trans` (it was
-never a real transpose -- Triton folds it into `ldmatrix.trans`), and a full
-TileLang rewrite (correct, 0.40x). The one untried lever is group-major `isel`,
-which needs a strided-coordinate codebook bundle.
+**Result.** The shipped Triton vq2 kernel runs at 1.21x int2. A hand-written CUDA
+stage-1 that stages the codebook in **shared memory** runs at **0.94-1.05x int2**
+and **0.75-0.83x Triton**, validated to rel 3.2e-04 against the shipped kernel:
 
-**Methodological caution recorded there too**: five microbenchmarks inverted
-their ranking when measured end-to-end, each because its regime differed from the
-served one. Only `bench_stage1.py` (real shape, engine-derived splits) agrees.
+| shape | int2 | Triton vq2 | CUDA vq2 | vs int2 | vs Triton |
+|---|---|---|---|---|---|
+| bs=64 ctx=30k | 1602 us | 1942 us | **1604 us** | 1.00x | 0.83x |
+| bs=32 ctx=60k | 1593 us | 1934 us | **1503 us** | **0.94x** | 0.78x |
+| bs=16 ctx=30k | 368 us | 501 us | **375 us** | 1.02x | 0.75x |
+| bs=64 ctx=8k | 402 us | 536 us | **423 us** | 1.05x | 0.79x |
+
+This is a *study artifact*, not an engine change: nothing in `vendor/OSCAR-vq` was
+modified, and wiring a CUDA extension into sglang's attention backend is a
+separate decision.
+
+**Round 2 corrected round 1's diagnosis.** Round 1 inferred the bottleneck by
+ablation and blamed "maximum address divergence". Nsight Compute was in fact
+reachable -- the driver sets `RmProfilingAdminOnly: 1`, so counters need
+CAP_SYS_ADMIN, which a privileged *sibling* container provides without touching
+the host driver (`profile_ncu.py`). The counters showed sectors *per request* are
+nearly identical between the two kernels (17.8 vs 19.4); what differs is sector
+**volume** (94 M vs 392 M), and vq2 sits at 74% of L1 peak. The decisive control:
+group-major `isel` -- round 1's "one untried lever" -- has the *best* L1 hit rate
+of any variant and is the *slowest*. It also never needed the strided-coordinate
+codebook bundle round 1 assumed.
+
+**What actually closed it**, in order: the shared-memory codebook (global sectors
+331 M -> 37.4 M); PV register tiling; **fully unrolling the 32-group score loop**
+(worth 1843 -> 1630 us on its own -- the score accumulators are a serial
+dependency chain with no ILP otherwise); loading the q half2 pair as one 8-byte
+access; and unrolling the PV loop.
+
+**A correction worth keeping.** An earlier round measured a *PV-side* FMA ablation
+(~61 us) and concluded tensor cores could not help. The *score-side* ablation
+tells a different story (~1137 us) -- the PV arithmetic is overlapped with
+memory, the score arithmetic is exposed. The right fix turned out to be ILP, not
+tensor cores.
+
+**Methodological caution**: round 1 had five microbenchmarks whose ranking
+inverted end-to-end because their regime differed from the served one; only
+`bench_stage1.py` agrees. Round 2 adds a sixth failure mode -- inferring a
+bottleneck by ablation when counters were one container away -- and leaves
+`probe_group_size.py` in the tree explicitly labelled INCONCLUSIVE as a live
+example of the same hazard.
+
+## vq2_cuda arm: the CUDA stage-1, and the bug that nearly got charted
+
+Full write-up: `notes/page_quant/studies/vq2_decode_kernel_report.md`
+(problem, root cause, every approach tried, and the final design).
+
+The CUDA stage-1 is wired in as an opt-in arm (`SGLANG_VQ2_CUDA=1`,
+`triton_ops/vq2_cuda_stage1.py`, dispatched from
+`_decode_grouped_att_m_fwd_quant_vq2`). Default-off, and `supports()` gates every
+assumption, so the Triton path is untouched for anything else.
+
+### The bug: launching on the wrong stream
+
+The arm first measured **1.6x at bs=1 and 8.3x at bs=64** end-to-end. The bs=64
+number was impossible on its face -- 5,195 tok/s is 12.3 ms/step, while 36 layers
+x the measured ~1.5 ms/layer is ~55 ms of stage-1 alone -- so it was chased rather
+than published. Five hypotheses were tested and killed by measurement (GPU
+placement, launch failure, paging locality, KV occupancy, server args), and a
+liveness probe settled it: `SGLANG_VQ2_CUDA_REP=8` makes the kernel 1.9x slower
+per call, the server demonstrably loaded that binary, and throughput did not move.
+
+The torch profiler over sglang's `/start_profile` endpoint
+(`kernel_study/profile_server_decode.py`) showed the answer in one line. Comparing
+total CUDA kernel time for 64 decode steps:
+
+| | vq2_s8 | vq2_cuda (broken) |
+|---|---|---|
+| `_fwd_grouped_kernel_stage1_quant_vq2` | 282.39 ms / 2304 calls | **absent** |
+| the CUDA `vq2_stage1` | -- | **absent** |
+| total kernel time | 813.58 ms | 530.91 ms |
+
+The 282.67 ms difference is exactly the cost of the quant stage-1. **Neither
+kernel was running**: the dispatch skipped the Triton launch, and the CUDA kernel
+was never captured, so decode was silently skipping long-context attention
+altogether. That is why it looked 8x faster and why making the kernel slower
+changed nothing.
+
+Cause: the kernel launched as `<<<grid, THR, sm>>>`, i.e. on the **legacy default
+stream**. sglang captures decode into CUDA graphs on a side stream, and work on
+the default stream is not captured. Eager-mode tests all passed because the
+default stream synchronises implicitly -- which is precisely why a unit test
+could not catch it. Fixed by launching on `at::cuda::getCurrentCUDAStream()`.
+
+After the fix the profiler shows `vq2_stage1<__nv_bfloat16, long, 128, true>` with
+**2304 calls** (64 steps x 36 layers) at 113.8 us against Triton's 122.6 us.
+
+### Final result (18/18 cells pass every gate)
+
+bs=max, aggregate decode tok/s, CUDA graphs enabled throughout:
+
+| model | length | int2 | vq2_s8 | **vq2_cuda** | vs int2 | vs vq2_s8 |
+|---|---|---|---|---|---|---|
+| Qwen3-8B | 30k | 926 | 569 | **938** | 1.01x | 1.65x |
+| Qwen3-8B | 60k | 481 | 287 | **501** | 1.04x | 1.74x |
+| Qwen3-8B | 90k | 282 | 184 | **318** | 1.13x | 1.73x |
+| 4B-Thinking | 30k | 970 | 588 | **976** | 1.01x | 1.66x |
+| 4B-Thinking | 60k | 506 | 306 | **513** | 1.01x | 1.68x |
+| 4B-Thinking | 90k | 332 | 192 | **344** | 1.03x | 1.79x |
+
+Two caveats on these numbers:
+
+- **The runs must be serialised.** Running two servers concurrently, or alongside
+  another user's job, produced OOMs and hard server kills (no traceback) that
+  looked like arm-specific failures and were not: the identical config passes
+  9/9 when run alone on a free GPU. Earlier "vq2_cuda OOMs at 60k" conclusions
+  were contention artefacts.
+- **The vq2_cuda cells were measured on a newer engine tree** than the bf16 /
+  int2 / vq2_s8 / vq2_s48 cells, which date from the original sweep. The
+  intervening change (`SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL`) defaults to OFF
+  and allocates nothing when disabled, so it should not affect the comparison --
+  but the four reference arms have not been re-measured on the current tree, and
+  a strict apples-to-apples chart would re-run them.
+
+### Lessons worth keeping
+
+- **A kernel-level speedup that exceeds what the kernel can explain is a bug
+  report, not a result.** The arithmetic (layers x per-layer time vs step time)
+  falsified it before any profiling.
+- **With synthetic codebooks the output is garbage by design, so every accuracy
+  signal is blind.** A kernel that silently does nothing passes every gate the
+  harness has. `no_nan` and `full_length` cannot catch omitted attention.
+- **Eager unit tests cannot catch stream-capture bugs.** Validate a decode kernel
+  by kernel COUNT inside a running server, not only by numerics offline.
+- Two harness issues surfaced: the bs=64 cell reported `ttft_spread_frac` 0.76
+  (vq2_s8: 0.08) while the headline metric sums per-request rates, which is only
+  stagger-robust when requests overlap; and `--disable-cuda-graph` roughly halves
+  throughput, so any A/B run without graphs understates a decode kernel's effect.
 
 ## Known limitations
 
