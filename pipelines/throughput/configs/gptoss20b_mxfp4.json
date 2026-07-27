@@ -1,0 +1,73 @@
+{
+  "study": "throughput_gptoss20b_mxfp4",
+  "model": "openai/gpt-oss-20b",
+  "synthetic_root": "artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64",
+  "tp": 2,
+  "_doc": [
+    "gpt-oss-20B, OFFICIAL openai checkpoint (MXFP4 weights), TP=2.",
+    "MXFP4 runs on Hopper: mxfp4.py has an is_sm90_supported() branch. NVFP4",
+    "does NOT -- modelopt_quant.py raises 'Please use Blackwell and above' -- so",
+    "an NVFP4 build of this model cannot be benchmarked on this node at all.",
+    "Hybrid SWA: 24 layers alternate sliding_attention / full_attention, so only",
+    "the 12 full-attention layers get a mixed-KV quant pool. capacity.py's",
+    "prediction assumes a uniform full-attention pool and is therefore an UPPER",
+    "BOUND here; B_max is taken from the server's logged max_total_num_tokens,",
+    "which is authoritative either way.",
+    "ABSORB_V_ROT=0: the weight-folding helper walks contiguous global layers and",
+    "cannot handle the hybrid layer pattern.",
+    "QUANT_GROUP_SIZE=0: head_dim=64 -> one scale group per head.",
+    "ARTIFACTS ARE SYNTHETIC -- THROUGHPUT-VALID / ACCURACY-INVALID.",
+    "MoE backend pinned to 'triton': the image's triton_kernels has no .routing module (API moved), so the auto-selected TRITON_KERNEL path dies with NameError: name 'routing' is not defined at topk.py:331.",
+    "Prefill backend is triton, NOT fa3: fa3 dies on this model's hybrid-SWA attention path with 'Boolean value of Tensor with more than one value is ambiguous' (hybrid_attn_backend.py:189 -> flash_attention_v3.py:131). The Qwen configs keep fa3, which works there."
+  ],
+  "input_lens": [
+    30000,
+    60000,
+    90000
+  ],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "bf16",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "triton",
+    "chunked_prefill_size": 4096,
+    "extra": "--moe-runner-backend triton"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0"
+      }
+    },
+    {
+      "label": "vq2_s8",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    }
+  ]
+}

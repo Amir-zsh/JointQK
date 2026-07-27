@@ -1,0 +1,20 @@
+{
+  "arm": "bf16",
+  "model": "Qwen/Qwen3-4B-Thinking-2507",
+  "gpu": 4,
+  "pool_tokens": 430213,
+  "pool_tokens_calibration": 430213,
+  "predicted_cell_size_bytes": 147456,
+  "predicted_pool_gib": 59.08,
+  "mem_frac": 0.85,
+  "max_running_requests": 13,
+  "cuda_graph_max_bs": 13,
+  "flags": "--bf16",
+  "env": {
+    "KV_SPLITS": "8"
+  },
+  "budget": {
+    "hp_gib": 0.0
+  },
+  "synthetic_artifacts": true
+}
