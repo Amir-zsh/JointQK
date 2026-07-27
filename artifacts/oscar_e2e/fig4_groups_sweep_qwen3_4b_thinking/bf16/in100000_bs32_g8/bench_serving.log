@@ -1,0 +1,63 @@
+benchmark_args=Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=32401, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model=None, served_model_name=None, tokenizer=None, num_prompts=32, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=32, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=8, gsp_prompts_per_group=4, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+Waiting up to 60s for http://127.0.0.1:32401/v1/models to become ready...
+Server ready in 0.0s.
+Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=32401, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model='Qwen/Qwen3-4B-Thinking-2507', served_model_name=None, tokenizer=None, num_prompts=32, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=32, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=8, gsp_prompts_per_group=4, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+
+
+Loading cached generated input data from /root/.cache/sglang/benchmark/gen_shared_prefix_1_8_4_100000_128_1000_Qwen2Tokenizer.pkl
+Starting warmup with 1 sequences...
+Warmup completed with 1 sequences. Starting main benchmark run...
+
+============ Serving Benchmark Result ============
+Backend:                                 sglang    
+Traffic request rate:                    inf       
+Max request concurrency:                 32        
+Successful requests:                     32        
+Benchmark duration (s):                  618.52    
+Total input tokens:                      3373522   
+Total input text tokens:                 3373522   
+Total generated tokens:                  32000     
+Total generated tokens (retokenized):    32000     
+Request throughput (req/s):              0.05      
+Input token throughput (tok/s):          5454.21   
+Output token throughput (tok/s):         51.74     
+Peak output token throughput (tok/s):    105.00    
+Peak concurrent requests:                32        
+Total token throughput (tok/s):          5505.94   
+Concurrency:                             17.05     
+----------------End-to-End Latency----------------
+Mean E2E Latency (ms):                   329594.35 
+Median E2E Latency (ms):                 340522.17 
+P90 E2E Latency (ms):                    564341.08 
+P99 E2E Latency (ms):                    618402.24 
+---------------Time to First Token----------------
+Mean TTFT (ms):                          276561.36 
+Median TTFT (ms):                        285995.82 
+P99 TTFT (ms):                           571236.54 
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          53.09     
+Median TPOT (ms):                        54.16     
+P99 TPOT (ms):                           61.78     
+---------------Inter-Token Latency----------------
+Mean ITL (ms):                           53.09     
+Median ITL (ms):                         47.38     
+P95 ITL (ms):                            48.05     
+P99 ITL (ms):                            48.37     
+Max ITL (ms):                            13886.97  
+==================================================
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+  0%|          | 0/32 [00:00<?, ?it/s]
+  3%|▎         | 1/32 [01:01<31:44, 61.43s/it]
+  6%|▋         | 2/32 [01:08<14:45, 29.52s/it]
+ 12%|█▎        | 4/32 [02:03<13:07, 28.14s/it]
+ 19%|█▉        | 6/32 [02:17<07:52, 18.16s/it]
+ 25%|██▌       | 8/32 [03:04<08:07, 20.31s/it]
+ 34%|███▍      | 11/32 [04:05<07:06, 20.32s/it]
+ 44%|████▍     | 14/32 [05:06<06:05, 20.33s/it]
+ 53%|█████▎    | 17/32 [06:14<05:18, 21.25s/it]
+ 69%|██████▉   | 22/32 [07:22<02:56, 17.65s/it]
+ 78%|███████▊  | 25/32 [08:16<02:04, 17.78s/it]
+ 88%|████████▊ | 28/32 [09:24<01:16, 19.17s/it]
+ 97%|█████████▋| 31/32 [10:18<00:18, 18.84s/it]
+100%|██████████| 32/32 [10:18<00:00, 19.33s/it]

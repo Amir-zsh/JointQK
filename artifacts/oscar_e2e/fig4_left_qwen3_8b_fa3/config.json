@@ -1,0 +1,80 @@
+{
+  "study": "fig4_left_qwen3_8b",
+  "_doc": [
+    "OSCAR Figure 4 (LEFT), Qwen3-8B column: decode throughput speedup vs BF16 at",
+    "batch size 1 with a full prefix-cache hit and 1k output length.",
+    "Paper OSCAR: 1.84 / 2.29 / 2.88 at 30k / 60k / 100k.",
+    "Paper Saw-INT4: 1.25 / 1.33 / 1.52 -- NOT implemented in this stack, so that",
+    "series is absent rather than substituted by a different baseline.",
+    "vq2 is ours and not in the paper; included because 'does vq2 beat OSCAR at",
+    "bs=1 long context' is the question this project is asking.",
+    "Split-K is pinned per arm: serve_oscar defaults to 48 for vq2 and 8 otherwise,",
+    "which would silently compare different schedules. vq2 also gets its tuned 48.",
+    "FIDELITY: serving flags follow OSCAR's own rotation/eval_oscar_gpqa.sh -- fa3 prefill, triton decode, --enable-cache-report. Their driver does NOT override --chunked-prefill-size, so sglang's 8192 default applies. Under that config the mixed-KV pool only commits the FIRST prefill chunk to the radix cache (measured cap = chunk - RECENT_TOKENS), so a 100k shared prefix is re-prefilled every request while bf16 caches it fully. chunked_prefill_size=102400 would fix it but OOMs at mem-frac 0.85."
+  ],
+  "grid": [
+    {
+      "input_len": 30000,
+      "batch_size": 1
+    },
+    {
+      "input_len": 60000,
+      "batch_size": 1
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 1
+    }
+  ],
+  "ngen": 1000,
+  "question_len": 128,
+  "warmup_requests": 1,
+  "metric": "decode_tok_s",
+  "reference": "bf16",
+  "serve": {
+    "ctx": 131072,
+    "mem_frac": 0.85,
+    "max_tokens": "auto",
+    "radix_cache": 1,
+    "extra": "--enable-cache-report",
+    "prefill_backend": "fa3"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8"
+      }
+    },
+    {
+      "label": "vq2_s8",
+      "flags": "--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+      "env": {
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "KV_SPLITS": "8"
+      }
+    },
+    {
+      "label": "vq2_s48",
+      "flags": "--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+      "env": {
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "KV_SPLITS": "48"
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "label": "oscar_int2",
+  "input_len": 100000,
+  "batch_size": 32,
+  "ngen": 1000,
+  "ok": false,
+  "error": "bench_serving produced no throughput line"
+}

@@ -1,0 +1,73 @@
+{
+  "study": "fig4_right_qwen3_8b_replay",
+  "_doc": [
+    "OSCAR Figure 4 (RIGHT), Qwen3-8B column: job-level throughput at a fixed 100k",
+    "input as a function of batch size, with prefix warm-up.",
+    "Paper OSCAR speedup vs BF16: 2.88 / 3.35 / 3.44 at BS=1 / 8 / 32.",
+    "Paper Saw-INT4: 1.52 / 2.32 / 2.09 -- not implemented here, series absent.",
+    "The shared prefix is what makes BS=32 at 100k feasible: 32 x 100k = 3.2M",
+    "tokens exceeds the pool, but one shared prefix costs ~100k plus short tails.",
+    "WORKLOAD = replay (distinct prompts, set run twice, second measured). The shared-prefix variant stores the 100k context ONCE for all BS requests, so KV capacity never binds and bf16 keeps up -- measured speedup collapsed to 1.08x at BS=32 versus the paper's 3.44x. Replay is the protocol the paper's Fig 6 caption names ('immediate replay after warmup') and it makes capacity bind: 32x100k = 3.2M tokens vs a ~374k BF16 pool and ~2.4M INT2 pool.",
+    "Uses SGLANG_MIXED_KV_PREFIX_REUSE_ACROSS_CHUNKS on the quant arms instead of --chunked-prefill-size 102400. The flag fixes the actual defect (a per-chunk positional bound min-accumulated with ownership-backed bounds, latching prefix reuse at chunk 1); the chunk override merely sidestepped it by making the prompt fit one chunk, which disabled chunked prefill, OOM'd bf16, and forced mem-frac to 0.82. bf16 does not need the flag -- it already caches across chunks.",
+    "BS=2/4 fill the transition. bf16 holds ~3.3 x 100k prompts (334k-374k pool at 144 KB/token); OSCAR holds ~21 (2.1-2.4M at ~18 KB/token). So BS=4 is exactly bf16's cliff: 3 resident, 1 queued, while OSCAR absorbs all four. Between BS=1 (both fit, 2.68x) and BS=8 (bf16 thrashing, 6.09x)."
+  ],
+  "grid": [
+    {
+      "input_len": 100000,
+      "batch_size": 2
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 4
+    }
+  ],
+  "ngen": 1000,
+  "question_len": 128,
+  "warmup_requests": 1,
+  "metric": "output_tok_s",
+  "reference": "bf16",
+  "serve": {
+    "ctx": 131072,
+    "mem_frac": 0.85,
+    "radix_cache": 1,
+    "extra": "--enable-cache-report",
+    "prefill_backend": "fa3"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto",
+        "SGLANG_MIXED_KV_PREFIX_REUSE_ACROSS_CHUNKS": "1"
+      }
+    },
+    {
+      "label": "vq2_s8",
+      "flags": "--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+      "env": {
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto",
+        "SGLANG_MIXED_KV_PREFIX_REUSE_ACROSS_CHUNKS": "1"
+      }
+    }
+  ],
+  "workload": "replay",
+  "seed": 1
+}

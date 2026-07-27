@@ -1,0 +1,49 @@
+{
+  "study": "fig4_right_qwen3_8b_bf16only",
+  "_doc": [
+    "OSCAR Figure 4 (RIGHT), Qwen3-8B column: job-level throughput at a fixed 100k",
+    "input as a function of batch size, with prefix warm-up.",
+    "Paper OSCAR speedup vs BF16: 2.88 / 3.35 / 3.44 at BS=1 / 8 / 32.",
+    "Paper Saw-INT4: 1.52 / 2.32 / 2.09 -- not implemented here, series absent.",
+    "The shared prefix is what makes BS=32 at 100k feasible: 32 x 100k = 3.2M",
+    "tokens exceeds the pool, but one shared prefix costs ~100k plus short tails.",
+    "chunked-prefill-size 102400 (> the 100k prefix) is REQUIRED: the mixed-KV pool only commits the first prefill chunk to the radix cache, so at the sglang default of 8192 a 100k prefix caches only 7936 tokens and the paper's full-prefix-cache-hit protocol silently degrades into a re-prefill. Verified: with 102400 a repeat 100k request reports #cached-token: 99728 and TTFT drops 6814ms -> 263ms. This is a documented DEVIATION -- the paper does not override this flag. Pool is capped at 1.2M for quant arms to leave room for the large chunk; bf16 keeps auto (~374k) since 1.2M BF16 tokens would need ~173GB."
+  ],
+  "grid": [
+    {
+      "input_len": 100000,
+      "batch_size": 1
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 8
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 32
+    }
+  ],
+  "ngen": 1000,
+  "question_len": 128,
+  "warmup_requests": 1,
+  "metric": "output_tok_s",
+  "reference": "bf16",
+  "serve": {
+    "ctx": 131072,
+    "mem_frac": 0.85,
+    "radix_cache": 1,
+    "extra": "--enable-cache-report",
+    "prefill_backend": "fa3"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto"
+      }
+    }
+  ]
+}

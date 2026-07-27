@@ -1,0 +1,87 @@
+{
+  "study": "fig4_left_qwen3_4b_thinking",
+  "_doc": [
+    "OSCAR Figure 4 (LEFT), Qwen3-8B column: decode throughput speedup vs BF16 at",
+    "batch size 1 with a full prefix-cache hit and 1k output length.",
+    "Paper OSCAR: 1.84 / 2.29 / 2.88 at 30k / 60k / 100k.",
+    "Paper Saw-INT4: 1.25 / 1.33 / 1.52 -- NOT implemented in this stack, so that",
+    "series is absent rather than substituted by a different baseline.",
+    "bs=1 long context' is the question this project is asking.",
+    "FIDELITY: serving flags follow OSCAR's own rotation/eval_oscar_gpqa.sh -- fa3 prefill, triton decode, --enable-cache-report. Their driver does NOT override --chunked-prefill-size, so sglang's 8192 default applies. Under that config the mixed-KV pool only commits the FIRST prefill chunk to the radix cache (measured cap = chunk - RECENT_TOKENS), so a 100k shared prefix is re-prefilled every request while bf16 caches it fully. chunked_prefill_size=102400 would fix it but OOMs at mem-frac 0.85.",
+    "Paper Fig 4 left for this model -- OSCAR speedup vs BF16: 1.98 / 2.52 / 3.08 at 30k / 60k / 100k.",
+    "vq2 arm uses the Qwen3-8B codebook. Qwen3-4B-Thinking-2507 has IDENTICAL KV geometry (36 layers, 8 kv-heads, head_dim 128), so it loads unchanged and the decode kernel does exactly the same work -- the gather, dequant and dot are independent of codebook CONTENTS. THROUGHPUT ONLY: the centroids encode the wrong model's statistics, so any accuracy number from this arm is meaningless and must not be reported."
+  ],
+  "grid": [
+    {
+      "input_len": 30000,
+      "batch_size": 1
+    },
+    {
+      "input_len": 60000,
+      "batch_size": 1
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 1
+    }
+  ],
+  "ngen": 1000,
+  "question_len": 128,
+  "warmup_requests": 1,
+  "metric": "decode_tok_s",
+  "reference": "bf16",
+  "serve": {
+    "ctx": 131072,
+    "mem_frac": 0.85,
+    "max_tokens": "auto",
+    "radix_cache": 1,
+    "extra": "--enable-cache-report",
+    "prefill_backend": "fa3"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "MODEL": "Qwen/Qwen3-4B-Thinking-2507",
+        "ROT_DIR": "/raid/amir/quantization/teamily-project/artifacts/oscar_e2e/rotzoo_dl/Qwen3-4B-Thinking-2507/seq20000_prompt83_group128"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8",
+        "MODEL": "Qwen/Qwen3-4B-Thinking-2507",
+        "ROT_DIR": "/raid/amir/quantization/teamily-project/artifacts/oscar_e2e/rotzoo_dl/Qwen3-4B-Thinking-2507/seq20000_prompt83_group128"
+      }
+    },
+    {
+      "label": "vq2_s8",
+      "flags": "--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "MODEL": "Qwen/Qwen3-4B-Thinking-2507",
+        "ROT_DIR": "/raid/amir/quantization/teamily-project/artifacts/oscar_e2e/rotzoo_dl/Qwen3-4B-Thinking-2507/seq20000_prompt83_group128",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "vq2_s48",
+      "flags": "--vq2 --vq-codebook third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+      "env": {
+        "KV_SPLITS": "48",
+        "MODEL": "Qwen/Qwen3-4B-Thinking-2507",
+        "ROT_DIR": "/raid/amir/quantization/teamily-project/artifacts/oscar_e2e/rotzoo_dl/Qwen3-4B-Thinking-2507/seq20000_prompt83_group128",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    }
+  ]
+}

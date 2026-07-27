@@ -1,0 +1,18 @@
+{
+  "label": "oscar_int2",
+  "input_len": 30000,
+  "batch_size": 1,
+  "ngen": 1000,
+  "ok": true,
+  "output_tok_s": 84.1,
+  "total_tok_s": 2755.34,
+  "mean_ttft_ms": 1094.89,
+  "median_ttft_ms": 1094.89,
+  "mean_tpot_ms": 10.79,
+  "median_tpot_ms": 10.79,
+  "duration_s": 11.89,
+  "request_throughput": 0.08,
+  "decode_tok_s": 92.67840593141798,
+  "prefill_share": 0.0922082515727508,
+  "prefill_ok": true
+}

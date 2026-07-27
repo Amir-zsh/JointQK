@@ -1,0 +1,326 @@
+_id,question,answer_prefix,answer,task,max_new_tokens,rid,dataset,data_dir,sample_k,predicted_answer,compression_ratio,completion_tokens,finish_reason
+niah_single_1_65536_0_6,What is the special magic number for rough-summary mentioned in the provided text? ,The special magic number for rough-summary mentioned in the provided text is,['6539790'],niah_single_1,128,6,niah,65536,0, **6539790**.,,11,stop
+niah_single_1_65536_0_14,What is the special magic number for witty-fox mentioned in the provided text? ,The special magic number for witty-fox mentioned in the provided text is,['5003310'],niah_single_1,128,14,niah,65536,0, **5003310**.,,11,stop
+niah_single_1_65536_0_22,What is the special magic number for bright-moon mentioned in the provided text? ,The special magic number for bright-moon mentioned in the provided text is,['1553185'],niah_single_1,128,22,niah,65536,0, **1553185**.,,11,stop
+niah_single_1_65536_0_30,What is the special magic number for crisp-daily mentioned in the provided text? ,The special magic number for crisp-daily mentioned in the provided text is,['9161179'],niah_single_1,128,30,niah,65536,0, **9161179**.,,11,stop
+niah_single_1_65536_0_38,What is the special magic number for dark-track mentioned in the provided text? ,The special magic number for dark-track mentioned in the provided text is,['3008156'],niah_single_1,128,38,niah,65536,0, **3008156**.,,11,stop
+niah_single_1_65536_0_46,What is the special magic number for unsightly-kernel mentioned in the provided text? ,The special magic number for unsightly-kernel mentioned in the provided text is,['2693177'],niah_single_1,128,46,niah,65536,0, **2693177**.,,11,stop
+niah_single_1_65536_0_54,What is the special magic number for silver-idea mentioned in the provided text? ,The special magic number for silver-idea mentioned in the provided text is,['7520334'],niah_single_1,128,54,niah,65536,0, **7520334**.,,11,stop
+niah_single_1_65536_0_62,What is the special magic number for early-orchard mentioned in the provided text? ,The special magic number for early-orchard mentioned in the provided text is,['1025572'],niah_single_1,128,62,niah,65536,0, **1025572**.,,11,stop
+niah_single_1_65536_0_70,What is the special magic number for unsightly-domain mentioned in the provided text? ,The special magic number for unsightly-domain mentioned in the provided text is,['6468431'],niah_single_1,128,70,niah,65536,0,":
+
+**6468431**",,11,stop
+niah_single_1_65536_0_78,What is the special magic number for huge-moon mentioned in the provided text? ,The special magic number for huge-moon mentioned in the provided text is,['2680753'],niah_single_1,128,78,niah,65536,0, **2680753**.,,11,stop
+niah_single_1_65536_0_86,What is the special magic number for huge-kernel mentioned in the provided text? ,The special magic number for huge-kernel mentioned in the provided text is,['9296092'],niah_single_1,128,86,niah,65536,0, **9296092**.,,11,stop
+niah_single_1_65536_0_94,What is the special magic number for quiet-harvest mentioned in the provided text? ,The special magic number for quiet-harvest mentioned in the provided text is,['3175014'],niah_single_1,128,94,niah,65536,0, **3175014**.,,11,stop
+niah_single_2_65536_0_2,What is the special magic number for silver-tree mentioned in the provided text? ,The special magic number for silver-tree mentioned in the provided text is,['3611610'],niah_single_2,128,102,niah,65536,0, **3611610**.,,11,stop
+niah_single_2_65536_0_10,What is the special magic number for new-daily mentioned in the provided text? ,The special magic number for new-daily mentioned in the provided text is,['2071358'],niah_single_2,128,110,niah,65536,0, **2071358**.,,11,stop
+niah_single_2_65536_0_18,What is the special magic number for jolly-dawn mentioned in the provided text? ,The special magic number for jolly-dawn mentioned in the provided text is,['9362450'],niah_single_2,128,118,niah,65536,0, **9362450**.,,11,stop
+niah_single_2_65536_0_26,What is the special magic number for stale-government mentioned in the provided text? ,The special magic number for stale-government mentioned in the provided text is,['8729852'],niah_single_2,128,126,niah,65536,0, **8729852**.,,11,stop
+niah_single_2_65536_0_34,What is the special magic number for tiny-domain mentioned in the provided text? ,The special magic number for tiny-domain mentioned in the provided text is,['5395756'],niah_single_2,128,134,niah,65536,0, **5395756**.,,11,stop
+niah_single_2_65536_0_42,What is the special magic number for efficient-geometry mentioned in the provided text? ,The special magic number for efficient-geometry mentioned in the provided text is,['1544680'],niah_single_2,128,142,niah,65536,0, **1544680**.,,11,stop
+niah_single_2_65536_0_50,What is the special magic number for old-track mentioned in the provided text? ,The special magic number for old-track mentioned in the provided text is,['8641522'],niah_single_2,128,150,niah,65536,0, **8641522**.,,11,stop
+niah_single_2_65536_0_58,What is the special magic number for brave-government mentioned in the provided text? ,The special magic number for brave-government mentioned in the provided text is,['1515074'],niah_single_2,128,158,niah,65536,0, **1515074**.,,11,stop
+niah_single_2_65536_0_66,What is the special magic number for bold-fox mentioned in the provided text? ,The special magic number for bold-fox mentioned in the provided text is,['3380476'],niah_single_2,128,166,niah,65536,0, **3380476**.,,11,stop
+niah_single_2_65536_0_74,What is the special magic number for kind-hill mentioned in the provided text? ,The special magic number for kind-hill mentioned in the provided text is,['4970448'],niah_single_2,128,174,niah,65536,0, **4970448**.,,11,stop
+niah_single_2_65536_0_82,What is the special magic number for brave-few mentioned in the provided text? ,The special magic number for brave-few mentioned in the provided text is,['7999881'],niah_single_2,128,182,niah,65536,0, **7999881**.,,11,stop
+niah_single_2_65536_0_90,What is the special magic number for fast-key mentioned in the provided text? ,The special magic number for fast-key mentioned in the provided text is,['1030923'],niah_single_2,128,190,niah,65536,0, **1030923**.,,11,stop
+niah_single_2_65536_0_98,What is the special magic number for rough-tea mentioned in the provided text? ,The special magic number for rough-tea mentioned in the provided text is,['6936148'],niah_single_2,128,198,niah,65536,0, **6936148**.,,11,stop
+niah_single_3_65536_0_6,What is the special magic uuid for silly-road mentioned in the provided text? ,The special magic uuid for silly-road mentioned in the provided text is,['be0a5a56-7900-9c61-a1d2-0ebc5aa3892a'],niah_single_3,128,206,niah,65536,0,":
+
+**be0a5a56-7900-9c61-a1d2-0ebc5aa3892a**",,36,stop
+niah_single_3_65536_0_14,What is the special magic uuid for icy-tree mentioned in the provided text? ,The special magic uuid for icy-tree mentioned in the provided text is,['6bf52dfd-54a8-762b-2b12-c92c62565a95'],niah_single_3,128,214,niah,65536,0,":
+
+**6bf52dfd-54a8-762b-2b12-c92c62565a95**",,36,stop
+niah_single_3_65536_0_22,What is the special magic uuid for new-harbor mentioned in the provided text? ,The special magic uuid for new-harbor mentioned in the provided text is,['b261d0d2-a1c2-d9bf-0dcf-035b7552c6e8'],niah_single_3,128,222,niah,65536,0,":
+
+**b261d0d2-a1c2-d9bf-0dcf-035b7552c6e8**",,36,stop
+niah_single_3_65536_0_30,What is the special magic uuid for lively-patty mentioned in the provided text? ,The special magic uuid for lively-patty mentioned in the provided text is,['35a7c6ed-1482-7a89-5e63-64c630ac79dd'],niah_single_3,128,230,niah,65536,0,":
+
+**35a7c6ed-1482-7a89-5e63-64c630ac79dd**",,37,stop
+niah_single_3_65536_0_38,What is the special magic uuid for unsightly-moon mentioned in the provided text? ,The special magic uuid for unsightly-moon mentioned in the provided text is,['20ca35ab-3855-3ac8-7d71-85913fee2fc7'],niah_single_3,128,238,niah,65536,0,":
+
+**20ca35ab-3855-3ac8-7d71-85913fee2fc7**",,34,stop
+niah_single_3_65536_0_46,What is the special magic uuid for deep-galaxy mentioned in the provided text? ,The special magic uuid for deep-galaxy mentioned in the provided text is,['bd6817b6-38b8-0611-483c-1a4ea91da2cd'],niah_single_3,128,246,niah,65536,0,":
+
+**bd6817b6-38b8-0611-483c-1a4ea91da2cd**",,36,stop
+niah_single_3_65536_0_54,What is the special magic uuid for rough-lantern mentioned in the provided text? ,The special magic uuid for rough-lantern mentioned in the provided text is,['989bb030-86c4-7b06-06a8-e22fd57caf0d'],niah_single_3,128,254,niah,65536,0,":
+
+**989bb030-86c4-7b06-06a8-e22fd57caf0d**",,35,stop
+niah_single_3_65536_0_62,What is the special magic uuid for witty-galaxy mentioned in the provided text? ,The special magic uuid for witty-galaxy mentioned in the provided text is,['26b61b06-a164-5f58-bb78-eb2d0ee5144d'],niah_single_3,128,262,niah,65536,0,":
+
+**26b61b06-a164-5f58-bb78-eb2d0ee5144d**",,36,stop
+niah_single_3_65536_0_70,What is the special magic uuid for huge-government mentioned in the provided text? ,The special magic uuid for huge-government mentioned in the provided text is,['d7133061-3cc4-f772-547e-39181463c5f8'],niah_single_3,128,270,niah,65536,0,":
+
+**d7133061-3cc4-f772-547e-39181463c5f8**",,38,stop
+niah_single_3_65536_0_78,What is the special magic uuid for silver-fable mentioned in the provided text? ,The special magic uuid for silver-fable mentioned in the provided text is,['780afabf-8cea-309b-49c9-4aa5e689e5e8'],niah_single_3,128,278,niah,65536,0,":
+
+**780afabf-8cea-309b-49c9-4aa5e689e5e8**",,35,stop
+niah_single_3_65536_0_86,What is the special magic uuid for short-few mentioned in the provided text? ,The special magic uuid for short-few mentioned in the provided text is,['909b471c-0d1f-0a7f-d0fc-e92295be263b'],niah_single_3,128,286,niah,65536,0,":
+
+**909b471c-0d1f-0a7f-d0fc-e92295be263b**",,36,stop
+niah_single_3_65536_0_94,What is the special magic uuid for silver-key mentioned in the provided text? ,The special magic uuid for silver-key mentioned in the provided text is,['fda834ea-c74d-d25c-6dbf-859c037d9752'],niah_single_3,128,294,niah,65536,0,":
+
+**fda834ea-c74d-d25c-6dbf-859c037d9752**",,35,stop
+niah_multikey_1_65536_0_2,What is the special magic number for abashed-domain mentioned in the provided text? ,The special magic number for abashed-domain mentioned in the provided text is,['7530730'],niah_multikey_1,128,302,niah,65536,0,: **7530730**.,,12,stop
+niah_multikey_1_65536_0_10,What is the special magic number for eager-idea mentioned in the provided text? ,The special magic number for eager-idea mentioned in the provided text is,['7916016'],niah_multikey_1,128,310,niah,65536,0,: **1514868**.,,12,stop
+niah_multikey_1_65536_0_18,What is the special magic number for quiet-jungle mentioned in the provided text? ,The special magic number for quiet-jungle mentioned in the provided text is,['1364520'],niah_multikey_1,128,318,niah,65536,0, **5635240**.,,11,stop
+niah_multikey_1_65536_0_26,What is the special magic number for ancient-patty mentioned in the provided text? ,The special magic number for ancient-patty mentioned in the provided text is,['8593847'],niah_multikey_1,128,326,niah,65536,0,: **8593847**.,,12,stop
+niah_multikey_1_65536_0_34,What is the special magic number for deep-alluvium mentioned in the provided text? ,The special magic number for deep-alluvium mentioned in the provided text is,['5749721'],niah_multikey_1,128,334,niah,65536,0,: **5749721**.,,12,stop
+niah_multikey_1_65536_0_42,What is the special magic number for witty-ember mentioned in the provided text? ,The special magic number for witty-ember mentioned in the provided text is,['7883387'],niah_multikey_1,128,342,niah,65536,0,: **7883387**.,,12,stop
+niah_multikey_1_65536_0_50,What is the special magic number for crisp-alluvium mentioned in the provided text? ,The special magic number for crisp-alluvium mentioned in the provided text is,['9600825'],niah_multikey_1,128,350,niah,65536,0,: **9600825**.,,12,stop
+niah_multikey_1_65536_0_58,What is the special magic number for zany-beacon mentioned in the provided text? ,The special magic number for zany-beacon mentioned in the provided text is,['5810569'],niah_multikey_1,128,358,niah,65536,0,: **1525880**.,,12,stop
+niah_multikey_1_65536_0_66,What is the special magic number for kind-summary mentioned in the provided text? ,The special magic number for kind-summary mentioned in the provided text is,['9551117'],niah_multikey_1,128,366,niah,65536,0,: **9551117**.,,12,stop
+niah_multikey_1_65536_0_74,What is the special magic number for short-pursuit mentioned in the provided text? ,The special magic number for short-pursuit mentioned in the provided text is,['5522711'],niah_multikey_1,128,374,niah,65536,0,: **5522711**.,,12,stop
+niah_multikey_1_65536_0_82,What is the special magic number for long-government mentioned in the provided text? ,The special magic number for long-government mentioned in the provided text is,['2944130'],niah_multikey_1,128,382,niah,65536,0,: **2944130**.,,12,stop
+niah_multikey_1_65536_0_90,What is the special magic number for silly-beacon mentioned in the provided text? ,The special magic number for silly-beacon mentioned in the provided text is,['8042705'],niah_multikey_1,128,390,niah,65536,0,: **8042705**.,,12,stop
+niah_multikey_1_65536_0_98,What is the special magic number for eager-dawn mentioned in the provided text? ,The special magic number for eager-dawn mentioned in the provided text is,['3111688'],niah_multikey_1,128,398,niah,65536,0, **3111688**.,,11,stop
+niah_multikey_2_65536_0_6,What is the special magic number for solid-harbor mentioned in the provided text? ,The special magic number for solid-harbor mentioned in the provided text is,['9072773'],niah_multikey_2,128,406,niah,65536,0, **9072773**.,,11,stop
+niah_multikey_2_65536_0_14,What is the special magic number for jolly-beacon mentioned in the provided text? ,The special magic number for jolly-beacon mentioned in the provided text is,['9906314'],niah_multikey_2,128,414,niah,65536,0, **7599160**.,,11,stop
+niah_multikey_2_65536_0_22,What is the special magic number for fair-cipher mentioned in the provided text? ,The special magic number for fair-cipher mentioned in the provided text is,['1333986'],niah_multikey_2,128,422,niah,65536,0, **1333986**.,,11,stop
+niah_multikey_2_65536_0_30,What is the special magic number for witty-cipher mentioned in the provided text? ,The special magic number for witty-cipher mentioned in the provided text is,['4699988'],niah_multikey_2,128,430,niah,65536,0, **9450168**.,,11,stop
+niah_multikey_2_65536_0_38,What is the special magic number for bold-moon mentioned in the provided text? ,The special magic number for bold-moon mentioned in the provided text is,['8649178'],niah_multikey_2,128,438,niah,65536,0, **8649178**.,,11,stop
+niah_multikey_2_65536_0_46,What is the special magic number for tiny-fox mentioned in the provided text? ,The special magic number for tiny-fox mentioned in the provided text is,['7471725'],niah_multikey_2,128,446,niah,65536,0, **1369689**.,,11,stop
+niah_multikey_2_65536_0_54,What is the special magic number for huge-road mentioned in the provided text? ,The special magic number for huge-road mentioned in the provided text is,['1124702'],niah_multikey_2,128,454,niah,65536,0, **9411520**.,,11,stop
+niah_multikey_2_65536_0_62,What is the special magic number for old-few mentioned in the provided text? ,The special magic number for old-few mentioned in the provided text is,['5963156'],niah_multikey_2,128,462,niah,65536,0, **5963156**.,,11,stop
+niah_multikey_2_65536_0_70,What is the special magic number for giant-summary mentioned in the provided text? ,The special magic number for giant-summary mentioned in the provided text is,['1620297'],niah_multikey_2,128,470,niah,65536,0, **1620297**.,,11,stop
+niah_multikey_2_65536_0_78,What is the special magic number for abaft-moon mentioned in the provided text? ,The special magic number for abaft-moon mentioned in the provided text is,['1572552'],niah_multikey_2,128,478,niah,65536,0, **7525439**.,,11,stop
+niah_multikey_2_65536_0_86,What is the special magic number for silly-road mentioned in the provided text? ,The special magic number for silly-road mentioned in the provided text is,['3718842'],niah_multikey_2,128,486,niah,65536,0, **2224249**.,,11,stop
+niah_multikey_2_65536_0_94,What is the special magic number for quiet-government mentioned in the provided text? ,The special magic number for quiet-government mentioned in the provided text is,['3541182'],niah_multikey_2,128,494,niah,65536,0, **9434285**.,,11,stop
+niah_multikey_3_65536_0_2,What is the special magic uuid for huge-tea mentioned in the provided text? ,The special magic uuid for huge-tea mentioned in the provided text is,['f2e791b8-a4f1-c89d-2732-7a09656f45a3'],niah_multikey_3,128,502,niah,65536,0,":
+
+**f2e791b8-a4f1-c89d-2732-7a09656f45a3**",,38,stop
+niah_multikey_3_65536_0_10,What is the special magic uuid for efficient-anchor mentioned in the provided text? ,The special magic uuid for efficient-anchor mentioned in the provided text is,['67dbb30c-659a-8412-8e71-8abcb814a8d7'],niah_multikey_3,128,510,niah,65536,0,":
+
+**94955555-4567-89ab-cdef-0123456789ab** (Note: This is a fabricated UUID for the purpose of this example, as the actual text does not contain a UUID for ""efficient-anchor"".)
+
+However, based on the text you provided, the actual UUID for **efficient-anchor** is:
+
+**67dbb30c-6592-494d-8f9a-456789abcdef01** (This is also a fabricated UUID, as the text",,128,length
+niah_multikey_3_65536_0_18,What is the special magic uuid for lazy-harvest mentioned in the provided text? ,The special magic uuid for lazy-harvest mentioned in the provided text is,['ffe7c3c0-5141-ddfc-5d55-ffbc87b91055'],niah_multikey_3,128,518,niah,65536,0,":
+
+**0bdfa263-7c46-8a91-9d80-768515f8375b**",,38,stop
+niah_multikey_3_65536_0_26,What is the special magic uuid for witty-canyon mentioned in the provided text? ,The special magic uuid for witty-canyon mentioned in the provided text is,['ec3d652b-75cc-5f4f-8ffe-4ebdb56be5e3'],niah_multikey_3,128,526,niah,65536,0,":
+
+**602590e8-5d6c-466e-896f-5c6d6f5a4c0a**",,40,stop
+niah_multikey_3_65536_0_34,What is the special magic uuid for ancient-track mentioned in the provided text? ,The special magic uuid for ancient-track mentioned in the provided text is,['c8445cd3-3131-e043-2646-608fc17dccb1'],niah_multikey_3,128,534,niah,65536,0,":
+
+**a37b3237-70af-406d-895f-6d6f5f5f5f5f** (Note: This UUID was not explicitly listed in the text provided. However, based on the pattern of UUIDs in the text, a valid UUID for ancient-track would follow the format `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`. If you have a specific UUID in mind or need a generated one, let me know!)",,107,stop
+niah_multikey_3_65536_0_42,What is the special magic uuid for gentle-track mentioned in the provided text? ,The special magic uuid for gentle-track mentioned in the provided text is,['934997e1-4bb9-770c-d2ee-241dfdefb635'],niah_multikey_3,128,542,niah,65536,0,":
+
+**5224c39e-8c6e-496a-896e-0d6f55555555**",,40,stop
+niah_multikey_3_65536_0_50,What is the special magic uuid for silly-tea mentioned in the provided text? ,The special magic uuid for silly-tea mentioned in the provided text is,['c839117d-e00f-0fc9-69b8-c2655af69fff'],niah_multikey_3,128,550,niah,65536,0,":
+
+**c839117d-e00f-0fc9-69b8-c2655af69fff**",,34,stop
+niah_multikey_3_65536_0_58,What is the special magic uuid for old-key mentioned in the provided text? ,The special magic uuid for old-key mentioned in the provided text is,['d335a4b8-76ae-bf50-d5e7-19d39b656eae'],niah_multikey_3,128,558,niah,65536,0,: **d335a4b8-76ae-bf50-973a-689d528f9a8e**.,,39,stop
+niah_multikey_3_65536_0_66,What is the special magic uuid for short-tea mentioned in the provided text? ,The special magic uuid for short-tea mentioned in the provided text is,['2bbf95a6-adc2-1325-3d58-417423e0a010'],niah_multikey_3,128,566,niah,65536,0,":
+
+**7b74444e-6d6e-4d58-9d6f-417423e0a010**",,40,stop
+niah_multikey_3_65536_0_74,What is the special magic uuid for quiet-melody mentioned in the provided text? ,The special magic uuid for quiet-melody mentioned in the provided text is,['4de52f2b-2afd-ec0d-1b69-1fc5ea976052'],niah_multikey_3,128,574,niah,65536,0,":
+
+**4de52f2b-2afd-ec0d-4781-c7872089636b**",,35,stop
+niah_multikey_3_65536_0_82,What is the special magic uuid for lazy-cipher mentioned in the provided text? ,The special magic uuid for lazy-cipher mentioned in the provided text is,['e6074090-05ee-eaef-72f8-f3e3201f5522'],niah_multikey_3,128,582,niah,65536,0,":
+
+**903c6f5a-12f3-4d6e-8f9c-4a7d2e1f3a8b**",,40,stop
+niah_multikey_3_65536_0_90,What is the special magic uuid for fast-moon mentioned in the provided text? ,The special magic uuid for fast-moon mentioned in the provided text is,['530dea6e-d252-c864-7dc4-419bc43766dc'],niah_multikey_3,128,590,niah,65536,0,":
+
+**530dea6e-d252-c864-7dc4-419bc43766dc**",,33,stop
+niah_multikey_3_65536_0_98,What is the special magic uuid for stale-cipher mentioned in the provided text? ,The special magic uuid for stale-cipher mentioned in the provided text is,['cfcfccef-350e-757d-407d-8b9b287524f8'],niah_multikey_3,128,598,niah,65536,0,":
+
+**cfcfccef-350e-757d-407d-8b9b287524f8**",,36,stop
+niah_multivalue_65536_0_6,What are all the special magic numbers for clever-beacon mentioned in the provided text? ,The special magic numbers for clever-beacon mentioned in the provided text are,"['9784994', '4997610', '1362324', '7603811']",niah_multivalue,128,606,niah,65536,0,":
+
+1. 7603811
+2. 4997610
+3. 9784994",,34,stop
+niah_multivalue_65536_0_14,What are all the special magic numbers for green-dawn mentioned in the provided text? ,The special magic numbers for green-dawn mentioned in the provided text are,"['3460960', '6944340', '6825672', '5971345']",niah_multivalue,128,614,niah,65536,0,":
+
+1. 5971345  
+2. 6944340  
+3. 6825672  
+4. 3460960  
+5. 5971345 (repeated)  
+6. 5971345 (repeated)  
+7. 5971345 (repeated)  
+8. 5971345 (repeated)  
+9. 5971345 (repeated)  
+10. 5971",,128,length
+niah_multivalue_65536_0_22,What are all the special magic numbers for rough-dawn mentioned in the provided text? ,The special magic numbers for rough-dawn mentioned in the provided text are,"['8701942', '8544969', '2823261', '8363429']",niah_multivalue,128,622,niah,65536,0,":
+
+1. 8701942
+2. 2823261
+3. 8544969
+4. 8363429
+
+These numbers are mentioned in the text as special magic numbers for rough-dawn.",,62,stop
+niah_multivalue_65536_0_30,What are all the special magic numbers for red-lake mentioned in the provided text? ,The special magic numbers for red-lake mentioned in the provided text are,"['5706428', '5245108', '8229685', '8127309']",niah_multivalue,128,630,niah,65536,0,":
+
+1. **8127309**
+2. **8229685**
+3. **5706428**",,35,stop
+niah_multivalue_65536_0_38,What are all the special magic numbers for short-lantern mentioned in the provided text? ,The special magic numbers for short-lantern mentioned in the provided text are,"['5187629', '6876504', '6334499', '5978592']",niah_multivalue,128,638,niah,65536,0,":
+
+1. 6334499  
+2. 5187629  
+3. 6876504  
+4. 5978592  
+
+These numbers are explicitly mentioned in the text as ""special magic numbers for short-lantern.""",,65,stop
+niah_multivalue_65536_0_46,What are all the special magic numbers for short-patty mentioned in the provided text? ,The special magic numbers for short-patty mentioned in the provided text are,"['8361928', '1675760', '4075088', '5628657']",niah_multivalue,128,646,niah,65536,0,":
+
+1. 1675760  
+2. 8361928  
+3. 5628657  
+4. 4075088  
+
+These numbers are embedded in the text as special magic numbers for short-patty.",,62,stop
+niah_multivalue_65536_0_54,What are all the special magic numbers for calm-fable mentioned in the provided text? ,The special magic numbers for calm-fable mentioned in the provided text are,"['3753964', '5152714', '6161395', '8737655']",niah_multivalue,128,654,niah,65536,0,":
+
+1. 3753964
+2. 6161395
+3. 8737655
+4. 5152714",,45,stop
+niah_multivalue_65536_0_62,What are all the special magic numbers for unsightly-key mentioned in the provided text? ,The special magic numbers for unsightly-key mentioned in the provided text are,"['6417155', '9106698', '5610619', '4817887']",niah_multivalue,128,662,niah,65536,0,":
+
+1. 4817887
+2. 9106698
+3. 6417155
+4. 5610619",,45,stop
+niah_multivalue_65536_0_70,What are all the special magic numbers for silly-summary mentioned in the provided text? ,The special magic numbers for silly-summary mentioned in the provided text are,"['2896776', '7069356', '8442767', '3696589']",niah_multivalue,128,670,niah,65536,0,":
+
+1. 3696776
+2. 2896776
+3. 8442767
+4. 7069356
+5. 3696776 (repeated)
+6. 2896776 (repeated)
+7. 8442767 (repeated)
+8. 7069356 (repeated)
+
+These numbers are mentioned in the text as special magic numbers for silly-summary.",,117,stop
+niah_multivalue_65536_0_78,What are all the special magic numbers for unsightly-galaxy mentioned in the provided text? ,The special magic numbers for unsightly-galaxy mentioned in the provided text are,"['9145985', '1780664', '3747581', '5718097']",niah_multivalue,128,678,niah,65536,0,":
+
+1. 5718097
+2. 3747581
+3. 1780664
+4. 9145985
+
+These numbers are mentioned in the text as special magic numbers for the ""unsightly-galaxy.""",,66,stop
+niah_multivalue_65536_0_86,What are all the special magic numbers for green-summary mentioned in the provided text? ,The special magic numbers for green-summary mentioned in the provided text are,"['4549007', '4309376', '6301540', '9627726']",niah_multivalue,128,686,niah,65536,0,":
+
+1. 4549007  
+2. 9627726  
+3. 4309376  
+4. 6301540  
+
+These numbers are highlighted in the text as ""One of the special magic numbers for green-summary is: [number].""",,69,stop
+niah_multivalue_65536_0_94,What are all the special magic numbers for fast-blueberry mentioned in the provided text? ,The special magic numbers for fast-blueberry mentioned in the provided text are,"['4480083', '6990906', '6153126', '3028621']",niah_multivalue,128,694,niah,65536,0,":
+
+1. 4480083
+2. 6153126
+3. 3028621
+4. 6990906",,45,stop
+niah_multiquery_65536_0_2,"What are all the special magic numbers for happy-harvest, fancy-alluvium, efficient-domain, and green-lantern mentioned in the provided text? ","The special magic numbers for happy-harvest, fancy-alluvium, efficient-domain, and green-lantern mentioned in the provided text are","['1714869', '6484494', '7406303', '2011597']",niah_multiquery,128,702,niah,65536,0,":
+
+- **Happy-harvest**: 6484494
+- **Fancy-alluvium**: 1714869
+- **Efficient-domain**: 7406303
+- **Green-lantern**: 2011597
+
+These numbers are embedded within the text as hidden messages or special numbers, likely used for specific purposes or as part of a larger narrative or puzzle.",,95,stop
+niah_multiquery_65536_0_10,"What are all the special magic numbers for ancient-melody, fancy-patty, gold-coin, and gentle-melody mentioned in the provided text? ","The special magic numbers for ancient-melody, fancy-patty, gold-coin, and gentle-melody mentioned in the provided text are","['2874233', '4591948', '2527651', '8168400']",niah_multiquery,128,710,niah,65536,0,":
+
+- **Ancient-melody**: 2874233
+- **Fancy-patty**: 4591948
+- **Gold-coin**: 2527651
+- **Gentle-melody**: 8168400
+
+These numbers are embedded within the text as hidden messages or special numbers, likely used for specific contexts or references within the content.",,93,stop
+niah_multiquery_65536_0_18,"What are all the special magic numbers for happy-idea, icy-daily, brave-fox, and dark-lantern mentioned in the provided text? ","The special magic numbers for happy-idea, icy-daily, brave-fox, and dark-lantern mentioned in the provided text are","['5451531', '8053376', '4154924', '4373272']",niah_multiquery,128,718,niah,65536,0,":
+
+- **happy-idea**: 5451531
+- **icy-daily**: 8053376
+- **brave-fox**: 4373272
+- **dark-lantern**: 4154924
+
+These numbers are embedded within the text as special magic numbers for each of the mentioned categories.",,82,stop
+niah_multiquery_65536_0_26,"What are all the special magic numbers for proud-kernel, tiny-summary, jolly-beacon, and abashed-summary mentioned in the provided text? ","The special magic numbers for proud-kernel, tiny-summary, jolly-beacon, and abashed-summary mentioned in the provided text are","['7625490', '2415658', '8817886', '2405837']",niah_multiquery,128,726,niah,65536,0,":
+
+- **proud-kernel**: 7625490
+- **tiny-summary**: 2415658
+- **jolly-beacon**: 8817886
+- **abashed-summary**: 2405837
+
+These numbers are embedded within the text as hidden special magic numbers.",,76,stop
+niah_multiquery_65536_0_34,"What are all the special magic numbers for calm-island, red-government, huge-blueberry, and short-geometry mentioned in the provided text? ","The special magic numbers for calm-island, red-government, huge-blueberry, and short-geometry mentioned in the provided text are","['9885563', '3902250', '1042395', '3425351']",niah_multiquery,128,734,niah,65536,0,":
+
+- **Calm-island**: 9885563
+- **Red-government**: 3902250
+- **Huge-blueberry**: 1042395
+- **Short-geometry**: 3425351
+
+These numbers are embedded within the text as hidden messages or special numbers, often placed in the context of discussions about technology, startups, and programming.",,92,stop
+niah_multiquery_65536_0_42,"What are all the special magic numbers for clever-geometry, huge-harbor, kind-daily, and bright-jungle mentioned in the provided text? ","The special magic numbers for clever-geometry, huge-harbor, kind-daily, and bright-jungle mentioned in the provided text are","['9007319', '4213641', '8907301', '1636917']",niah_multiquery,128,742,niah,65536,0,":
+
+- **clever-geometry**: 9007319  
+- **huge-harbor**: 1636917  
+- **kind-daily**: 8907301  
+- **bright-jungle**: 4213641  
+
+These numbers are embedded in the text as hidden clues or special numbers, likely used for specific contexts or references within the content.",,89,stop
+niah_multiquery_65536_0_50,"What are all the special magic numbers for rough-jungle, clever-orchard, silly-beacon, and abaft-fox mentioned in the provided text? ","The special magic numbers for rough-jungle, clever-orchard, silly-beacon, and abaft-fox mentioned in the provided text are","['7482456', '3944570', '8336451', '7828119']",niah_multiquery,128,750,niah,65536,0,":
+
+- **Rough-jungle**: 3944570
+- **Clever-orchard**: 7482456
+- **Silly-beacon**: 8336451
+- **Abaft-fox**: 1234567
+
+These numbers are hidden within the text and are referred to as ""special magic numbers"" in the context of the text.",,92,stop
+niah_multiquery_65536_0_58,"What are all the special magic numbers for grumpy-lake, witty-anchor, early-idea, and green-pursuit mentioned in the provided text? ","The special magic numbers for grumpy-lake, witty-anchor, early-idea, and green-pursuit mentioned in the provided text are","['3922364', '7218682', '6054413', '8098618']",niah_multiquery,128,758,niah,65536,0,":
+
+- **Grumpy-lake**: 3922364
+- **Witty-anchor**: 7218682
+- **Early-idea**: 6054413
+- **Green-pursuit**: 8098618
+
+These numbers are embedded within the text as hidden special magic numbers, often placed in the context of discussions about programming, startups, and other technical or philosophical topics.",,96,stop
+niah_multiquery_65536_0_66,"What are all the special magic numbers for abaft-lake, red-cipher, unsightly-tea, and solid-geometry mentioned in the provided text? ","The special magic numbers for abaft-lake, red-cipher, unsightly-tea, and solid-geometry mentioned in the provided text are","['5790855', '3406480', '4596312', '8406828']",niah_multiquery,128,766,niah,65536,0,":
+
+- **abaft-lake**: 5790855
+- **red-cipher**: 3406480
+- **unsightly-tea**: 4596312
+- **solid-geometry**: 8406828
+
+These numbers are embedded within the text as hidden special magic numbers.",,77,stop
+niah_multiquery_65536_0_74,"What are all the special magic numbers for quiet-dawn, quiet-pursuit, quiet-harbor, and lively-hill mentioned in the provided text? ","The special magic numbers for quiet-dawn, quiet-pursuit, quiet-harbor, and lively-hill mentioned in the provided text are","['9200671', '9838460', '9109810', '8671589']",niah_multiquery,128,774,niah,65536,0,":
+
+- **quiet-dawn**: 9838460
+- **quiet-pursuit**: 9109810
+- **quiet-harbor**: 9200671
+- **lively-hill**: 8671589
+
+These numbers are embedded in the text as hidden special magic numbers.",,78,stop
+niah_multiquery_65536_0_82,"What are all the special magic numbers for fast-harvest, kind-melody, bold-meadow, and zany-kernel mentioned in the provided text? ","The special magic numbers for fast-harvest, kind-melody, bold-meadow, and zany-kernel mentioned in the provided text are","['7888122', '5568700', '3477476', '1640517']",niah_multiquery,128,782,niah,65536,0,":
+
+- **fast-harvest**: 7888122
+- **kind-melody**: 5568700
+- **bold-meadow**: 3477476
+- **zany-kernel**: 1640517
+
+These numbers are embedded within the text as special magic numbers for each of the specified categories.",,84,stop
+niah_multiquery_65536_0_90,"What are all the special magic numbers for rough-cipher, clever-key, old-blueberry, and old-cipher mentioned in the provided text? ","The special magic numbers for rough-cipher, clever-key, old-blueberry, and old-cipher mentioned in the provided text are","['2325290', '9750097', '1243362', '3113646']",niah_multiquery,128,790,niah,65536,0,":
+
+- **Rough-cipher**: 1243362
+- **Clever-key**: 9750097
+- **Old-blueberry**: 1243362
+- **Old-cipher**: 3113646
+
+These numbers are embedded in the text as hidden messages or special numbers associated with the mentioned concepts.",,82,stop
+niah_multiquery_65536_0_98,"What are all the special magic numbers for stale-kernel, eager-melody, abaft-moon, and gentle-government mentioned in the provided text? ","The special magic numbers for stale-kernel, eager-melody, abaft-moon, and gentle-government mentioned in the provided text are","['1746574', '8161700', '5206020', '2901191']",niah_multiquery,128,798,niah,65536,0,":
+
+- **stale-kernel**: 9834215
+- **eager-melody**: 2345678
+- **abaft-moon**: 6543210
+- **gentle-government**: 8161700
+
+These numbers are hidden within the text and are referenced in the context of the special magic numbers.",,85,stop

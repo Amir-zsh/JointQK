@@ -1,0 +1,18 @@
+{
+  "label": "vq2_s8",
+  "input_len": 100000,
+  "batch_size": 32,
+  "ngen": 1000,
+  "ok": true,
+  "output_tok_s": 80.76,
+  "total_tok_s": 8156.77,
+  "mean_ttft_ms": 156580.68,
+  "median_ttft_ms": 119229.01,
+  "mean_tpot_ms": 140.26,
+  "median_tpot_ms": 136.16,
+  "duration_s": 396.24,
+  "request_throughput": 0.08,
+  "decode_tok_s": 7.129616426636248,
+  "prefill_share": 0.5277400011769448,
+  "prefill_ok": false
+}

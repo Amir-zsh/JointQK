@@ -93,14 +93,21 @@ def main():
     print("== G1 roundtrip parity (engine encode/decode vs reference)")
     for l in args.layers:
         h = l % H
-        # Reference uses the SAME e5m2-snapped centroids as the engine (G1 is
-        # an implementation-parity gate); ref_raw quantifies the e5m2 snap
-        # cost against the bundle's raw codebook (informational).
+        # Reference uses the SAME fp8-snapped centroids as the engine (G1 is
+        # an implementation-parity gate), so it must track whichever format the
+        # loader chose -- e5m2 on sm80, e4m3 on sm89+. Pinning it to e5m2 makes
+        # G1 fail on an e4m3 engine that is strictly MORE accurate than the
+        # reference. ref_raw quantifies the snap cost against the bundle's raw
+        # codebook (informational).
+        _snap_dt = (
+            torch.float8_e4m3fn if getattr(vq, "fp8_fmt", "e5m2") == "e4m3"
+            else torch.float8_e5m2
+        )
         ref = GroupVQCompressor(
             blob["forward"][l, h],
             blob["inverse"][l, h],
             blob["mean"][l, h],
-            [c.to(torch.float8_e5m2).to(torch.float16)
+            [c.to(_snap_dt).to(torch.float16)
              for c in blob["codebooks"][(l, h)]],
             blob["bounds"],
             pertoken_norm=bool(blob.get("pertoken_norm", False)),
@@ -280,6 +287,10 @@ def main():
         max_splits,
         sm_scale,
         logit_cap=0.0,
+        # Honour SGLANG_VQ_OPT_CB16 so G3/G5 actually exercise the fp16-gather
+        # path when it is enabled; passing cb16=None would silently test the
+        # packed-fp8 path instead and make the gate vacuous.
+        cb16=(vq.cb16[l] if os.environ.get("SGLANG_VQ_OPT_CB16", "") in ("1", "true", "True") else None),
     )
     o = torch.zeros(bs, QH, D, device=device, dtype=torch.bfloat16)
     _unified_stage2(att_out, att_lse, o, total_splits=max_splits)

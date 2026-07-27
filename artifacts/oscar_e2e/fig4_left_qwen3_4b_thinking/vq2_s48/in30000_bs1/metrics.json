@@ -1,0 +1,18 @@
+{
+  "label": "vq2_s48",
+  "input_len": 30000,
+  "batch_size": 1,
+  "ngen": 1000,
+  "ok": true,
+  "output_tok_s": 116.0,
+  "total_tok_s": 3800.37,
+  "mean_ttft_ms": 1036.54,
+  "median_ttft_ms": 1036.54,
+  "mean_tpot_ms": 7.58,
+  "median_tpot_ms": 7.58,
+  "duration_s": 8.62,
+  "request_throughput": 0.12,
+  "decode_tok_s": 131.92612137203167,
+  "prefill_share": 0.12040246440917371,
+  "prefill_ok": true
+}

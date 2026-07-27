@@ -1,0 +1,7 @@
+{
+  "kv_cache_dtype": "int2",
+  "num_kv_splits": "8",
+  "max_total_num_tokens": "2198376",
+  "vq_codebook_loaded": false,
+  "radix_cache_disabled": false
+}

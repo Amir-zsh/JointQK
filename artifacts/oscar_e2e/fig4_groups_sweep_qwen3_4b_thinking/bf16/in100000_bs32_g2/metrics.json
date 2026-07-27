@@ -1,0 +1,18 @@
+{
+  "label": "bf16",
+  "input_len": 100000,
+  "batch_size": 32,
+  "ngen": 1000,
+  "ok": true,
+  "output_tok_s": 257.99,
+  "total_tok_s": 27438.15,
+  "mean_ttft_ms": 10640.72,
+  "median_ttft_ms": 10939.12,
+  "mean_tpot_ms": 113.29,
+  "median_tpot_ms": 113.03,
+  "duration_s": 124.04,
+  "request_throughput": 0.26,
+  "decode_tok_s": 8.826904404625298,
+  "prefill_share": 0.08593878907032716,
+  "prefill_ok": true
+}

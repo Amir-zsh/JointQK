@@ -1,0 +1,59 @@
+benchmark_args=Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=31401, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model=None, served_model_name=None, tokenizer=None, num_prompts=8, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=8, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=1, gsp_prompts_per_group=8, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+Waiting up to 60s for http://127.0.0.1:31401/v1/models to become ready...
+Server ready in 0.0s.
+Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=31401, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model='Qwen/Qwen3-8B', served_model_name=None, tokenizer=None, num_prompts=8, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=8, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=1, gsp_prompts_per_group=8, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+
+
+Loading cached generated input data from /root/.cache/sglang/benchmark/gen_shared_prefix_1_1_8_100000_128_1000_Qwen2Tokenizer.pkl
+Starting warmup with 1 sequences...
+Warmup completed with 1 sequences. Starting main benchmark run...
+
+============ Serving Benchmark Result ============
+Backend:                                 sglang    
+Traffic request rate:                    inf       
+Max request concurrency:                 8         
+Successful requests:                     8         
+Benchmark duration (s):                  34.75     
+Total input tokens:                      841288    
+Total input text tokens:                 841288    
+Total generated tokens:                  8000      
+Total generated tokens (retokenized):    7501      
+Request throughput (req/s):              0.23      
+Input token throughput (tok/s):          24208.10  
+Output token throughput (tok/s):         230.20    
+Peak output token throughput (tok/s):    256.00    
+Peak concurrent requests:                8         
+Total token throughput (tok/s):          24438.30  
+Concurrency:                             7.84      
+----------------End-to-End Latency----------------
+Mean E2E Latency (ms):                   34041.11  
+Median E2E Latency (ms):                 34192.89  
+P90 E2E Latency (ms):                    34648.26  
+P99 E2E Latency (ms):                    34711.60  
+---------------Time to First Token----------------
+Mean TTFT (ms):                          2543.43   
+Median TTFT (ms):                        2716.82   
+P99 TTFT (ms):                           2885.29   
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          31.53     
+Median TPOT (ms):                        31.70     
+P99 TPOT (ms):                           31.92     
+---------------Inter-Token Latency----------------
+Mean ITL (ms):                           31.53     
+Median ITL (ms):                         32.13     
+P95 ITL (ms):                            32.52     
+P99 ITL (ms):                            32.75     
+Max ITL (ms):                            1273.46   
+==================================================
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+  0%|          | 0/8 [00:00<?, ?it/s]
+ 12%|█▎        | 1/8 [00:32<03:50, 32.95s/it]
+ 25%|██▌       | 2/8 [00:33<01:22, 13.83s/it]
+ 38%|███▊      | 3/8 [00:33<00:38,  7.71s/it]
+ 50%|█████     | 4/8 [00:34<00:19,  4.78s/it]
+ 62%|██████▎   | 5/8 [00:34<00:09,  3.13s/it]
+ 75%|███████▌  | 6/8 [00:34<00:04,  2.12s/it]
+ 88%|████████▊ | 7/8 [00:34<00:01,  1.47s/it]
+100%|██████████| 8/8 [00:34<00:00,  1.04s/it]
+100%|██████████| 8/8 [00:34<00:00,  4.34s/it]

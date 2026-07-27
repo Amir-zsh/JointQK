@@ -50,8 +50,13 @@ export CUDA_VISIBLE_DEVICES=$GPU
 # Needed in BOTH modes: ctx 66560 exceeds Qwen3-8B's derived 40960 (RoPE
 # extrapolation, matching the transformers-harness behaviour at 64K).
 export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
-export CUDA_HOME="$CUDA128"
-export PATH="$CUDA128/bin:$PATH"
+# The cuda128 conda env only exists on the lambda boxes. In the CUDA-13
+# container (and any node with its own toolkit) CUDA_HOME is already correct,
+# so pointing it at a missing directory would break flashinfer's JIT lookup.
+if [[ -d "$CUDA128" ]]; then
+    export CUDA_HOME="$CUDA128"
+    export PATH="$CUDA128/bin:$PATH"
+fi
 # expandable_segments breaks cudaIpcGetMemHandle on the VA-range base
 # pointers custom all-reduce exports for CUDA-graph buffers (upstream:
 # vllm#42609) -> under TP we drop it (per-GPU pressure is halved) and keep
@@ -84,14 +89,28 @@ if [[ "${TP:-1}" -gt 1 && "${DISABLE_CUSTOM_AR:-0}" = "1" ]]; then
     TP_EXTRA+=(--disable-custom-all-reduce)
 fi
 
+# MAX_TOKENS=auto omits --max-total-tokens so the engine derives the pool from
+# mem-fraction. Needed for "same memory budget" comparisons: pinning the pool
+# gives every method the same token count and hides INT2's ~8x smaller KV,
+# which is exactly the capacity effect the throughput claims rest on.
+POOL_ARG=(--max-total-tokens "${MAX_TOKENS:-140000}")
+[[ "${MAX_TOKENS:-}" == "auto" ]] && POOL_ARG=()
+
 ARGS=(
     --model-path "$MODEL"
+    "${POOL_ARG[@]}"
     --tensor-parallel-size "${TP:-1}"
     "${TP_EXTRA[@]}"
     --host 127.0.0.1 --port "$PORT"
     --trust-remote-code
-    --prefill-attention-backend triton
-    --decode-attention-backend triton
+    # OSCAR's README serves with `--prefill-attention-backend fa3`; we default to
+    # triton because this CUDA-13 build's sgl-kernel 0.4.4 does not export
+    # flash_attn_with_kvcache. Triton prefill is materially slower, which inflates
+    # TTFT and therefore any prefill-inclusive throughput number -- so set
+    # PREFILL_BACKEND=fa3 when reproducing the paper's serving figures if the
+    # kernel is available.
+    --prefill-attention-backend "${PREFILL_BACKEND:-triton}"
+    --decode-attention-backend "${DECODE_BACKEND:-triton}"
     # flashinfer's sampling kernel JIT-compiles on the first temperature>0
     # request and fails on this box (cuda128 conda env has no curand.h);
     # greedy runs never hit it. torch sampling is fine at bs<=8.
@@ -103,12 +122,8 @@ ARGS=(
     # mem-fraction budget (sized for H100-80GB); pin the token pool directly
     # AND the request slots (the fp16 HP recent-ring arena scales with
     # max_running_requests * ring_size across all 36 layers).
-    --max-total-tokens "${MAX_TOKENS:-140000}"
     --max-running-requests "${MAX_REQS:-8}"
-    # Eval rows are unique prompts: the radix cache only RETAINS finished
-    # requests' BF16 prefix windows until the HP-prefix pool exhausts
-    # (observed after ~3200 rows); no reuse to gain, so disable it.
-    --disable-radix-cache
+    # (radix cache handled after the array -- see RADIX_CACHE below)
     # F2: quant-tier decode split-K cap. vq2's gather kernel is decode-latency-bound
     # and wants high split-K (a matched-splits sweep found 48 best: 32K decode
     # 21.4->17.2 ms/tok, and it keeps vq2 competitive to 64K). int2/bf16's cheap
@@ -116,6 +131,13 @@ ARGS=(
     # more at long ctx. Default 48 for vq2, 8 otherwise; override with KV_SPLITS=<n>.
     --triton-attention-num-kv-splits "${KV_SPLITS:-$( [ "$MODE" = vq2 ] && echo 48 || echo 8 )}"
 )
+
+# Radix (prefix) cache. Eval rows are unique prompts: the cache only RETAINS
+# finished requests' BF16 prefix windows until the HP-prefix pool exhausts
+# (observed after ~3200 rows), so for accuracy sweeps there is no reuse to gain
+# and it is disabled. Prefix-reuse BENCHMARKS need it on -- OSCAR Figure 4 (left)
+# measures decode over a fully cached prefix -- so set RADIX_CACHE=1 there.
+[[ "${RADIX_CACHE:-0}" == "1" ]] || ARGS+=(--disable-radix-cache)
 
 # Extra sglang flags for one-off ablation cells, e.g.
 # SERVE_EXTRA="--chunked-prefill-size 32768". Word-split deliberately.
@@ -179,4 +201,6 @@ fi
 # (e.g. the VQ read-back probe) actually runs instead of being skipped by graph replay.
 [[ -n "${DISABLE_CUDA_GRAPH:-}" ]] && ARGS+=(--disable-cuda-graph)
 
-exec "$REPO_ROOT/.venv-oscar/bin/python" -m sglang.launch_server "${ARGS[@]}"
+# The CUDA-13 container builds its engine env at /opt/venv-oscar (outside the
+# mounted repo), so the interpreter is overridable. Default is unchanged.
+exec "${OSCAR_PYTHON:-$REPO_ROOT/.venv-oscar/bin/python}" -m sglang.launch_server "${ARGS[@]}"

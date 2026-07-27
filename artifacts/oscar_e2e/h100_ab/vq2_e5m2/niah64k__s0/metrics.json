@@ -1,0 +1,10 @@
+{
+  "niah_single_1": {
+    "string_match": 100.0
+  },
+  "niah_single_2": {
+    "string_match": 100.0
+  },
+  "cap_hit_rate": 0.005235602094240838,
+  "mean_completion_tokens": 12.87434554973822
+}

@@ -1,0 +1,68 @@
+{
+  "study": "fig4_groups_sweep_qwen3_8b",
+  "_doc": [
+    "Sweep the number of DISTINCT shared prefixes at BS=32, 100k input.",
+    "groups=1 reproduces total sharing (measured 1.06x, too low);",
+    "groups=32 reproduces zero sharing (measured 1.93x, both arms thrash).",
+    "The paper's 3.44x (8B) / 6.17x (4B) should sit between: enough",
+    "distinct contexts that BF16 over-subscribes, few enough that OSCAR",
+    "still fits its pool. mem_frac 0.78 because 0.85 left too little",
+    "headroom for prefill activations and OOM'd in torch.cat of V parts."
+  ],
+  "grid": [
+    {
+      "input_len": 100000,
+      "batch_size": 32,
+      "groups": 2
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 32,
+      "groups": 4
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 32,
+      "groups": 8
+    },
+    {
+      "input_len": 100000,
+      "batch_size": 32,
+      "groups": 16
+    }
+  ],
+  "ngen": 1000,
+  "question_len": 128,
+  "warmup_requests": 1,
+  "metric": "output_tok_s",
+  "reference": "bf16",
+  "serve": {
+    "ctx": 131072,
+    "mem_frac": 0.7,
+    "radix_cache": 1,
+    "extra": "--enable-cache-report",
+    "prefill_backend": "fa3"
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8",
+        "MAX_REQS": "32",
+        "MAX_TOKENS": "auto",
+        "SGLANG_MIXED_KV_PREFIX_REUSE_ACROSS_CHUNKS": "1"
+      }
+    }
+  ],
+  "seed": 1
+}

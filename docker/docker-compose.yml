@@ -1,0 +1,70 @@
+# CUDA 13 / sm90 engine environment for the OSCAR-vq (vq2-longhorizon) fork.
+#
+# Requires Compose v2. This file is not at the repo root, so either pass -f or
+# export COMPOSE_FILE once per shell:
+#   docker compose -f docker/docker-compose.yml up -d engine
+#   export COMPOSE_FILE=docker/docker-compose.yml   # then plain `docker compose ...`
+#
+# Then drive experiments by exec'ing into it:
+#   docker compose exec engine bash
+#   docker compose exec engine pipelines/oscar_e2e/serve_oscar.sh --vq2 --gpu 0 ...
+#
+# Paths default to this node but are overridable from a .env file beside this
+# file (the project has already moved once, /vault -> /raid):
+#   REPO_ROOT=/raid/amir/quantization/teamily-project
+#   HF_CACHE=/home/amir/.cache/huggingface
+#   HF_TOKEN=hf_...        # needed for gated weights (Llama-3.1)
+
+services:
+  engine:
+    build:
+      # Relative to this file's directory — Dockerfile and the engine lock live
+      # alongside it.
+      context: .
+      dockerfile: Dockerfile
+    image: oscar-cu13:latest
+    container_name: oscar-cu13
+
+    # serve_oscar.sh binds 127.0.0.1 on port 30850+GPU, and gpu_pool_runner.sh
+    # reclaims ports with `lsof -t -i :$PORT`. Bridged networking would hide
+    # those loopback binds from host-side eval drivers, so share the host netns
+    # rather than publishing a fixed port list.
+    network_mode: host
+    ipc: host
+    shm_size: "32gb"
+
+    # All 8 H100s on this node are available. (CLAUDE.md's "GPUs 0-3 only, never
+    # 4-7" rule describes the lambda boxes, not this one.) Restrict a single run
+    # with CUDA_VISIBLE_DEVICES / the launcher's --gpu flag rather than here.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    volumes:
+      # Identical path inside and out: REPO_ROOT resolution, venv shebangs and
+      # every calibration/artifact path in the experiment specs are absolute.
+      - ${REPO_ROOT:-/raid/amir/quantization/teamily-project}:${REPO_ROOT:-/raid/amir/quantization/teamily-project}
+      - ${HF_CACHE:-/home/amir/.cache/huggingface}:/root/.cache/huggingface
+
+    working_dir: ${REPO_ROOT:-/raid/amir/quantization/teamily-project}
+
+    environment:
+      # The fork shadows the vendored snapshot. sglang is deliberately NOT
+      # pip-installed in the image, so a missing PYTHONPATH fails loudly with
+      # ModuleNotFoundError instead of silently serving vendor/OSCAR — which
+      # has no vq2 support at all.
+      PYTHONPATH: ${REPO_ROOT:-/raid/amir/quantization/teamily-project}/vendor/OSCAR-vq/sglang-research/python
+      # serve_oscar.sh uses this instead of $REPO_ROOT/.venv-oscar/bin/python.
+      OSCAR_PYTHON: /opt/venv-oscar/bin/python
+      HF_HOME: /root/.cache/huggingface
+      HF_TOKEN: ${HF_TOKEN:-}
+
+    # Long-lived container: runs are driven by exec'ing scripts into it, not by
+    # one process per `up`.
+    command: ["sleep", "infinity"]
+    stdin_open: true
+    tty: true

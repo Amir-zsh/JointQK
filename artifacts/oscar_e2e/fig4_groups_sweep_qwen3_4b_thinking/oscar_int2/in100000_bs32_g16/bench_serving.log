@@ -1,0 +1,212 @@
+benchmark_args=Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=32403, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model=None, served_model_name=None, tokenizer=None, num_prompts=32, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=32, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=16, gsp_prompts_per_group=2, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+Waiting up to 60s for http://127.0.0.1:32403/v1/models to become ready...
+Server ready in 0.0s.
+Namespace(backend='sglang', base_url=None, host='127.0.0.1', port=32403, ready_check_timeout_sec=60, dataset_name='generated-shared-prefix', dataset_path='', model='Qwen/Qwen3-4B-Thinking-2507', served_model_name=None, tokenizer=None, num_prompts=32, sharegpt_output_len=None, sharegpt_context_len=None, random_input_len=1024, random_output_len=1024, random_range_ratio=0.0, image_count=1, image_resolution='1080p', random_image_count=False, image_format='jpeg', image_content='random', request_rate=inf, use_trace_timestamps=False, max_concurrency=32, output_file=None, output_details=False, print_requests=False, disable_tqdm=False, disable_stream=False, return_logprob=False, top_logprobs_num=0, token_ids_logprob=None, logprob_start_len=-1, return_routed_experts=False, seed=1, disable_ignore_eos=False, extra_request_body=None, apply_chat_template=False, profile=False, plot_throughput=False, profile_activities=['CPU', 'GPU'], profile_start_step=None, profile_steps=None, profile_num_steps=None, profile_by_stage=False, profile_stages=None, profile_output_dir=None, profile_prefix=None, lora_name=None, lora_request_distribution='uniform', lora_zipf_alpha=1.5, prompt_suffix='', pd_separated=False, profile_prefill_url=None, profile_decode_url=None, flush_cache=False, warmup_requests=1, tokenize_prompt=False, gsp_num_groups=16, gsp_prompts_per_group=2, gsp_system_prompt_len=100000, gsp_question_len=128, gsp_output_len=1000, gsp_range_ratio=1.0, gsp_fast_prepare=False, gsp_send_routing_key=False, gsp_num_turns=1, gsp_ordered=False, mooncake_slowdown_factor=1.0, mooncake_num_rounds=1, mooncake_workload='conversation', tag=None, header=None)
+
+
+Generating new input data... (num_groups=16, 2, system_prompt_len=100000, question_len=128, output_len=1000, range_ratio=1.0, num_turns=1)
+
+Generated shared prefix dataset statistics:
+Number of groups: 16
+Prompts per group: 2
+Number of turns: 1
+Total prompts: 32
+Total input tokens: 3371207
+Total output tokens: 32000
+Average system prompt length: 105213.8 tokens
+Average question length: 135.5 tokens
+
+Caching generated input data to /root/.cache/sglang/benchmark/gen_shared_prefix_1_16_2_100000_128_1000_Qwen2Tokenizer.pkl
+Starting warmup with 1 sequences...
+Warmup completed with 1 sequences. Starting main benchmark run...
+
+============ Serving Benchmark Result ============
+Backend:                                 sglang    
+Traffic request rate:                    inf       
+Max request concurrency:                 32        
+Successful requests:                     32        
+Benchmark duration (s):                  207.07    
+Total input tokens:                      3371207   
+Total input text tokens:                 3371207   
+Total generated tokens:                  32000     
+Total generated tokens (retokenized):    6667      
+Request throughput (req/s):              0.15      
+Input token throughput (tok/s):          16280.31  
+Output token throughput (tok/s):         154.54    
+Peak output token throughput (tok/s):    320.00    
+Peak concurrent requests:                32        
+Total token throughput (tok/s):          16434.84  
+Concurrency:                             31.98     
+----------------End-to-End Latency----------------
+Mean E2E Latency (ms):                   206965.10 
+Median E2E Latency (ms):                 207013.04 
+P90 E2E Latency (ms):                    207046.91 
+P99 E2E Latency (ms):                    207053.78 
+---------------Time to First Token----------------
+Mean TTFT (ms):                          73217.65  
+Median TTFT (ms):                        90193.44  
+P99 TTFT (ms):                           102643.21 
+-----Time per Output Token (excl. 1st token)------
+Mean TPOT (ms):                          133.88    
+Median TPOT (ms):                        116.94    
+P99 TPOT (ms):                           201.87    
+---------------Inter-Token Latency----------------
+Mean ITL (ms):                           133.94    
+Median ITL (ms):                         104.74    
+P95 ITL (ms):                            105.38    
+P99 ITL (ms):                            105.76    
+Max ITL (ms):                            91807.12  
+==================================================
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Generating system prompt:   0%|          | 0/16 [00:00<?, ?it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.82it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.98it/s][A
+
+                                                                   [A
+Generating system prompt:   6%|▋         | 1/16 [00:00<00:10,  1.48it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.88it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.00it/s][A
+
+                                                                   [A
+Generating system prompt:  12%|█▎        | 2/16 [00:01<00:09,  1.48it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.20it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.21it/s][A
+
+                                                                   [A
+Generating system prompt:  19%|█▉        | 3/16 [00:01<00:08,  1.54it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.18it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.14it/s][A
+
+                                                                   [A
+Generating system prompt:  25%|██▌       | 4/16 [00:02<00:07,  1.55it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.16it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.15it/s][A
+
+                                                                   [A
+Generating system prompt:  31%|███▏      | 5/16 [00:03<00:07,  1.56it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.19it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.17it/s][A
+
+                                                                   [A
+Generating system prompt:  38%|███▊      | 6/16 [00:03<00:06,  1.57it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.11it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.06it/s][A
+
+                                                                   [A
+Generating system prompt:  44%|████▍     | 7/16 [00:04<00:05,  1.56it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.90it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.85it/s][A
+
+                                                                   [A
+Generating system prompt:  50%|█████     | 8/16 [00:05<00:05,  1.51it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.65it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.76it/s][A
+
+                                                                   [A
+Generating system prompt:  56%|█████▋    | 9/16 [00:05<00:04,  1.46it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.90it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.98it/s][A
+
+                                                                   [A
+Generating system prompt:  62%|██████▎   | 10/16 [00:06<00:04,  1.47it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.10it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.05it/s][A
+
+                                                                   [A
+Generating system prompt:  69%|██████▉   | 11/16 [00:07<00:03,  1.49it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  2.98it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.95it/s][A
+
+                                                                   [A
+Generating system prompt:  75%|███████▌  | 12/16 [00:07<00:02,  1.48it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.00it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.04it/s][A
+
+                                                                   [A
+Generating system prompt:  81%|████████▏ | 13/16 [00:08<00:02,  1.49it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.04it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  2.98it/s][A
+
+                                                                   [A
+Generating system prompt:  88%|████████▊ | 14/16 [00:09<00:01,  1.49it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.09it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.10it/s][A
+
+                                                                   [A
+Generating system prompt:  94%|█████████▍| 15/16 [00:09<00:00,  1.51it/s]
+
+Generating questions:   0%|          | 0/2 [00:00<?, ?it/s][A
+
+Generating questions:  50%|█████     | 1/2 [00:00<00:00,  3.21it/s][A
+
+Generating questions: 100%|██████████| 2/2 [00:00<00:00,  3.10it/s][A
+
+                                                                   [A
+Generating system prompt: 100%|██████████| 16/16 [00:10<00:00,  1.52it/s]
+Generating system prompt: 100%|██████████| 16/16 [00:10<00:00,  1.51it/s]
+
+  0%|          | 0/32 [00:00<?, ?it/s]
+  3%|▎         | 1/32 [03:25<1:46:09, 205.46s/it]
+  6%|▋         | 2/32 [03:27<42:46, 85.54s/it]   
+100%|██████████| 32/32 [03:27<00:00,  6.47s/it]
