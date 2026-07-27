@@ -23,6 +23,7 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 
 import pandas as pd
 import requests
@@ -30,6 +31,22 @@ import requests
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "vendor" / "kvpress"))
+
+
+def primary_score(metrics):
+    if "accuracy" in metrics:
+        return float(metrics["accuracy"])
+    string_matches = [
+        float(task_metrics["string_match"])
+        for task_metrics in metrics.values()
+        if isinstance(task_metrics, dict) and "string_match" in task_metrics
+    ]
+    if string_matches:
+        return statistics.mean(string_matches)
+    raise KeyError(
+        "scorer result has neither top-level accuracy nor task string_match: "
+        f"{metrics}"
+    )
 
 
 def generate(base, rec, timeout, sampling, retries=3):
@@ -45,6 +62,7 @@ def generate(base, rec, timeout, sampling, retries=3):
             out = r.json()
             meta = out.get("meta_info", {})
             return out["text"], {
+                "prompt_tokens": meta.get("prompt_tokens"),
                 "completion_tokens": meta.get("completion_tokens"),
                 "finish_reason": (meta.get("finish_reason") or {}).get("type"),
             }
@@ -71,6 +89,11 @@ def main():
                     help="default: 0.0 when --samples 1, else 1.0")
     ap.add_argument("--top-p", type=float, default=0.95)
     ap.add_argument("--top-k", type=int, default=40)
+    ap.add_argument(
+        "--ignore-eos",
+        action="store_true",
+        help="Force every request to generate max_new_tokens.",
+    )
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -80,6 +103,8 @@ def main():
     sampling = {"temperature": temperature}
     if temperature > 0:
         sampling.update({"top_p": args.top_p, "top_k": args.top_k})
+    if args.ignore_eos:
+        sampling["ignore_eos"] = True
 
     from kvq.benchmarks.evaluate_registry import SCORER_REGISTRY
     # HumanEval / LiveCodeBench have no scorer in the (read-only) kvq registry;
@@ -118,7 +143,7 @@ def main():
                   f"{len(recs) - len(prior)} to run", flush=True)
     base = f"http://{args.host}:{args.port}"
     info = requests.get(f"{base}/get_server_info", timeout=30).json()
-    t0 = time.time()
+    t0 = time.perf_counter()
     print(f"[client] {len(recs)} rows -> {base} "
           f"(kv_cache_dtype={info.get('kv_cache_dtype', '?')})", flush=True)
 
@@ -128,32 +153,49 @@ def main():
 
     done = [0]
     metas = {}
+    log_lock = Lock()
     def run_one(rec):
         key = (rec["rid"], rec["sample_k"])
         if key in prior:
             e = prior[key]
-            metas[key] = {"completion_tokens": e.get("completion_tokens"),
-                          "finish_reason": e.get("finish_reason")}
+            metas[key] = {
+                "prompt_tokens": e.get("prompt_tokens"),
+                "completion_tokens": e.get("completion_tokens"),
+                "finish_reason": e.get("finish_reason"),
+            }
             return e["response"]
         text, meta = generate(base, rec, args.timeout, sampling)
         metas[key] = meta
-        log.write(json.dumps({"rid": rec["rid"], "sample_k": rec["sample_k"],
-                              "response": text, **meta}) + "\n")
-        log.flush()
-        done[0] += 1
-        if done[0] % 25 == 0:
-            print(f"[client] {done[0]}/{len(recs)} ({time.time()-t0:.0f}s)", flush=True)
+        with log_lock:
+            log.write(json.dumps({"rid": rec["rid"], "sample_k": rec["sample_k"],
+                                  "response": text, **meta}) + "\n")
+            log.flush()
+            done[0] += 1
+            if done[0] % 25 == 0:
+                elapsed = time.perf_counter() - t0
+                print(
+                    f"[client] {done[0]}/{len(recs)} ({elapsed:.0f}s)",
+                    flush=True,
+                )
         return text
 
     with ThreadPoolExecutor(max_workers=args.threads) as ex:
         preds = list(ex.map(run_one, recs))
+    generation_seconds = time.perf_counter() - t0
     log.close()
 
     df = pd.DataFrame(recs).drop(columns=["prompt"])
     df["predicted_answer"] = preds
     df["compression_ratio"] = None
-    df["completion_tokens"] = [metas[(r["rid"], r["sample_k"])]["completion_tokens"] for r in recs]
-    df["finish_reason"] = [metas[(r["rid"], r["sample_k"])]["finish_reason"] for r in recs]
+    df["prompt_tokens"] = [
+        metas[(r["rid"], r["sample_k"])]["prompt_tokens"] for r in recs
+    ]
+    df["completion_tokens"] = [
+        metas[(r["rid"], r["sample_k"])]["completion_tokens"] for r in recs
+    ]
+    df["finish_reason"] = [
+        metas[(r["rid"], r["sample_k"])]["finish_reason"] for r in recs
+    ]
     df.to_csv(out / "predictions.csv", index=False)
 
     dataset = recs[0]["dataset"]
@@ -163,7 +205,7 @@ def main():
                  for k in range(args.samples)]
         # Each sample_k is an independent sampled pass over the rows == one OSCAR
         # "seed", so per_k are seed-level accuracies; report mean +/- std (n=samples).
-        accs = [m["accuracy"] for m in per_k]
+        accs = [primary_score(m) for m in per_k]
         metrics = {
             "samples": args.samples,
             "sampling": {**sampling, "top_p": args.top_p, "top_k": args.top_k},
@@ -179,10 +221,17 @@ def main():
         metrics = scorer(df)
         metrics["cap_hit_rate"] = float((df.finish_reason == "length").mean())
         metrics["mean_completion_tokens"] = float(df.completion_tokens.mean())
+    if not prior:
+        total_completion_tokens = int(df.completion_tokens.sum())
+        metrics["generation_seconds"] = generation_seconds
+        metrics["output_throughput_tok_s"] = (
+            total_completion_tokens / generation_seconds
+        )
+        metrics["total_completion_tokens"] = total_completion_tokens
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2))
     (out / "server_info.json").write_text(json.dumps(info, indent=2, default=str))
     print(f"[client] metrics: {json.dumps(metrics)[:300]}", flush=True)
-    print(f"[client] wrote {out} in {time.time()-t0:.0f}s", flush=True)
+    print(f"[client] wrote {out} in {time.perf_counter()-t0:.0f}s", flush=True)
 
 
 if __name__ == "__main__":

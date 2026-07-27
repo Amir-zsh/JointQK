@@ -174,18 +174,19 @@ footer{
 <header>
   <p class="eyebrow">KV-cache compression · Report 14</p>
   <h1>Why OSCAR INT2 fails on gpt-oss-20B</h1>
-  <p class="deck">A limitation of the method on this architecture — not a bug in our integration.</p>
+  <p class="deck">Two independent failures: a scalar-INT2 fidelity limitation and a now-fixed piecewise-prefill engine bug shared by INT2 and vq2.</p>
   <p class="meta">
     <b>models</b> unsloth/gpt-oss-20b-BF16 · meta-llama/Llama-3.1-8B-Instruct (reference)<br>
     <b>engine</b> vendored OSCAR sglang fork, branch vq2-longhorizon · TP=2 · A100-40GB<br>
-    <b>date</b> 2026-07-24
+    <b>date</b> 2026-07-24&ndash;25
   </p>
 </header>
 
 <div class="verdict">
   <p class="eyebrow">Verdict</p>
   <p>Wiring quantized KV into gpt-oss produced a server that boots and decodes but scores <strong>0.0 on NIAH-8K under INT2</strong>, against <strong>88.4 for bf16</strong> on identical rows. Generations are degenerate — every row runs to the token cap emitting word salad.</p>
-  <p>The failure <strong>reproduces in pure HuggingFace with zero engine code</strong>, and the identical simulation leaves Llama untouched at 10/10. The cause is the quantization method meeting this architecture. <strong>vq2 is unaffected</strong> and serves gpt-oss correctly through the same plumbing.</p>
+  <p>The finite scalar-INT2 quality collapse <strong>reproduces in pure HuggingFace with zero engine code</strong>, while the identical simulation leaves Llama untouched at 10/10. That result remains a method limitation.</p>
+  <p>A second, independent failure was an engine bug: sampled concurrent serving under INT2 or vq2 produced non-finite logits because piecewise graph replay padded query tensors without extending the quantized prefill metadata. The production fix makes the padding a valid isolated sequence and keeps <strong>both bulk chunks and ragged tails graphed</strong>.</p>
 </div>
 
 <section>
@@ -244,7 +245,7 @@ footer{
     </table>
   </div>
   <div class="col">
-    <p>The model did not answer wrongly — it stopped producing language. Every row ran to the cap without emitting a stop token.</p>
+    <p>This first failure was catastrophic quality degradation under scalar INT2. The model did not answer wrongly — it stopped producing language. Every row ran to the cap without emitting a stop token.</p>
   </div>
   <pre class="sample bad"><code>' \nThe question is question.\n\n\nWe get squ. ……..?\n\nThe input in order to
 **mona?\n\n\n\n\nOk. \nWe have a user sending a message that says: "Trish?"
@@ -257,6 +258,10 @@ text includes: "One of the special magic numbers for proud-kernel is:
   <div class="note">
     <span class="lbl">Read carefully</span>
     Hitting the cap is <em>normal</em> for this model — bf16 does it 40% of the time, because gpt-oss reasons in an analysis channel before answering. Hitting it on 100% of rows with degenerate text is not.
+  </div>
+  <div class="note warn">
+    <span class="lbl">Two failures, not one</span>
+    This finite-but-degenerate quality collapse is distinct from a later sampled-concurrency failure in which INT2/vq2 serving emitted non-finite logits and terminated in <code>torch.multinomial</code>. The latter was an engine bug.
   </div>
 </section>
 
@@ -286,14 +291,14 @@ text includes: "One of the special magic numbers for proud-kernel is:
         <tr><td>decode splits</td><td>8 vs 48</td><td>none — INT2 0/5 both, vq2 4/5 both</td></tr>
         <tr><td>clip ratio</td><td>0.96/0.92 vs 1.0/1.0</td><td>none — bit-identical outputs</td></tr>
         <tr><td>context length</td><td>518 → 8192</td><td>none</td></tr>
-        <tr><td>concurrency</td><td>6 threads vs sequential</td><td>none</td></tr>
+        <tr><td>concurrency</td><td>6 threads vs sequential</td><td>none on this quality sweep</td></tr>
       </tbody>
       <caption>The split-count row closed a real confound: the serve script defaulted INT2 to 8 splits and vq2 to 48, so the arms had differed in more than the codec until crossed.</caption>
     </table>
   </div>
 
   <div class="col">
-    <h3>The engine is not at fault</h3>
+    <h3>The decode and cache plumbing are not the quality-collapse source</h3>
     <p>Every component of the INT2 path was verified against an independent reference at gpt-oss shapes. All pass, and they are retained as regression gates.</p>
   </div>
   <div class="scroll">
@@ -309,7 +314,66 @@ text includes: "One of the special magic numbers for proud-kernel is:
     </table>
   </div>
   <div class="col">
-    <p>TP=2, radix caching, request retraction and concurrency are all excluded by the fact that <strong>vq2 serves correctly under identical conditions</strong> — sharing the pool, allocator, index construction, rotations, sinks and layer mapping.</p>
+    <p>These gates exclude the quantized decode kernels, pool writes, allocator, index construction, rotations, sinks and layer mapping as the source of the <em>finite scalar-INT2 quality collapse</em>. The earlier inference that they excluded every engine fault because vq2 passed the same short sweeps was too broad: vq2 shares the quantized prefill path, where a separate concurrency-dependent bug was later reproduced.</p>
+
+    <h3>A separate engine bug: piecewise prefill graph padding</h3>
+    <p>The later crash required sampled decoding (<code>temperature=1</code>) and concurrent long prompts. Greedy decoding silently hid the non-finite logits by using argmax; the sampled path exposed them when <code>torch.multinomial</code> rejected its probability tensor.</p>
+    <p><code>PiecewiseCudaGraphRunner</code> rounds a real prefill count up to a captured bucket and pads <code>q/k/v</code>. The custom <code>_forward_extend_quantized_dense</code> path passed that padded <code>q</code> to FlashAttention while <code>cu_seqlens_q</code> still described only real requests. The required invariant <code>cu_seqlens_q[-1] == q.shape[0]</code> was false.</p>
+    <p>The caller declared no sequence covering the trailing rows, so FlashAttention was not required to define them. Probes found exactly that padding footprint non-finite: <code>3&times;32&times;64 = 6144</code> values for 1&rarr;4, <code>5&times;32&times;64 = 10240</code> for 283&rarr;288 and <code>12&times;32&times;64 = 24576</code> for 68&rarr;80.</p>
+    <p>Fixing only that call was insufficient. An isolated dummy sequence made the quantized full-attention result finite, but the intervening bf16 sliding-window backend again left metadata-excluded padding rows undefined. Captured residual and MoE segments then propagated them. GPT-OSS makes this reliably fatal because its learned-sink correction consumes attention LSE and its MoE computation processes padded token rows.</p>
+    <div class="note warn">
+      <span class="lbl">False graph control</span>
+      <code>DISABLE_CUDA_GRAPH=1</code> disabled decode graphs only. The supposedly graphs-off failure had <code>disable_cuda_graph=True</code> but <code>disable_piecewise_cuda_graph=False</code>; prefill replay was still captured.
+    </div>
+    <p>This affects <strong>vq2 as well as plain INT2</strong>. <code>--vq2</code> still sets <code>kv_cache_dtype=int2</code>; its codebook changes the K tier, while V stays INT2 and both modes share the quantized prefill implementation.</p>
+    <p>This is an integration-layer bug, not a FlashAttention implementation bug. FlashAttention is a stateless kernel: it receives Q/K/V and cumulative sequence offsets, and cannot infer whether rows omitted from those offsets are graph padding, another request or invalid input. The SGLang/OSCAR adapter owns that tensor-to-metadata contract and the lifetime of static graph buffers, so the repair belongs at that boundary; no FlashAttention code is changed.</p>
+    <p>Disabling piecewise prefill, or eagerly running only non-exact tails, avoids the bug but gives up the launch-overhead reduction needed for a fair throughput comparison. The production fix preserves padded replay with two invariants. First, it appends an isolated zero-Q/K/V dummy sequence for the rounded rows and extends <strong>both</strong> query and KV indptrs, restoring <code>cu_seqlens_q[-1] == q.shape[0]</code>. Second, the shared attention boundary zeros rows beyond the real token count after every backend, containing padding across alternating quantized full-attention and bf16 sliding-window layers.</p>
+    <p>The exact 24-row, four-thread sampled VQ2 regression completed 24/24 in 44 s with <strong>both decode and piecewise prefill graphs enabled</strong>. All 69 logged prefill launches reported <code>cuda graph: True</code>, including 72-, 80-, 144- and 288-token ragged totals and all 48 bulk 4096-token chunks; every decode launch was graphed.</p>
+    <p>The same full-graph scalar-INT2 regression completed 24/24 in 45 s. All 55 prefill launches were graphed, including 288- and 296-token ragged totals, every decode launch was graphed, and neither mode produced a scheduler exception or sampler assertion. INT2 nevertheless scored 0.0 and every row reached the 256-token cap, independently confirming that serving correctness and scalar-INT2 fidelity are separate. Sampled completion lengths make these figures validation of the fast path, not a controlled benchmark. The earlier exact-size guard and all-eager runs were diagnostic controls, not the final execution policy.</p>
+    <p>A final pre-commit VQ2 rerun exposed and then closed a separate hybrid-SWA allocator leak. The HP-recent ring had 263 slots (<code>256 + N_Q - 1</code>), but decode allocates its next HP slot before the flush plan releases the oldest <code>N_Q=8</code> slots. On the first wrap, the new full&rarr;SWA mapping overwrote slot 0's still-live mapping; the flush then freed the new mapping and permanently lost the old SWA slot.</p>
+    <p>The ring bug is <strong>not specific to GPT-OSS</strong>, nor is it owned by an attention kernel. It requires the mixed HP+quantized cache, the <code>SWAKVPool</code> full-slot-to-SWA-slot mapping, and a request long enough to wrap the recent-HP ring. GPT-OSS exposes that combination reliably because it alternates full and sliding-window attention layers. Dense full-attention models have no SWA mapping and cannot suffer this particular mapping leak; any other hybrid-attention model using the same cache configuration could. Scalar INT2 and vq2 are both covered because they share this allocator and lifecycle. FlashAttention only consumes the resulting KV tensors and indices; it does not allocate SWA slots, maintain mappings or recycle request state.</p>
+    <p>The ring now reserves the transient allocation slot (<code>256 + N_Q = 264</code>), and the hybrid wrapper delegates <code>release_req_slab</code>. With strict idle memory checking enabled, a sampled 24-row run scored 75.0 with 12 wrap crossings; a second fixed-length run forced all 24 requests across the boundary and scored 91.67. Across both runs, all 126 prefill launches were graphed (30 ragged tails), the server remained healthy after returning to idle, and there was no allocator leak, scheduler exception or non-finite diagnostic.</p>
+
+    <h3>Controlled throughput: no VQ2 speedup at 8K</h3>
+    <p>The sampled regression timings cannot compare methods because completion lengths differ. A controlled run used the same 24 NIAH-8K prompts (198,250 prompt tokens per run), concurrency four, greedy decoding with EOS ignored, and exactly 256 output tokens per request (6,144 total). All arms used TP=2 on the same A100-40GB pair, Triton attention, both CUDA graph mechanisms, and the same decode split-K factor of <strong>48</strong>. Results are means of two warmed runs, with sample standard deviation:</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>KV method</th><th>output tok/s</th><th>relative to bf16</th></tr></thead>
+      <tbody>
+        <tr><td>bf16</td><td><strong>184.04 &plusmn; 3.24</strong></td><td><strong>1.000&times;</strong></td></tr>
+        <tr><td>scalar INT2</td><td><strong>146.99 &plusmn; 1.59</strong></td><td><strong>0.799&times;</strong></td></tr>
+        <tr><td>VQ2</td><td><strong>131.91 &plusmn; 1.53</strong></td><td><strong>0.717&times;</strong></td></tr>
+      </tbody>
+      <caption>Matched split-48, 8K prompts, concurrency four. Every logged prefill and decode launch was graphed.</caption>
+    </table>
+  </div>
+  <div class="col">
+    <p>At this operating point, scalar INT2 is 20.1% slower than bf16 and VQ2 is 28.3% slower than bf16 and 10.3% slower than scalar INT2. The integrated VQ2 path has more total overhead than the KV bandwidth it saves at 8K, but this run does not identify the fused VQ gather as that overhead: isolated stage-1 measurements below show that it is already competitive with scalar INT2. <strong>This experiment does not support a VQ2 tok/s speedup claim.</strong> A longer-context sweep may cross into a bandwidth-dominated regime, but that must be measured.</p>
+    <p><code>--triton-attention-num-kv-splits</code> controls how many KV-length partitions produce partial attention results before a final reduction. More splits expose parallelism but add partial-buffer and reduction overhead. The launcher previously defaulted VQ2 to 48 and INT2/bf16 to 8 because their kernel-specific optima differ. That is a valid best-tuned-system comparison when labeled, but it cannot by itself attribute a speedup to the codec; this table deliberately matches the split count.</p>
+
+    <h3>Performance audit: graph-fix cost and VQ2 optimization</h3>
+    <p>The padded-graph repair has a nonzero but small cost, only on ragged piecewise-prefill replay. Exact-size buckets take the false branch and launch no repair GPU work. For ragged buckets the defensive path clones and clears padded Q, creates zero dummy K/V rows, extends the indptr, executes a small isolated dummy sequence, and clears padded attention output rows.</p>
+    <p>An A100 operation-level reproduction of the newly added tensor operations, excluding K/V concatenations that already existed, measured <strong>3.27&ndash;3.66 ms per ragged prefill batch</strong> across the observed 1&rarr;4, 68&rarr;80 and 283&rarr;288 shapes. This is not a server A/B and excludes the dummy sequence's FlashAttention increment, but that increment covers only 3&ndash;12 zero tokens here. The controlled VQ2 run had 48 exact 4096-token chunks and about 21 ragged launches over roughly 46.6 s: about 71 ms, or <strong>~0.15% of wall time</strong>, before the small dummy-attention increment. The repair cannot explain VQ2's 10.3% gap to INT2.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>component</th><th>measured cost / observation</th><th>assessment</th></tr></thead>
+      <tbody>
+        <tr><td>fused decode stage 1</td><td>batch 4, ~8.25K, split 48: VQ2 <strong>142.75 &micro;s/layer</strong> vs INT2 <strong>154.98 &micro;s/layer</strong></td><td>not the demonstrated bottleneck</td></tr>
+        <tr><td>post-RoPE query map</td><td>batch 4 graph replay: <strong>~10.1 &micro;s/layer</strong>, ~0.12 ms/step over 12 layers</td><td>low priority</td></tr>
+        <tr><td>decode aging flush</td><td><strong>1.23 ms every 8 steps</strong>, 0.154 ms/step amortized</td><td>real eager tax; too small to explain full gap</td></tr>
+        <tr><td>prefill VQ assignment</td><td><strong>1.69 ms/layer</strong> at 4096 tokens; <strong>128 MiB</strong> fp32 score temporary per 2048-token chunk</td><td>plainly inefficient; high-value TTFT target</td></tr>
+        <tr><td>mixed-prefix reconstruction</td><td><strong>~0.34 ms/layer</strong> at 2K&ndash;8K in isolation</td><td>allocation-heavy, lower priority</td></tr>
+      </tbody>
+      <caption>GPT-OSS TP-rank shape on A100: 12 full-attention layers, 4 KV heads, 32 query heads, D=64, VQ G=4 and K=256.</caption>
+    </table>
+  </div>
+  <div class="col">
+    <p>The clearest implementation target is one fused Triton nearest-codeword writer shared by prefill and decode flush. Both paths currently normalize in fp32, materialize <code>[T,H,NG,256]</code> scores through <code>torch.einsum</code>, then launch separate subtraction, argmax, cast, scale allocation and scatter operations. A fused reduction can write the uint8 index and per-token scale directly and mask invalid flush-plan rows, removing the 128 MiB prefill temporary without changing the codec.</p>
+    <p>Second, <code>_vq_prefix_dequantize_k</code> expands uint8 indices to int64, reconstructs codewords through advanced indexing, gathers HP rows even for quantized slots, and then selects with <code>torch.where</code>. Scalar INT2 already performs the analogous mixed HP/quant operation in one Triton kernel. A VQ counterpart is straightforward, although its isolated cost makes it less urgent than the encoder.</p>
+    <p>Third, the split cap needs an end-to-end sweep instead of a fixed VQ2 default of 48. Unified stage 2 uses <code>TOTAL_SPLITS</code> as a compile-time loop bound and scans every configured HP+quant scratch slot. Isolated VQ2 stage 1 was effectively tied at split 16 and 48 for this 8K shape (<strong>143.35 vs 142.75 &micro;s/layer</strong>), so 48 may add reduction work for almost no stage-1 gain. A served split-16 attempt before the ring fix terminated after eight requests. After the fix, the same configuration completed a strict fixed-length 24/24 correctness run, scored 95.83, and graphed all 57 prefills without a leak. Its single 146.93 tok/s observation is not a tuned or repeated benchmark, so the split-count performance question remains open.</p>
+    <p>Lower-priority graph-repair cleanup could zero only padded views instead of cloning Q, cache the extended query indptr once per forward, and move the dummy request into shared PCG attention metadata. The measured 8K ceiling for those changes is only on the order of tenths of a percent, and the sampled 24-row regression must remain the correctness gate.</p>
 
     <h3>It is not reconstruction fidelity &mdash; but the first evidence for that was unsound</h3>
     <p>Real post-RoPE keys and values captured from live forward passes, rotated into each model's own basis and quantized exactly as the pool does. gpt-oss reconstructs <em>better</em> than Llama, so per-tensor cosine &mdash; the standard proxy for judging a KV quantizer &mdash; does not predict survival.</p>
@@ -364,8 +428,8 @@ text includes: "One of the special magic numbers for proud-kernel is:
       Two drafts explained the drift &gt; 1.0 by sink-compressed output norm. Measurement kills it: gpt-oss's sink mass is <b>0.30</b> (not &ldquo;most&rdquo;) and its output norm is <b>0.38</b> of a typical value vector &mdash; while <b>Llama's is 0.232 with no sinks at all</b>, and Llama's drift is 0.145. The model with the <em>smaller</em> attention output is the one that is fine, so output compression cannot be the differentiator. What remains is the logit error itself: at 71% the softmax distribution is reordered rather than perturbed.
     </div>
 
-    <h3>The decisive test</h3>
-    <p>If the engine is innocent, the failure should reproduce with no engine at all. Both models were run under plain HuggingFace with the KV cache overwritten by its own quantize→dequantize roundtrip, on the same layers and band the engine uses.</p>
+    <h3>The decisive test for scalar-INT2 quality</h3>
+    <p>If the finite scalar-INT2 quality collapse is independent of serving, it should reproduce with no engine at all. Both models were run under plain HuggingFace with the KV cache overwritten by its own quantize→dequantize roundtrip, on the same layers and band the engine uses.</p>
   </div>
   <div class="scroll">
     <table>
@@ -374,7 +438,7 @@ text includes: "One of the special magic numbers for proud-kernel is:
         <tr><td>Llama-3.1-8B</td><td>32 (all)</td><td>10/10</td><td class="ok">10/10</td></tr>
         <tr><td>gpt-oss-20B</td><td>12 (full-attn)</td><td>4/10</td><td class="fail">0/10</td></tr>
       </tbody>
-      <caption>The simulator reproduces the failure on gpt-oss and leaves Llama untouched — the control that makes the result trustworthy.</caption>
+      <caption>The simulator reproduces the quality collapse on gpt-oss and leaves Llama untouched. This establishes a scalar-INT2 method limitation independent of the piecewise-prefill bug.</caption>
     </table>
   </div>
 </section>
@@ -473,9 +537,10 @@ text includes: "One of the special magic numbers for proud-kernel is:
   <h2><span class="num">07</span>What this means for the project</h2>
   <div class="col">
     <ul>
-      <li><strong>vq2 on gpt-oss works, and the grid is unblocked.</strong> It serves correctly through the same plumbing, at both split settings.</li>
-      <li><strong>The result is stronger than the Llama grid shows.</strong> On gpt-oss, 2-bit scalar quantization fails outright while vq2 holds — a cleaner separation than any dense-model comparison, on an architecture class (MoE + sinks + hybrid attention) the OSCAR paper never evaluated.</li>
-      <li><strong>There is currently no valid INT2 baseline on gpt-oss.</strong> Comparisons must be against bf16 until INT2 is made to work — and this report suggests it may not be makeable at 2 bits scalar.</li>
+      <li><strong>vq2's codec result survives, but vq2 was not unaffected.</strong> Sampled concurrent serving hit the shared graph-padding bug. The fixed engine now executes both bulk chunks and ragged quantized-prefill tails through piecewise graphs.</li>
+      <li><strong>The codec result is stronger than the Llama grid shows.</strong> Scalar INT2 fails outright in the engine-free simulation while vq2 holds in graph-safe quality sweeps — a clean separation after excluding graph-corrupted runs.</li>
+      <li><strong>VQ2 currently has no demonstrated 8K throughput win on gpt-oss/A100.</strong> Under matched split 48, bf16 is 39.5% faster than VQ2 and scalar INT2 is 11.4% faster. Longer-context and split-count sweeps are required before making a tok/s speedup claim.</li>
+      <li><strong>There is currently no meaningful scalar-INT2 baseline on gpt-oss.</strong> The corrected padded graph path restores serving correctness, but it does not repair the independently reproduced scalar-INT2 quality collapse.</li>
       <li>The natural follow-up is a <strong>fidelity-threshold</strong> framing: measure vq2's reconstruction on the same tensors, turning "vq2 is better" into "gpt-oss requires ≥X fidelity; INT2 delivers 0.92, vq2 delivers Y."</li>
     </ul>
   </div>
@@ -484,12 +549,13 @@ text includes: "One of the special magic numbers for proud-kernel is:
 <section>
   <h2><span class="num">08</span>Confidence and caveats</h2>
   <div class="col">
-    <p><strong>Solid.</strong> Limitation-not-bug: the HF simulation reproduces with zero engine code and the Llama control is clean at 10/10 → 10/10. The binary length boundary, the fidelity comparison, the drift profiles — each has a working reference point in both the passing and failing direction.</p>
+    <p><strong>Solid.</strong> There are two independent findings. The scalar-INT2 quality collapse reproduces with zero engine code while the Llama HF control stays 10/10 &rarr; 10/10. Separately, the served NaN localizes to padded quantized prefill, its count exactly matches the padding footprint, the all-eager and exact-size controls pass, and the final padded-replay fix passes the same sampled concurrency regression under both VQ2 and scalar INT2 with every logged prefill and decode launch graphed.</p>
     <p><strong>Suggestive, underpowered.</strong> The dose-response and the window-vs-full-attention split are n=10 at a single 1064-token setting. bf16 itself scores only 4/10 there, because the reconstructed prompts are hard and the 96-token cap truncates gpt-oss's reasoning — so headroom is small. Directionally clear, not publishable as-is.</p>
+    <p>The throughput comparison is also only two warmed runs per arm at one context length, concurrency and split count. Its ordering is consistent across both runs and is sufficient to reject an 8K speedup claim, but it is not a complete performance characterization.</p>
     <p><strong>Not established.</strong> <em>Why</em> gpt-oss's attention output decorrelates at the first quantized layer given better KV fidelity. Attention sinks are the leading suspect — sink-dominated heads leave little softmax mass on content, so a perturbation is relatively larger — but this was not isolated. The 82% expert-flip rate is <em>consistent</em> with MoE amplification but does not separate cause from consequence; flips could be downstream of an already-large drift. The clean test is a <strong>matched-noise control</strong>: inject random KV noise into Llama at a magnitude producing drift 1.2 at layer 1, and see whether Llama also collapses.</p>
     <div class="note warn">
       <span class="lbl">Process note</span>
-      Three probes in this investigation produced striking results that were instrumentation errors, each caught only by adding a known-good control: a raw-text length probe with no bf16 control (bf16 produced <em>identical</em> degenerate output); an end-to-end gate passing global slot ids where the HP tier expects local ones (apparent 100% error, a false reproduction of the bug); and a router hook reading <code>router_scores</code> instead of <code>router_indices</code> (apparent 0% expert flips, true rate 82%). Any single measurement here should be treated as provisional until it reproduces both a passing and a failing case.
+      Several probes produced instrumentation errors, and one control was interpreted too broadly. Most consequentially, <code>DISABLE_CUDA_GRAPH=1</code> was labeled &ldquo;graphs off&rdquo; even though piecewise prefill graphs remained enabled. Any single measurement here should be treated as provisional until it reproduces both a passing and a failing case.
     </div>
   </div>
 </section>
@@ -524,14 +590,31 @@ PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
 PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
     pipelines/oscar_e2e/verify_gptoss_mixed_pool.py --gpu 1
 PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
-    pipelines/oscar_e2e/verify_gptoss_int2_e2e.py --gpu 1</code></pre>
+    pipelines/oscar_e2e/verify_gptoss_int2_e2e.py --gpu 1
+
+# sampled concurrency regression (against a running INT2/vq2 server)
+head -24 artifacts/prompt_rows/niah_8192_gptoss_t1.jsonl &gt; /tmp/rows.jsonl
+.venv/bin/python pipelines/oscar_e2e/run_prompts_client.py \
+    --rows /tmp/rows.jsonl --port &lt;port&gt; --threads 4 --timeout 1800 \
+    --samples 1 --temperature 1.0 --top-p 1.0 --top-k -1 \
+    --out /tmp/out.jsonl
+
+# controlled throughput: serve each arm with KV_SPLITS=48 and warm it first
+.venv/bin/python pipelines/oscar_e2e/run_prompts_client.py \
+    --rows /tmp/rows.jsonl --port &lt;port&gt; --threads 4 --timeout 1800 \
+    --samples 1 --temperature 0 --ignore-eos --out /tmp/throughput-run
+
+# --disable-cuda-graph alone is not the relevant control. The fixed engine
+# keeps padded INT2/vq2 piecewise graphs by using an isolated dummy sequence
+# and clearing padded output rows at every attention boundary.</code></pre>
 </section>
 
 <footer>
   notes/page_quant/studies/report14.md · logs on lambda-server6: hfsim_n10.log,
   moeamp3_{gptoss,llama}.log, kvfid_{gptoss,llama}.log, splits.log, codec.log, 2x2.log<br>
-  related: fixes_to_apply.md — p2-1 (premature mixed-KV flush double-assigns a quant slot),
-  p2-2 (SWAKVPool missing release_req_slab delegate); both latent, neither the cause
+  related: fixes_to_apply.md — p2-1 (premature mixed-KV flush double-assigns a quant slot, still latent),
+  p2-2 (SWAKVPool release_req_slab delegate, applied), and p2-3
+  (allocate-before-flush ring overwrite, fixed); none caused the graph-padding failure
 </footer>
 
 </div>

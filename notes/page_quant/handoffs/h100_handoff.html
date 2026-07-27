@@ -51,57 +51,89 @@
 <main>
   <div class="kicker">KV-cache compression · infrastructure handoff</div>
   <h1>Running the KV-quantization experiments on H100 nodes</h1>
-  <p class="meta">2026-07-23 · source of truth: <code>/vault/amir/efficient-llm/teamily-project</code> on lambda7 (canonical) / lambda6 (mirror; ssh host is <code>lambda-server6</code> = 10.137.32.78 — plain <code>lambda6</code> does not resolve and fails with &ldquo;no route to host&rdquo;, which reads like a downed node), branch <code>pgq10</code>, engine clone <code>vendor/OSCAR-vq</code> @ <code>7015d087a</code>+ (branch <code>vq2-longhorizon</code>) · companion docs: <a href="https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c">Report 12</a>, <a href="https://claude.ai/code/artifact/0cb61471-28cf-41f2-959a-009ee4cd6228">Report 13</a>, <a href="https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf">team handoff</a></p>
+  <p class="meta">2026-07-23 · source of truth: <code>/vault/amir/efficient-llm/teamily-project</code> &mdash; <b>lambda7 for git, lambda6 for artifacts</b> (they have DIVERGED: lambda6 holds the gpt-oss NIAH row files and the canonical gpqacc128k llama codebook that lambda7 lacks, so build the payload on lambda6). lambda6 ssh host is <code>lambda-server6</code> = 10.137.32.78 &mdash; plain <code>lambda6</code> does not resolve and fails with &ldquo;no route to host&rdquo;, which reads like a downed node, branch <code>pgq10</code>, engine clone <code>vendor/OSCAR-vq</code> @ <code>7015d087a</code>+ (branch <code>vq2-longhorizon</code>) · companion docs: <a href="https://claude.ai/code/artifact/eea529b4-755c-40a9-a605-8965ba257e2c">Report 12</a>, <a href="https://claude.ai/code/artifact/0cb61471-28cf-41f2-959a-009ee4cd6228">Report 13</a>, <a href="https://claude.ai/code/artifact/7e1b0e79-93b7-4b11-9336-b63f39a0c0cf">team handoff</a></p>
 
   <h2><span class="no">1</span>What this project is</h2>
   <p>We compress the transformer KV cache at serving time to ~2 bits/element and measure what survives. The flagship method, <b>vq2</b>, is a group-vector-quantized K tier inside the OSCAR serving engine (a research sglang fork): keys are mapped per (layer, KV-head) into a calibrated basis, split into 16 groups of 4 dims, and each group stored as one uint8 index into a 256-entry codebook plus a per-token fp8 RMS scale; V stays on OSCAR's scalar-INT2 path. Everything — quantize-on-aging behind a bf16 sink+recent band, fused triton decode kernels, chunked-prefill dequant — runs inside one engine, so every method is compared <em>served</em>, not offline. Baselines in the same stack: <b>OSCAR-INT2</b> (production release: calibrated rotations + percentile clips), <b>TurboQuant-INT2</b> (Lloyd-Max, calibration-free), <b>QuaRot-INT2</b>, <b>Naive-INT2</b>, and the <b>bf16</b> ceiling.</p>
   <p>Headline results so far: vq2 holds long-context retrieval where scalar INT2 collapses (Llama-3.1-8B 64K NIAH: 92 vs 77; Qwen3-8B: 77 vs 23), is context-flat at ~7 pts below bf16, decodes 12–13% faster than OSCAR-INT2 at 100K on A100, and the sharpest design law we've measured: <b>codebook calibration must cover the serving position range</b> — a 64K-calibrated codebook serves 131K at 0.16 (total collapse) while a 128K-calibrated one serves it at 68.2. gpqacc128k (4 × 131,072-token concat) is now the canonical calibration everywhere.</p>
 
   <h2><span class="no">2</span>What to copy to the H100 node</h2>
-  <p><b>Code comes from GitHub (two repos); binaries come by rsync.</b> Both are private.
-  The project repo is <code>git@github.com:Amir-zsh/JointQK.git</code>, branch <code>pgq10</code>.
-  The engine is now its own repo too — <code>git@github.com:Amir-zsh/VQ-SGLang.git</code>, branch
-  <code>vq2-longhorizon</code> — so cloning it into <code>vendor/OSCAR-vq/</code> replaces the old
-  ~2&nbsp;GB vendor rsync. <b>Cloning is not sufficient on its own:</b> the artifact binaries below
-  (rotations and codebooks are <code>.pt</code>, excluded by <code>.gitignore</code>) and the eval
-  rows are in neither repo, and without them no quantized arm can serve. The other vendor trees
-  (<code>kvpress</code>, <code>OSCAR</code> reference, <code>turboquant-pytorch</code>,
-  <code>kivi</code>) are still rsync-only; you need them only for the baselines that import them.</p>
-  <p>Keep the same absolute path <code>/vault/amir/efficient-llm/teamily-project</code> if you can:
-  venv shebangs and the conda paths inside <code>serve_oscar.sh</code> are absolute. A different
-  path works, but rebuild both venvs (steps 3&ndash;4 do) and re-check those two conda refs.</p>
+  <p><b>The two boxes are on different VPNs, so nothing goes lambda&rarr;H100 directly.</b>
+  Everything moves as a <i>path-independent payload</i>: lambda &rarr; your laptop &rarr; (switch
+  VPN) &rarr; H100. Two rules make that survivable: repos travel as <b>git bundles</b> (single
+  files, full history, every branch) and artifacts travel as <b>one tar with repo-relative
+  paths</b>, so neither cares where the repo lives on either machine. Nothing below hardcodes a
+  local or H100 directory &mdash; set <code>$STAGE</code> and <code>$DEST</code> to whatever suits
+  each box.</p>
 
-  <p class="step"><b>1 &middot; clone both repos</b> &nbsp;<i>(on the H100)</i></p>
-  <pre>export ROOT=/vault/amir/efficient-llm/teamily-project
-mkdir -p "$(dirname "$ROOT")" &amp;&amp; cd "$(dirname "$ROOT")"
-git clone -b pgq10 git@github.com:Amir-zsh/JointQK.git "$ROOT"
-git clone -b vq2-longhorizon git@github.com:Amir-zsh/VQ-SGLang.git "$ROOT/vendor/OSCAR-vq"</pre>
+  <div class="callout"><b>Clone everything, not one branch.</b> Measured on this repo: an
+  all-branches bundle is <b>46&nbsp;MB</b> vs <b>43&nbsp;MB</b> for <code>pgq10</code> alone
+  &mdash; 3&nbsp;MB for the other 5 commits, because git packs share history. The engine adds
+  ~390&nbsp;MB either way. So <b>~436&nbsp;MB for both repos with every branch</b>, against
+  ~8&ndash;10&nbsp;GB of artifacts you must carry regardless: the repos are ~4% of the transfer
+  and branch selection is noise. Take <code>--all</code> and keep the boxes able to sync any
+  branch without a second trip through the VPN dance.</div>
 
-  <p class="step"><b>2 &middot; rsync the binaries</b> &nbsp;<i>(run ON lambda7, pushing out &mdash;
-  the lambda boxes are on 10.137.x, so a rented node usually cannot reach in)</i></p>
+  <p class="step"><b>1 &middot; build the payload</b> &nbsp;<i>(on <b>lambda6</b> &mdash; it is the more complete box for artifacts)</i></p>
   <pre>SRC=/vault/amir/efficient-llm/teamily-project
-H100=user@your-h100-host          # &lt;-- edit
-cd "$SRC"
+OUT=/tmp/kvq_payload; mkdir -p "$OUT"; cd "$SRC"
 
-rsync -aHSR --info=stats1 --exclude '__pycache__/' \
+# repos: full history, ALL branches, one file each
+git bundle create "$OUT/jointqk.bundle" --all
+git -C vendor/OSCAR-vq bundle create "$OUT/vqsglang.bundle" --all
+
+# artifacts: repo-RELATIVE paths, so extraction works at any destination path
+tar -czf "$OUT/kvq_artifacts.tgz" \
   artifacts/oscar_gptoss20b artifacts/oscar_llama31_8b \
   artifacts/oscar_e2e/rotzoo third_party/samuel_vq/codebooks \
   artifacts/prompt_rows artifacts/niah_bench artifacts/niah_corpus \
-  artifacts/prompt_rows_code \
-  "$H100:$SRC/"
+  artifacts/prompt_rows_code artifacts/page_quant2 \
+  --exclude='__pycache__' --exclude='*.log'
+# page_quant2 holds vqg_bundle__qwen3_8b_flat_ptn.pt, which the day-0 gate
+# battery (verify_vq_engine.py) opens. It was absent from earlier payload
+# lists and fails only once you run the gates.
 
-# vendor trees NOT on GitHub. vendor/OSCAR is the editable install root for
-# .venv-oscar (step 4) -- it is required, not merely "for reference".
-rsync -aHS --info=stats1 --exclude 'OSCAR-vq' --exclude '__pycache__/' \
-  "$SRC/vendor/" "$H100:$SRC/vendor/"
+# vendor trees that are NOT on GitHub (vendor/OSCAR is the editable install
+# root for .venv-oscar -- required, not merely a reference copy)
+tar -czf "$OUT/kvq_vendor.tgz" --exclude='OSCAR-vq' --exclude='__pycache__' vendor/
 
-# optional: prior results, for comparison / resume
-rsync -aHSR --info=stats1 --include '*/' --include 'metrics.json' \
-  --include '*manifest*.json' --exclude '*' \
-  artifacts/oscar_gptoss20b/grid artifacts/oscar_llama31_8b/grid \
-  artifacts/oscar_llama31_8b/grid_v2 "$H100:$SRC/"</pre>
-  <p><code>-R</code> recreates the relative structure at the destination; <code>-S</code> handles
-  sparse files. Roughly <b>8&ndash;10&nbsp;GB</b> total.</p>
+cd "$OUT" &amp;&amp; sha256sum * &gt; SHA256SUMS &amp;&amp; ls -lh</pre>
+
+  <p class="step"><b>2 &middot; hop 1 &mdash; lambda &rarr; laptop</b> &nbsp;<i>(from your laptop,
+  on the lambda VPN)</i></p>
+  <pre>STAGE=<i>&lt;any local dir with ~10 GB free&gt;</i>          # e.g. ~/kvq-transfer
+mkdir -p "$STAGE"
+rsync -avP lambda-server6:/tmp/kvq_payload/ "$STAGE"/     # -P = resumable; re-run if the VPN drops
+cd "$STAGE" &amp;&amp; sha256sum -c SHA256SUMS</pre>
+
+  <p class="step"><b>3 &middot; switch VPN, then hop 2 &mdash; laptop &rarr; H100</b></p>
+  <pre>DEST=<i>&lt;any dir on the H100 with ~15 GB free&gt;</i>      # e.g. /workspace or /raid/$USER
+rsync -avP "$STAGE"/ h100:"$DEST"/staging/
+ssh h100 "cd '$DEST/staging' &amp;&amp; sha256sum -c SHA256SUMS"   # verify AFTER the second hop</pre>
+
+  <div class="callout warn"><b>Verify after hop 2, not just hop 1.</b> Two transfers over two
+  VPNs is two chances at a silent truncation, and a half-written codebook fails as a wrong
+  <i>number</i> rather than an error.</div>
+
+  <p class="step"><b>4 &middot; assemble on the H100</b></p>
+  <pre>DEST=<i>&lt;same dir as above&gt;</i>
+ROOT="$DEST/teamily-project"      # the repo can live anywhere; nothing assumes a path
+git clone "$DEST/staging/jointqk.bundle" "$ROOT"
+cd "$ROOT" &amp;&amp; git checkout pgq10
+git clone "$DEST/staging/vqsglang.bundle" vendor/OSCAR-vq
+git -C vendor/OSCAR-vq checkout vq2-longhorizon
+
+tar -xzf "$DEST/staging/kvq_artifacts.tgz" -C "$ROOT"   # relative paths land correctly
+tar -xzf "$DEST/staging/kvq_vendor.tgz"    -C "$ROOT"
+
+# point the bundles' origin at GitHub once the H100 has network access,
+# so later syncs skip the whole VPN dance:
+git remote set-url origin git@github.com:Amir-zsh/JointQK.git
+git -C vendor/OSCAR-vq remote set-url origin git@github.com:Amir-zsh/VQ-SGLang.git</pre>
+
+  <div class="callout"><b>If the H100 has GitHub access</b>, skip the bundles entirely and clone
+  from GitHub there &mdash; only the artifact tars need the two-hop trip. The bundles exist for
+  the offline case.</div>
 
   <p class="step"><b>3 &middot; client / eval venv</b></p>
   <pre>cd "$ROOT"
@@ -118,7 +150,11 @@ uv pip install --python .venv-oscar/bin/python -e vendor/OSCAR/sglang-research/p
   why <code>vendor/OSCAR</code> must be rsynced even though the clone is what actually runs.</p>
 
   <p class="step"><b>5 &middot; verify before running anything</b></p>
-  <pre>PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
+  <p>Run the preflight first: it names every missing file and prints a tar
+  command that fetches only the gaps, so a shortfall surfaces as a path rather
+  than as a confusing failure hours into a run.</p>
+  <pre>bash pipelines/oscar_e2e/preflight_h100.sh          # or: ... gptoss | llama | gates
+PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
     pipelines/oscar_e2e/verify_gptoss_int2_decode.py --gpu 0
 PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
     pipelines/oscar_e2e/verify_gptoss_mixed_pool.py --gpu 0
@@ -126,8 +162,8 @@ PYTHONPATH=vendor/OSCAR-vq/sglang-research/python:. .venv-oscar/bin/python \
     pipelines/oscar_e2e/verify_gptoss_int2_e2e.py --gpu 0
 git -C vendor/OSCAR-vq log --oneline -1     # expect c6d999a50 for the P2 work</pre>
   <div class="tw"><table>
-    <tr><th>what</th><th>path (rsync from lambda7)</th><th>size</th></tr>
-    <tr><td>Repo (branch pgq10)</td><td class="path">git clone from GitHub (above) — kvq/ pipelines/ third_party/ tests/ notes/</td><td>small</td></tr>
+    <tr><th>what</th><th>path (repo-relative, as packed in step 1)</th><th>size</th></tr>
+    <tr><td>Repos, ALL branches (bundles)</td><td class="path">jointqk.bundle 46M + vqsglang.bundle ~390M — full history, any branch checkoutable</td><td>~436M</td></tr>
     <tr><td>Engine clone incl. its .git</td><td class="path">vendor/OSCAR-vq/ &rarr; now cloned from GitHub. Still rsync-only: vendor/OSCAR (editable install root for .venv-oscar &mdash; required), vendor/kvpress, turboquant, kivi</td><td>~2G</td></tr>
     <tr><td>Calibration artifacts (rotations + codebooks, all models)</td><td class="path">artifacts/oscar_llama31_8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_r1d_llama8b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_gptoss20b/{rotations_gpqa198,vqa_*fp8.pt} · artifacts/oscar_e2e/rotzoo/ · third_party/samuel_vq/codebooks/</td><td>~3G</td></tr>
     <tr><td>Eval rows + benches</td><td class="path">artifacts/prompt_rows/ · artifacts/niah_bench/ · artifacts/niah_corpus/ · artifacts/prompt_rows_code/</td><td>~4G</td></tr>

@@ -319,4 +319,30 @@ unaffected by construction.
   a per-request ring, so correctness appears unaffected, but it is a plausible
   source of the observed ~2 slot/req leak and it is silently wrong.
 - **Fix**: add a `release_req_slab` delegate to `SWAKVPool` forwarding to
-  `full_kv_pool`. Not yet applied.
+  `full_kv_pool`.
+- **Status**: applied with the p2-3 ring-lifecycle fix. A second strict
+  24-request pass reused request slots without leaking.
+
+## p2-3: hybrid-SWA mapping overwritten on the first HP-recent ring wrap
+
+- **Symptom**: after concurrent long generations return to idle, the full
+  allocator balances exactly while the SWA allocator reports approximately
+  one leaked slot per request that crosses the first HP-recent ring wrap
+  (`full_leaked=0, swa_leaked=21` in one 24-row reproduction).
+- **Root cause**: the ring held `hp_recent + N_Q - 1` slots, matching the
+  maximum steady-state live occupancy but not the operation order. Decode
+  allocates and installs the new full→SWA mapping before the flush plan
+  releases the oldest `N_Q` mappings. On the flush step that first wraps the
+  ring, allocation overwrote slot 0's mapping; cleanup then freed the new SWA
+  slot and lost the old one.
+- **Fix**: reserve one transient slot by sizing the ring as
+  `hp_recent + N_Q`. The flush-step allocation now lands in the final spare
+  slot, the flush releases slots 0 through `N_Q-1`, and only the following
+  decode step reuses slot 0.
+- **Verification**: a focused lifecycle regression fails with the old geometry.
+  With the fix and strict idle checking enabled, two consecutive 24-row VQ2
+  runs completed with scores 75.0 and 91.67. The fixed-length pass forced all
+  24 requests across the wrap and reused request slots; all 126 prefills across
+  both passes were graphed and the server returned to idle with no leak. The
+  previously failing split-16 configuration also completed 24/24, scored
+  95.83, and graphed all 57 prefills under strict checking.
