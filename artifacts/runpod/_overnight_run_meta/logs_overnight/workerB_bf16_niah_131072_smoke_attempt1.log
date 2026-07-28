@@ -1,0 +1,13 @@
+[rows] 8 rows -> artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke/rows.jsonl
+[2026-07-28 16:59:18] cell=artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke arm=bf16 task=niah_131072_smoke gpus=2,3 tp=2 port=30902 shard=none
+[2026-07-28 17:01:29] server up
+echo gate ok — 9 knobs verified, pool=2039992 tokens
+[2026-07-28 17:01:29] client start (1 samples, T=0.0)
+/opt/venv-client/lib/python3.12/site-packages/fuzzywuzzy/fuzz.py:11: UserWarning: Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning
+  warnings.warn('Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning')
+[client] 8 rows -> http://127.0.0.1:30902 (kv_cache_dtype=auto)
+[client] metrics: {"niah_multikey_1": {"string_match": 100.0}, "niah_multikey_2": {"string_match": 100.0}, "niah_multikey_3": {"string_match": 100.0}, "niah_multiquery": {"string_match": 100.0}, "niah_multivalue": {"string_match": 100.0}, "niah_single_1": {"string_match": 100.0}, "niah_single_2": {"string_match": 100
+[client] wrote /workspace/teamily-project/artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke in 77s
+[provenance] artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke/provenance.json
+[2026-07-28 17:02:56] CELL DONE — artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke
+pipelines/runpod/run_cell.sh: line 116: 14601 Killed                  env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE_ARGS[@]}" > "$SERVE_LOG" 2>&1 < /dev/null

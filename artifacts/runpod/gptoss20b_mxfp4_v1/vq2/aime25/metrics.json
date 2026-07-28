@@ -1,0 +1,59 @@
+{
+  "samples": 5,
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": -1
+  },
+  "per_k": [
+    {
+      "correct": 20,
+      "answered": 24,
+      "accuracy": 0.6666666666666666,
+      "accuracy_boxed_exact": 0.6333333333333333,
+      "scorer": "math_verify",
+      "total": 30
+    },
+    {
+      "correct": 19,
+      "answered": 26,
+      "accuracy": 0.6333333333333333,
+      "accuracy_boxed_exact": 0.6,
+      "scorer": "math_verify",
+      "total": 30
+    },
+    {
+      "correct": 19,
+      "answered": 26,
+      "accuracy": 0.6333333333333333,
+      "accuracy_boxed_exact": 0.6,
+      "scorer": "math_verify",
+      "total": 30
+    },
+    {
+      "correct": 22,
+      "answered": 26,
+      "accuracy": 0.7333333333333333,
+      "accuracy_boxed_exact": 0.7333333333333333,
+      "scorer": "math_verify",
+      "total": 30
+    },
+    {
+      "correct": 21,
+      "answered": 25,
+      "accuracy": 0.7,
+      "accuracy_boxed_exact": 0.6666666666666666,
+      "scorer": "math_verify",
+      "total": 30
+    }
+  ],
+  "accuracy_mean": 0.6733333333333333,
+  "accuracy_std": 0.04346134936801765,
+  "accuracy_avg_at_k": 0.6733333333333332,
+  "cap_hit_rate": 0.14666666666666667,
+  "mean_completion_tokens": 12589.526666666667,
+  "total": 30,
+  "generation_seconds": 975.024706883356,
+  "output_throughput_tok_s": 1936.8011771069062,
+  "total_completion_tokens": 1888429
+}

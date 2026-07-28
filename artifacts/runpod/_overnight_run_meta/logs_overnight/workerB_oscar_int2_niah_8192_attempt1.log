@@ -1,0 +1,1 @@
+[2026-07-28 15:51:54] cell=artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/niah_8192 arm=oscar_int2 task=niah_8192 gpus=2,3 tp=2 port=30902 shard=none

@@ -1,0 +1,35 @@
+[2026-07-28 15:57:50] === overnight queue RESUME (existing queue file has 14 items) ===
+[2026-07-28 15:57:50] [workerA] START bf16/niah_16384 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 15:57:50] [workerB] START oscar_int2/niah_16384 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 16:12:46] [workerB] DONE oscar_int2/niah_16384 -> artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/niah_16384/metrics.json
+[2026-07-28 16:12:46] [workerB] START vq2/niah_16384 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 16:12:56] [workerA] DONE bf16/niah_16384 -> artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_16384/metrics.json
+[2026-07-28 16:12:56] [workerA] START bf16/niah_32768 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 16:19:39] [workerB] DONE vq2/niah_16384 -> artifacts/runpod/gptoss20b_mxfp4_v1/vq2/niah_16384/metrics.json
+[2026-07-28 16:19:40] [workerB] START oscar_int2/niah_32768 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 16:24:37] [workerA] DONE bf16/niah_32768 -> artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_32768/metrics.json
+[2026-07-28 16:24:38] [workerA] START vq2/niah_32768 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 16:29:18] [workerB] DONE oscar_int2/niah_32768 -> artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/niah_32768/metrics.json
+[2026-07-28 16:29:19] [workerB] START bf16/niah_65536 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 16:35:49] [workerA] DONE vq2/niah_32768 -> artifacts/runpod/gptoss20b_mxfp4_v1/vq2/niah_32768/metrics.json
+[2026-07-28 16:35:50] [workerA] START oscar_int2/niah_65536 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 16:55:36] [workerA] DONE oscar_int2/niah_65536 -> artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/niah_65536/metrics.json
+[2026-07-28 16:55:37] [workerA] START vq2/niah_65536 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 16:58:39] [workerB] DONE bf16/niah_65536 -> artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_65536/metrics.json
+[2026-07-28 16:58:40] [workerB] START bf16/niah_131072_smoke (protocol=gptoss20b_mxfp4_v1_ctx131k.json attempt 1/3 gpus=2,3)
+[2026-07-28 17:02:59] [workerB] DONE bf16/niah_131072_smoke -> artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072_smoke/metrics.json
+[2026-07-28 17:02:59] [workerB] niah_131072 smoke test PASSED -- queueing full 3-arm sweep at ctx131k
+[2026-07-28 17:03:00] [workerB] START bf16/lcb (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 17:20:04] [workerA] DONE vq2/niah_65536 -> artifacts/runpod/gptoss20b_mxfp4_v1/vq2/niah_65536/metrics.json
+[2026-07-28 17:20:04] [workerA] START oscar_int2/lcb (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=0,1)
+[2026-07-28 17:25:03] [workerB] DONE bf16/lcb -> artifacts/runpod/gptoss20b_mxfp4_v1/bf16/lcb/metrics.json
+[2026-07-28 17:25:03] [workerB] START bf16/niah_8192 (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 17:28:55] [workerB] DONE bf16/niah_8192 -> artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_8192/metrics.json
+[2026-07-28 17:28:55] [workerB] START vq2/lcb (protocol=gptoss20b_mxfp4_v1.json attempt 1/3 gpus=2,3)
+[2026-07-28 17:32:29] [workerB] FAILED vq2/lcb (attempt 1) -- see /workspace/logs_overnight/workerB_vq2_lcb_attempt1.log
+[2026-07-28 17:32:29] [workerB] requeued vq2/lcb to end of shared queue (next attempt 2)
+[2026-07-28 17:32:29] [workerB] START bf16/niah_131072 (protocol=gptoss20b_mxfp4_v1_ctx131k.json attempt 1/3 gpus=2,3)
+[2026-07-28 17:34:27] [workerA] DONE oscar_int2/lcb -> artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/lcb/metrics.json
+[2026-07-28 17:34:29] [workerA] START oscar_int2/niah_131072 (protocol=gptoss20b_mxfp4_v1_ctx131k.json attempt 1/3 gpus=0,1)
+[2026-07-28 18:21:56] [workerA] DONE oscar_int2/niah_131072 -> artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/oscar_int2/niah_131072/metrics.json
+[2026-07-28 18:21:57] [workerA] START vq2/niah_131072 (protocol=gptoss20b_mxfp4_v1_ctx131k.json attempt 1/3 gpus=0,1)

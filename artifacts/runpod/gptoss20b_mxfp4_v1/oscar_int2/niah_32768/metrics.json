@@ -1,0 +1,97 @@
+{
+  "samples": 3,
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": -1
+  },
+  "per_k": [
+    {
+      "niah_multikey_1": {
+        "string_match": 0.0
+      },
+      "niah_multikey_2": {
+        "string_match": 0.0
+      },
+      "niah_multikey_3": {
+        "string_match": 0.0
+      },
+      "niah_multiquery": {
+        "string_match": 0.0
+      },
+      "niah_multivalue": {
+        "string_match": 0.0
+      },
+      "niah_single_1": {
+        "string_match": 0.0
+      },
+      "niah_single_2": {
+        "string_match": 0.0
+      },
+      "niah_single_3": {
+        "string_match": 0.0
+      }
+    },
+    {
+      "niah_multikey_1": {
+        "string_match": 0.0
+      },
+      "niah_multikey_2": {
+        "string_match": 0.0
+      },
+      "niah_multikey_3": {
+        "string_match": 0.0
+      },
+      "niah_multiquery": {
+        "string_match": 0.0
+      },
+      "niah_multivalue": {
+        "string_match": 0.0
+      },
+      "niah_single_1": {
+        "string_match": 0.0
+      },
+      "niah_single_2": {
+        "string_match": 0.0
+      },
+      "niah_single_3": {
+        "string_match": 0.0
+      }
+    },
+    {
+      "niah_multikey_1": {
+        "string_match": 0.0
+      },
+      "niah_multikey_2": {
+        "string_match": 0.0
+      },
+      "niah_multikey_3": {
+        "string_match": 0.0
+      },
+      "niah_multiquery": {
+        "string_match": 0.0
+      },
+      "niah_multivalue": {
+        "string_match": 0.0
+      },
+      "niah_single_1": {
+        "string_match": 0.0
+      },
+      "niah_single_2": {
+        "string_match": 0.0
+      },
+      "niah_single_3": {
+        "string_match": 0.0
+      }
+    }
+  ],
+  "accuracy_mean": 0.0,
+  "accuracy_std": 0.0,
+  "accuracy_avg_at_k": 0.0,
+  "cap_hit_rate": 0.96,
+  "mean_completion_tokens": 124.08,
+  "total": 200,
+  "generation_seconds": 455.55437033623457,
+  "output_throughput_tok_s": 163.42286420181105,
+  "total_completion_tokens": 74448
+}

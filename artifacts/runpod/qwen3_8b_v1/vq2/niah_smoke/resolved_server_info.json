@@ -1,0 +1,19 @@
+{
+  "model_path": "Qwen/Qwen3-8B",
+  "context_length": 73728,
+  "chunked_prefill_size": 4096,
+  "tp_size": 1,
+  "mem_fraction_static": 0.85,
+  "max_running_requests": 4,
+  "max_total_num_tokens": 2654448,
+  "triton_attention_num_kv_splits": 48,
+  "kv_cache_dtype": "int2",
+  "kv_cache_quant_group_size": 128,
+  "disable_radix_cache": true,
+  "cuda_graph_max_bs": 8,
+  "prefill_attention_backend": "triton",
+  "decode_attention_backend": "triton",
+  "sampling_backend": "pytorch",
+  "random_seed": 973944595,
+  "version": "0.0.0.dev0"
+}

@@ -1,0 +1,10 @@
+[2026-07-28 17:29:09] cell=artifacts/runpod/gptoss20b_mxfp4_v1/vq2/lcb arm=vq2 task=lcb gpus=2,3 tp=2 port=30902 shard=none
+[2026-07-28 17:30:39] server up
+echo gate ok — 10 knobs verified, pool=3718640 tokens
+[2026-07-28 17:30:40] client start (5 samples, T=1.0)
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/venv-client/lib/python3.12/site-packages/requests/adapters.py", line 678, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPConnectionPool(host='127.0.0.1', port=30902): Max retries exceeded with url: /generate (Caused by NewConnectionError("HTTPConnection(host='127.0.0.1', port=30902): Failed to establish a new connection: [Errno 111] Connection refused"))
+pipelines/runpod/run_cell.sh: line 187: 25573 Killed                  env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE_ARGS[@]}" > "$SERVE_LOG" 2>&1 < /dev/null

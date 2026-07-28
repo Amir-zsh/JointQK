@@ -1,0 +1,12 @@
+[2026-07-28 11:27:15] cell=artifacts/runpod/gptoss20b_mxfp4_v1/vq2/gpqa arm=vq2 task=gpqa gpus=2,3 tp=2 port=30902 shard=none
+[2026-07-28 11:28:55] server up
+echo gate ok — 10 knobs verified, pool=3497288 tokens
+[2026-07-28 11:28:56] client start (5 samples, T=1.0)
+[client] 925/990 (1273s)
+[client] 950/990 (1315s)
+[client] 975/990 (1347s)
+[client] metrics: {"samples": 5, "sampling": {"temperature": 1.0, "top_p": 1.0, "top_k": -1}, "per_k": [{"correct": 93, "accuracy": 0.4696969696969697, "extraction_rate": 0.6767676767676768, "scorer": "gpqa_simple_evals", "total": 198}, {"correct": 98, "accuracy": 0.494949494949495, "extraction_rate": 0.7171717171717
+[client] wrote /workspace/teamily-project/artifacts/runpod/gptoss20b_mxfp4_v1/vq2/gpqa in 1392s
+[provenance] artifacts/runpod/gptoss20b_mxfp4_v1/vq2/gpqa/provenance.json
+[2026-07-28 11:52:17] CELL DONE — artifacts/runpod/gptoss20b_mxfp4_v1/vq2/gpqa
+pipelines/runpod/run_cell.sh: line 116: 51801 Killed                  env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE_ARGS[@]}" > "$SERVE_LOG" 2>&1 < /dev/null

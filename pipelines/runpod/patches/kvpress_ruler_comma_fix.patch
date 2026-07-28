@@ -1,0 +1,44 @@
+diff --git a/evaluation/benchmarks/ruler/calculate_metrics.py b/evaluation/benchmarks/ruler/calculate_metrics.py
+index 16d1b92..738d016 100644
+--- a/evaluation/benchmarks/ruler/calculate_metrics.py
++++ b/evaluation/benchmarks/ruler/calculate_metrics.py
+@@ -1,11 +1,28 @@
+ # SPDX-FileCopyrightText: Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ # SPDX-License-Identifier: Apache-2.0
+ 
++from __future__ import annotations
++
+ 
+ import re
+ 
+ import pandas as pd
+ 
++# LOCAL PATCH (not upstream kvpress) -- see fixes_to_apply.md. Reference
++# answers are plain digit strings with no separators; models write large
++# numbers with thousands-separators ("4,484,859", or "1 681 570" in
++# markdown-table output -- observed both from the same model in the same
++# response batch), which breaks the exact substring match below even though
++# the answer is correct. Only strips a separator directly between two
++# digits, so "12, 34" (a genuine two-item list, space after the comma) is
++# untouched -- only comma/no-break-space with no surrounding word-space
++# would merge, which no observed model output does for genuine list items.
++_SEP_IN_NUMBER = re.compile(r"(?<=\d)[,\u00a0\u202f](?=\d)")
++
++
++def polish(text: str) -> str:
++    return _SEP_IN_NUMBER.sub("", text)
++
+ 
+ def string_match_part(preds, refs):
+     score = (
+@@ -31,7 +48,9 @@ def calculate_metrics(df: pd.DataFrame) -> dict:
+     scores = {}
+ 
+     np_pattern = re.compile(r"[\x00-\x1f]")
+-    df["predicted_answer"] = df["predicted_answer"].apply(lambda x: np_pattern.sub("", x.strip()).strip())
++    df["predicted_answer"] = df["predicted_answer"].apply(
++        lambda x: polish(np_pattern.sub("", x.strip()).strip())
++    )
+ 
+     for task, df_task in df.groupby("task"):
+         task_category = task.split("_")[0]

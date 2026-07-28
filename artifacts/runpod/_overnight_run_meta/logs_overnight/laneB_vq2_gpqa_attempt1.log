@@ -1,0 +1,1 @@
+[2026-07-28 11:22:33] cell=artifacts/runpod/gptoss20b_mxfp4_v1/vq2/gpqa arm=vq2 task=gpqa gpus=2,3 tp=2 port=30902 shard=none

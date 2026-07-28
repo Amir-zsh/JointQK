@@ -42,6 +42,15 @@ GROUPS: dict[str, list[str]] = {
         "artifacts/prompt_rows/niah_65536_qwen.jsonl",
         "artifacts/niah_corpus/essays.txt",
         "artifacts/niah_corpus/noise.txt",
+        # 200-row balanced NIAH subsets (25/subtask, round-robin) -- the
+        # 65536/131072 pair came from samuel_pull_20260727.zip; 8192/16384/
+        # 32768 were reconstructed here with the same verified method. This
+        # is what qwen3_8b_v1.json's niah_* tasks actually read now.
+        "artifacts/prompt_rows_proto/niah_8192_qwen_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_16384_qwen_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_32768_qwen_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_65536_qwen_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_131072_qwen_s200.jsonl",
     ],
     "gptoss": [
         "artifacts/oscar_gptoss20b/rotations_gpqa198/k_rotation_qqt_r_h_pbr.pt",
@@ -54,6 +63,36 @@ GROUPS: dict[str, list[str]] = {
         "artifacts/prompt_rows/niah_65536_gptoss.jsonl",
         "artifacts/prompt_rows/niah_131072_gptoss.jsonl",
         "artifacts/prompt_rows/gpqa_diamond.csv",
+        # 200-row balanced subsets built from the channel-tag-fixed 800-row
+        # exports above; what both gptoss20b_{mxfp4,bf16}_v1.json actually
+        # read now. Built with openai/gpt-oss-20b's tokenizer, shared across
+        # both protocols (see gptoss20b_bf16_v1.json's comment for why).
+        "artifacts/prompt_rows_proto/niah_8192_gptoss_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_16384_gptoss_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_32768_gptoss_s200.jsonl",
+        "artifacts/prompt_rows_proto/niah_65536_gptoss_s200.jsonl",
+        # Client-ready gpt-oss math500/aime25 rows (empty answer_prefix, so
+        # the channel-tag fix correctly does NOT apply -- see
+        # export_prompt_rows.py's build_prompt() gating). 32768-token budget.
+        "artifacts/prompt_rows_proto/math500_gptoss_32k.jsonl",
+        "artifacts/prompt_rows_proto/aime25_gptoss_32k.jsonl",
+        # Client-ready gpt-oss GPQA-diamond rows (198 questions, gpqa_adapter's
+        # own seeded-permutation + simple-evals template; empty answer_prefix,
+        # default 8192-token budget, same as qwen3_8b_v1.json's gpqa task).
+        "artifacts/prompt_rows_proto/gpqa_gptoss.jsonl",
+        # Client-ready gpt-oss LCB-v6 rows (export_code_rows.py, 32768-token
+        # budget, no channel-tag fix needed -- no answer_prefix concept here).
+        # sub256 = first 256 rids of the full 1055-row export, matching the
+        # SAME subset choice already made for Qwen (lcb_v6_sub256_qwen.jsonl)
+        # for cross-model consistency, despite its documented sub256-vs-full
+        # bias (see artifacts/oscar_e2e/from_samuel/PROVENANCE.md).
+        "artifacts/prompt_rows_code/lcb_v6_gptoss.jsonl",
+        "artifacts/prompt_rows_code/lcb_v6_sub256_gptoss.jsonl",
+        # 200-row balanced NIAH-131072 subset, same construction as the other
+        # gptoss lengths -- built but NOT yet validated for serving (ctx>131072
+        # is unexercised by the SGLang serving stack; see gptoss20b_mxfp4_v1's
+        # niah_131072 comment).
+        "artifacts/prompt_rows_proto/niah_131072_gptoss_s200.jsonl",
     ],
     # Calibrated on the official openai MXFP4 checkpoint (task #15) — the
     # go-forward set for serving that checkpoint. Codebook is 128k-calibrated;

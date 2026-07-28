@@ -1,0 +1,97 @@
+{
+  "samples": 3,
+  "sampling": {
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": -1
+  },
+  "per_k": [
+    {
+      "niah_multikey_1": {
+        "string_match": 100.0
+      },
+      "niah_multikey_2": {
+        "string_match": 76.0
+      },
+      "niah_multikey_3": {
+        "string_match": 76.0
+      },
+      "niah_multiquery": {
+        "string_match": 94.0
+      },
+      "niah_multivalue": {
+        "string_match": 97.0
+      },
+      "niah_single_1": {
+        "string_match": 100.0
+      },
+      "niah_single_2": {
+        "string_match": 96.0
+      },
+      "niah_single_3": {
+        "string_match": 76.0
+      }
+    },
+    {
+      "niah_multikey_1": {
+        "string_match": 96.0
+      },
+      "niah_multikey_2": {
+        "string_match": 80.0
+      },
+      "niah_multikey_3": {
+        "string_match": 68.0
+      },
+      "niah_multiquery": {
+        "string_match": 96.0
+      },
+      "niah_multivalue": {
+        "string_match": 97.0
+      },
+      "niah_single_1": {
+        "string_match": 100.0
+      },
+      "niah_single_2": {
+        "string_match": 100.0
+      },
+      "niah_single_3": {
+        "string_match": 84.0
+      }
+    },
+    {
+      "niah_multikey_1": {
+        "string_match": 100.0
+      },
+      "niah_multikey_2": {
+        "string_match": 68.0
+      },
+      "niah_multikey_3": {
+        "string_match": 68.0
+      },
+      "niah_multiquery": {
+        "string_match": 96.0
+      },
+      "niah_multivalue": {
+        "string_match": 99.0
+      },
+      "niah_single_1": {
+        "string_match": 100.0
+      },
+      "niah_single_2": {
+        "string_match": 100.0
+      },
+      "niah_single_3": {
+        "string_match": 84.0
+      }
+    }
+  ],
+  "accuracy_mean": 89.625,
+  "accuracy_std": 0.4330127018922193,
+  "accuracy_avg_at_k": 89.625,
+  "cap_hit_rate": 0.01,
+  "mean_completion_tokens": 28.498333333333335,
+  "total": 200,
+  "generation_seconds": 116.45669662579894,
+  "output_throughput_tok_s": 146.82710823356823,
+  "total_completion_tokens": 17099
+}

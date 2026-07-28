@@ -1,0 +1,12 @@
+[2026-07-28 17:20:24] cell=artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/lcb arm=oscar_int2 task=lcb gpus=0,1 tp=2 port=30900 shard=none
+[2026-07-28 17:24:34] server up
+echo gate ok — 10 knobs verified, pool=3718640 tokens
+[2026-07-28 17:24:35] client start (5 samples, T=1.0)
+[client] 25/1280 (35s)
+[client] 50/1280 (67s)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[client] metrics: {"samples": 5, "sampling": {"temperature": 1.0, "top_p": 1.0, "top_k": -1}, "per_k": [{"correct": 0, "accuracy": 0.0, "total": 256}, {"correct": 0, "accuracy": 0.0, "total": 256}, {"correct": 0, "accuracy": 0.0, "total": 256}, {"correct": 0, "accuracy": 0.0, "total": 256}, {"correct": 0, "accuracy":
+[client] wrote /workspace/teamily-project/artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/lcb in 580s
+[provenance] artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/lcb/provenance.json
+[2026-07-28 17:34:24] CELL DONE — artifacts/runpod/gptoss20b_mxfp4_v1/oscar_int2/lcb
+pipelines/runpod/run_cell.sh: line 116: 21693 Killed                  env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE_ARGS[@]}" > "$SERVE_LOG" 2>&1 < /dev/null

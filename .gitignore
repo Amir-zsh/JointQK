@@ -1,4 +1,5 @@
 .venv/
+.env
 vendor/OSCAR/
 vendor/OSCAR-vq/
 vendor/kvpress/
@@ -52,6 +53,9 @@ artifacts/niah_bench/
 artifacts/prompt_rows/
 artifacts/oscar_e2e/lh/**/io_log.jsonl
 artifacts/oscar_e2e/lh/**/predictions.csv
+artifacts/runpod/**/io_log.jsonl
+artifacts/runpod/**/predictions.csv
+artifacts/runpod/**/rows.jsonl
 artifacts/prompt_rows_proto/
 artifacts/prompt_rows_code/
 .venv-tilelang/

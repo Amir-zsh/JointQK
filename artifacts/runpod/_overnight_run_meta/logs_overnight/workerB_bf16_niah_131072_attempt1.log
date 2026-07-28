@@ -1,0 +1,4 @@
+[2026-07-28 17:32:44] cell=artifacts/runpod/gptoss20b_mxfp4_v1_ctx131k/bf16/niah_131072 arm=bf16 task=niah_131072 gpus=2,3 tp=2 port=30902 shard=none
+[2026-07-28 17:34:35] server up
+echo gate ok — 9 knobs verified, pool=2039992 tokens
+[2026-07-28 17:34:35] client start (3 samples, T=1.0)

@@ -1,0 +1,7 @@
+# Build context allowlist for docker/Dockerfile.runpod (built from the repo
+# root). Everything is excluded so the multi-GB artifacts/ tree never enters
+# the docker context; only the files the image COPYs are let through.
+*
+!requirements.lock.txt
+!docker/requirements.engine.cu13.txt
+!docker/runpod/

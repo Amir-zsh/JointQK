@@ -1,0 +1,3 @@
+[2026-07-28 15:49:22] cell=artifacts/runpod/gptoss20b_mxfp4_v1/bf16/lcb arm=bf16 task=lcb gpus=0,1 tp=2 port=30900 shard=none
+[2026-07-28 15:49:32] SERVER DIED — tail of /workspace/teamily-project/logs/runpod_bf16_lcb_serve.log:
+/opt/venv-oscar/bin/python: Error while finding module specification for 'sglang.launch_server' (ModuleNotFoundError: No module named 'sglang')

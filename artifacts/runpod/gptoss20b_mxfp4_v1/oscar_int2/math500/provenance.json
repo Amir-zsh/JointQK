@@ -1,0 +1,44 @@
+{
+  "protocol": {
+    "name": "gptoss20b_mxfp4_v1",
+    "file": "pipelines/runpod/protocols/gptoss20b_mxfp4_v1.json",
+    "sha256": "22354b716ca9f7c3ef073556d30a669cab27a9c36455c18d9ed575cf83689fa2"
+  },
+  "arm": "oscar_int2",
+  "task": "math500",
+  "shard": null,
+  "repo": {
+    "sha": "7b116af9a911b6068c7fa853a12de4d032a9ab4f",
+    "dirty": true
+  },
+  "engine": {
+    "sha": "fc26a779846eb396a0145ad315703d63e2a3931f",
+    "dirty": true
+  },
+  "rows": {
+    "file": "artifacts/prompt_rows_proto/math500_gptoss_32k.jsonl",
+    "sha256": "24d2329fa499785b04d6bc0d478b8cdd0cb42b481a1e081769d6f6d3268489cc"
+  },
+  "sampling": {
+    "samples": 5,
+    "temperature": 1.0,
+    "top_p": "1.0",
+    "top_k": "-1"
+  },
+  "serve": {
+    "tp": 2,
+    "gpus": "0,1",
+    "exact_chunked_prefill": false,
+    "scale_dtype": null,
+    "quant_group_size": "0",
+    "absorb_v_rotation": false,
+    "moe_runner_backend": "triton",
+    "vq2_cuda_geom": "16,256,64,8"
+  },
+  "gpu": "NVIDIA H100 80GB HBM3, 580.126.09",
+  "image_tag": null,
+  "rotations": {
+    "v_rotation_sst_r_h_pbr.pt": "8acce755c6919a8b9fdee695dc1642e3fac230f7ec4a31c14d805d0269da24aa",
+    "k_rotation_qqt_r_h_pbr.pt": "968f5445a5ecbe3d93c70bdf3e2a553b982eef53dc92dccd2f95c5e6e0547efa"
+  }
+}

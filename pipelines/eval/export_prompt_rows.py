@@ -54,13 +54,28 @@ def prepare_df(dataset, data_dir, fraction, seed, exclude_indices_file):
 
 
 def build_prompt(tokenizer, context, question, answer_prefix,
-                 enable_thinking=False):
+                 enable_thinking=False, model=""):
     separator = "#" * (len(context) + 10)
     templ = tokenizer.apply_chat_template(
         [{"role": "user", "content": context + separator}],
         add_generation_prompt=True, tokenize=False,
         enable_thinking=enable_thinking)
     ctx_part, question_suffix = templ.split(separator)
+    # gpt-oss's harmony format requires every message to declare a channel
+    # (its own system prompt states this) but apply_chat_template's
+    # generation prompt is a bare "<|start|>assistant" with no channel tag.
+    # A non-empty answer_prefix glued directly onto that is malformed input:
+    # the model burns tokens self-recovering the channel structure before it
+    # can answer, which on tight budgets (e.g. NIAH's 128) truncates before
+    # it ever emits a formatted response -- go straight to the final channel.
+    # Gated on answer_prefix specifically: tasks with an EMPTY answer_prefix
+    # (math500, aime25 -- open-ended reasoning, no forced continuation) don't
+    # have this failure mode (verified: math500 was already 0% garbage with
+    # NO fix, large token budget lets the model self-recover into its own
+    # analysis-then-final flow naturally) and forcing straight-to-final would
+    # cut off the analysis phase a reasoning task needs. Don't apply there.
+    if "gpt-oss" in model.lower() and answer_prefix:
+        question_suffix += "<|channel|>final<|message|>"
     return ctx_part + (question or "") + question_suffix + (answer_prefix or "")
 
 
@@ -91,7 +106,8 @@ def main():
         for rid, row in df.iterrows():
             prompt = build_prompt(tok, row["context"], row.get("question", ""),
                                   row.get("answer_prefix", ""),
-                                  enable_thinking=args.enable_thinking)
+                                  enable_thinking=args.enable_thinking,
+                                  model=args.model)
             rec = {k: v for k, v in row.items() if k != "context"}
             for k, v in list(rec.items()):
                 if hasattr(v, "tolist"):

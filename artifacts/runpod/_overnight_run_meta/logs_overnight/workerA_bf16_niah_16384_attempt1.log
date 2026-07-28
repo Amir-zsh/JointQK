@@ -1,0 +1,12 @@
+[2026-07-28 16:01:11] cell=artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_16384 arm=bf16 task=niah_16384 gpus=0,1 tp=2 port=30900 shard=none
+[2026-07-28 16:08:42] server up
+echo gate ok — 9 knobs verified, pool=2040085 tokens
+[2026-07-28 16:08:46] client start (3 samples, T=1.0)
+[client] 550/600 (224s)
+[client] 575/600 (235s)
+[client] 600/600 (236s)
+[client] metrics: {"samples": 3, "sampling": {"temperature": 1.0, "top_p": 1.0, "top_k": -1}, "per_k": [{"niah_multikey_1": {"string_match": 96.0}, "niah_multikey_2": {"string_match": 96.0}, "niah_multikey_3": {"string_match": 92.0}, "niah_multiquery": {"string_match": 100.0}, "niah_multivalue": {"string_match": 97.0
+[client] wrote /workspace/teamily-project/artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_16384 in 237s
+[provenance] artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_16384/provenance.json
+[2026-07-28 16:12:53] CELL DONE — artifacts/runpod/gptoss20b_mxfp4_v1/bf16/niah_16384
+pipelines/runpod/run_cell.sh: line 116:  1904 Killed                  env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh "${SERVE_ARGS[@]}" > "$SERVE_LOG" 2>&1 < /dev/null

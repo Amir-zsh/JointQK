@@ -1,0 +1,36 @@
+{
+  "protocol": {
+    "name": "qwen3_8b_v1",
+    "file": "pipelines/runpod/protocols/qwen3_8b_v1.json",
+    "sha256": "8a58fdf2bfe879594eea14577854b6e6395bc405d1268a0a90c8e421fa3f0697"
+  },
+  "arm": "bf16",
+  "task": "niah_smoke",
+  "shard": null,
+  "repo": {
+    "sha": "",
+    "dirty": false
+  },
+  "engine": {
+    "sha": "",
+    "dirty": false
+  },
+  "rows": {
+    "file": "artifacts/prompt_rows/niah_8192_qwen.jsonl",
+    "sha256": "1932b208f393900a60f56fb5bb804062976180273b67a40e607943b938954df4"
+  },
+  "sampling": {
+    "samples": 1,
+    "temperature": 0.0,
+    "top_p": null,
+    "top_k": null
+  },
+  "serve": {
+    "tp": 1,
+    "gpus": "0",
+    "exact_chunked_prefill": false,
+    "scale_dtype": null
+  },
+  "gpu": "NVIDIA H100 80GB HBM3, 580.159.03",
+  "image_tag": "kvq-runpod:v1"
+}

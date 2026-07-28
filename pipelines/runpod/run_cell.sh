@@ -60,8 +60,18 @@ q("P_GRAPH_BS", p["cuda_graph_max_bs"]); q("P_ROT_DIR", p["rot_dir"]); q("P_CB",
 q("P_MOE_BACKEND", p.get("moe_runner_backend", ""))
 q("P_QGS", p.get("quant_group_size", 128))
 q("P_ABSORB_V", int(p.get("absorb_v_rotation", 1)))
+# vq2-arm-only: the CUDA stage-1 decode kernel (opt-in, supports() falls back
+# to Triton on any geometry/dtype mismatch it doesn't recognize).
+q("P_VQ2_CUDA_GEOM", p.get("vq2_cuda_geom", ""))
 q("A_MODE_FLAG", arm["mode_flag"]); q("A_MAX_REQS", arm["max_reqs"]); q("A_KV_SPLITS", arm["kv_splits"])
 q("A_SCALE_DTYPE", arm.get("scale_dtype", ""))
+# int2plain-arm-only (Naive/QuaRot/TurboQuant baselines): fixed Hadamard order
+# (1=naive, 128=quarot) and no-clip K/V ratios (1.0). Empty = serve_oscar.sh's
+# own defaults (unused by bf16/oscar_int2/vq2, which never hit the int2plain
+# branch).
+q("A_HADAMARD_ORDER", arm.get("hadamard_order", ""))
+q("A_K_CLIP_RATIO", arm.get("k_clip_ratio", ""))
+q("A_V_CLIP_RATIO", arm.get("v_clip_ratio", ""))
 q("T_ROWS", task["rows"]); q("T_SAMPLES", task["samples"]); q("T_TEMP", task["temperature"])
 q("T_TOP_P", task.get("top_p", "")); q("T_TOP_K", task.get("top_k", ""))
 q("T_LIMIT", task.get("limit_rows", ""))
@@ -131,6 +141,12 @@ SERVE_ENV=(TP="$P_TP" MAX_REQS="$A_MAX_REQS" KV_SPLITS="$A_KV_SPLITS"
            SERVE_EXTRA="$CHUNK_EXTRA")
 [[ -n "$A_SCALE_DTYPE" ]] && SERVE_ENV+=(SCALE_DTYPE="$A_SCALE_DTYPE")
 [[ "$P_EXACT" == "1" ]] && SERVE_ENV+=(SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL=1)
+[[ -n "$A_HADAMARD_ORDER" ]] && SERVE_ENV+=(HADAMARD_ORDER="$A_HADAMARD_ORDER")
+[[ -n "$A_K_CLIP_RATIO" ]] && SERVE_ENV+=(SGLANG_OSCAR_K_CLIP_RATIO="$A_K_CLIP_RATIO")
+[[ -n "$A_V_CLIP_RATIO" ]] && SERVE_ENV+=(SGLANG_OSCAR_V_CLIP_RATIO="$A_V_CLIP_RATIO")
+if [[ "$A_MODE_FLAG" == "--vq2" && -n "$P_VQ2_CUDA_GEOM" ]]; then
+    SERVE_ENV+=(SGLANG_VQ2_CUDA=1 "SGLANG_VQ2_CUDA_GEOM=$P_VQ2_CUDA_GEOM" SGLANG_VQ2_CUDA_FP32=1)
+fi
 
 log "cell=$CELL arm=$ARM task=$TASK gpus=$GPUS tp=$P_TP port=$PORT shard=${SHARD:-none}"
 env "${SERVE_ENV[@]}" setsid bash pipelines/oscar_e2e/serve_oscar.sh \
@@ -201,7 +217,8 @@ prov = {
               "exact_chunked_prefill": bool($P_EXACT),
               "scale_dtype": "$A_SCALE_DTYPE" or None,
               "quant_group_size": "$P_QGS", "absorb_v_rotation": bool($P_ABSORB_V),
-              "moe_runner_backend": "$P_MOE_BACKEND" or None},
+              "moe_runner_backend": "$P_MOE_BACKEND" or None,
+              "vq2_cuda_geom": "$P_VQ2_CUDA_GEOM" or None},
     "gpu": gpu[0] if gpu else None,
     "image_tag": "${IMAGE_TAG:-}" or None,
 }

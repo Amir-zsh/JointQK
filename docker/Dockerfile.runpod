@@ -1,0 +1,54 @@
+# RunPod pod image for the OSCAR-vq experiments. Deps only — no repos, no
+# artifacts, no model weights, no tokens. Code arrives by git clone at pod-up
+# (pod_init.sh), data by rsync/manifest (pipelines/runpod/bootstrap.sh).
+#
+# Build FROM THE REPO ROOT (the .dockerignore there keeps artifacts/ out of
+# the context):
+#   docker build -f docker/Dockerfile.runpod -t <registry>/kvq-runpod:v1 .
+#
+# Same base and engine layer as docker/Dockerfile (the validated oscar-cu13
+# local image): torch 2.11.0+cu130 + nvcc 13.0 devel toolkit for flashinfer /
+# triton JIT. sglang itself is NOT installed — serve_oscar.sh puts the
+# vendored fork on PYTHONPATH, so engine-code fixes are a `git pull`, never an
+# image rebuild.
+FROM pytorch/pytorch:2.11.0-cuda13.0-cudnn9-devel
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git openssh-server rsync tmux jq curl ca-certificates \
+        numactl libnuma1 libibverbs1 python3.12-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+# Engine venv — identical to docker/Dockerfile. --system-site-packages
+# inherits the base torch stack instead of re-downloading cu130 wheels.
+RUN python3 -m venv --system-site-packages /opt/venv-oscar
+COPY docker/requirements.engine.cu13.txt /tmp/requirements.engine.cu13.txt
+RUN /opt/venv-oscar/bin/pip install --no-cache-dir --upgrade pip \
+ && /opt/venv-oscar/bin/pip install --no-cache-dir \
+        --extra-index-url https://download.pytorch.org/whl/cu130 \
+        -r /tmp/requirements.engine.cu13.txt
+
+# Client/eval venv — the host's .venv, reproduced from the tracked lockfile.
+# Its torch pin (2.11.0+cu130) is satisfied by the base image, so this layer
+# is small. Kept separate from the engine venv on purpose: transformers 5.2
+# vs 5.3, pandas 2.x vs 3.x.
+RUN python3 -m venv --system-site-packages /opt/venv-client
+COPY requirements.lock.txt /tmp/requirements.lock.txt
+RUN /opt/venv-client/bin/pip install --no-cache-dir --upgrade pip \
+ && /opt/venv-client/bin/pip install --no-cache-dir \
+        --extra-index-url https://download.pytorch.org/whl/cu130 \
+        -r /tmp/requirements.lock.txt
+
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=/opt/venv-oscar/bin:/usr/local/cuda/bin:$PATH
+# serve_oscar.sh / run_cell.sh honour these instead of $REPO_ROOT/.venv*.
+ENV OSCAR_PYTHON=/opt/venv-oscar/bin/python
+ENV CLIENT_PYTHON=/opt/venv-client/bin/python
+# HF cache on the persistent volume so weights survive pod restarts.
+ENV HF_HOME=/workspace/hf
+
+COPY docker/runpod/start.sh docker/runpod/pod_init.sh /opt/runpod/
+RUN chmod +x /opt/runpod/start.sh /opt/runpod/pod_init.sh
+
+WORKDIR /workspace
+CMD ["/opt/runpod/start.sh"]
