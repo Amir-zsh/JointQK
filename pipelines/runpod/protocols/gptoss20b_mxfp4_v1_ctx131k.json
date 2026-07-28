@@ -146,7 +146,12 @@
       "hadamard_order": 64,
       "k_clip_ratio": 1.0,
       "v_clip_ratio": 1.0
-    }
+    },
+    "turboquant_int2":  { "mode_flag": "--int2plain", "max_reqs": 24, "kv_splits": 8,
+                     "hadamard_order": 64, "k_clip_ratio": 1.0, "v_clip_ratio": 1.0,
+                     "lloyd_max": 1 },
+    "turboquant_k3v3":  { "mode_flag": "--bf16", "max_reqs": 24, "kv_splits": 8,
+                     "simquant_bundle": "artifacts/simquant/simquant_turboquant_d64_L12_k3v3.pt" }
   },
   "tasks": {
     "niah_8192": {

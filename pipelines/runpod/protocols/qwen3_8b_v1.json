@@ -38,7 +38,14 @@
   "arms": {
     "bf16":       { "mode_flag": "--bf16", "max_reqs": 8, "kv_splits": 8 },
     "oscar_int2": { "mode_flag": "",       "max_reqs": 4, "kv_splits": 8,  "scale_dtype": "float32" },
-    "vq2":        { "mode_flag": "--vq2",  "max_reqs": 4, "kv_splits": 48, "scale_dtype": "bfloat16" }
+    "vq2":        { "mode_flag": "--vq2",  "max_reqs": 4, "kv_splits": 48, "scale_dtype": "bfloat16" },
+    "quarot":     { "mode_flag": "--int2plain", "max_reqs": 4, "kv_splits": 8,
+                     "hadamard_order": 128, "k_clip_ratio": 1.0, "v_clip_ratio": 1.0 },
+    "turboquant_int2":  { "mode_flag": "--int2plain", "max_reqs": 4, "kv_splits": 8,
+                     "hadamard_order": 128, "k_clip_ratio": 1.0, "v_clip_ratio": 1.0,
+                     "lloyd_max": 1 },
+    "turboquant_k3v3":  { "mode_flag": "--bf16", "max_reqs": 4, "kv_splits": 8,
+                     "simquant_bundle": "artifacts/simquant/simquant_turboquant_d128_L36_k3v3.pt" }
   },
   "tasks": {
     "gpqa":       { "rows": "artifacts/prompt_rows/gpqa_diamond_think_qwen.jsonl",   "samples": 5, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },

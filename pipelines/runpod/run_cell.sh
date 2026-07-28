@@ -72,6 +72,17 @@ q("A_SCALE_DTYPE", arm.get("scale_dtype", ""))
 q("A_HADAMARD_ORDER", arm.get("hadamard_order", ""))
 q("A_K_CLIP_RATIO", arm.get("k_clip_ratio", ""))
 q("A_V_CLIP_RATIO", arm.get("v_clip_ratio", ""))
+# TurboQuant, 2-bit Lloyd-Max variant: int2plain + Hadamard + MSE-optimal levels
+# instead of min/max. Requires a non-identity Hadamard (the engine rejects the
+# combination with SGLANG_INT2_NO_HADAMARD) and one scale group per head.
+q("A_LLOYD_MAX", arm.get("lloyd_max", ""))
+# Naive-INT2: make the plain-int2 Hadamard an identity. The engine rejects order 1,
+# so hadamard_order stays a dummy and this env var is the real bypass.
+q("A_NO_HADAMARD", arm.get("no_hadamard", ""))
+# TurboQuant, K=3/V=3 sim-quant variant: the quantizer runs in the BF16 write path
+# because this stack has no int4 pool. Bundle from build_simquant_turboquant.py.
+# The arm must also set mode_flag "--bf16" -- it simulates on an unquantized pool.
+q("A_SIMQUANT", arm.get("simquant_bundle", ""))
 q("T_ROWS", task["rows"]); q("T_SAMPLES", task["samples"]); q("T_TEMP", task["temperature"])
 q("T_TOP_P", task.get("top_p", "")); q("T_TOP_K", task.get("top_k", ""))
 q("T_LIMIT", task.get("limit_rows", ""))
@@ -144,6 +155,13 @@ SERVE_ENV=(TP="$P_TP" MAX_REQS="$A_MAX_REQS" KV_SPLITS="$A_KV_SPLITS"
 [[ -n "$A_HADAMARD_ORDER" ]] && SERVE_ENV+=(HADAMARD_ORDER="$A_HADAMARD_ORDER")
 [[ -n "$A_K_CLIP_RATIO" ]] && SERVE_ENV+=(SGLANG_OSCAR_K_CLIP_RATIO="$A_K_CLIP_RATIO")
 [[ -n "$A_V_CLIP_RATIO" ]] && SERVE_ENV+=(SGLANG_OSCAR_V_CLIP_RATIO="$A_V_CLIP_RATIO")
+[[ -n "$A_LLOYD_MAX" ]] && SERVE_ENV+=(SGLANG_LLOYD_MAX="$A_LLOYD_MAX")
+[[ -n "$A_NO_HADAMARD" ]] && SERVE_ENV+=(SGLANG_INT2_NO_HADAMARD="$A_NO_HADAMARD")
+if [[ -n "$A_SIMQUANT" ]]; then
+    # Absolute: serve_oscar.sh runs from the repo root but the server process may not.
+    SERVE_ENV+=(SGLANG_SIMQUANT_PATH="$ROOT/$A_SIMQUANT")
+    [[ -f "$ROOT/$A_SIMQUANT" ]] || { log "FATAL: simquant bundle missing: $A_SIMQUANT"; exit 2; }
+fi
 if [[ "$A_MODE_FLAG" == "--vq2" && -n "$P_VQ2_CUDA_GEOM" ]]; then
     SERVE_ENV+=(SGLANG_VQ2_CUDA=1 "SGLANG_VQ2_CUDA_GEOM=$P_VQ2_CUDA_GEOM" SGLANG_VQ2_CUDA_FP32=1)
 fi
