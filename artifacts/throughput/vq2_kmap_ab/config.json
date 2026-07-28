@@ -1,0 +1,83 @@
+{
+  "study": "vq2_kmap_ab",
+  "model": "Qwen/Qwen3-8B",
+  "synthetic_root": "artifacts/throughput/synthetic/Qwen3-8B_L36H8D128",
+  "_doc": [
+    "A/B for SGLANG_VQ_OPT_KMAP: the fused Triton K map replacing vq_map_k's",
+    "einsum (sub/bmm/contiguous -> one kernel). Verified bit-identical to the",
+    "torch path at bf16/fp16/fp32 across T=1..2048, contiguous and strided.",
+    "",
+    "It runs on EVERY decode step, once per layer, on the HP write",
+    "(unified_kv_pool.py:1319 -> _prepare_hp_kv_tensors), with T = batch. Under",
+    "CUDA-graph replay the microbenchmark is 8.1-9.0us -> 3.2us, so the ceiling",
+    "is 36 layers x ~5.5us ~= 200us/step. That is ~2% of a bs=1 step and ~0.2%",
+    "of a bs=64 one, i.e. small and, at large batch, at the harness noise floor.",
+    "",
+    "Hence the doubled arms: kmap_a/kmap_b and base_a/base_b are identical pairs",
+    "whose spread MEASURES that noise floor. A kmap-vs-base gap smaller than the",
+    "a-vs-b spread is not a result.",
+    "",
+    "Everything else is held at the vq2_retune_ab settings so this isolates one",
+    "flag. ARTIFACTS ARE SYNTHETIC -- throughput-valid, accuracy-invalid."
+  ],
+  "input_lens": [30000],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "base_a",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "fa3",
+    "chunked_prefill_size": 4096
+  },
+  "arms": [
+    {
+      "label": "kmap_a",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "kmap_b",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "base_a",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "base_b",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "arm": "vq2_cuda_fp32",
+  "model": "Qwen/Qwen3-4B-Thinking-2507",
+  "gpus": [
+    5
+  ],
+  "tp": 1,
+  "pool_tokens": 2747624,
+  "pool_tokens_calibration": 2747624,
+  "predicted_cell_size_bytes": 23040,
+  "predicted_pool_gib": 58.96,
+  "note": "predicted_* assume a uniform full-attention KV pool; hybrid-SWA models (gpt-oss) allocate the quant pool for full-attention layers only, so the prediction is an upper bound there",
+  "mem_frac": 0.85,
+  "max_running_requests": 64,
+  "cuda_graph_max_bs": 64,
+  "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-4B-Thinking-2507_L36H8D128/vq_bundle.pt",
+  "env": {
+    "KV_SPLITS": "8",
+    "SGLANG_VQ_FP8_FMT": "e5m2",
+    "SGLANG_VQ_OPT_QMAP": "1",
+    "SGLANG_VQ_OPT_KMAP": "1",
+    "SGLANG_VQ_OPT_FLUSH": "1",
+    "SGLANG_VQ_OPT_PREFILL": "1",
+    "SGLANG_VQ2_CUDA": "1",
+    "SGLANG_VQ2_CUDA_FP32": "1"
+  },
+  "budget": {
+    "hp_gib": 3.45,
+    "reserve_gib": 11.95,
+    "pool_gib": 58.96
+  },
+  "synthetic_artifacts": true
+}

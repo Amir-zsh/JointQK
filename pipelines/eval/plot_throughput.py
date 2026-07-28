@@ -25,16 +25,29 @@ import matplotlib.pyplot as plt  # noqa: E402
 REPO = Path(__file__).resolve().parents[2]
 ART = REPO / "artifacts/throughput"
 
-STUDIES = [
-    ("Qwen3-8B", "throughput_qwen3_8b"),
-    ("Qwen3-4B-Thinking-2507", "throughput_qwen3_4b_thinking"),
-]
+# Two chart generations share this script. The original studies include a
+# vq2_cuda arm running the CUDA kernel's half2 DEFAULT (fp16 accumulation,
+# rel 3.2e-04): faster, but not numerics-matched to the other arms. The _fp32
+# studies rerun everything at fp32 accumulation -- the fair setting -- with
+# the retuned-ladder Triton and SGLANG_VQ2_CUDA_FP32=1.
+STUDY_SETS = {
+    "half2": [
+        ("Qwen3-8B", "throughput_qwen3_8b"),
+        ("Qwen3-4B-Thinking-2507", "throughput_qwen3_4b_thinking"),
+    ],
+    "fp32": [
+        ("Qwen3-8B", "throughput_qwen3_8b_fp32"),
+        ("Qwen3-4B-Thinking-2507", "throughput_qwen3_4b_thinking_fp32"),
+    ],
+}
 STYLE = [
     ("bf16", "#8c8c8c", "BF16"),
     ("oscar_int2", "#1f77b4", "OSCAR-INT2"),
     ("vq2_s8", "#2ca02c", "vq2 (splits 8)"),
     ("vq2_s48", "#d62728", "vq2 (splits 48)"),
     ("vq2_cuda", "#9467bd", "vq2 CUDA (shared codebook)"),
+    ("vq2_triton", "#2ca02c", "vq2 Triton (retuned)"),
+    ("vq2_cuda_fp32", "#9467bd", "vq2 CUDA (fp32 acc)"),
 ]
 
 
@@ -80,10 +93,14 @@ def panel(ax, summary, ctx, show_legend=False):
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", type=Path, default=REPO / "notes/throughput_benchmark.png")
+    ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--set", choices=sorted(STUDY_SETS), default="half2")
     a = ap.parse_args()
+    if a.out is None:
+        a.out = REPO / ("notes/throughput_benchmark.png" if a.set == "half2"
+                        else f"notes/throughput_benchmark_{a.set}.png")
 
-    loaded = [(name, load(s)) for name, s in STUDIES]
+    loaded = [(name, load(s)) for name, s in STUDY_SETS[a.set]]
     loaded = [(n, s) for n, s in loaded if s]
     if not loaded:
         print("no throughput_summary.json found -- run the sweep first")
@@ -102,10 +119,13 @@ def main() -> int:
 
     h, l = axes[0][0].get_legend_handles_labels()
     fig.legend(h, l, loc="lower center", ncol=len(l), frameon=False, fontsize=8)
+    sub = ("bs=max is each arm's largest batch that fits its own KV pool (annotated bN)"
+           if a.set == "half2" else
+           "ALL ARMS AT FP32 ACCUMULATION (fair numerics) — "
+           "bs=max annotated bN is each arm's largest batch in its own KV pool")
     fig.suptitle(
         "Decode throughput, prefill excluded — H100 TP=1, no cross-request prefix sharing\n"
-        "bs=max is each arm's largest batch that fits its own KV pool (annotated bN)",
-        fontsize=10)
+        + sub, fontsize=10)
     fig.tight_layout(rect=(0, 0.06, 1, 0.91))
     a.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(a.out, dpi=160)

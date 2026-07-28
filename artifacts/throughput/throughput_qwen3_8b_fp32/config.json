@@ -1,0 +1,75 @@
+{
+  "study": "throughput_qwen3_8b_fp32",
+  "model": "Qwen/Qwen3-8B",
+  "synthetic_root": "artifacts/throughput/synthetic/Qwen3-8B_L36H8D128",
+  "_doc": [
+    "FAIR-SETTING rerun of the throughput chart: every arm accumulates in",
+    "fp32, the precision OSCAR-INT2 and shipped vq2 Triton use. The prior",
+    "chart's vq2_cuda arm ran the kernel's half2 default (fp16 accumulate,",
+    "rel 3.2e-04) -- its 'beats int2 at every length' result does not hold",
+    "at equal numerics and is superseded by this study.",
+    "vq2_triton is the retuned launch ladder (now the tree default) plus",
+    "the bit-identical VQ_OPT fusions incl. the new KMAP.",
+    "vq2_cuda_fp32 is the shared-codebook CUDA kernel with",
+    "SGLANG_VQ2_CUDA_FP32=1. ARTIFACTS ARE SYNTHETIC: throughput-valid,",
+    "accuracy-invalid, as before."
+  ],
+  "input_lens": [
+    30000,
+    60000,
+    90000
+  ],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "oscar_int2",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "fa3",
+    "chunked_prefill_size": 4096
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8"
+      }
+    },
+    {
+      "label": "vq2_triton",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "vq2_cuda_fp32",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "SGLANG_VQ2_CUDA": "1",
+        "SGLANG_VQ2_CUDA_FP32": "1"
+      }
+    }
+  ]
+}

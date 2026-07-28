@@ -65,9 +65,9 @@ leaves that number alone, and all of them measure as no-ops or regressions:
 |---|---|
 | group-major `isel` `[NG, BLOCK_N]` | **1.13-1.15x SLOWER**; best L1 hit rate of any variant, most sectors |
 | four K=NG dots, no `kg` tile | **1.19x slower**; registers unchanged at 249, so `kg` was not the register driver |
-| `eviction_policy` evict_first/evict_last (9 combos) | 0.99-1.00x -- noise |
-| `cache_modifier` `.cg` / `.cs` (L1 bypass) | 1.01-1.03x -- noise |
-| launch-config sweep (96 configs) | 64/8/2/3 already optimal |
+| `eviction_policy` evict_first/evict_last (9 combos) | 0.99-1.00x -- **and the PTX is byte-identical to no hints; Triton drops them, so this measured nothing** (dump_triton_asm.py) |
+| `cache_modifier` `.cg` / `.cs` (L1 bypass) | 1.01-1.03x -- same: dropped before PTX |
+| launch-config sweep (96 configs) | **wrong** -- it capped num_stages at 3. The gather is 32 cp.async per token, so num_stages is the pipeline depth; at stages>=4 the optimum moves to BLOCK_H=4 and the kernel goes from 1.02-1.34x int2 to 0.97-1.10x |
 | `tl.gather` (Triton on-chip gather) | **1.7-4.3x SLOWER**; lowers to warp shuffles, 34 instr/element |
 | shared-memory codebook staging, fused | 3.58x in isolation, **0.40x fused** |
 | smaller codebook (KC 256->16) | only 1.28x, for half the bit rate |

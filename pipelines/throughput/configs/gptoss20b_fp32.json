@@ -1,0 +1,80 @@
+{
+  "study": "throughput_gptoss20b_fp32",
+  "model": "openai/gpt-oss-20b",
+  "synthetic_root": "artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64",
+  "_doc": [
+    "gpt-oss-20b row for the FAIR (fp32) throughput chart. Same arms/protocol",
+    "as qwen3_*_fp32. The prior gptoss study's quant arms crashed at boot on a",
+    "day-old tree (o.copy_ shape mismatch in _forward_extend_quantized_dense);",
+    "this run is the first quant-serving attempt on the current tree.",
+    "vq2_cuda_fp32 sets SGLANG_VQ2_CUDA_GEOM=16,256,64,8 so the geometry-",
+    "templated extension compiles at import, outside CUDA-graph capture."
+  ],
+  "input_lens": [
+    30000,
+    60000,
+    90000
+  ],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "oscar_int2",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "fa3",
+    "chunked_prefill_size": 4096
+  },
+  "arms": [
+    {
+      "label": "bf16",
+      "flags": "--bf16",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0"
+      }
+    },
+    {
+      "label": "vq2_triton",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "vq2_cuda_fp32",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "ABSORB_V_ROT": "0",
+        "QUANT_GROUP_SIZE": "0",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "SGLANG_VQ2_CUDA": "1",
+        "SGLANG_VQ2_CUDA_FP32": "1",
+        "SGLANG_VQ2_CUDA_GEOM": "16,256,64,8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "study": "vq2_adaptive_ab",
+  "model": "Qwen/Qwen3-8B",
+  "synthetic_root": "artifacts/throughput/synthetic/Qwen3-8B_L36H8D128",
+  "_doc": [
+    "A/B for SGLANG_VQ2_ADAPTIVE_SPLITS on the vq2 CUDA fp32 arm. KV_SPLITS=48",
+    "sizes the buffer for the top rung; the ladder caps the heuristic per batch",
+    "(48/32/16/8/8/4 for bs 1/2/4/8-16/32, measured on H100 at 30k).",
+    "Compare against throughput_qwen3_8b_fp32: cuda@s8 85/310/862, int2@s8 94/314/922."
+  ],
+  "input_lens": [
+    30000
+  ],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "vq2_cuda_adaptive",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "fa3",
+    "chunked_prefill_size": 4096
+  },
+  "arms": [
+    {
+      "label": "vq2_cuda_adaptive",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "48",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_KMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "SGLANG_VQ2_CUDA": "1",
+        "SGLANG_VQ2_CUDA_FP32": "1",
+        "SGLANG_VQ2_ADAPTIVE_SPLITS": "1"
+      }
+    }
+  ]
+}

@@ -114,8 +114,11 @@ def main() -> int:
     print(f"{'BN':>4} {'BH':>3} {'W':>2} {'S':>2} {'us':>9} {'vs int2':>8} "
           f"{'regs':>5} {'sp':>4} {'smem':>7} {'CTA':>4}")
     rows = []
-    for bn, bh, nw, ns in itertools.product((32, 64, 128, 256), (4, 8, 16),
-                                            (1, 2, 4, 8), (2, 3)):
+    # num_stages is the cp.async pipeline depth, and the compiled PTX shows the
+# codebook gather IS 32 cp.async.ca.shared.global per token -- so this is the
+# knob that controls how many blocks' gathers are in flight. Swept wider.
+    for bn, bh, nw, ns in itertools.product((32, 64, 128), (4, 8),
+                                            (1, 2, 4), (2, 3, 4, 5, 6)):
         for k, v in (("SGL_VQ2_BLOCK_N", bn), ("SGL_VQ2_BLOCK_H", bh),
                      ("SGL_VQ2_NUM_WARPS", nw), ("SGL_VQ2_NUM_STAGES", ns)):
             os.environ[k] = str(v)

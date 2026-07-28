@@ -1,0 +1,70 @@
+{
+  "study": "vq2_retune_ab",
+  "model": "Qwen/Qwen3-8B",
+  "synthetic_root": "artifacts/throughput/synthetic/Qwen3-8B_L36H8D128",
+  "_doc": [
+    "Controlled decode-throughput benchmark. Three operating points per length:",
+    "bs=1 (equal-setting latency), bs=4 (scaling), bs=max (best achievable/GPU).",
+    "No CROSS-REQUEST prefix sharing: every prompt is a distinct random token",
+    "stream. Each request's OWN prefix is warmed before measuring, without which",
+    "a bs=max cell never forms -- prefilling 64 x 30k takes minutes while 512",
+    "decode tokens take ~15 s, so early requests would finish generating before",
+    "late ones start decoding.",
+    "KV_SPLITS is pinned on every arm: serve_oscar.sh defaults 48 for vq2 and 8",
+    "otherwise, so leaving it unset would compare different decode schedules.",
+    "vq2 appears twice because split-K trades off against batch: 48 is worth",
+    "-28% at bs=1/100k but +4.5% at batch. Reporting both gives the envelope.",
+    "ARTIFACTS ARE SYNTHETIC (random rotations + random codebook) and therefore",
+    "THROUGHPUT-VALID / ACCURACY-INVALID. Throughput does not depend on their",
+    "contents; this removes the per-model calibration hurdle."
+  ],
+  "input_lens": [
+    30000
+  ],
+  "output_len": 1024,
+  "bs_max_ceiling": 64,
+  "seed": 1,
+  "reference": "vq2_default",
+  "serve": {
+    "ctx": 98304,
+    "mem_frac": 0.85,
+    "mem_frac_fallback": 0.8,
+    "prefill_backend": "fa3",
+    "chunked_prefill_size": 4096
+  },
+  "arms": [
+    {
+      "label": "vq2_tuned",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1",
+        "SGL_VQ2_BLOCK_N": "32",
+        "SGL_VQ2_BLOCK_H": "16",
+        "SGL_VQ2_NUM_WARPS": "1",
+        "SGL_VQ2_NUM_STAGES": "3"
+      }
+    },
+    {
+      "label": "vq2_default",
+      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-8B_L36H8D128/vq_bundle.pt",
+      "env": {
+        "KV_SPLITS": "8",
+        "SGLANG_VQ_FP8_FMT": "e5m2",
+        "SGLANG_VQ_OPT_QMAP": "1",
+        "SGLANG_VQ_OPT_FLUSH": "1",
+        "SGLANG_VQ_OPT_PREFILL": "1"
+      }
+    },
+    {
+      "label": "oscar_int2",
+      "flags": "",
+      "env": {
+        "KV_SPLITS": "8"
+      }
+    }
+  ]
+}

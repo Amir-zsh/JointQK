@@ -39,20 +39,6 @@
   },
   "arms": [
     {
-      "label": "bf16",
-      "flags": "--bf16",
-      "env": {
-        "KV_SPLITS": "8"
-      }
-    },
-    {
-      "label": "oscar_int2",
-      "flags": "",
-      "env": {
-        "KV_SPLITS": "8"
-      }
-    },
-    {
       "label": "vq2_s8",
       "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-4B-Thinking-2507_L36H8D128/vq_bundle.pt",
       "env": {
@@ -72,18 +58,6 @@
         "SGLANG_VQ_OPT_QMAP": "1",
         "SGLANG_VQ_OPT_FLUSH": "1",
         "SGLANG_VQ_OPT_PREFILL": "1"
-      }
-    },
-    {
-      "label": "vq2_cuda",
-      "flags": "--vq2 --vq-codebook artifacts/throughput/synthetic/Qwen3-4B-Thinking-2507_L36H8D128/vq_bundle.pt",
-      "env": {
-        "KV_SPLITS": "8",
-        "SGLANG_VQ_FP8_FMT": "e5m2",
-        "SGLANG_VQ_OPT_QMAP": "1",
-        "SGLANG_VQ_OPT_FLUSH": "1",
-        "SGLANG_VQ_OPT_PREFILL": "1",
-        "SGLANG_VQ2_CUDA": "1"
       }
     }
   ],

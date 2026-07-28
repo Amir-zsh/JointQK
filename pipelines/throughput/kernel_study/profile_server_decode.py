@@ -60,6 +60,11 @@ def main() -> int:
     ap.add_argument("--out", type=int, default=64)
     ap.add_argument("--port", type=int, default=32500)
     ap.add_argument("--gpu", type=int, default=0)
+    ap.add_argument("--bs", type=int, default=1,
+                    help="concurrent requests; the kernel-vs-end-to-end\n"
+                         "discrepancy only appears at large batch")
+    ap.add_argument("--max-reqs", type=int, default=None)
+    ap.add_argument("--graph-bs", type=int, default=None)
     a = ap.parse_args()
 
     cfg = json.loads(a.config.read_text())
@@ -73,14 +78,15 @@ def main() -> int:
         arm["env"]["SGLANG_VQ2_CUDA"] = "1"
     else:
         arm = arms[a.arm]
-    trace_dir = REPO / "logs/decode_profile" / a.arm
+    trace_dir = REPO / "logs/decode_profile" / f"{a.arm}_bs{a.bs}"
     trace_dir.mkdir(parents=True, exist_ok=True)
     for old in trace_dir.glob("*.trace.json*"):
         old.unlink()
 
     log_dir = REPO / "logs/decode_profile"
-    srv = Server(arm, cfg, [a.gpu], a.port, log_dir, max_reqs=4, graph_bs=4,
-                 tag="prof")
+    srv = Server(arm, cfg, [a.gpu], a.port, log_dir,
+                 max_reqs=a.max_reqs or max(4, a.bs),
+                 graph_bs=a.graph_bs or max(4, a.bs), tag="prof")
     srv.arm = dict(arm)
     srv.arm.setdefault("env", {})
     srv.arm["env"] = dict(arm.get("env", {}))
@@ -92,16 +98,25 @@ def main() -> int:
         return 1
     base = f"http://127.0.0.1:{a.port}"
     try:
-        ids = [(1234 + i) % 100000 for i in range(a.ctx)]
-        body = {"input_ids": ids,
-                "sampling_params": {"temperature": 0, "max_new_tokens": 1,
-                                    "ignore_eos": True}}
-        requests.post(f"{base}/generate", json=body, timeout=1200)   # warm prefix
+        from concurrent.futures import ThreadPoolExecutor
+        # Distinct prompts, as the benchmark does -- a shared prefix would let
+        # the radix cache collapse the batch and change what is measured.
+        def body_for(r, n):
+            ids = [(1234 + r * 7919 + i) % 100000 for i in range(a.ctx)]
+            return {"input_ids": ids,
+                    "sampling_params": {"temperature": 0, "max_new_tokens": n,
+                                        "ignore_eos": True}}
 
+        def fire(n):
+            with ThreadPoolExecutor(max_workers=a.bs) as ex:
+                list(ex.map(lambda r: requests.post(f"{base}/generate",
+                                                    json=body_for(r, n), timeout=2400),
+                            range(a.bs)))
+
+        fire(1)                                        # warm every prefix
         requests.post(f"{base}/start_profile", json={"num_steps": None}, timeout=60)
-        body["sampling_params"]["max_new_tokens"] = a.out
         t0 = time.time()
-        requests.post(f"{base}/generate", json=body, timeout=1200)
+        fire(a.out)
         wall = time.time() - t0
         requests.post(f"{base}/stop_profile", timeout=120)
         time.sleep(12)          # the profiler writes the trace asynchronously
@@ -109,8 +124,8 @@ def main() -> int:
         srv.stop()
 
     ks = top_kernels(trace_dir)
-    print(f"\n=== {a.arm}: {a.out} decode steps in {wall:.2f}s "
-          f"({a.out / wall:.1f} tok/s) ===")
+    print(f"\n=== {a.arm}: bs={a.bs}, {a.out} steps in {wall:.2f}s "
+          f"({a.bs * a.out / wall:.1f} tok/s aggregate) ===")
     if not ks:
         print(f"no trace written under {trace_dir}")
         return 1
