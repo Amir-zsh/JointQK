@@ -1,0 +1,41 @@
+{
+  "protocol": "qwen3_8b_v1",
+  "comment": [
+    "Single source of truth for the Qwen3-8B accuracy grid. run_cell.sh resolves",
+    "every serve/client knob from here; the protocol name + this file's sha256",
+    "land in each cell's provenance.json, so two cells are comparable iff their",
+    "protocol hashes match.",
+    "Two fields encode decisions that are still open and must be settled before",
+    "headline numbers are quoted: exact_chunked_prefill (the chunked-prefill",
+    "error confound — false reproduces the published serving default, true is",
+    "the exact-math shadow fix) and the NIAH sampling regime (T=0.6/3-seed here,",
+    "matching the handoff's fresh cells; greedy is the candidate replacement)."
+  ],
+  "model": "Qwen/Qwen3-8B",
+  "tp": 1,
+  "ctx": 73728,
+  "mem_frac": 0.85,
+  "max_tokens_pool": "auto",
+  "chunked_prefill_size": 4096,
+  "exact_chunked_prefill": false,
+  "cuda_graph_max_bs": 8,
+  "rot_dir": "artifacts/oscar_e2e/rotzoo/Qwen3-8B/seq20000_prompt83_group128",
+  "vq_codebook": "third_party/samuel_vq/codebooks/vqa_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+  "arms": {
+    "bf16":       { "mode_flag": "--bf16", "max_reqs": 8, "kv_splits": 8 },
+    "oscar_int2": { "mode_flag": "",       "max_reqs": 4, "kv_splits": 8,  "scale_dtype": "float32" },
+    "vq2":        { "mode_flag": "--vq2",  "max_reqs": 4, "kv_splits": 48, "scale_dtype": "bfloat16" }
+  },
+  "tasks": {
+    "gpqa":       { "rows": "artifacts/prompt_rows/gpqa_diamond_think_qwen.jsonl",   "samples": 5, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "aime25":     { "rows": "artifacts/prompt_rows/aime25_think_qwen.jsonl",         "samples": 8, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "math500":    { "rows": "artifacts/prompt_rows_proto/math500_think32k_qwen.jsonl", "samples": 5, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_qwen.jsonl",       "samples": 5, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "lcb":        { "rows": "artifacts/prompt_rows_code/lcb_v6_sub256_qwen.jsonl",   "samples": 5, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "niah_8192":  { "rows": "artifacts/prompt_rows/niah_8192_qwen.jsonl",  "samples": 3, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "niah_16384": { "rows": "artifacts/prompt_rows/niah_16384_qwen.jsonl", "samples": 3, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "niah_32768": { "rows": "artifacts/prompt_rows/niah_32768_qwen.jsonl", "samples": 3, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "niah_65536": { "rows": "artifacts/prompt_rows/niah_65536_qwen.jsonl", "samples": 3, "temperature": 0.6, "top_p": 0.95, "top_k": 20 },
+    "niah_smoke": { "rows": "artifacts/prompt_rows/niah_8192_qwen.jsonl",  "samples": 1, "temperature": 0.0, "limit_rows": 24 }
+  }
+}
