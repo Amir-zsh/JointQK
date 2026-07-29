@@ -116,6 +116,8 @@
     "niah_32768": { "rows": "artifacts/prompt_rows_proto/niah_32768_gptoss_s200.jsonl", "samples": 3, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
     "niah_65536": { "rows": "artifacts/prompt_rows_proto/niah_65536_gptoss_s200.jsonl", "samples": 3, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
     "niah_smoke": { "rows": "artifacts/prompt_rows_proto/niah_8192_gptoss_s200.jsonl",  "samples": 1, "temperature": 0.0, "limit_rows": 24 },
-    "math500_smoke": { "rows": "artifacts/prompt_rows/math500_gptoss_32k_n200.jsonl", "samples": 1, "temperature": 1.0, "top_p": 1.0, "top_k": -1, "limit_rows": 24 }
+    "math500_smoke": { "rows": "artifacts/prompt_rows/math500_gptoss_32k_n200.jsonl", "samples": 1, "temperature": 1.0, "top_p": 1.0, "top_k": -1, "limit_rows": 24 },
+    "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
+    "lcb":        { "rows": "artifacts/prompt_rows_code/lcb_v6_sub256_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 }
   }
 }

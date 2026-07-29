@@ -73,6 +73,28 @@ snapshot_download('$m', allow_patterns=['config.json'])" >/dev/null 2>&1; then
     fi
 done
 
+step "livecodebench test cases"
+# LCB tests are NOT embedded in the prompt rows (28k cases would balloon
+# predictions.csv), so code_scorers.load_lcb_tests() pulls six shards from the
+# Hub at SCORING time -- i.e. after the GPU work is already paid for. Warm the
+# cache here so a network/auth failure surfaces during setup instead of
+# destroying a finished cell's score. HumanEval needs nothing: its asserts
+# travel inside the row.
+if "$CLIENT_PY" - <<'PY' >/dev/null 2>&1
+import importlib.util, pathlib, sys
+p = pathlib.Path("pipelines/eval/code_scorers.py")
+spec = importlib.util.spec_from_file_location("code_scorers", p)
+m = importlib.util.module_from_spec(spec); sys.modules["code_scorers"] = m
+spec.loader.exec_module(m)
+sys.exit(0 if m.load_lcb_tests("release_v6") else 1)
+PY
+then
+    ok "LCB release_v6 test cases cached"
+else
+    bad "LCB tests not reachable — an 'lcb' cell would fail AFTER generation.
+        Needs network + HF access. Ignorable if you run no lcb tasks."
+fi
+
 echo
 if [[ "$FAIL" == "0" ]]; then
     echo "BOOTSTRAP READY — run_cell.sh can run against group '$GROUP'."

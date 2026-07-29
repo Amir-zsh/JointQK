@@ -51,6 +51,7 @@ GROUPS: dict[str, list[str]] = {
         "artifacts/prompt_rows_proto/niah_32768_qwen_s200.jsonl",
         "artifacts/prompt_rows_proto/niah_65536_qwen_s200.jsonl",
         "artifacts/prompt_rows_proto/niah_131072_qwen_s200.jsonl",
+        "artifacts/simquant/simquant_turboquant_d128_L36_k3v3.pt",
     ],
     "gptoss": [
         "artifacts/oscar_gptoss20b/rotations_gpqa198/k_rotation_qqt_r_h_pbr.pt",
@@ -93,6 +94,8 @@ GROUPS: dict[str, list[str]] = {
         # is unexercised by the SGLang serving stack; see gptoss20b_mxfp4_v1's
         # niah_131072 comment).
         "artifacts/prompt_rows_proto/niah_131072_gptoss_s200.jsonl",
+        "artifacts/prompt_rows_code/humaneval_gptoss.jsonl",
+        "artifacts/simquant/simquant_turboquant_d64_L12_k3v3.pt",
     ],
     # Calibrated on the official openai MXFP4 checkpoint (task #15) — the
     # go-forward set for serving that checkpoint. Codebook is 128k-calibrated;
@@ -103,6 +106,9 @@ GROUPS: dict[str, list[str]] = {
         "artifacts/oscar_gptoss20b_mxfp4/rotations_gpqa198/v_rotation_sst_r_h_pbr.pt",
         "artifacts/oscar_gptoss20b_mxfp4/rotations_gpqa198/layer_map.json",
         "artifacts/oscar_gptoss20b_mxfp4/vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k_fp8.pt",
+        "artifacts/prompt_rows_code/humaneval_gptoss.jsonl",
+        "artifacts/prompt_rows_code/lcb_v6_sub256_gptoss.jsonl",
+        "artifacts/simquant/simquant_turboquant_d64_L12_k3v3.pt",
     ],
     "llama": [
         "artifacts/oscar_llama31_8b/rotations_gpqa198/k_rotation_qqt_r_h_pbr.pt",
@@ -111,6 +117,8 @@ GROUPS: dict[str, list[str]] = {
         "artifacts/prompt_rows/gpqa_diamond_llama.jsonl",
         "artifacts/prompt_rows/math500_llama.jsonl",
         "artifacts/prompt_rows/aime25_llama.jsonl",
+        "artifacts/prompt_rows_code/humaneval_llama.jsonl",
+        "artifacts/simquant/simquant_turboquant_d128_L36_k3v3.pt",
     ],
 }
 

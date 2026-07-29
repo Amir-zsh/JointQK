@@ -228,6 +228,7 @@
       "temperature": 1.0,
       "top_p": 1.0,
       "top_k": -1
-    }
+    },
+    "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 }
   }
 }
