@@ -27,13 +27,16 @@ for g in groups:
     for row in data[g]:
         print(row["path"])
 PY
-        rsync -av --info=progress2 -e "$RSH" --files-from=/tmp/runpod_payload.txt \
+        # --no-owner/--no-group: container root on the pod's mounted volume
+        # commonly lacks chown capability even as uid 0 -- -a's ownership
+        # preservation then fails every file with "Operation not permitted".
+        rsync -av --no-owner --no-group --info=progress2 -e "$RSH" --files-from=/tmp/runpod_payload.txt \
             "$ROOT/" "$TARGET:$POD_REPO/"
         echo "pushed; on the pod run: bash pipelines/runpod/bootstrap.sh --group $GROUP"
         ;;
     pull-results)
         PROTO="${3:-}"
-        rsync -av --info=progress2 -e "$RSH" \
+        rsync -av --no-owner --no-group --info=progress2 -e "$RSH" \
             "$TARGET:$POD_REPO/artifacts/runpod/${PROTO:+$PROTO/}" \
             "$ROOT/artifacts/runpod/${PROTO:+$PROTO/}"
         ;;

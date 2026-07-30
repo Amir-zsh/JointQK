@@ -34,14 +34,25 @@ def extract_code(text: str) -> str:
     """Pull the solution code from a chat completion.
 
     Qwen3 thinking traces are wrapped in <think>...</think>; drop everything up
-    to the last </think>. Then take the last fenced code block (```python or
-    bare ```); if there's no fence, return the post-think text as-is (some
-    completions emit raw code).
+    to the last </think>. gpt-oss's harmony format instead switches from its
+    analysis channel to the final channel via control tokens that decode (with
+    special tokens stripped) to the literal, delimiter-less substring
+    "assistantfinal" glued onto the end of the analysis text -- e.g. "...Let's
+    produce code.assistantfinalfrom typing import List\n...". Because it's not
+    at a line start, the def/class/import fallback below never matches it,
+    silently letting the whole analysis prose through as "code" (confirmed:
+    100% of a 16-row gpt-oss HumanEval smoke sample carried this marker with
+    no fence, and scoring the raw text passed only 1/16 vs. a working accuracy
+    once split). Then take the last fenced code block (```python or bare ```);
+    if there's no fence, return the post-marker text as-is (some completions
+    emit raw code).
     """
     if text is None:
         return ""
     if "</think>" in text:
         text = text.rsplit("</think>", 1)[1]
+    if "assistantfinal" in text:
+        text = text.rsplit("assistantfinal", 1)[1]
     blocks = re.findall(r"```(?:python|py)?\s*\n(.*?)```", text, flags=re.DOTALL)
     if blocks:
         return blocks[-1]

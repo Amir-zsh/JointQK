@@ -1,0 +1,40 @@
+{
+  "protocol": {
+    "name": "llama31_8b_v1_ctx131k",
+    "file": "pipelines/runpod/protocols/llama31_8b_v1_ctx131k.json",
+    "sha256": "b18d3d00f0bce2e0ef967959ca34d5043575aebe8d4f5405e550bf9986fc29c5"
+  },
+  "arm": "bf16",
+  "task": "niah_131072_bf16_remainder",
+  "shard": "5/7",
+  "repo": {
+    "sha": "9091f6f86c657ced3fee238325014d46b95e721e",
+    "dirty": true
+  },
+  "engine": {
+    "sha": "ff43ee3cc3161feec9e800a637666a4ce5140a1a",
+    "dirty": true
+  },
+  "rows": {
+    "file": "artifacts/prompt_rows/niah_131072_llama_bf16_remainder.jsonl",
+    "sha256": "455fe07b5732b3fe9fb7b2d66385741e29344219bbcf023976a66ccafdf915dd"
+  },
+  "sampling": {
+    "samples": 1,
+    "temperature": 0.0,
+    "top_p": null,
+    "top_k": null
+  },
+  "serve": {
+    "tp": 1,
+    "gpus": "1",
+    "exact_chunked_prefill": false,
+    "scale_dtype": null,
+    "quant_group_size": "128",
+    "absorb_v_rotation": true,
+    "moe_runner_backend": null,
+    "vq2_cuda_geom": null
+  },
+  "gpu": "NVIDIA H100 80GB HBM3, 580.126.09",
+  "image_tag": "kvq-runpod:v1"
+}

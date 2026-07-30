@@ -25,6 +25,9 @@ HF_CLI="$(dirname "${OSCAR_PYTHON:-/opt/venv-oscar/bin/python}")/hf"
 
 for m in "${MODELS[@]}"; do
     echo "=== $m -> $HF_HOME"
-    "$HF_CLI" download "$m" --exclude "*.pth" "original/*"
+    # --exclude takes ONE pattern per flag (repeatable) -- a second bare
+    # string after it is parsed as an explicit filename to fetch, not a
+    # second pattern, and 404s since "original/*" doesn't exist literally.
+    "$HF_CLI" download "$m" --exclude "*.pth" --exclude "original/*"
 done
 echo "models ready under $HF_HOME"

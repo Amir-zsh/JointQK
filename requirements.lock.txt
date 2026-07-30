@@ -12,6 +12,7 @@ aiohappyeyeballs==2.6.1
 aiohttp==3.13.5
 aiosignal==1.4.0
 annotated-doc==0.0.4
+antlr4-python3-runtime==4.13.2
 anyio==4.13.0
 asttokens==3.0.1
 attrs==26.1.0
@@ -66,8 +67,10 @@ jupyter-client==8.8.0
 jupyter-core==5.9.1
 kiwisolver==1.5.0
 librt==0.9.0
+latex2sympy2-extended==1.11.0
 markdown-it-py==4.0.0
 markupsafe==3.0.3
+math-verify==0.9.0
 matplotlib==3.10.8
 matplotlib-inline==0.2.1
 mccabe==0.7.0
@@ -160,3 +163,4 @@ urllib3==2.6.3
 wcwidth==0.6.0
 xxhash==3.6.0
 yarl==1.23.0
+kernels==0.10.2

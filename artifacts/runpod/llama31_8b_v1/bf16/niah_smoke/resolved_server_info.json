@@ -1,0 +1,20 @@
+{
+  "model_path": "meta-llama/Llama-3.1-8B-Instruct",
+  "context_length": 73728,
+  "chunked_prefill_size": 4096,
+  "tp_size": 1,
+  "mem_fraction_static": 0.85,
+  "max_running_requests": 8,
+  "max_total_num_tokens": 423350,
+  "triton_attention_num_kv_splits": 8,
+  "kv_cache_dtype": "auto",
+  "kv_cache_quant_group_size": null,
+  "disable_radix_cache": true,
+  "moe_runner_backend": "auto",
+  "cuda_graph_max_bs": 8,
+  "prefill_attention_backend": "triton",
+  "decode_attention_backend": "triton",
+  "sampling_backend": "pytorch",
+  "random_seed": 406210109,
+  "version": "0.0.0.dev0"
+}

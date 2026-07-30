@@ -32,7 +32,7 @@
   "exact_chunked_prefill": false,
   "cuda_graph_max_bs": 8,
   "rot_dir": "artifacts/oscar_llama31_8b/rotations",
-  "vq_codebook": "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc64k_fp8.pt",
+  "vq_codebook": "artifacts/oscar_llama31_8b/vqa_llama31_8b_G4_strat_flat_ptn_gpqacc128k_fp8.pt",
   "arms": {
     "bf16":       { "mode_flag": "--bf16", "max_reqs": 8, "kv_splits": 8 },
     "oscar_int2": { "mode_flag": "",       "max_reqs": 4, "kv_splits": 8,  "scale_dtype": "float32" },
@@ -53,6 +53,7 @@
     "aime25":     { "rows": "artifacts/prompt_rows/aime25_llama.jsonl",         "samples": 5, "temperature": 0.6, "top_p": 0.9, "top_k": -1 },
     "math500":    { "rows": "artifacts/prompt_rows/math500_llama.jsonl",        "samples": 5, "temperature": 0.6, "top_p": 0.9, "top_k": -1 },
     "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_llama.jsonl", "samples": 5, "temperature": 0.6, "top_p": 0.9, "top_k": -1 },
+    "lcb":        { "rows": "artifacts/prompt_rows_code/lcb_v6_sub256_llama.jsonl", "samples": 5, "temperature": 0.6, "top_p": 0.9, "top_k": -1 },
     "niah_8192":  { "rows": "artifacts/prompt_rows/niah_8192_llama.jsonl",  "samples": 1, "temperature": 0.0 },
     "niah_16384": { "rows": "artifacts/prompt_rows/niah_16384_llama.jsonl", "samples": 1, "temperature": 0.0 },
     "niah_32768": { "rows": "artifacts/prompt_rows/niah_32768_llama.jsonl", "samples": 1, "temperature": 0.0 },

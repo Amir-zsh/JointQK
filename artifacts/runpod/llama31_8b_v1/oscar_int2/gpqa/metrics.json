@@ -1,0 +1,54 @@
+{
+  "samples": 5,
+  "sampling": {
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "top_k": -1
+  },
+  "per_k": [
+    {
+      "correct": 50,
+      "accuracy": 0.25252525252525254,
+      "extraction_rate": 0.696969696969697,
+      "scorer": "gpqa_simple_evals",
+      "total": 198
+    },
+    {
+      "correct": 45,
+      "accuracy": 0.22727272727272727,
+      "extraction_rate": 0.696969696969697,
+      "scorer": "gpqa_simple_evals",
+      "total": 198
+    },
+    {
+      "correct": 50,
+      "accuracy": 0.25252525252525254,
+      "extraction_rate": 0.7222222222222222,
+      "scorer": "gpqa_simple_evals",
+      "total": 198
+    },
+    {
+      "correct": 43,
+      "accuracy": 0.21717171717171718,
+      "extraction_rate": 0.7171717171717171,
+      "scorer": "gpqa_simple_evals",
+      "total": 198
+    },
+    {
+      "correct": 41,
+      "accuracy": 0.20707070707070707,
+      "extraction_rate": 0.6717171717171717,
+      "scorer": "gpqa_simple_evals",
+      "total": 198
+    }
+  ],
+  "accuracy_mean": 0.23131313131313133,
+  "accuracy_std": 0.020639208830002583,
+  "accuracy_avg_at_k": 0.2313131313131313,
+  "cap_hit_rate": 0.22626262626262628,
+  "mean_completion_tokens": 1374.5111111111112,
+  "total": 198,
+  "generation_seconds": 2856.390305100009,
+  "output_throughput_tok_s": 476.3935788363336,
+  "total_completion_tokens": 1360766
+}

@@ -1,0 +1,44 @@
+{
+  "protocol": {
+    "name": "llama31_8b_v1_ctx131k",
+    "file": "pipelines/runpod/protocols/llama31_8b_v1_ctx131k.json",
+    "sha256": "b18d3d00f0bce2e0ef967959ca34d5043575aebe8d4f5405e550bf9986fc29c5"
+  },
+  "arm": "quarot",
+  "task": "niah_131072",
+  "shard": null,
+  "repo": {
+    "sha": "9091f6f86c657ced3fee238325014d46b95e721e",
+    "dirty": true
+  },
+  "engine": {
+    "sha": "ff43ee3cc3161feec9e800a637666a4ce5140a1a",
+    "dirty": true
+  },
+  "rows": {
+    "file": "artifacts/prompt_rows/niah_131072_llama.jsonl",
+    "sha256": "e63df95fdf14c59485a2cd3d6ea0352919ad4027186c9b8b23562d2cf9b3ebd4"
+  },
+  "sampling": {
+    "samples": 1,
+    "temperature": 0.0,
+    "top_p": null,
+    "top_k": null
+  },
+  "serve": {
+    "tp": 1,
+    "gpus": "2",
+    "exact_chunked_prefill": false,
+    "scale_dtype": null,
+    "quant_group_size": "128",
+    "absorb_v_rotation": true,
+    "moe_runner_backend": null,
+    "vq2_cuda_geom": null
+  },
+  "gpu": "NVIDIA H100 80GB HBM3, 580.126.09",
+  "image_tag": "kvq-runpod:v1",
+  "rotations": {
+    "v_rotation_sst_r_h_pbr.pt": "62c6ac942cfd90a15e3c67e7d0053763d61a812367ee9df49a76f065df4e5cae",
+    "k_rotation_qqt_r_h_pbr.pt": "36f582008d0f632af5508d3c65cfa9b9f065f0aaf05d78068b250714f918ceef"
+  }
+}

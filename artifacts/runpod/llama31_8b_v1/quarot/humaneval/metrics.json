@@ -1,0 +1,44 @@
+{
+  "samples": 5,
+  "sampling": {
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "top_k": -1
+  },
+  "per_k": [
+    {
+      "correct": 9,
+      "accuracy": 0.054878048780487805,
+      "total": 164
+    },
+    {
+      "correct": 9,
+      "accuracy": 0.054878048780487805,
+      "total": 164
+    },
+    {
+      "correct": 13,
+      "accuracy": 0.07926829268292683,
+      "total": 164
+    },
+    {
+      "correct": 12,
+      "accuracy": 0.07317073170731707,
+      "total": 164
+    },
+    {
+      "correct": 12,
+      "accuracy": 0.07317073170731707,
+      "total": 164
+    }
+  ],
+  "accuracy_mean": 0.06707317073170732,
+  "accuracy_std": 0.011407492032847381,
+  "accuracy_avg_at_k": 0.06707317073170731,
+  "cap_hit_rate": 0.1719512195121951,
+  "mean_completion_tokens": 490.0292682926829,
+  "total": 164,
+  "generation_seconds": 785.9353568498045,
+  "output_throughput_tok_s": 511.26851145951207,
+  "total_completion_tokens": 401824
+}

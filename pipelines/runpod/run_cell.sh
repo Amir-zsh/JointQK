@@ -19,6 +19,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
+# Auto-load GIT_TOKEN/HF_TOKEN/IMAGE_TAG from the pod's .env (see docker/README.md
+# "Make sure to move .env to the pod") so every invocation gets them without the
+# caller having to remember to source it first -- belt-and-suspenders alongside
+# HF_HUB_OFFLINE=1 below (offline mode is the primary fix for gated-repo 401s at
+# serve time; a present HF_TOKEN is a fallback if the cache ever turns out
+# incomplete rather than a hard, silent failure).
+[[ -f "$ROOT/../.env" ]] && { set -a; source "$ROOT/../.env"; set +a; }
+
 PROTOCOL="" ARM="" TASK="" GPUS="" SHARD="" PORT="" OUT_ROOT="artifacts/runpod"
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -96,7 +104,7 @@ CELL="$OUT_ROOT/$P_NAME/$ARM/$TASK"
 mkdir -p "$CELL" logs
 SHARD_SUFFIX=""
 [[ -n "$SHARD" ]] && SHARD_SUFFIX="_s${SHARD%%/*}"
-LOG="$ROOT/logs/runpod_${ARM}_${TASK}${SHARD_SUFFIX}.log"
+LOG="$ROOT/logs/runpod_${P_NAME}_${ARM}_${TASK}${SHARD_SUFFIX}.log"
 SERVE_LOG="${LOG%.log}_serve.log"
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG"; }
 
@@ -149,7 +157,15 @@ SERVE_ENV=(TP="$P_TP" MAX_REQS="$A_MAX_REQS" KV_SPLITS="$A_KV_SPLITS"
            CUDA_GRAPH_BS="$P_GRAPH_BS" MAX_TOKENS="$P_POOL"
            ROT_DIR="$ROOT/$P_ROT_DIR"
            QUANT_GROUP_SIZE="$P_QGS" ABSORB_V_ROT="$P_ABSORB_V"
-           SERVE_EXTRA="$CHUNK_EXTRA")
+           SERVE_EXTRA="$CHUNK_EXTRA"
+           # bootstrap.sh's "models" gate already guarantees the weights are
+           # fully cached before any cell is allowed to run -- the server has
+           # no business touching the network. Without this, gated repos
+           # (Llama) 401 on the hub's auth HEAD check even with a full local
+           # cache, since huggingface_hub validates access before falling
+           # back to disk.
+           HF_HUB_OFFLINE=1)
+[[ -n "${HF_TOKEN:-}" ]] && SERVE_ENV+=(HF_TOKEN="$HF_TOKEN")
 [[ -n "$A_SCALE_DTYPE" ]] && SERVE_ENV+=(SCALE_DTYPE="$A_SCALE_DTYPE")
 [[ "$P_EXACT" == "1" ]] && SERVE_ENV+=(SGLANG_MIXED_KV_EXACT_CHUNKED_PREFILL=1)
 [[ -n "$A_HADAMARD_ORDER" ]] && SERVE_ENV+=(HADAMARD_ORDER="$A_HADAMARD_ORDER")

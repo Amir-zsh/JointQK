@@ -1,0 +1,40 @@
+{
+  "protocol": {
+    "name": "llama31_8b_v1",
+    "file": "pipelines/runpod/protocols/llama31_8b_v1.json",
+    "sha256": "c362ba1020c477f6cebb26040ab51f7ba5f947139a8dd471b088c96e7f12a5f4"
+  },
+  "arm": "turboquant_k3v3",
+  "task": "niah_8192",
+  "shard": null,
+  "repo": {
+    "sha": "9091f6f86c657ced3fee238325014d46b95e721e",
+    "dirty": true
+  },
+  "engine": {
+    "sha": "ff43ee3cc3161feec9e800a637666a4ce5140a1a",
+    "dirty": false
+  },
+  "rows": {
+    "file": "artifacts/prompt_rows/niah_8192_llama.jsonl",
+    "sha256": "c373f02c8a129f93a333f488886a5d20b22ae3a8f083a8cd570e8d75ecc59df5"
+  },
+  "sampling": {
+    "samples": 1,
+    "temperature": 0.0,
+    "top_p": null,
+    "top_k": null
+  },
+  "serve": {
+    "tp": 1,
+    "gpus": "0",
+    "exact_chunked_prefill": false,
+    "scale_dtype": null,
+    "quant_group_size": "128",
+    "absorb_v_rotation": true,
+    "moe_runner_backend": null,
+    "vq2_cuda_geom": null
+  },
+  "gpu": "NVIDIA H100 80GB HBM3, 580.126.09",
+  "image_tag": "kvq-runpod:v1"
+}

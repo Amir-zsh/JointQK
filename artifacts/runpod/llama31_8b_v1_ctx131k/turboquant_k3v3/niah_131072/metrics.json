@@ -1,0 +1,35 @@
+{
+  "niah_multikey_3": {
+    "string_match": 61.9997
+  },
+  "niah_single_1": {
+    "string_match": 4.9993
+  },
+  "niah_single_2": {
+    "string_match": 100.0
+  },
+  "niah_multiquery": {
+    "string_match": 88.7495
+  },
+  "niah_single_3": {
+    "string_match": 96.0002
+  },
+  "niah_multivalue": {
+    "string_match": 75.7505
+  },
+  "niah_multikey_2": {
+    "string_match": 78.0008
+  },
+  "niah_multikey_1": {
+    "string_match": 70.0018
+  },
+  "cap_hit_rate": 0.1125,
+  "total": 800,
+  "accuracy_mean": 71.937725,
+  "accuracy_ci95": 25.05212692251835,
+  "_merged_from": {
+    "head_shards": 8,
+    "remainder_shards": 7,
+    "note": "row-weighted merge across head (low-rid) + remainder (high-rid) shard sets"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "samples": 5,
+  "per_k": [
+    {"correct": 222, "total": 500, "accuracy": 0.444},
+    {"correct": 222, "total": 500, "accuracy": 0.444},
+    {"correct": 231, "total": 500, "accuracy": 0.462},
+    {"correct": 219, "total": 500, "accuracy": 0.438},
+    {"correct": 225, "total": 500, "accuracy": 0.45}
+  ],
+  "total": 500,
+  "_merged_from": ["math500__s0", "math500__s1", "math500__s2", "math500__s3", "math500__s4"]
+}

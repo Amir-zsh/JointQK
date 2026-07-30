@@ -145,6 +145,7 @@
     "aime25":     { "rows": "artifacts/prompt_rows_proto/aime25_gptoss_32k.jsonl",  "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
     "gpqa":       { "rows": "artifacts/prompt_rows_proto/gpqa_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
     "lcb":        { "rows": "artifacts/prompt_rows_code/lcb_v6_sub256_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
-    "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 }
+    "humaneval":  { "rows": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl", "samples": 5, "temperature": 1.0, "top_p": 1.0, "top_k": -1 },
+    "humaneval_smoke": { "rows": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl", "samples": 1, "temperature": 0.0, "limit_rows": 16 }
   }
 }

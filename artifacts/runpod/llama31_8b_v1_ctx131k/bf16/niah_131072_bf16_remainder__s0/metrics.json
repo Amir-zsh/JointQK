@@ -1,0 +1,25 @@
+{
+  "niah_multikey_1": {
+    "string_match": 80.0
+  },
+  "niah_multikey_2": {
+    "string_match": 78.57
+  },
+  "niah_multikey_3": {
+    "string_match": 57.14
+  },
+  "niah_multiquery": {
+    "string_match": 95.0
+  },
+  "niah_multivalue": {
+    "string_match": 83.93
+  },
+  "niah_single_3": {
+    "string_match": 100.0
+  },
+  "cap_hit_rate": 0.0,
+  "mean_completion_tokens": 21.453333333333333,
+  "generation_seconds": 2674.70494915545,
+  "output_throughput_tok_s": 0.6015616789837134,
+  "total_completion_tokens": 1609
+}

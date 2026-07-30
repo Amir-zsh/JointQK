@@ -100,6 +100,11 @@
         "path": "artifacts/prompt_rows_proto/niah_131072_qwen_s200.jsonl",
         "bytes": 104765140,
         "sha256": "c690f4266957ed4cc1947ed206b0378270877b425c70f2d92752dbaef6919d57"
+      },
+      {
+        "path": "artifacts/simquant/simquant_turboquant_d128_L36_k3v3.pt",
+        "bytes": 4721505,
+        "sha256": "f990b71eab20a2a4f60e28321bc5cf3571bc07b3e0a45e8fad15f9e7c0f61802"
       }
     ],
     "gptoss": [
@@ -202,6 +207,16 @@
         "path": "artifacts/prompt_rows_proto/niah_131072_gptoss_s200.jsonl",
         "bytes": 110866433,
         "sha256": "f9884af3ef6ce96d9a7177dcc66d7270e2eeaaa791f1df0af3ed383ebfeacae5"
+      },
+      {
+        "path": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl",
+        "bytes": 360460,
+        "sha256": "e9f11972f6d3ecf481d0ff54d39322d1e4cb5425744074aea71d88fbc9ae889e"
+      },
+      {
+        "path": "artifacts/simquant/simquant_turboquant_d64_L12_k3v3.pt",
+        "bytes": 396119,
+        "sha256": "6cc30405e8a7651a2f801b3ecf2817f6ead6b155eda3e1dab09e54352a0809e9"
       }
     ],
     "gptoss_mxfp4": [
@@ -224,9 +239,34 @@
         "path": "artifacts/oscar_gptoss20b_mxfp4/vqa_gptoss20b_G4_strat_flat_ptn_gpqacc128k_fp8.pt",
         "bytes": 9938355,
         "sha256": "8a12fe96e03551a4e9b5dceefe59f86d63b4ddcc5c5a37367ad9eef5cb6793ac"
+      },
+      {
+        "path": "artifacts/prompt_rows_code/humaneval_gptoss.jsonl",
+        "bytes": 360460,
+        "sha256": "e9f11972f6d3ecf481d0ff54d39322d1e4cb5425744074aea71d88fbc9ae889e"
+      },
+      {
+        "path": "artifacts/prompt_rows_code/lcb_v6_sub256_gptoss.jsonl",
+        "bytes": 621075,
+        "sha256": "4e293f1fe4052e6b97492461f22651254215a150fc833b8f4dce6cbfb515a8d9"
+      },
+      {
+        "path": "artifacts/simquant/simquant_turboquant_d64_L12_k3v3.pt",
+        "bytes": 396119,
+        "sha256": "6cc30405e8a7651a2f801b3ecf2817f6ead6b155eda3e1dab09e54352a0809e9"
       }
     ],
     "llama": [
+      {
+        "path": "artifacts/oscar_llama31_8b/rotations/k_rotation_qqt_r_h_pbr.pt",
+        "bytes": 2132797,
+        "sha256": "36f582008d0f632af5508d3c65cfa9b9f065f0aaf05d78068b250714f918ceef"
+      },
+      {
+        "path": "artifacts/oscar_llama31_8b/rotations/v_rotation_sst_r_h_pbr.pt",
+        "bytes": 2132797,
+        "sha256": "62c6ac942cfd90a15e3c67e7d0053763d61a812367ee9df49a76f065df4e5cae"
+      },
       {
         "path": "artifacts/oscar_llama31_8b/rotations_gpqa198/k_rotation_qqt_r_h_pbr.pt",
         "bytes": 2132797,
@@ -256,6 +296,46 @@
         "path": "artifacts/prompt_rows/aime25_llama.jsonl",
         "bytes": 40965,
         "sha256": "5a5302145b421e4aaae383e46fc554c00d6d26cf0eddd05cb34fa2d61207848e"
+      },
+      {
+        "path": "artifacts/prompt_rows_code/humaneval_llama.jsonl",
+        "bytes": 339796,
+        "sha256": "4646ea1455510cf4e4f91a4b35ccdd438cf943318f6ca6bda0223d8a466d865c"
+      },
+      {
+        "path": "artifacts/prompt_rows_code/lcb_v6_sub256_llama.jsonl",
+        "bytes": 589075,
+        "sha256": "a6b7a24ef43c45860f8509915e22a40b5b136ac09e57911abeaec5369982aa0d"
+      },
+      {
+        "path": "artifacts/prompt_rows/niah_8192_llama.jsonl",
+        "bytes": 26913199,
+        "sha256": "c373f02c8a129f93a333f488886a5d20b22ae3a8f083a8cd570e8d75ecc59df5"
+      },
+      {
+        "path": "artifacts/prompt_rows/niah_16384_llama.jsonl",
+        "bytes": 53277479,
+        "sha256": "2d30caeb0327f68ab4e53ca63681229853c519c8de622528ab9ed7910e150de3"
+      },
+      {
+        "path": "artifacts/prompt_rows/niah_32768_llama.jsonl",
+        "bytes": 106075038,
+        "sha256": "18b82f055494f21842459e0e1b20a88569109e37dd21e07e2425a81361b87fad"
+      },
+      {
+        "path": "artifacts/prompt_rows/niah_65536_llama.jsonl",
+        "bytes": 211574783,
+        "sha256": "c1b1cdd3116d18823a0f8ed2e1a21861f3784bd9cc780bccaee7c533f9535c52"
+      },
+      {
+        "path": "artifacts/prompt_rows/niah_131072_llama.jsonl",
+        "bytes": 436765929,
+        "sha256": "e63df95fdf14c59485a2cd3d6ea0352919ad4027186c9b8b23562d2cf9b3ebd4"
+      },
+      {
+        "path": "artifacts/simquant/simquant_turboquant_d128_L36_k3v3.pt",
+        "bytes": 4721505,
+        "sha256": "f990b71eab20a2a4f60e28321bc5cf3571bc07b3e0a45e8fad15f9e7c0f61802"
       }
     ]
   }
