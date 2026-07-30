@@ -1,0 +1,121 @@
+{
+ "study": "int2_retune_qwen3_4b",
+ "model": "Qwen/Qwen3-4B-Thinking-2507",
+ "synthetic_root": "artifacts/throughput/synthetic/Qwen3-4B-Thinking-2507_L36H8D128",
+ "_doc": [
+  "Task #18: OSCAR-INT2 stage-1 tile retune, on-server, at the Figure 4 cells.",
+  "Every vq2-vs-int2 number so far is TUNED vq2 vs UNTUNED int2. NOVA-KV picks",
+  "its best THR per cell; OSCAR ran one heuristic config. This closes that.",
+  "Serve settings and the oscar_int2 arm are copied verbatim from vq2_cuda_thr_sweep_qwen3_4b_thinking,",
+  "so the winner is directly substitutable into Figure 4's OSCAR series.",
+  "'default' reproduces the current ladder and is the control: if it wins a",
+  "cell, that cell was already tuned and the Figure 4 value stands."
+ ],
+ "input_lens": [
+  30000,
+  60000,
+  90000
+ ],
+ "output_len": 1024,
+ "bs_max_ceiling": 64,
+ "seed": 1,
+ "reference": "oscar_default",
+ "serve": {
+  "ctx": 98304,
+  "mem_frac": 0.85,
+  "mem_frac_fallback": 0.8,
+  "prefill_backend": "fa3",
+  "chunked_prefill_size": 4096
+ },
+ "arms": [
+  {
+   "label": "oscar_default",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8"
+   }
+  },
+  {
+   "label": "oscar_bn256_bh8_w4",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "256",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "4",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn256_bh8_w8",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "256",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "8",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn128_bh8_w2",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "128",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "2",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn128_bh8_w8",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "128",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "8",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn128_bh16_w4",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "128",
+    "SGL_INT2_BLOCK_H": "16",
+    "SGL_INT2_NUM_WARPS": "4",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn64_bh8_w4",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "64",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "4",
+    "SGL_INT2_NUM_STAGES": "3"
+   }
+  },
+  {
+   "label": "oscar_bn128_bh8_w4s2",
+   "flags": "",
+   "env": {
+    "KV_SPLITS": "8",
+    "SGL_INT2_BLOCK_N": "128",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "4",
+    "SGL_INT2_NUM_STAGES": "2"
+   }
+  }
+ ],
+ "batch_sizes": [
+  1,
+  4,
+  16
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "study": "bf16_gptoss20b_90k_bs8",
+ "model": "openai/gpt-oss-20b",
+ "synthetic_root": "artifacts/throughput/synthetic/gpt-oss-20b_L24H8D64",
+ "_doc": [
+  "Fills the one BF16 cell Figure 4 panel (d) plots but never measured:",
+  "GPT-OSS-20B, 90K input, batch 8. BF16 admits b10 at 90K, so bs8 fits --",
+  "it was simply absent from the fp32 study's ladder [1,4,10,16,32,...].",
+  "Serve settings copied verbatim from throughput_gptoss20b_fp32 so the new",
+  "point is comparable to the bs1/bs4 BF16 values already in the figure.",
+  "BF16 does not use mixed KV, so it is unaffected by the SWA flush defect."
+ ],
+ "input_lens": [
+  90000
+ ],
+ "output_len": 1024,
+ "bs_max_ceiling": 256,
+ "seed": 1,
+ "reference": "bf16",
+ "serve": {
+  "ctx": 98304,
+  "mem_frac": 0.85,
+  "mem_frac_fallback": 0.8,
+  "prefill_backend": "triton",
+  "chunked_prefill_size": 8192
+ },
+ "arms": [
+  {
+   "label": "bf16",
+   "flags": "--bf16",
+   "env": {
+    "KV_SPLITS": "8",
+    "ABSORB_V_ROT": "0",
+    "QUANT_GROUP_SIZE": "0",
+    "SERVE_EXTRA": "--moe-runner-backend triton_kernel --chunked-prefill-size 8192"
+   }
+  }
+ ],
+ "quant_bmax_slack": 1.0,
+ "batch_sizes": [
+  8
+ ]
+}

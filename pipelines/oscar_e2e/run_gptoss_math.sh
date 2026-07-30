@@ -35,6 +35,11 @@ TOP_K="${TOP_K:--1}"
 MATH_THREADS="${MATH_THREADS:-4}"
 AIME_THREADS="${AIME_THREADS:-4}"
 GPQA_THREADS="${GPQA_THREADS:-4}"
+# The server runs in the oscar container; the host .venv-oscar raises
+# "Either a revision or a version must be specified" out of transformers'
+# hub_kernels on this box. Set SERVER_CONTAINER= (empty) to serve on the host.
+# The client stays on the host either way -- see run_cell.
+SERVER_CONTAINER="${SERVER_CONTAINER-oscar-ab}"
 
 mkdir -p logs "$OUT_ROOT"
 
@@ -49,7 +54,16 @@ ensure_port_free() {
 }
 
 stop_server() {
-  if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+  if [[ -n "$SERVER_CONTAINER" ]]; then
+    # docker exec -d leaves no host PID, so scope the kill by port rather than
+    # by pattern -- a bare launch_server pattern would take down concurrent runs.
+    docker exec "$SERVER_CONTAINER" bash -lc \
+      "pkill -9 -f '[l]aunch_server.*--port $PORT'" >/dev/null 2>&1 || true
+    for _ in $(seq 1 60); do
+      lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1 || break
+      sleep 2
+    done
+  elif [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
     kill "$SERVER_PID" 2>/dev/null || true
     wait "$SERVER_PID" 2>/dev/null || true
   fi
@@ -72,19 +86,36 @@ wait_ready() {
 
 boot_arm() {
   local arm="$1"
-  local log="logs/gptoss_math_${arm}_server.log"
+  # Port-scoped: two concurrent runs of the SAME arm (e.g. a radix-cache
+  # on/off control pair) would otherwise share one log, and wait_ready would
+  # read the other run's "fired up" line and proceed against a dead port.
+  local log="logs/gptoss_math_${arm}_${PORT}_server.log"
   ensure_port_free
   : > "$log"
 
-  unset SGLANG_VQ_CODEBOOK_PATH SGLANG_VQ_DISABLE_SINK_CORRECTION || true
-  export TP=2
-  export MODEL="$MODEL"
-  export ABSORB_V_ROT=0
-  export QUANT_GROUP_SIZE=0
-  export ROT_DIR="$ROT_DIR"
-  export MAX_REQS="${MAX_REQS:-4}"
-  export CUDA_GRAPH_BS="${CUDA_GRAPH_BS:-4}"
-  export KV_SPLITS="${KV_SPLITS:-48}"
+  local senv=(
+    TP=2
+    "MODEL=$MODEL"
+    ABSORB_V_ROT=0
+    QUANT_GROUP_SIZE=0
+    "ROT_DIR=$ROT_DIR"
+    "MAX_REQS=${MAX_REQS:-4}"
+    "CUDA_GRAPH_BS=${CUDA_GRAPH_BS:-4}"
+    "KV_SPLITS=${KV_SPLITS:-48}"
+  )
+  # Forward the knobs a caller may want to vary without teaching this script
+  # about each one; unset names are simply skipped.
+  local k
+  for k in RADIX_CACHE MAX_TOKENS PREFILL_BACKEND SERVE_EXTRA \
+           SGLANG_SWA_POOL_TOKENS SGLANG_MIXED_KV_PREFIX_REUSE_ACROSS_CHUNKS \
+           SGLANG_MIXED_KV_HP_PREFIX_POOL_TOKENS \
+           SGLANG_ENABLE_STRICT_MEM_CHECK_DURING_IDLE \
+           SGLANG_VQ2_CUDA SGLANG_VQ2_CUDA_FP32 SGLANG_VQ2_CUDA_THR \
+           SGLANG_VQ2_CUDA_GEOM SGLANG_VQ_OPT_QMAP SGLANG_VQ_OPT_KMAP \
+           SGLANG_VQ_OPT_FLUSH SGLANG_VQ_OPT_PREFILL SGLANG_VQ_FP8_FMT \
+           SGLANG_CHECK_MIXED_KV_SWA; do
+    [[ -n "${!k:-}" ]] && senv+=("$k=${!k}")
+  done
 
   local args=(--gpu "$GPU_PAIR" --port "$PORT" --model "$MODEL" --ctx "${CTX:-73728}" --mem-frac "${MEM_FRAC:-0.78}")
   case "$arm" in
@@ -95,11 +126,11 @@ boot_arm() {
       ;;
     vq2)
       args+=(--vq2 --vq-codebook "$VQ_CODEBOOK")
-      export SGLANG_VQ_DISABLE_SINK_CORRECTION=0
+      senv+=(SGLANG_VQ_DISABLE_SINK_CORRECTION=0)
       ;;
     old_vq2)
       args+=(--vq2 --vq-codebook "$VQ_CODEBOOK")
-      export SGLANG_VQ_DISABLE_SINK_CORRECTION=1
+      senv+=(SGLANG_VQ_DISABLE_SINK_CORRECTION=1)
       ;;
     *)
       echo "unknown arm: $arm" >&2
@@ -107,9 +138,17 @@ boot_arm() {
       ;;
   esac
 
-  echo "[$(date -Is)] boot arm=$arm gpu_pair=$GPU_PAIR port=$PORT" | tee -a "$log"
-  nohup bash pipelines/oscar_e2e/serve_oscar.sh "${args[@]}" >> "$log" 2>&1 &
-  SERVER_PID=$!
+  echo "[$(date -Is)] boot arm=$arm gpu_pair=$GPU_PAIR port=$PORT container=${SERVER_CONTAINER:-<host>}" | tee -a "$log"
+  if [[ -n "$SERVER_CONTAINER" ]]; then
+    local eargs=()
+    for k in "${senv[@]}"; do eargs+=(-e "$k"); done
+    docker exec -d "${eargs[@]}" "$SERVER_CONTAINER" bash -lc \
+      "cd $ROOT && bash pipelines/oscar_e2e/serve_oscar.sh ${args[*]} >> $ROOT/$log 2>&1"
+    SERVER_PID=""
+  else
+    nohup env "${senv[@]}" bash pipelines/oscar_e2e/serve_oscar.sh "${args[@]}" >> "$log" 2>&1 &
+    SERVER_PID=$!
+  fi
   wait_ready "$log"
 }
 
@@ -123,7 +162,11 @@ run_cell() {
     echo "[$(date -Is)] skip complete $arm/$name"
     return 0
   fi
-  .venv/bin/python pipelines/oscar_e2e/run_prompts_client.py \
+  # The client only speaks HTTP, so it can run wherever; the server may not.
+  # Overridable because .venv/bin/python's interpreter symlink points outside
+  # the oscar-ab bind mount, so it resolves on the host but not in the container
+  # -- run the whole script in the container and this line is what breaks.
+  "${CLIENT_PYTHON:-.venv/bin/python}" pipelines/oscar_e2e/run_prompts_client.py \
     --rows "$rows" \
     --port "$PORT" \
     --timeout 7200 \

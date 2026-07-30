@@ -1,0 +1,35 @@
+{
+  "arm": "oscar_bn256_bh8_w4",
+  "model": "openai/gpt-oss-20b",
+  "gpus": [
+    1
+  ],
+  "tp": 1,
+  "pool_tokens": 6541480,
+  "pool_tokens_calibration": 6541472,
+  "predicted_cell_size_bytes": 9216,
+  "predicted_pool_gib": 56.15,
+  "note": "predicted_* assume a uniform full-attention KV pool; hybrid-SWA models (gpt-oss) allocate the quant pool for full-attention layers only, so the prediction is an upper bound there",
+  "mem_frac": 0.85,
+  "max_running_requests": 210,
+  "cuda_graph_max_bs": 210,
+  "flags": "",
+  "env": {
+    "KV_SPLITS": "8",
+    "ABSORB_V_ROT": "0",
+    "QUANT_GROUP_SIZE": "0",
+    "SERVE_EXTRA": "--moe-runner-backend triton_kernel --chunked-prefill-size 8192",
+    "SGLANG_ENABLE_STRICT_MEM_CHECK_DURING_IDLE": "0",
+    "SGLANG_SWA_POOL_TOKENS": "1048576",
+    "SGL_INT2_BLOCK_N": "256",
+    "SGL_INT2_BLOCK_H": "8",
+    "SGL_INT2_NUM_WARPS": "4",
+    "SGL_INT2_NUM_STAGES": "3"
+  },
+  "budget": {
+    "hp_gib": 3.77,
+    "reserve_gib": 11.95,
+    "pool_gib": 56.15
+  },
+  "synthetic_artifacts": true
+}

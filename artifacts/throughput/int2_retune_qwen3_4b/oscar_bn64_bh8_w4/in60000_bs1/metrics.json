@@ -1,0 +1,41 @@
+{
+  "batch_size": 1,
+  "input_len": 60000,
+  "output_len": 1024,
+  "warm_s": 1.83,
+  "latency_s": 12.8633,
+  "first_ttft_s": 0.2369,
+  "last_ttft_s": 0.2369,
+  "decode_window_s": 12.6263,
+  "decode_tok_s_total": 81.1,
+  "decode_tok_s_per_req": 81.1,
+  "decode_tok_s": 81.1,
+  "decode_tok_s_stagger_free": 81.1,
+  "overall_tok_s": 4744.06,
+  "gates": {
+    "full_length": true,
+    "no_retract": true,
+    "warm_took": true,
+    "batch_coexisted": true,
+    "no_nan": true,
+    "server_agrees": true
+  },
+  "produced_tokens": [
+    1024,
+    1024
+  ],
+  "finish_reasons": [
+    "length"
+  ],
+  "cached_tokens_median": 58144,
+  "ttft_spread_frac": 0.0,
+  "estimator_gap_frac": 0.0,
+  "max_running_req": 1,
+  "server_last_gen_throughput": 80.66327817124288,
+  "ok": true,
+  "arm": "oscar_bn64_bh8_w4",
+  "pool_tokens": 2747624,
+  "b_max": 45,
+  "mem_frac": 0.85,
+  "is_bs_max": false
+}

@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import re
 import subprocess
@@ -87,6 +88,11 @@ def run_cell(gpu, port, mode, chunk, prompt_len, extra_env=None):
 
     env = ["-e", "RADIX_CACHE=1", "-e", "MAX_TOKENS=600000",
            "-e", f"SERVE_EXTRA=--chunked-prefill-size {chunk} --enable-cache-report"]
+    # Forward the strict-mem-check level when the caller sets it, so this repro
+    # can double as the carrier for the (temporary) HP-recent-in-tree assertion.
+    for passthru in ("SGLANG_CHECK_MIXED_KV_SWA",):
+        if os.environ.get(passthru):
+            env += ["-e", f"{passthru}={os.environ[passthru]}"]
     for k, v in (extra_env or {}).items():
         env += ["-e", f"{k}={v}"]
     flags = "--bf16" if mode == "bf16" else ""
